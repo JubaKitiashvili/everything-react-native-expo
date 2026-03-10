@@ -1,0 +1,54 @@
+// Template for continuous-learning-observer.cjs hook
+// This runs on PostToolUse events and captures patterns
+
+const fs = require('fs');
+const path = require('path');
+
+const CONFIG = {
+  observationDir: '{{observationDir}}',
+  maxPerSession: {{maxObservationsPerSession}},
+  threshold: {{observationThreshold}},
+};
+
+module.exports = async ({ tool, filePaths, result }) => {
+  // Only observe file-editing tools
+  if (!['Edit', 'Write', 'NotebookEdit'].includes(tool)) return;
+
+  const sessionFile = path.join(CONFIG.observationDir, `session-${Date.now()}.json`);
+
+  // Ensure observation directory exists
+  fs.mkdirSync(CONFIG.observationDir, { recursive: true });
+
+  // Read existing observations for this session
+  let observations = [];
+  const sessionFiles = fs.readdirSync(CONFIG.observationDir)
+    .filter(f => f.startsWith('session-'))
+    .sort()
+    .slice(-1);
+
+  if (sessionFiles.length > 0) {
+    try {
+      observations = JSON.parse(
+        fs.readFileSync(path.join(CONFIG.observationDir, sessionFiles[0]), 'utf8')
+      );
+    } catch { /* fresh session */ }
+  }
+
+  // Don't exceed max observations
+  if (observations.length >= CONFIG.maxPerSession) return;
+
+  // Record observation
+  observations.push({
+    timestamp: new Date().toISOString(),
+    tool,
+    files: filePaths || [],
+    resultPreview: typeof result === 'string' ? result.slice(0, 200) : '',
+  });
+
+  // Write back
+  const targetFile = sessionFiles.length > 0
+    ? path.join(CONFIG.observationDir, sessionFiles[0])
+    : sessionFile;
+
+  fs.writeFileSync(targetFile, JSON.stringify(observations, null, 2));
+};
