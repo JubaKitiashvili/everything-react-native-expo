@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["hooks"],
+  "properties": {
+    "hooks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["event", "script", "command", "profiles"],
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "PreToolUse", "PostToolUse", "Stop",
+              "PreCompact", "SessionStart", "SessionEnd"
+            ]
+          },
+          "pattern": { "type": "string" },
+          "script": { "type": "string" },
+          "command": { "type": "string" },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["minimal", "standard", "strict"]
+            },
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

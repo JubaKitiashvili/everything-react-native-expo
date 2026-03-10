@@ -1,0 +1,22 @@
+{
+  "name": "strict",
+  "description": "Production-grade enforcement. For teams requiring CI-level quality.",
+  "hooks": [
+    "session-start.js",
+    "post-edit-format.js",
+    "post-edit-typecheck.js",
+    "check-console-log.js",
+    "check-platform-specific.js",
+    "check-reanimated-worklet.js",
+    "check-expo-config.js",
+    "bundle-size-check.js",
+    "pre-commit-lint.js",
+    "pre-edit-test-gate.js",
+    "security-scan.js",
+    "performance-budget.js",
+    "native-compat-check.js",
+    "accessibility-check.js",
+    "continuous-learning-observer.js",
+    "evaluate-session.js"
+  ]
+}
