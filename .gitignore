@@ -1,2 +1,5 @@
 .worktrees/
 node_modules/
+coverage/
+.claude/erne/
+.DS_Store

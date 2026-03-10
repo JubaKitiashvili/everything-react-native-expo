@@ -1,0 +1,13 @@
+{
+  "name": "erne-universal",
+  "version": "0.1.0",
+  "description": "AI coding agent harness for React Native and Expo development",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest",
+    "test:hooks": "jest tests/hooks/"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
