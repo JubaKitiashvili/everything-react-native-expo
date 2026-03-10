@@ -17,12 +17,12 @@ const input = readStdin();
 const filePath = getEditedFilePath(input);
 
 if (!filePath) {
-  pass();
+  return pass();
 }
 
 const ext = path.extname(filePath).toLowerCase();
 if (!SUPPORTED_EXTENSIONS.includes(ext)) {
-  pass();
+  return pass();
 }
 
 try {
@@ -32,7 +32,7 @@ try {
     timeout: 15000,
     cwd: process.env.ERNE_PROJECT_DIR || process.cwd(),
   });
-  pass(`ERNE: Formatted ${path.basename(filePath)}`);
+  return pass(`ERNE: Formatted ${path.basename(filePath)}`);
 } catch (err) {
-  warn(`ERNE: Could not format ${path.basename(filePath)}: prettier unavailable or failed`);
+  return warn(`ERNE: Could not format ${path.basename(filePath)}: prettier unavailable or failed`);
 }

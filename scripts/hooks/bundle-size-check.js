@@ -8,8 +8,8 @@ const LARGE_PACKAGES = ['moment', 'lodash', 'firebase', 'aws-sdk', '@aws-sdk/cli
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
-if (path.basename(filePath) !== 'package.json') pass();
+if (!filePath) return pass();
+if (path.basename(filePath) !== 'package.json') return pass();
 
 try {
   const content = fs.readFileSync(filePath, 'utf8');
@@ -18,14 +18,14 @@ try {
   const found = LARGE_PACKAGES.filter(name => name in allDeps);
 
   if (found.length > 0) {
-    warn(
+    return warn(
       `ERNE: Large dependencies detected: ${found.join(', ')}. ` +
       'Consider lighter alternatives (e.g., date-fns instead of moment, ' +
       'lodash-es or individual lodash methods instead of full lodash).'
     );
   } else {
-    pass();
+    return pass();
   }
 } catch {
-  pass();
+  return pass();
 }

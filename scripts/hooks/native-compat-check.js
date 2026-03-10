@@ -7,18 +7,18 @@ const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
+if (!filePath) return pass();
 
 const NATIVE_EXTS = ['.swift', '.m', '.mm', '.h', '.kt', '.java', '.gradle'];
 const ext = path.extname(filePath).toLowerCase();
-if (!NATIVE_EXTS.includes(ext)) pass();
+if (!NATIVE_EXTS.includes(ext)) return pass();
 
 const isIosFile = ['.swift', '.m', '.mm', '.h'].includes(ext) ||
   filePath.includes('/ios/') || filePath.includes('\\ios\\');
 const isAndroidFile = ['.kt', '.java', '.gradle'].includes(ext) ||
   filePath.includes('/android/') || filePath.includes('\\android\\');
 
-if (!isIosFile && !isAndroidFile) pass();
+if (!isIosFile && !isAndroidFile) return pass();
 
 const iosDir = path.join(projectDir, 'ios');
 const androidDir = path.join(projectDir, 'android');
@@ -36,7 +36,7 @@ if (isAndroidFile && !hasIosDir) {
 }
 
 if (warnings.length > 0) {
-  warn(`ERNE: Native compatibility — ${warnings.length} concern(s):\n${warnings.map((w) => `  - ${w}`).join('\n')}`);
+  return warn(`ERNE: Native compatibility — ${warnings.length} concern(s):\n${warnings.map((w) => `  - ${w}`).join('\n')}`);
 } else {
-  pass();
+  return pass();
 }

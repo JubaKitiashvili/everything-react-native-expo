@@ -7,8 +7,8 @@ const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
-if (path.basename(filePath) !== 'package.json') pass();
+if (!filePath) return pass();
+if (path.basename(filePath) !== 'package.json') return pass();
 
 const HEAVY_PACKAGES = {
   'moment': { size: '290KB', alternative: 'dayjs or date-fns' },
@@ -25,7 +25,7 @@ let pkg;
 try {
   pkg = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 } catch {
-  pass();
+  return pass();
 }
 
 const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
@@ -51,7 +51,7 @@ if (fs.existsSync(budgetPath)) {
 }
 
 if (warnings.length > 0) {
-  warn(`ERNE: Performance budget — ${warnings.length} concern(s):\n${warnings.map((w) => `  - ${w}`).join('\n')}`);
+  return warn(`ERNE: Performance budget — ${warnings.length} concern(s):\n${warnings.map((w) => `  - ${w}`).join('\n')}`);
 } else {
-  pass();
+  return pass();
 }

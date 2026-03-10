@@ -6,11 +6,11 @@ const { readStdin, getEditedFilePath, pass, warn } = require('./lib/hook-utils')
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
+if (!filePath) return pass();
 
 const basename = path.basename(filePath);
 const isConfig = basename === 'app.json' || basename === 'app.config.ts' || basename === 'app.config.js';
-if (!isConfig) pass();
+if (!isConfig) return pass();
 
 const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 const appJsonPath = path.join(projectDir, 'app.json');
@@ -21,7 +21,7 @@ try {
   try {
     config = JSON.parse(raw);
   } catch {
-    warn('ERNE: app.json contains invalid JSON');
+    return warn('ERNE: app.json contains invalid JSON');
   }
 
   const expo = config.expo || config;
@@ -31,10 +31,10 @@ try {
   if (!expo.version) missing.push('version');
 
   if (missing.length > 0) {
-    warn(`ERNE: app.json missing required fields: ${missing.join(', ')}`);
+    return warn(`ERNE: app.json missing required fields: ${missing.join(', ')}`);
   } else {
-    pass('ERNE: Expo config valid');
+    return pass('ERNE: Expo config valid');
   }
 } catch {
-  pass();
+  return pass();
 }

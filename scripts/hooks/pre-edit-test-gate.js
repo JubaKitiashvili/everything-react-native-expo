@@ -8,11 +8,11 @@ const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
+if (!filePath) return pass();
 
 const JS_TS_EXTS = ['.js', '.jsx', '.ts', '.tsx'];
-if (!hasExtension(filePath, JS_TS_EXTS)) pass();
-if (isTestFile(filePath)) pass();
+if (!hasExtension(filePath, JS_TS_EXTS)) return pass();
+if (isTestFile(filePath)) return pass();
 
 const basename = path.basename(filePath, path.extname(filePath));
 const dir = path.dirname(filePath);
@@ -47,7 +47,7 @@ const rootTestPatterns = [
 const allPatterns = [...testPatterns, ...rootTestPatterns];
 const testFile = allPatterns.find((p) => fs.existsSync(p));
 
-if (!testFile) pass();
+if (!testFile) return pass();
 
 try {
   execFileSync('npx', ['jest', '--bail', '--no-coverage', testFile], {
@@ -56,13 +56,13 @@ try {
     timeout: 30000,
     cwd: projectDir,
   });
-  pass('ERNE: Related tests pass');
+  return pass('ERNE: Related tests pass');
 } catch (err) {
   const output = err.stdout || err.stderr || '';
   if (output.includes('FAIL')) {
-    warn(`ERNE: Related test failed — ${path.basename(testFile)}. Fix tests before editing.`);
+    return warn(`ERNE: Related test failed — ${path.basename(testFile)}. Fix tests before editing.`);
   } else {
     // Jest unavailable or configuration error — skip the gate
-    pass('ERNE: Could not run related tests (jest unavailable or error) — skipping gate');
+    return pass('ERNE: Could not run related tests (jest unavailable or error) — skipping gate');
   }
 }

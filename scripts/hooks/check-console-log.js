@@ -8,9 +8,9 @@ const CONSOLE_PATTERN = /\bconsole\.(log|warn|error|info|debug)\s*\(/;
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
-if (!hasExtension(filePath, CODE_EXTENSIONS)) pass();
-if (isTestFile(filePath)) pass();
+if (!filePath) return pass();
+if (!hasExtension(filePath, CODE_EXTENSIONS)) return pass();
+if (isTestFile(filePath)) return pass();
 
 try {
   const content = fs.readFileSync(filePath, 'utf8');
@@ -24,14 +24,14 @@ try {
   }
 
   if (hits.length > 0) {
-    warn(
+    return warn(
       `ERNE: Found ${hits.length} console statement(s) in production code:\n` +
       hits.slice(0, 5).join('\n') +
       (hits.length > 5 ? `\n  ... and ${hits.length - 5} more` : '')
     );
   } else {
-    pass();
+    return pass();
   }
 } catch {
-  pass();
+  return pass();
 }

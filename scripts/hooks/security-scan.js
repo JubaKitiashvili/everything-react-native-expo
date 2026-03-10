@@ -5,16 +5,16 @@ const { readStdin, getEditedFilePath, pass, warn, hasExtension } = require('./li
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
+if (!filePath) return pass();
 
 const JS_TS_EXTS = ['.js', '.jsx', '.ts', '.tsx'];
-if (!hasExtension(filePath, JS_TS_EXTS)) pass();
+if (!hasExtension(filePath, JS_TS_EXTS)) return pass();
 
 let content;
 try {
   content = fs.readFileSync(filePath, 'utf8');
 } catch {
-  pass();
+  return pass();
 }
 
 const issues = [];
@@ -59,7 +59,7 @@ if (/WebView/.test(content) && /javaScriptEnabled/.test(content)) {
 }
 
 if (issues.length > 0) {
-  warn(`ERNE: Security scan found ${issues.length} issue(s):\n${issues.map((i) => `  - ${i}`).join('\n')}`);
+  return warn(`ERNE: Security scan found ${issues.length} issue(s):\n${issues.map((i) => `  - ${i}`).join('\n')}`);
 } else {
-  pass();
+  return pass();
 }

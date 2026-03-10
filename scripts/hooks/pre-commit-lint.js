@@ -4,7 +4,7 @@ const { readStdin, pass, fail, warn } = require('./lib/hook-utils');
 
 const input = readStdin();
 const command = (input.tool_input && input.tool_input.command) || '';
-if (!command.includes('git commit')) pass();
+if (!command.includes('git commit')) return pass();
 
 const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 
@@ -18,11 +18,12 @@ try {
 } catch (err) {
   const output = err.stdout || err.stderr || '';
   if (output.includes('error') || output.includes('warning')) {
-    fail(`ERNE: Lint errors found. Fix before committing:\n${output.slice(0, 500)}`);
+    return fail(`ERNE: Lint errors found. Fix before committing:\n${output.slice(0, 500)}`);
   }
   if (err.status === 127 || output.includes('not found')) {
-    warn('ERNE: ESLint not available, skipping lint check');
+    return warn('ERNE: ESLint not available, skipping lint check');
   }
+  return warn('ERNE: ESLint failed with unknown error');
 }
 
 try {
@@ -32,12 +33,12 @@ try {
     timeout: 15000,
     cwd: projectDir,
   });
-  pass('ERNE: Lint and format checks passed');
+  return pass('ERNE: Lint and format checks passed');
 } catch (err) {
   const output = err.stdout || err.stderr || '';
   if (output.includes('Code style')) {
-    warn('ERNE: Some files need formatting. Run: npx prettier --write .');
+    return warn('ERNE: Some files need formatting. Run: npx prettier --write .');
   } else {
-    pass();
+    return pass();
   }
 }

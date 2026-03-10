@@ -6,12 +6,12 @@ const CODE_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx'];
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
-if (!hasExtension(filePath, CODE_EXTENSIONS)) pass();
+if (!filePath) return pass();
+if (!hasExtension(filePath, CODE_EXTENSIONS)) return pass();
 
 try {
   const content = fs.readFileSync(filePath, 'utf8');
-  if (!content.includes('react-native-reanimated')) pass();
+  if (!content.includes('react-native-reanimated')) return pass();
 
   const workletPatterns = [
     /useAnimatedStyle\s*\(/,
@@ -22,7 +22,7 @@ try {
   ];
 
   const hasWorklet = workletPatterns.some(p => p.test(content));
-  if (!hasWorklet) pass();
+  if (!hasWorklet) return pass();
 
   const dangerousPatterns = [
     /\.current\b/,
@@ -38,14 +38,14 @@ try {
   }
 
   if (warnings.length > 0) {
-    warn(
+    return warn(
       'ERNE: Possible non-serializable reference in Reanimated worklet. ' +
       'Refs and non-primitive objects cannot be accessed inside worklet callbacks. ' +
       'Use shared values instead.'
     );
   } else {
-    pass();
+    return pass();
   }
 } catch {
-  pass();
+  return pass();
 }

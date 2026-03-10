@@ -5,17 +5,17 @@ const { readStdin, getEditedFilePath, pass, warn, isTestFile, hasExtension } = r
 const input = readStdin();
 const filePath = getEditedFilePath(input);
 
-if (!filePath) pass();
+if (!filePath) return pass();
 
 const JSX_EXTS = ['.jsx', '.tsx'];
-if (!hasExtension(filePath, JSX_EXTS)) pass();
-if (isTestFile(filePath)) pass();
+if (!hasExtension(filePath, JSX_EXTS)) return pass();
+if (isTestFile(filePath)) return pass();
 
 let content;
 try {
   content = fs.readFileSync(filePath, 'utf8');
 } catch {
-  pass();
+  return pass();
 }
 
 /**
@@ -111,7 +111,7 @@ if (issues.length > 0) {
   const remaining = unique.length - shown.length;
   let msg = `ERNE: Accessibility check — ${unique.length} issue(s):\n${shown.map((i) => `  - ${i}`).join('\n')}`;
   if (remaining > 0) msg += `\n  ... and ${remaining} more`;
-  warn(msg);
+  return warn(msg);
 } else {
-  pass();
+  return pass();
 }
