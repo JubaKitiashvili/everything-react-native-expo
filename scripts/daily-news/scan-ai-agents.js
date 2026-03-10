@@ -127,7 +127,8 @@ Return JSON array only. If nothing relevant, return [].`,
   });
 
   if (!res.ok) {
-    console.error('Claude API error:', res.status);
+    const errBody = await res.text();
+    console.error('Claude API error:', res.status, errBody);
     return [];
   }
 
