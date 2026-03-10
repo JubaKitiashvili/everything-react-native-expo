@@ -7,6 +7,7 @@ const {
   cleanupTempProject,
 } = require('./helpers');
 
+
 describe('continuous-learning-observer.js', () => {
   test('creates observations file and appends entry', () => {
     const dir = createTempProject({});
@@ -94,5 +95,31 @@ describe('continuous-learning-observer.js', () => {
     } finally {
       cleanupTempProject(dir);
     }
+  });
+});
+
+describe('evaluate-session.js', () => {
+  test('creates session evaluation file', () => {
+    const dir = createTempProject({});
+    try {
+      const result = runHook('evaluate-session.js', {
+        stop_reason: 'end_turn',
+      }, { ERNE_PROJECT_DIR: dir });
+      expect(result.exitCode).toBe(0);
+
+      const evalDir = path.join(dir, '.claude', 'erne');
+      const files = fs.readdirSync(evalDir);
+      const evalFiles = files.filter(f => f.startsWith('session-'));
+      expect(evalFiles.length).toBeGreaterThan(0);
+    } finally {
+      cleanupTempProject(dir);
+    }
+  });
+
+  test('always exits 0', () => {
+    const result = runHook('evaluate-session.js', {}, {
+      ERNE_PROJECT_DIR: '/nonexistent/path',
+    });
+    expect(result.exitCode).toBe(0);
   });
 });
