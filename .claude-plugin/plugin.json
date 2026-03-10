@@ -1,0 +1,92 @@
+{
+  "name": "erne-universal",
+  "version": "0.1.0",
+  "description": "Complete AI coding agent harness for React Native and Expo development — 8 agents, 16 commands, 8 skills, 10 MCP integrations",
+  "author": "JubaKitiashvili",
+  "license": "MIT",
+  "repository": "https://github.com/JubaKitiashvili/everything-react-native-expo",
+  "homepage": "https://erne.dev",
+  "keywords": [
+    "react-native",
+    "expo",
+    "claude-code",
+    "ai-agents",
+    "mobile-development",
+    "coding-assistant",
+    "tdd",
+    "performance",
+    "security",
+    "native-modules"
+  ],
+  "categories": [
+    "mobile-development",
+    "react-native",
+    "ai-agents",
+    "developer-tools"
+  ],
+  "components": {
+    "agents": [
+      "architect",
+      "code-reviewer",
+      "expo-config-resolver",
+      "native-bridge-builder",
+      "performance-profiler",
+      "tdd-guide",
+      "ui-designer",
+      "upgrade-assistant"
+    ],
+    "commands": [
+      "plan",
+      "code-review",
+      "tdd",
+      "build-fix",
+      "perf",
+      "upgrade",
+      "native-module",
+      "navigate",
+      "animate",
+      "deploy",
+      "component",
+      "debug",
+      "quality-gate",
+      "learn",
+      "retrospective",
+      "setup-device"
+    ],
+    "skills": [
+      "coding-standards",
+      "continuous-learning-v2",
+      "native-module-scaffold",
+      "performance-optimization",
+      "security-review",
+      "tdd-workflow",
+      "upgrade-workflow"
+    ],
+    "hooks": [
+      "minimal",
+      "standard",
+      "strict"
+    ],
+    "mcp-configs": [
+      "agent-device",
+      "appstore-connect",
+      "expo-api",
+      "figma",
+      "firebase",
+      "github",
+      "memory",
+      "play-console",
+      "sentry",
+      "supabase"
+    ],
+    "contexts": [
+      "dev",
+      "review",
+      "vibe"
+    ]
+  },
+  "install": "npx erne-universal init",
+  "engines": {
+    "node": ">=18"
+  }
+}

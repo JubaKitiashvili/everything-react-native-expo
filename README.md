@@ -26,6 +26,21 @@ This will:
 | Contexts | 3 behavior modes (dev, review, vibe) |
 | MCP configs | 10 server integrations |
 
+## IDE & Editor Support
+
+ERNE works with every major AI coding assistant out of the box:
+
+| File | IDE / Tool |
+|------|-----------|
+| `CLAUDE.md` | Claude Code |
+| `AGENTS.md` | Codex, Windsurf, Cursor, GitHub Copilot |
+| `GEMINI.md` | Google Antigravity |
+| `.cursorrules` | Cursor |
+| `.windsurfrules` | Windsurf |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+
+All config files share the same React Native & Expo conventions: TypeScript strict mode, Expo Router, Zustand + TanStack Query, testing with Jest/RNTL/Detox, and security best practices.
+
 ## Agents
 
 - **architect** — System design and project structure
@@ -54,6 +69,13 @@ Core: `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/nati
 Extended: `/animate`, `/deploy`, `/component`, `/debug`, `/quality-gate`
 
 Learning: `/learn`, `/retrospective`, `/setup-device`
+
+## Available On
+
+- [npm](https://www.npmjs.com/package/erne-universal) — `npx erne-universal init`
+- [SkillsMP](https://skillsmp.com) — Auto-indexed from GitHub
+- [BuildWithClaude](https://buildwithclaude.com) — Plugin directory
+- [VoltAgent/awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) — Curated skills list
 
 ## Documentation
 

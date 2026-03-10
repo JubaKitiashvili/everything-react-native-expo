@@ -1,6 +1,6 @@
 {
   "name": "erne-universal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Complete AI coding agent harness for React Native and Expo development",
   "keywords": [
     "react-native",
@@ -20,6 +20,7 @@
     "erne": "./bin/cli.js"
   },
   "files": [
+    ".claude-plugin/",
     "bin/",
     "agents/",
     "commands/",
@@ -33,6 +34,12 @@
     "schemas/",
     "docs/",
     "install.sh",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "GEMINI.md",
+    ".cursorrules",
+    ".windsurfrules",
+    ".github/copilot-instructions.md",
     "LICENSE",
     "README.md"
   ],
