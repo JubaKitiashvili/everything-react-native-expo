@@ -11,12 +11,22 @@ const HOOKS_CONFIG = path.resolve(__dirname, '../../hooks/hooks.json');
 describe('run-with-flags.js dispatcher', () => {
   describe('profile gating', () => {
     test('runs hook when profile matches', () => {
-      const result = runDispatcher('session-start.js', {}, {
-        ERNE_PROFILE: 'minimal',
-        ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
+      const dir = createTempProject({
+        'package.json': JSON.stringify({
+          dependencies: { expo: '~51.0.0' },
+        }),
       });
-      // session-start.js is in minimal — should run (exit 0)
-      expect(result.exitCode).toBe(0);
+      try {
+        const result = runDispatcher('session-start.js', {}, {
+          ERNE_PROFILE: 'minimal',
+          ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
+          ERNE_PROJECT_DIR: dir,
+        });
+        // session-start.js is in minimal — should run (exit 0)
+        expect(result.exitCode).toBe(0);
+      } finally {
+        cleanupTempProject(dir);
+      }
     });
 
     test('skips hook when profile does not match', () => {
@@ -135,15 +145,25 @@ describe('run-with-flags.js dispatcher', () => {
 
   describe('stdin forwarding', () => {
     test('forwards stdin data to hook script', () => {
-      const input = {
-        tool_name: 'Edit',
-        tool_input: { file_path: '/a/b.ts' },
-      };
-      const result = runDispatcher('session-start.js', input, {
-        ERNE_PROFILE: 'standard',
-        ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
+      const dir = createTempProject({
+        'package.json': JSON.stringify({
+          dependencies: { expo: '~51.0.0' },
+        }),
       });
-      expect(result.exitCode).toBe(0);
+      try {
+        const input = {
+          tool_name: 'Edit',
+          tool_input: { file_path: '/a/b.ts' },
+        };
+        const result = runDispatcher('session-start.js', input, {
+          ERNE_PROFILE: 'standard',
+          ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
+          ERNE_PROJECT_DIR: dir,
+        });
+        expect(result.exitCode).toBe(0);
+      } finally {
+        cleanupTempProject(dir);
+      }
     });
   });
 });
