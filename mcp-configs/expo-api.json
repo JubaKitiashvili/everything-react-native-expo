@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "name": "expo-api",
+    "description": "EAS Build status, update channels, project info via Expo API",
+    "category": "optional",
+    "requires": ["Expo account", "EXPO_TOKEN"]
+  },
+  "command": "npx",
+  "args": ["-y", "erne-expo-mcp-server"],
+  "env": {
+    "EXPO_TOKEN": "${EXPO_TOKEN}"
+  }
+}

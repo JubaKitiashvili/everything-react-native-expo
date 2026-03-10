@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "name": "memory",
+    "description": "Persistent cross-session knowledge storage for the AI agent",
+    "category": "optional",
+    "requires": []
+  },
+  "command": "npx",
+  "args": ["-y", "memory-mcp-server"],
+  "env": {
+    "MEMORY_STORAGE_PATH": ".claude/memory"
+  }
+}

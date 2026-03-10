@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "name": "appstore-connect",
+    "description": "iOS app submission, TestFlight management, metadata updates",
+    "category": "optional",
+    "requires": ["Apple Developer account", "App Store Connect API key"]
+  },
+  "command": "npx",
+  "args": ["-y", "erne-appstore-mcp-server"],
+  "env": {
+    "ASC_KEY_ID": "${ASC_KEY_ID}",
+    "ASC_ISSUER_ID": "${ASC_ISSUER_ID}",
+    "ASC_PRIVATE_KEY_PATH": "${ASC_PRIVATE_KEY_PATH}"
+  }
+}
