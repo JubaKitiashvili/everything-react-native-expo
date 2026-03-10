@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ERNE Plugin Structure",
+  "description": "Schema for validating the overall ERNE plugin file structure",
+  "type": "object",
+  "required": ["version", "name"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+",
+      "description": "Semantic version of the plugin"
+    },
+    "name": {
+      "type": "string",
+      "const": "erne-universal",
+      "description": "Plugin package name"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["expo", "bare-rn", "both"],
+      "description": "Detected project platform type"
+    },
+    "profile": {
+      "type": "string",
+      "enum": ["minimal", "standard", "strict"],
+      "default": "standard",
+      "description": "Active hook profile"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["common", "expo", "bare-rn", "native-ios", "native-android"]
+      },
+      "description": "Active rule layers based on project detection"
+    },
+    "mcpServers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Installed MCP server names"
+    },
+    "structure": {
+      "type": "object",
+      "description": "Expected directory structure",
+      "properties": {
+        "agents": { "type": "integer", "minimum": 8 },
+        "rules": { "type": "integer", "minimum": 9 },
+        "commands": { "type": "integer", "minimum": 16 },
+        "contexts": { "type": "integer", "minimum": 3 },
+        "skills": { "type": "integer", "minimum": 8 },
+        "hooks": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

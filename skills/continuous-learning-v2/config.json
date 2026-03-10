@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "observationThreshold": 3,
+  "maxObservationsPerSession": 100,
+  "autoApprove": false,
+  "contentTypes": ["rule", "skill"],
+  "observationDir": ".claude/memory/observations",
+  "generatedDir": ".claude/memory/generated",
+  "patterns": {
+    "minOccurrences": 3,
+    "categories": [
+      "style-fix",
+      "import-pattern",
+      "architecture-choice",
+      "error-handling",
+      "testing-pattern",
+      "performance-fix"
+    ]
+  },
+  "generation": {
+    "ruleTemplate": "agent-prompts/skill-generator.md",
+    "analyzerPrompt": "agent-prompts/pattern-analyzer.md",
+    "validationScript": "scripts/validate-content.js"
+  }
+}
