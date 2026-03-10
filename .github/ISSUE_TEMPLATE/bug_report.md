@@ -1,20 +1,20 @@
 ---
 name: Bug Report
-about: Report a problem with ERNE
+about: Something isn't working as expected
 labels: bug
 ---
 
-## Description
+## What happened?
 
-Brief description of the issue.
+A clear description of the bug.
 
 ## Environment
 
-- ERNE version:
-- Node.js version:
-- OS:
-- Claude Code version:
-- Project type: (Expo managed / bare RN / monorepo)
+- **ERNE version**: (run `npx erne-universal --version`)
+- **Node.js version**: (run `node -v`)
+- **OS**: (macOS / Windows / Linux)
+- **IDE**: (Claude Code / Cursor / Windsurf / Copilot / Antigravity / Other)
+- **Project type**: (Expo managed / bare RN / monorepo)
 
 ## Steps to Reproduce
 
@@ -24,6 +24,12 @@ Brief description of the issue.
 
 ## Expected Behavior
 
+What should have happened.
+
 ## Actual Behavior
 
+What actually happened. Include error messages, screenshots, or logs if possible.
+
 ## Additional Context
+
+Any other relevant info (hook profile, MCP configs, related commands used, etc.)
