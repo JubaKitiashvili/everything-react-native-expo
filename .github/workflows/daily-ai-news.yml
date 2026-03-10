@@ -1,0 +1,33 @@
+name: Daily AI Agent News Scanner
+
+on:
+  schedule:
+    # Every day at 08:30 UTC
+    - cron: '30 8 * * *'
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  issues: write
+
+jobs:
+  scan-news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Scan AI Agent News
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLICKUP_API_TOKEN: ${{ secrets.CLICKUP_API_TOKEN }}
+          CLICKUP_LIST_ID: ${{ secrets.CLICKUP_AI_NEWS_LIST_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/daily-news/scan-ai-agents.js
+
+      - name: Summary
+        if: always()
+        run: echo "AI agent news scan completed at $(date -u)"
