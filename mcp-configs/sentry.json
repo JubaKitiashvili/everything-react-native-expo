@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "name": "sentry",
+    "description": "Crash reporting, performance monitoring, error tracking",
+    "category": "optional",
+    "requires": ["Sentry project", "SENTRY_AUTH_TOKEN"]
+  },
+  "command": "npx",
+  "args": ["-y", "sentry-mcp-server"],
+  "env": {
+    "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
+    "SENTRY_ORG": "${SENTRY_ORG}",
+    "SENTRY_PROJECT": "${SENTRY_PROJECT}"
+  }
+}

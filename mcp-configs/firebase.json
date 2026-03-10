@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "name": "firebase",
+    "description": "Analytics, push notifications, crashlytics, remote config",
+    "category": "optional",
+    "requires": ["Firebase project", "GOOGLE_APPLICATION_CREDENTIALS"]
+  },
+  "command": "npx",
+  "args": ["-y", "firebase-mcp-server"],
+  "env": {
+    "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}",
+    "FIREBASE_PROJECT_ID": "${FIREBASE_PROJECT_ID}"
+  }
+}

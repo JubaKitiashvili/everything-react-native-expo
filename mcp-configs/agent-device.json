@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "name": "agent-device",
+    "description": "Control iOS Simulator and Android Emulator (screenshots, tap, type, swipe, navigate)",
+    "category": "recommended",
+    "requires": ["Xcode (iOS) or Android Studio (Android)"]
+  },
+  "command": "npx",
+  "args": ["-y", "agent-device"]
+}

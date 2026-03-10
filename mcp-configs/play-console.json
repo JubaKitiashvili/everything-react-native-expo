@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "name": "play-console",
+    "description": "Android app submission, release management, review status",
+    "category": "optional",
+    "requires": ["Google Play Console access", "Service account key"]
+  },
+  "command": "npx",
+  "args": ["-y", "erne-play-console-mcp-server"],
+  "env": {
+    "GOOGLE_PLAY_KEY_PATH": "${GOOGLE_PLAY_KEY_PATH}",
+    "GOOGLE_PLAY_PACKAGE_NAME": "${GOOGLE_PLAY_PACKAGE_NAME}"
+  }
+}

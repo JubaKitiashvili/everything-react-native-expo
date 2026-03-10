@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "name": "github",
+    "description": "PR management, issue tracking, code search via GitHub MCP",
+    "category": "recommended",
+    "requires": ["gh CLI authenticated"]
+  },
+  "command": "npx",
+  "args": ["-y", "@anthropic-ai/github-mcp-server"],
+  "env": {
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  }
+}

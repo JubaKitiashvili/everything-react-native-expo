@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "name": "figma",
+    "description": "Design-to-code — extract styles, assets, component specs from Figma",
+    "category": "optional",
+    "requires": ["Figma account", "FIGMA_ACCESS_TOKEN"]
+  },
+  "command": "npx",
+  "args": ["-y", "figma-mcp-server"],
+  "env": {
+    "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+  }
+}

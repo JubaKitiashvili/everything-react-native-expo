@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "name": "supabase",
+    "description": "Backend-as-a-service — database, auth, storage, edge functions",
+    "category": "optional",
+    "requires": ["Supabase project", "SUPABASE_ACCESS_TOKEN"]
+  },
+  "command": "npx",
+  "args": ["-y", "supabase-mcp-server"],
+  "env": {
+    "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}",
+    "SUPABASE_PROJECT_REF": "${SUPABASE_PROJECT_REF}"
+  }
+}
