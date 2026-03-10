@@ -510,7 +510,7 @@ Commands check for agent-device availability at runtime and degrade gracefully w
 | GitHub | `git clone` + `install.sh` | Full control |
 | npm | `npx erne-universal init` | Quick setup |
 | Claude Code Plugin | Plugin registry | One-click install |
-| Website | `erne.tools` or similar | Discovery, docs |
+| Website | `erne.dev` | Discovery, docs |
 
 ### Install Flow
 
