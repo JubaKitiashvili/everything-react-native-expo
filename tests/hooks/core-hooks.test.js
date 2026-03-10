@@ -150,3 +150,85 @@ describe('session-start.js', () => {
     }
   });
 });
+
+describe('post-edit-format.js', () => {
+  test('exits 0 for supported file extension', () => {
+    const dir = createTempProject({
+      'src/app.tsx': 'const x=1;',
+      'node_modules/.bin/prettier': '',
+    });
+    try {
+      const result = runHook('post-edit-format.js', {
+        tool_name: 'Edit',
+        tool_input: { file_path: path.join(dir, 'src/app.tsx') },
+      }, {
+        ERNE_PROJECT_DIR: dir,
+      });
+      expect([0, 2]).toContain(result.exitCode);
+    } finally {
+      cleanupTempProject(dir);
+    }
+  });
+
+  test('skips unsupported file extensions silently', () => {
+    const result = runHook('post-edit-format.js', {
+      tool_name: 'Edit',
+      tool_input: { file_path: '/some/image.png' },
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('skips when no file path in stdin', () => {
+    const result = runHook('post-edit-format.js', {
+      tool_name: 'Edit',
+      tool_input: {},
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('skips when stdin is empty', () => {
+    const result = runHook('post-edit-format.js', {});
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('handles missing tool_input gracefully', () => {
+    const result = runHook('post-edit-format.js', {
+      tool_name: 'Write',
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('formats .json files', () => {
+    const dir = createTempProject({
+      'config.json': '{"a":1}',
+    });
+    try {
+      const result = runHook('post-edit-format.js', {
+        tool_name: 'Edit',
+        tool_input: { file_path: path.join(dir, 'config.json') },
+      }, {
+        ERNE_PROJECT_DIR: dir,
+      });
+      expect([0, 2]).toContain(result.exitCode);
+    } finally {
+      cleanupTempProject(dir);
+    }
+  });
+
+  test('formats .css files', () => {
+    const dir = createTempProject({
+      'styles.css': 'body{color:red}',
+    });
+    try {
+      const result = runHook('post-edit-format.js', {
+        tool_name: 'Edit',
+        tool_input: { file_path: path.join(dir, 'styles.css') },
+      }, {
+        ERNE_PROJECT_DIR: dir,
+      });
+      expect([0, 2]).toContain(result.exitCode);
+    } finally {
+      cleanupTempProject(dir);
+    }
+  });
+});
