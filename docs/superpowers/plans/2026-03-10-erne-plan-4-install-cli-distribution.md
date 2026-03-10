@@ -37,7 +37,7 @@ This plan covers the **installer CLI** (`npx erne-universal init`), **project sc
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nickolasburr/everything-react-native-expo"
+    "url": "https://github.com/JubaKitiashvili/everything-react-native-expo"
   },
   "homepage": "https://erne.dev",
   "bin": {
@@ -647,7 +647,7 @@ module.exports = async function update() {
 set -euo pipefail
 
 ERNE_VERSION="0.1.0"
-REPO_URL="https://github.com/nickolasburr/everything-react-native-expo"
+REPO_URL="https://github.com/JubaKitiashvili/everything-react-native-expo"
 
 echo ""
 echo "  erne v${ERNE_VERSION} — AI agent harness for React Native & Expo"
@@ -1492,9 +1492,9 @@ function detectInDir(cwd) {
     <section>
       <h2>Links</h2>
       <div class="links">
-        <a href="https://github.com/nickolasburr/everything-react-native-expo">GitHub</a>
+        <a href="https://github.com/JubaKitiashvili/everything-react-native-expo">GitHub</a>
         <a href="https://www.npmjs.com/package/erne-universal">npm</a>
-        <a href="https://github.com/nickolasburr/everything-react-native-expo/blob/main/docs/getting-started.md">Docs</a>
+        <a href="https://github.com/JubaKitiashvili/everything-react-native-expo/blob/main/docs/getting-started.md">Docs</a>
       </div>
     </section>
 
