@@ -1,13 +1,49 @@
 {
   "name": "erne-universal",
   "version": "0.1.0",
-  "description": "AI coding agent harness for React Native and Expo development",
+  "description": "Complete AI coding agent harness for React Native and Expo development",
+  "keywords": [
+    "react-native",
+    "expo",
+    "claude-code",
+    "ai-agents",
+    "mobile-development",
+    "coding-assistant"
+  ],
   "license": "MIT",
-  "scripts": {
-    "test": "jest",
-    "test:hooks": "jest tests/hooks/"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JubaKitiashvili/everything-react-native-expo"
   },
-  "devDependencies": {
-    "jest": "^29.7.0"
-  }
+  "homepage": "https://erne.dev",
+  "bin": {
+    "erne": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "agents/",
+    "commands/",
+    "rules/",
+    "skills/",
+    "hooks/",
+    "contexts/",
+    "mcp-configs/",
+    "scripts/",
+    "examples/",
+    "schemas/",
+    "docs/",
+    "install.sh",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "lint": "node scripts/lint-content.js",
+    "validate": "node scripts/validate-all.js",
+    "prepublishOnly": "npm run validate"
+  },
+  "devDependencies": {}
 }

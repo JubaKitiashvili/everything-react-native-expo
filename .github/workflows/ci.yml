@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Validate content files
+        run: npm run validate
+
+      - name: Run tests
+        run: npm test
+
+      - name: Check CLI runs
+        run: node bin/cli.js version
+
+      - name: Verify file structure
+        run: |
+          echo "Checking required directories..."
+          for dir in agents commands rules skills hooks contexts mcp-configs scripts schemas docs examples; do
+            if [ ! -d "$dir" ]; then
+              echo "FAIL: Missing directory: $dir"
+              exit 1
+            fi
+          done
+          echo "All directories present."
+
+          echo "Checking agent count..."
+          AGENT_COUNT=$(ls -1 agents/*.md 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$AGENT_COUNT" -ne 8 ]; then
+            echo "FAIL: Expected 8 agents, found $AGENT_COUNT"
+            exit 1
+          fi
+          echo "OK: $AGENT_COUNT agents"
+
+          echo "Checking command count..."
+          CMD_COUNT=$(ls -1 commands/*.md 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$CMD_COUNT" -ne 16 ]; then
+            echo "FAIL: Expected 16 commands, found $CMD_COUNT"
+            exit 1
+          fi
+          echo "OK: $CMD_COUNT commands"
