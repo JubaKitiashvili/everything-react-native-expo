@@ -3,14 +3,13 @@
 /**
  * Daily React Native & Expo News Scanner
  *
- * Scans multiple sources for RN/Expo updates, analyzes relevance to ERNE,
- * and creates ClickUp tasks for actionable items.
+ * Scans multiple sources for RN/Expo updates and creates ClickUp tasks.
+ * Uses keyword-based relevance filtering (no API credits needed).
  *
  * Sources:
  * - GitHub releases (react-native, expo, key libraries)
  * - React Native blog RSS
  * - Expo blog RSS
- * - GitHub trending repos
  */
 
 const SOURCES = {
@@ -33,6 +32,18 @@ const SOURCES = {
 };
 
 const CLICKUP_API = 'https://api.clickup.com/api/v2';
+
+// Keywords for prioritization
+const HIGH_PRIORITY_KEYWORDS = [
+  'breaking', 'deprecat', 'removed', 'migration', 'upgrade required',
+  'security', 'critical', 'major',
+];
+
+const ERNE_KEYWORDS = [
+  'expo-router', 'file-based', 'typescript', 'hermes',
+  'new architecture', 'fabric', 'turbo', 'bridgeless',
+  'flashlist', 'reanimated', 'gesture',
+];
 
 async function fetchGitHubReleases(repo) {
   const res = await fetch(
@@ -97,56 +108,34 @@ async function fetchRSS(url) {
   }
 }
 
-async function analyzeRelevance(items) {
+function analyzeRelevance(items) {
   if (items.length === 0) return [];
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
-      messages: [
-        {
-          role: 'user',
-          content: `You are analyzing React Native & Expo news for the ERNE project (an AI coding agent harness for RN/Expo development with agents, skills, rules, commands, and hooks).
+  return items.map((item) => {
+    const text = `${item.title} ${item.body}`.toLowerCase();
 
-Analyze these items and return ONLY a JSON array of relevant ones. For each relevant item include:
-- "title": short task title
-- "description": why this matters for ERNE (1-2 sentences)
-- "priority": "urgent" | "high" | "normal" | "low"
-- "action": what ERNE should do about it
-- "source_url": original URL
+    const isHighPriority = HIGH_PRIORITY_KEYWORDS.some((kw) => text.includes(kw));
+    const isErneRelevant = ERNE_KEYWORDS.some((kw) => text.includes(kw));
+    const isRelease = item.type === 'release';
+    const isBlog = item.type === 'blog';
 
-Items to analyze:
-${JSON.stringify(items, null, 2)}
+    // All releases and blog posts are relevant
+    if (!isRelease && !isBlog && !isHighPriority && !isErneRelevant) {
+      return null;
+    }
 
-Return JSON array only. If nothing is relevant, return [].`,
-        },
-      ],
-    }),
-  });
+    const priority = isHighPriority ? 'high' : isErneRelevant ? 'normal' : 'low';
 
-  if (!res.ok) {
-    const errBody = await res.text();
-    console.error('Claude API error:', res.status, errBody);
-    return [];
-  }
-
-  const data = await res.json();
-  const text = data.content[0].text;
-
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    return jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-  } catch {
-    console.error('Failed to parse Claude response');
-    return [];
-  }
+    return {
+      title: `[${item.type.toUpperCase()}] ${item.title}`,
+      description: item.body.slice(0, 300) || 'New update detected',
+      action: isHighPriority
+        ? 'Urgent: Check for breaking changes affecting ERNE'
+        : 'Review for potential ERNE updates',
+      priority,
+      source_url: item.url,
+    };
+  }).filter(Boolean);
 }
 
 async function createClickUpTask(task) {
@@ -168,7 +157,7 @@ async function createClickUpTask(task) {
     body: JSON.stringify({
       name: task.title,
       markdown_description: [
-        `## Why This Matters`,
+        `## Summary`,
         task.description,
         '',
         `## Action Required`,
@@ -195,7 +184,6 @@ async function main() {
   console.log('=== ERNE Daily RN/Expo News Scanner ===');
   console.log(`Date: ${new Date().toISOString()}\n`);
 
-  // Gather news from all sources
   const allItems = [];
 
   // GitHub releases
@@ -225,12 +213,10 @@ async function main() {
     return;
   }
 
-  // Analyze relevance with Claude
-  console.log('\nAnalyzing relevance with Claude...');
-  const relevant = await analyzeRelevance(allItems);
+  console.log('\nAnalyzing relevance...');
+  const relevant = analyzeRelevance(allItems);
   console.log(`Relevant items: ${relevant.length}`);
 
-  // Create ClickUp tasks
   if (relevant.length > 0) {
     console.log('\nCreating ClickUp tasks...');
     for (const task of relevant) {

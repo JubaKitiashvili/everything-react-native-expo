@@ -8,6 +8,8 @@
  * - Competitor agent tools (Codex, Cursor, Windsurf, Antigravity)
  * - Skills marketplace changes
  * - New agent skills in the ecosystem
+ *
+ * Uses keyword-based relevance filtering (no API credits needed).
  */
 
 const SOURCES = {
@@ -27,6 +29,18 @@ const SOURCES = {
 };
 
 const CLICKUP_API = 'https://api.clickup.com/api/v2';
+
+// Keywords that indicate high relevance to ERNE
+const HIGH_PRIORITY_KEYWORDS = [
+  'breaking', 'deprecat', 'removed', 'migration', 'upgrade',
+  'skill', 'plugin', 'marketplace', 'CLAUDE.md', 'AGENTS.md',
+  'react-native', 'expo', 'agent',
+];
+
+const NORMAL_KEYWORDS = [
+  'feature', 'new', 'add', 'support', 'improve', 'update',
+  'fix', 'bug', 'release', 'version',
+];
 
 async function fetchGitHubReleases(repo) {
   const res = await fetch(
@@ -85,63 +99,32 @@ async function fetchRepoCommits(repo) {
   ];
 }
 
-async function analyzeRelevance(items) {
+function analyzeRelevance(items) {
   if (items.length === 0) return [];
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
-      messages: [
-        {
-          role: 'user',
-          content: `You are analyzing AI coding agent ecosystem news for the ERNE project. ERNE is an AI agent harness for React Native/Expo with skills, agents, commands, rules, hooks, and IDE configs (CLAUDE.md, AGENTS.md, GEMINI.md, .cursorrules, .windsurfrules, copilot-instructions).
+  return items.map((item) => {
+    const text = `${item.title} ${item.body}`.toLowerCase();
 
-Analyze these items. Focus on:
-- Breaking changes that affect ERNE compatibility
-- New features ERNE should support
-- New skill formats or standards
-- Competitor moves ERNE should respond to
-- New marketplace or distribution opportunities
+    const isHighPriority = HIGH_PRIORITY_KEYWORDS.some((kw) => text.includes(kw));
+    const isRelease = item.type === 'release';
 
-Return ONLY a JSON array of relevant items:
-- "title": short task title
-- "description": why this matters for ERNE
-- "priority": "urgent" | "high" | "normal" | "low"
-- "action": what ERNE should do
-- "source_url": original URL
+    // All releases are relevant, commits only if they match keywords
+    if (!isRelease && !isHighPriority && !NORMAL_KEYWORDS.some((kw) => text.includes(kw))) {
+      return null;
+    }
 
-Items:
-${JSON.stringify(items, null, 2)}
+    const priority = isHighPriority ? 'high' : 'normal';
 
-Return JSON array only. If nothing relevant, return [].`,
-        },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const errBody = await res.text();
-    console.error('Claude API error:', res.status, errBody);
-    return [];
-  }
-
-  const data = await res.json();
-  const text = data.content[0].text;
-
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    return jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-  } catch {
-    console.error('Failed to parse Claude response');
-    return [];
-  }
+    return {
+      title: `[${item.type.toUpperCase()}] ${item.title}`,
+      description: item.body.slice(0, 300) || 'New activity detected',
+      action: isRelease
+        ? 'Review release notes for ERNE compatibility'
+        : 'Review changes for potential impact',
+      priority,
+      source_url: item.url,
+    };
+  }).filter(Boolean);
 }
 
 async function createClickUpTask(task) {
@@ -163,7 +146,7 @@ async function createClickUpTask(task) {
     body: JSON.stringify({
       name: task.title,
       markdown_description: [
-        `## Why This Matters`,
+        `## Summary`,
         task.description,
         '',
         `## Action Required`,
@@ -219,8 +202,8 @@ async function main() {
     return;
   }
 
-  console.log('\nAnalyzing relevance with Claude...');
-  const relevant = await analyzeRelevance(allItems);
+  console.log('\nAnalyzing relevance...');
+  const relevant = analyzeRelevance(allItems);
   console.log(`Relevant items: ${relevant.length}`);
 
   if (relevant.length > 0) {

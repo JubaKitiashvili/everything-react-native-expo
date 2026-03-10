@@ -22,7 +22,6 @@ jobs:
 
       - name: Scan AI Agent News
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLICKUP_API_TOKEN: ${{ secrets.CLICKUP_API_TOKEN }}
           CLICKUP_LIST_ID: ${{ secrets.CLICKUP_AI_NEWS_LIST_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
