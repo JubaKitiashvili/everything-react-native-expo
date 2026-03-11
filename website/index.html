@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ERNE — AI Agent Harness for React Native & Expo</title>
-  <meta name="description" content="Complete AI coding agent harness for React Native and Expo development. 8 agents, 16 commands, 5 rule layers, 3 hook profiles.">
+  <meta name="description" content="Complete AI coding agent harness for React Native and Expo development. 8 agents, 16 commands, real-time dashboard, and 65% token savings through smart architecture.">
   <meta property="og:title" content="ERNE — AI Agent Harness for React Native & Expo">
-  <meta property="og:description" content="8 specialized AI agents, 16 slash commands, 5 rule layers, and 3 hook profiles. Ship mobile apps faster with Claude Code.">
+  <meta property="og:description" content="8 specialized AI agents, 16 commands, pixel-art dashboard, and ~65% token savings. Ship React Native apps faster with Claude Code, Cursor, Codex, and more.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/JubaKitiashvili/everything-react-native-expo/main/docs/assets/dashboard-preview.png">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -702,6 +703,150 @@
       text-overflow: ellipsis;
     }
 
+    /* ─── DASHBOARD ─── */
+    .dashboard-showcase {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+      margin-top: 32px;
+    }
+
+    .dashboard-showcase img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .dashboard-showcase::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    .dashboard-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .dashboard-feature {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .dashboard-feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-feature h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .dashboard-feature p {
+      color: var(--fg-muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    /* ─── TOKEN EFFICIENCY ─── */
+    .efficiency-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .efficiency-grid { grid-template-columns: 1fr; }
+    }
+
+    .efficiency-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .eff-bar-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .eff-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--fg-muted);
+    }
+
+    .eff-bar-label span:last-child {
+      font-weight: 600;
+      color: var(--emerald);
+    }
+
+    .eff-bar-track {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .eff-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.5s ease;
+    }
+
+    .eff-bar-fill.coral { background: linear-gradient(90deg, var(--coral), #cc5530); }
+    .eff-bar-fill.emerald { background: linear-gradient(90deg, var(--emerald), #40c080); }
+    .eff-bar-fill.gold { background: linear-gradient(90deg, var(--gold), #d0a020); }
+    .eff-bar-fill.sky { background: linear-gradient(90deg, var(--sky), #4080d0); }
+    .eff-bar-fill.violet { background: linear-gradient(90deg, var(--violet), #8050d0); }
+
+    .efficiency-summary {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: clamp(24px, 4vw, 40px);
+      text-align: center;
+    }
+
+    .efficiency-number {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--emerald), var(--sky));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .efficiency-label {
+      font-size: 1.1rem;
+      color: var(--fg-muted);
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+
+    .efficiency-detail {
+      font-size: 0.88rem;
+      color: var(--fg-dim);
+      line-height: 1.7;
+    }
+
     /* ─── CTA ─── */
     .cta-section {
       text-align: center;
@@ -954,6 +1099,7 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="#features">Features</a></li>
         <li><a href="#agents">Agents</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
         <li><a href="#profiles">Profiles</a></li>
         <li><a href="#commands">Commands</a></li>
         <li><a href="https://github.com/JubaKitiashvili/everything-react-native-expo/blob/main/docs/getting-started.md">Docs</a></li>
@@ -976,7 +1122,7 @@
       </h1>
       <p class="hero-tagline">
         A complete AI coding agent harness for React Native &amp; Expo.
-        8 agents, 16 commands, and battle-tested rules &mdash; all wired into Claude Code.
+        8 agents, 16 commands, battle-tested rules &mdash; using ~65% fewer tokens than naive approaches.
       </p>
       <div class="hero-actions">
         <a href="#get-started" class="btn-primary">
@@ -1152,6 +1298,85 @@
       </div>
     </section>
 
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="reveal">
+      <div class="section-header center">
+        <span class="section-label">Real-time visualization</span>
+        <h2 class="section-title">Watch your agents work</h2>
+        <p class="section-desc">A pixel-art office dashboard that shows all 8 agents in real-time. See who's working, what they're doing, and when they finish.</p>
+      </div>
+
+      <div class="dashboard-showcase reveal">
+        <img src="dashboard-preview.png" alt="ERNE Agent Dashboard — pixel-art office with agents working in real-time" loading="lazy">
+      </div>
+
+      <div class="dashboard-features">
+        <div class="dashboard-feature reveal">
+          <div class="dashboard-feature-icon">&#127970;</div>
+          <h4>4 Office Rooms</h4>
+          <p>Development, Code Review, Testing, and Conference &mdash; each mapped to agent roles</p>
+        </div>
+        <div class="dashboard-feature reveal reveal-delay-1">
+          <div class="dashboard-feature-icon">&#127918;</div>
+          <h4>Pixel-Art Sprites</h4>
+          <p>8 unique procedural 32&times;32 animated characters with distinct visual traits</p>
+        </div>
+        <div class="dashboard-feature reveal reveal-delay-2">
+          <div class="dashboard-feature-icon">&#9889;</div>
+          <h4>Live WebSocket</h4>
+          <p>Real-time status updates from Claude Code hooks with auto-reconnect</p>
+        </div>
+        <div class="dashboard-feature reveal reveal-delay-3">
+          <div class="dashboard-feature-icon">&#128187;</div>
+          <h4>One Command</h4>
+          <p><code style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;background:rgba(232,122,84,0.1);color:var(--coral);padding:2px 6px;border-radius:4px;">erne dashboard</code> to launch</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKEN EFFICIENCY -->
+    <section id="efficiency" class="reveal">
+      <div class="section-header">
+        <span class="section-label">Smart architecture</span>
+        <h2 class="section-title">Save 60&ndash;67% on tokens</h2>
+        <p class="section-desc">Six layered mechanisms ensure you only load what you need. No bloated context windows, no wasted tokens.</p>
+      </div>
+
+      <div class="efficiency-grid">
+        <div class="efficiency-bars">
+          <div class="eff-bar-item reveal">
+            <div class="eff-bar-label"><span>Profile-gated hooks</span><span>31%</span></div>
+            <div class="eff-bar-track"><div class="eff-bar-fill coral" style="width:31%"></div></div>
+          </div>
+          <div class="eff-bar-item reveal reveal-delay-1">
+            <div class="eff-bar-label"><span>Conditional rules</span><span>26%</span></div>
+            <div class="eff-bar-track"><div class="eff-bar-fill emerald" style="width:26%"></div></div>
+          </div>
+          <div class="eff-bar-item reveal reveal-delay-1">
+            <div class="eff-bar-label"><span>Task-specific commands</span><span>13%</span></div>
+            <div class="eff-bar-track"><div class="eff-bar-fill gold" style="width:13%"></div></div>
+          </div>
+          <div class="eff-bar-item reveal reveal-delay-2">
+            <div class="eff-bar-label"><span>On-demand skills</span><span>12%</span></div>
+            <div class="eff-bar-track"><div class="eff-bar-fill sky" style="width:12%"></div></div>
+          </div>
+          <div class="eff-bar-item reveal reveal-delay-2">
+            <div class="eff-bar-label"><span>Subagent isolation</span><span>12%</span></div>
+            <div class="eff-bar-track"><div class="eff-bar-fill violet" style="width:12%"></div></div>
+          </div>
+        </div>
+
+        <div class="efficiency-summary reveal">
+          <div class="efficiency-number">~65%</div>
+          <div class="efficiency-label">fewer tokens per session</div>
+          <p class="efficiency-detail">
+            Vibe mode saves 67%. Standard dev saves 64%. Even strict mode saves 57%.<br>
+            Compound effect of 6 mechanisms &mdash; each small saving multiplies.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- PROFILES -->
     <section id="profiles" class="reveal">
       <div class="section-header">
@@ -1282,6 +1507,7 @@
             <ul>
               <li><a href="#features">Features</a></li>
               <li><a href="#agents">Agents</a></li>
+              <li><a href="#dashboard">Dashboard</a></li>
               <li><a href="#profiles">Profiles</a></li>
               <li><a href="#commands">Commands</a></li>
             </ul>
