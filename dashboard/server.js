@@ -91,7 +91,35 @@ const persistHistory = () => {
 };
 
 const handleEvent = (event) => {
-  const { type, agent, task } = event;
+  const { type, agent, agents: agentList, task } = event;
+
+  // Planning events affect multiple agents
+  if (type === 'planning:start') {
+    const now = new Date().toISOString();
+    const targets = agentList || Object.keys(agentState);
+    for (const name of targets) {
+      if (!agentState[name]) continue;
+      agentState[name].status = 'planning';
+      agentState[name].task = task || 'Team planning session';
+      agentState[name].lastEvent = now;
+      addHistoryEntry(name, { type: 'planning', task: task || 'Team planning session', timestamp: now });
+    }
+    persistHistory();
+    return { ok: true };
+  }
+
+  if (type === 'planning:end') {
+    const now = new Date().toISOString();
+    for (const name of Object.keys(agentState)) {
+      if (agentState[name].status === 'planning') {
+        agentState[name].status = 'idle';
+        agentState[name].task = null;
+        agentState[name].lastEvent = now;
+      }
+    }
+    return { ok: true };
+  }
+
   if (!agent || !agentState[agent]) {
     return { error: `Unknown agent: ${agent}` };
   }

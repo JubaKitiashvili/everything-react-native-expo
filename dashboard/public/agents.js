@@ -1,5 +1,6 @@
 /**
  * ERNE Dashboard — Procedural 32x32 pixel-art agent sprites with animations
+ * Supports walking between desk and conference room positions.
  */
 (function () {
   'use strict';
@@ -10,6 +11,7 @@
   const SHEET_W = FRAME_SIZE * SHEET_COLS; // 128
   const SHEET_H = FRAME_SIZE * SHEET_ROWS; // 128
   const ANIM_FPS = 12;
+  const MOVE_SPEED = 180; // pixels per second
 
   const SKIN = '#FDBCB4';
   const HAIR = '#4A3728';
@@ -28,49 +30,56 @@
     'feature-builder':      { bodyColor: '#00bcd4', traitColor: '#0097a7', trait: 'hammer' },
   };
 
+  // Conference room seating positions (pixels) — around the table
+  // Conference room: tile (27,19), size 24x14
+  // Table center pixel: (27+12)*16=624, (19+7)*16=416
+  const CONFERENCE_SEATS = {
+    'architect':              { x: 570, y: 370 },
+    'senior-developer':       { x: 610, y: 370 },
+    'feature-builder':        { x: 650, y: 370 },
+    'code-reviewer':          { x: 690, y: 370 },
+    'native-bridge-builder':  { x: 570, y: 462 },
+    'expo-config-resolver':   { x: 610, y: 462 },
+    'ui-designer':            { x: 650, y: 462 },
+    'upgrade-assistant':      { x: 690, y: 462 },
+    'tdd-guide':              { x: 538, y: 400 },
+    'performance-profiler':   { x: 538, y: 432 },
+  };
+
   /* ---- Drawing primitives ---- */
 
   const drawCharacter = (ctx, ox, oy, def, headBob, typing, armOffset) => {
     const hb = headBob || 0;
     const ao = armOffset || 0;
 
-    // Legs
     ctx.fillStyle = LEGS_COLOR;
     ctx.fillRect(ox + 11, oy + 24, 4, 6);
     ctx.fillRect(ox + 17, oy + 24, 4, 6);
 
-    // Body
     ctx.fillStyle = def.bodyColor;
     ctx.fillRect(ox + 9, oy + 14, 14, 11);
-    // Shirt detail
     ctx.fillStyle = def.traitColor;
     ctx.fillRect(ox + 14, oy + 15, 4, 3);
 
-    // Arms
     ctx.fillStyle = def.bodyColor;
     ctx.fillRect(ox + 5, oy + 15 + ao, 4, 8);
     ctx.fillRect(ox + 23, oy + 15 - ao, 4, 8);
 
-    // Hands
     ctx.fillStyle = SKIN;
     ctx.fillRect(ox + 5, oy + 23 + ao, 4, 3);
     ctx.fillRect(ox + 23, oy + 23 - ao, 4, 3);
 
-    // Head
     ctx.fillStyle = SKIN;
     ctx.fillRect(ox + 10, oy + 4 + hb, 12, 11);
 
-    // Hair
     ctx.fillStyle = HAIR;
     ctx.fillRect(ox + 9, oy + 3 + hb, 14, 4);
     ctx.fillRect(ox + 9, oy + 4 + hb, 2, 6);
 
-    // Eyes
     ctx.fillStyle = '#222';
     ctx.fillRect(ox + 13, oy + 8 + hb, 2, 2);
     ctx.fillRect(ox + 18, oy + 8 + hb, 2, 2);
 
-    // Mouth
     ctx.fillStyle = '#c0392b';
     ctx.fillRect(ox + 14, oy + 12 + hb, 4, 1);
 
@@ -80,18 +89,15 @@
   const drawWalkingCharacter = (ctx, ox, oy, def, legOffset) => {
     const lo = legOffset || 0;
 
-    // Legs — walk cycle
     ctx.fillStyle = LEGS_COLOR;
     ctx.fillRect(ox + 11, oy + 24 + lo, 4, 6);
     ctx.fillRect(ox + 17, oy + 24 - lo, 4, 6);
 
-    // Body
     ctx.fillStyle = def.bodyColor;
     ctx.fillRect(ox + 9, oy + 14, 14, 11);
     ctx.fillStyle = def.traitColor;
     ctx.fillRect(ox + 14, oy + 15, 4, 3);
 
-    // Arms swing
     ctx.fillStyle = def.bodyColor;
     ctx.fillRect(ox + 5, oy + 15 - lo, 4, 8);
     ctx.fillRect(ox + 23, oy + 15 + lo, 4, 8);
@@ -99,7 +105,6 @@
     ctx.fillRect(ox + 5, oy + 23 - lo, 4, 3);
     ctx.fillRect(ox + 23, oy + 23 + lo, 4, 3);
 
-    // Head
     ctx.fillStyle = SKIN;
     ctx.fillRect(ox + 10, oy + 4, 12, 11);
     ctx.fillStyle = HAIR;
@@ -193,7 +198,6 @@
     ctx.fillStyle = '#2ecc71';
     ctx.fillRect(ox + 10, oy - 6 - bounce, 12, 10);
     ctx.fillStyle = '#fff';
-    // Checkmark shape
     ctx.fillRect(ox + 13, oy - 2 - bounce, 2, 2);
     ctx.fillRect(ox + 14, oy - 1 - bounce, 2, 2);
     ctx.fillRect(ox + 15, oy - 2 - bounce, 2, 2);
@@ -246,6 +250,7 @@
     working: 1,
     moving: 2,
     done: 3,
+    planning: 0, // seated at conference table, use idle animation
   };
 
   const agentSprites = {};
@@ -258,7 +263,13 @@
         sheet: generateSpriteSheet(name),
         x: pos.x,
         y: pos.y,
+        homeX: pos.x,
+        homeY: pos.y,
+        targetX: pos.x,
+        targetY: pos.y,
         status: 'idle',
+        isMoving: false,
+        pendingStatus: null,
         frame: 0,
         frameTimer: 0,
       };
@@ -266,14 +277,58 @@
   };
 
   const updateAgentState = (name, status) => {
-    if (!agentSprites[name]) return;
-    agentSprites[name].status = status;
-    agentSprites[name].frame = 0;
-    agentSprites[name].frameTimer = 0;
+    const sprite = agentSprites[name];
+    if (!sprite) return;
+
+    if (status === 'planning') {
+      // Move to conference room
+      const seat = CONFERENCE_SEATS[name];
+      if (seat) {
+        sprite.targetX = seat.x;
+        sprite.targetY = seat.y;
+        sprite.isMoving = true;
+        sprite.pendingStatus = 'planning';
+      }
+    } else if (sprite.status === 'planning' || sprite.pendingStatus === 'planning') {
+      // Return to desk
+      sprite.targetX = sprite.homeX;
+      sprite.targetY = sprite.homeY;
+      sprite.isMoving = true;
+      sprite.pendingStatus = status;
+    } else {
+      sprite.status = status;
+      sprite.frame = 0;
+      sprite.frameTimer = 0;
+    }
   };
 
   const updateAgentSprites = (dt) => {
-    for (const sprite of Object.values(agentSprites)) {
+    for (const [name, sprite] of Object.entries(agentSprites)) {
+      // Handle movement
+      if (sprite.isMoving) {
+        const dx = sprite.targetX - sprite.x;
+        const dy = sprite.targetY - sprite.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 3) {
+          // Arrived
+          sprite.x = sprite.targetX;
+          sprite.y = sprite.targetY;
+          sprite.isMoving = false;
+          if (sprite.pendingStatus) {
+            sprite.status = sprite.pendingStatus;
+            sprite.pendingStatus = null;
+            sprite.frame = 0;
+            sprite.frameTimer = 0;
+          }
+        } else {
+          const step = MOVE_SPEED * dt;
+          sprite.x += (dx / dist) * Math.min(step, dist);
+          sprite.y += (dy / dist) * Math.min(step, dist);
+        }
+      }
+
+      // Advance animation
       sprite.frameTimer += dt;
       const frameDuration = 1 / ANIM_FPS;
       if (sprite.frameTimer >= frameDuration) {
@@ -287,11 +342,15 @@
     idle: '#9E9E9E',
     working: '#4CAF50',
     done: '#2196F3',
+    planning: '#FF9800',
   };
 
   const drawAgentSprites = (ctx) => {
     for (const [name, sprite] of Object.entries(agentSprites)) {
-      const row = STATUS_TO_ROW[sprite.status] || 0;
+      // Use moving row while walking, otherwise status row
+      const row = sprite.isMoving
+        ? STATUS_TO_ROW.moving
+        : (STATUS_TO_ROW[sprite.status] || 0);
       const sx = sprite.frame * FRAME_SIZE;
       const sy = row * FRAME_SIZE;
 
@@ -303,7 +362,9 @@
       );
 
       // Status dot
-      const dotColor = STATUS_DOT_COLORS[sprite.status] || '#9E9E9E';
+      const dotColor = sprite.isMoving
+        ? '#FF9800'
+        : (STATUS_DOT_COLORS[sprite.status] || '#9E9E9E');
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(sprite.x, sprite.y - FRAME_SIZE / 2 - 4, 3, 0, Math.PI * 2);
