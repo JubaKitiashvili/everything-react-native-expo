@@ -214,7 +214,85 @@
     ctx.fillRect(CANVAS_W / 2 - 60, 38, 120, 2);
   };
 
-  const drawOffice = (ctx) => {
+  // Conference whiteboard — shows planning task text
+  let planningTask = null;
+
+  const setPlanningTask = (task) => {
+    planningTask = task;
+  };
+
+  const drawConferenceWhiteboard = (ctx, rx, ry) => {
+    const wx = (rx + 2) * TILE_SIZE;
+    const wy = (ry + 1) * TILE_SIZE;
+    // Frame
+    ctx.fillStyle = COLORS.whiteboardFrame;
+    ctx.fillRect(wx - 2, wy - 2, 52, 22);
+    // Board
+    ctx.fillStyle = planningTask ? '#fff' : COLORS.whiteboard;
+    ctx.fillRect(wx, wy, 48, 18);
+
+    if (planningTask) {
+      // Show planning task on whiteboard
+      ctx.fillStyle = '#d32f2f';
+      ctx.font = 'bold 7px monospace';
+      ctx.textAlign = 'left';
+      const text = planningTask.length > 20 ? planningTask.substring(0, 19) + '\u2026' : planningTask;
+      ctx.fillText(text, wx + 3, wy + 11);
+    } else {
+      // Static scribbles
+      ctx.fillStyle = '#888';
+      ctx.fillRect(wx + 4, wy + 4, 18, 2);
+      ctx.fillRect(wx + 4, wy + 8, 28, 2);
+      ctx.fillRect(wx + 4, wy + 12, 12, 2);
+    }
+  };
+
+  // Room activity glow
+  const getRoomActivity = (agents) => {
+    const activity = { development: false, review: false, testing: false, conference: false };
+    if (!agents) return activity;
+    for (const [name, agent] of Object.entries(agents)) {
+      if (agent.status === 'working' || agent.status === 'planning') {
+        // Find which room this agent belongs to
+        for (const [roomName, desks] of Object.entries(DESK_POSITIONS)) {
+          for (const d of desks) {
+            if (d.agent === name) {
+              activity[roomName] = agent.status;
+            }
+          }
+        }
+      }
+    }
+    // If any agent is planning, conference is active
+    for (const agent of Object.values(agents || {})) {
+      if (agent.status === 'planning') {
+        activity.conference = 'planning';
+        break;
+      }
+    }
+    return activity;
+  };
+
+  const drawRoomGlow = (ctx, room, status) => {
+    if (!status) return;
+    const px = room.x * TILE_SIZE;
+    const py = room.y * TILE_SIZE;
+    const pw = room.w * TILE_SIZE;
+    const ph = room.h * TILE_SIZE;
+    const color = status === 'planning' ? 'rgba(255, 152, 0, 0.12)' : 'rgba(76, 175, 80, 0.10)';
+    const borderColor = status === 'planning' ? 'rgba(255, 152, 0, 0.35)' : 'rgba(76, 175, 80, 0.30)';
+
+    // Inner glow
+    ctx.fillStyle = color;
+    ctx.fillRect(px, py, pw, ph);
+
+    // Border glow
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+  };
+
+  const drawOffice = (ctx, agents) => {
     // Background
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -224,7 +302,6 @@
     // Hallway floor between rooms
     for (let r = 0; r < OFFICE_ROWS; r++) {
       for (let c = 0; c < OFFICE_COLS; c++) {
-        // Only fill hallway areas (outside rooms, below header)
         if (r >= 3) {
           let inRoom = false;
           for (const room of Object.values(ROOMS)) {
@@ -241,9 +318,16 @@
     }
 
     // Draw rooms
+    const roomActivity = getRoomActivity(agents);
     for (const [name, room] of Object.entries(ROOMS)) {
       drawRoom(ctx, room, name);
+      // Room glow for active rooms
+      drawRoomGlow(ctx, room, roomActivity[name]);
     }
+
+    // Conference whiteboard (drawn after room so it's on top)
+    const confRoom = ROOMS.conference;
+    drawConferenceWhiteboard(ctx, confRoom.x, confRoom.y);
   };
 
   const getAgentDeskPosition = (agentName) => {
@@ -288,5 +372,6 @@
     drawOffice,
     getAgentDeskPosition,
     getAgentAtPoint,
+    setPlanningTask,
   };
 })();

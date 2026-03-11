@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" id="layout">
     <div class="canvas-container" id="canvasContainer">
       <canvas id="dashboard"></canvas>
     </div>
-    <!-- Panel and overlay are created by JS modules -->
+    <!-- Panel, stats bar, toasts, and overlay are created by JS modules -->
   </div>
 
   <script src="canvas.js"></script>
@@ -19,6 +19,8 @@
   <script src="history.js"></script>
   <script src="panel.js"></script>
   <script src="overlay.js"></script>
+  <script src="toasts.js"></script>
+  <script src="statsbar.js"></script>
   <script src="ws-client.js"></script>
   <script>
     (function () {
@@ -29,12 +31,11 @@
 
       var canvas = document.getElementById('dashboard');
       var ctx = canvas.getContext('2d');
-      var container = document.querySelector('.dashboard-layout');
+      var layout = document.getElementById('layout');
 
       canvas.width = CANVAS_W;
       canvas.height = CANVAS_H;
 
-      // Scale canvas to fit container
       var resizeCanvas = function () {
         var containerEl = document.getElementById('canvasContainer');
         var cw = containerEl.clientWidth;
@@ -49,38 +50,63 @@
       window.addEventListener('resize', resizeCanvas);
       resizeCanvas();
 
-      // Init sprites
+      // Init modules
       AgentSprites.initAgentSprites();
-
-      // Init HTML panel
-      Panel.init(container, function onAgentClick(agentName) {
+      Panel.init(layout, function onAgentClick(agentName) {
         Overlay.open(agentName, agentServerState);
       });
-
-      // Init overlay
       Overlay.init(document.body);
+      Toasts.init();
+      StatsBar.init(layout);
 
       // Canvas click → agent detection
       canvas.addEventListener('click', function (e) {
         var rect = canvas.getBoundingClientRect();
-        var scaleX = CANVAS_W / rect.width;
-        var scaleY = CANVAS_H / rect.height;
-        var cx = (e.clientX - rect.left) * scaleX;
-        var cy = (e.clientY - rect.top) * scaleY;
+        var sx = CANVAS_W / rect.width;
+        var sy = CANVAS_H / rect.height;
+        var cx = (e.clientX - rect.left) * sx;
+        var cy = (e.clientY - rect.top) * sy;
         var agent = OfficeCanvas.getAgentAtPoint(cx, cy);
         if (agent) {
           Overlay.open(agent, agentServerState);
         }
       });
 
-      // State
+      // State tracking
       var agentServerState = {};
+      var prevStatuses = {};
 
-      // WebSocket connection
       WSClient.createWSClient(
         function onStateUpdate(agents) {
           agentServerState = agents;
-          // Sync sprite states
+
+          // Detect status changes for toasts
+          for (var name in agents) {
+            if (!agents.hasOwnProperty(name)) continue;
+            var newStatus = agents[name].status || 'idle';
+            var oldStatus = prevStatuses[name] || 'idle';
+
+            if (newStatus !== oldStatus) {
+              if (newStatus === 'done') {
+                Toasts.show(name, agents[name].task, 'complete');
+              } else if (newStatus === 'working' && oldStatus !== 'planning') {
+                Toasts.show(name, agents[name].task, 'start');
+              }
+            }
+            prevStatuses[name] = newStatus;
+          }
+
+          // Track planning task for whiteboard
+          var planTask = null;
+          for (var n in agents) {
+            if (agents[n].status === 'planning') {
+              planTask = agents[n].task;
+              break;
+            }
+          }
+          OfficeCanvas.setPlanningTask(planTask);
+
+          // Sync sprites
           for (var name in agents) {
             if (agents.hasOwnProperty(name)) {
               var status = agents[name].status || 'idle';
@@ -90,9 +116,14 @@
               }
             }
           }
-          // Update HTML panel and overlay
+
+          // Pass task data to sprites for thought bubbles
+          AgentSprites.setAgentTasks(agents);
+
+          // Update HTML modules
           Panel.update(agents);
           Overlay.updateState(agents);
+          StatsBar.update(agents);
         },
         function onConnectionChange(connected) {
           Panel.setConnected(connected);
@@ -113,7 +144,7 @@
         AgentSprites.updateAgentSprites(dt);
 
         ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-        OfficeCanvas.drawOffice(ctx);
+        OfficeCanvas.drawOffice(ctx, agentServerState);
         AgentSprites.drawAgentSprites(ctx);
 
         requestAnimationFrame(render);

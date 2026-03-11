@@ -345,6 +345,53 @@
     planning: '#FF9800',
   };
 
+  // Thought bubble — shows truncated task above working agents
+  let agentTasks = {};
+
+  const setAgentTasks = (agents) => {
+    agentTasks = agents || {};
+  };
+
+  const drawThoughtBubble = (ctx, x, y, text) => {
+    if (!text) return;
+    const maxLen = 18;
+    const display = text.length > maxLen ? text.substring(0, maxLen - 1) + '\u2026' : text;
+
+    ctx.font = '7px monospace';
+    const tw = ctx.measureText(display).width;
+    const bw = tw + 8;
+    const bh = 12;
+    const bx = x - bw / 2;
+    const by = y - FRAME_SIZE / 2 - 20;
+
+    // Bubble background
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 3);
+    ctx.fill();
+
+    // Bubble border
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 3);
+    ctx.stroke();
+
+    // Triangle pointer
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.moveTo(x - 3, by + bh);
+    ctx.lineTo(x + 3, by + bh);
+    ctx.lineTo(x, by + bh + 4);
+    ctx.fill();
+
+    // Text
+    ctx.fillStyle = '#333';
+    ctx.font = '7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(display, x, by + 9);
+  };
+
   const drawAgentSprites = (ctx) => {
     for (const [name, sprite] of Object.entries(agentSprites)) {
       // Use moving row while walking, otherwise status row
@@ -376,6 +423,14 @@
       ctx.textAlign = 'center';
       const shortName = name.length > 12 ? name.substring(0, 11) + '\u2026' : name;
       ctx.fillText(shortName, sprite.x, sprite.y + FRAME_SIZE / 2 + 8);
+
+      // Thought bubble for working agents
+      if (sprite.status === 'working' && !sprite.isMoving) {
+        const agentData = agentTasks[name];
+        if (agentData && agentData.task) {
+          drawThoughtBubble(ctx, sprite.x, sprite.y, agentData.task);
+        }
+      }
     }
   };
 
@@ -386,5 +441,6 @@
     updateAgentState,
     updateAgentSprites,
     drawAgentSprites,
+    setAgentTasks,
   };
 })();
