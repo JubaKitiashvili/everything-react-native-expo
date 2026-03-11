@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><title>ERNE Dashboard</title></head>
+<body>
+  <h1>ERNE Dashboard</h1>
+  <pre id="state"></pre>
+  <script>
+    const ws = new WebSocket(`ws://${location.host}`);
+    ws.onmessage = (e) => {
+      document.getElementById('state').textContent = JSON.stringify(JSON.parse(e.data), null, 2);
+    };
+  </script>
+</body>
+</html>
