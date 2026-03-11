@@ -42,6 +42,8 @@
       { x: 12, y: 4, agent: 'native-bridge-builder' },
       { x: 4, y: 9, agent: 'expo-config-resolver' },
       { x: 12, y: 9, agent: 'ui-designer' },
+      { x: 20, y: 4, agent: 'senior-developer' },
+      { x: 20, y: 9, agent: 'feature-builder' },
     ],
     review: [
       { x: 4, y: 4, agent: 'code-reviewer' },

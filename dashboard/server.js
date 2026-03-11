@@ -26,6 +26,8 @@ const AGENT_DEFINITIONS = [
   { name: 'upgrade-assistant', room: 'review' },
   { name: 'tdd-guide', room: 'testing' },
   { name: 'performance-profiler', room: 'testing' },
+  { name: 'senior-developer', room: 'development' },
+  { name: 'feature-builder', room: 'development' },
 ];
 
 const agentState = {};

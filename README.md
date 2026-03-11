@@ -22,7 +22,7 @@ This will:
 
 | Component | Count | Description |
 |-----------|-------|-------------|
-| Agents | 8 | Specialized AI agents for architecture, review, testing, UI, native, and more |
+| Agents | 10 | Specialized AI agents for architecture, development, review, testing, UI, native, and more |
 | Commands | 16 | Slash commands for every React Native workflow |
 | Rule layers | 5 | Conditional rules: common, expo, bare-rn, native-ios, native-android |
 | Hook profiles | 3 | Minimal, standard, strict — quality enforcement your way |
@@ -85,6 +85,8 @@ All config files share the same React Native & Expo conventions: TypeScript stri
 | Agent | Domain | Room |
 |-------|--------|------|
 | **architect** | System design and project structure | Development |
+| **senior-developer** | End-to-end feature implementation, screens, hooks, API | Development |
+| **feature-builder** | Focused implementation units, works in parallel | Development |
 | **native-bridge-builder** | Turbo Modules and native platform APIs | Development |
 | **expo-config-resolver** | Expo configuration and build issues | Development |
 | **ui-designer** | Accessible, performant UI components | Development |

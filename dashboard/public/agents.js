@@ -24,6 +24,8 @@
     'upgrade-assistant':    { bodyColor: '#f39c12', traitColor: '#e67e22', trait: 'arrow' },
     'tdd-guide':            { bodyColor: '#1abc9c', traitColor: '#16a085', trait: 'testtube' },
     'performance-profiler': { bodyColor: '#e67e22', traitColor: '#d35400', trait: 'stopwatch' },
+    'senior-developer':     { bodyColor: '#3455db', traitColor: '#2a44b0', trait: 'laptop' },
+    'feature-builder':      { bodyColor: '#00bcd4', traitColor: '#0097a7', trait: 'hammer' },
   };
 
   /* ---- Drawing primitives ---- */
@@ -168,6 +170,20 @@
         ctx.fillStyle = '#333';
         ctx.fillRect(ox + 27, oy + 5, 1, 3);
         ctx.fillRect(ox + 26, oy + 3, 2, 2);
+        break;
+      case 'laptop':
+        ctx.fillStyle = '#333';
+        ctx.fillRect(ox + 23, oy + 8, 7, 5);
+        ctx.fillStyle = '#5dade2';
+        ctx.fillRect(ox + 24, oy + 9, 5, 3);
+        ctx.fillStyle = '#555';
+        ctx.fillRect(ox + 22, oy + 13, 9, 2);
+        break;
+      case 'hammer':
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(ox + 26, oy + 6, 2, 10);
+        ctx.fillStyle = def.traitColor;
+        ctx.fillRect(ox + 23, oy + 3, 8, 4);
         break;
     }
   };
