@@ -1,6 +1,6 @@
 {
   "name": "erne-universal",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Complete AI coding agent harness for React Native and Expo development",
   "keywords": [
     "react-native",
@@ -29,6 +29,8 @@
     "hooks/",
     "contexts/",
     "mcp-configs/",
+    "dashboard/",
+    "lib/",
     "scripts/",
     "examples/",
     "schemas/",

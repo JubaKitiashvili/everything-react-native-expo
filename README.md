@@ -3,7 +3,7 @@
 Complete AI coding agent harness for React Native and Expo development.
 
 <p align="center">
-  <img src="docs/assets/dashboard-preview.png" alt="ERNE Agent Dashboard — pixel-art office with 8 agents working in real-time" width="800">
+  <img src="docs/assets/dashboard-preview.png" alt="ERNE Agent Dashboard — pixel-art office with 10 agents working in real-time" width="800">
 </p>
 
 ## Quick Start
@@ -47,7 +47,7 @@ ERNE's architecture is designed to minimize token usage through six layered mech
 
 ## Agent Dashboard
 
-ERNE includes a real-time pixel-art dashboard that visualizes all 8 agents working in an animated office environment.
+ERNE includes a real-time pixel-art dashboard that visualizes all 10 agents working in an animated office environment.
 
 ```bash
 erne dashboard              # Start on port 3333, open browser
