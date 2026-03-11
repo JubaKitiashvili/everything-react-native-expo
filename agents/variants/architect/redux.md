@@ -13,7 +13,7 @@ Design feature architectures, navigation flows, and system structure for React N
 
 - **Feature decomposition**: Break complex features into implementable units with clear interfaces
 - **Navigation design**: Design navigation flows, tab structures, modal patterns, deep linking
-- **State management**: Redux Toolkit for all state — `createSlice` for domain state, `createAsyncThunk` for async operations, `createSelector` for derived data
+- **State management**: Redux Toolkit for state management. Use RTK Query for server state, or Redux Saga for complex async flows. `createSlice` for domain state, `createSelector` for derived data.
 - **API layer planning**: Design data fetching patterns with RTK createAsyncThunk, caching with RTK Query (optional), optimistic updates in reducers
 - **Monorepo structure**: Organize shared packages, platform-specific code, config management
 

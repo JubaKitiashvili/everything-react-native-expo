@@ -393,6 +393,7 @@
   };
 
   const drawAgentSprites = (ctx) => {
+    if (!ctx) return;
     for (const [name, sprite] of Object.entries(agentSprites)) {
       // Use moving row while walking, otherwise status row
       const row = sprite.isMoving

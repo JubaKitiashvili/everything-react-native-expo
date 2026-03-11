@@ -14,11 +14,15 @@ The installer will:
 3. Let you select MCP integrations (agent-device, GitHub, etc.)
 4. Generate all configuration files in `.claude/`
 
+### Adaptive Init System
+
+ERNE's `init` command deep-scans your project across 15 stack dimensions — navigation, state management, styling, lists, images, forms, storage, testing, and more. Based on what it finds, it selects from 24 variant templates to generate rules, agents, and hooks tailored to your exact stack. This means a Zustand + Expo Router project gets different guidance than a Redux Toolkit + React Navigation one, with no manual configuration required.
+
 ## What Gets Installed
 
 ```
 .claude/
-  agents/       # 8 specialized AI agents
+  agents/       # 10 specialized AI agents
   rules/        # 25 coding standard rules (layered by platform)
   commands/     # 16 slash commands
   contexts/     # 3 behavior modes (dev, review, vibe)

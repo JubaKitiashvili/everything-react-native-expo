@@ -14,6 +14,8 @@ Agents are specialized AI personas with focused expertise. Each agent has specif
 | expo-config-resolver | EAS, app.config, build fixes | /build-fix, /deploy |
 | ui-designer | NativeWind, Reanimated, components | /animate, /component |
 | upgrade-assistant | Version migrations, breaking changes | /upgrade |
+| senior-developer | End-to-end feature implementation, screens, hooks, API, state | /code, /feature, /plan |
+| feature-builder | Focused feature units, works in parallel with senior-developer | /code, /feature, /component |
 
 ## How Agents Work
 

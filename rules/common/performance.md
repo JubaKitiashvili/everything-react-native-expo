@@ -23,14 +23,14 @@ const renderItem = useCallback(({ item }: { item: User }) => (
 ```
 
 ## Lists
-- `FlatList` or `FlashList` for lists > 20 items (never ScrollView)
+- Use `FlashList` for lists > 20 items (preferred). Legacy projects may use `FlatList`. Never use `ScrollView` for dynamic lists.
 - Set `keyExtractor` with stable, unique keys
 - Use `getItemLayout` when item heights are fixed
 - Configure `windowSize`, `maxToRenderPerBatch`, `initialNumToRender`
 - `removeClippedSubviews={true}` for long lists on Android
 
 ## Images
-- Use `expo-image` (not `<Image>` or react-native-fast-image)
+- Use `expo-image` for Expo projects. Bare RN projects should optimize the built-in `Image` component or use `react-native-fast-image`.
 - Set explicit `width` and `height` (avoid layout shifts)
 - Use `contentFit="cover"` and `placeholder` for loading states
 - Optimize source images (WebP, appropriate resolution)
@@ -40,7 +40,7 @@ const renderItem = useCallback(({ item }: { item: User }) => (
 - Import specific modules, not entire packages (`lodash/get` not `lodash`)
 - Use `React.lazy` + `Suspense` for code splitting heavy screens
 - Analyze bundle with `npx react-native-bundle-visualizer`
-- Target < 5MB JS bundle for production
+- Target < 1.5MB JavaScript bundle. Absolute maximum: 5MB.
 
 ## Animations
 - Use `react-native-reanimated` for all animations (not Animated API)

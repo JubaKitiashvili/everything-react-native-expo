@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Secrets Management
 - NEVER hardcode API keys, tokens, or secrets in JS code
-- Use `expo-secure-store` for sensitive data (NOT AsyncStorage)
+- Use secure storage for tokens: `expo-secure-store` (Expo), `react-native-keychain` (bare RN). Never use AsyncStorage for sensitive data.
 - Environment variables via `.env` files (excluded from git)
 - Build-time secrets via EAS Secrets (for CI/CD)
 - Runtime secrets via secure backend API

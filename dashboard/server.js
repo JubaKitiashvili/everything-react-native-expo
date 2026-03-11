@@ -32,6 +32,38 @@ const AGENT_DEFINITIONS = [
   { name: 'feature-builder', room: 'development' },
 ];
 
+// Rate limiting — 60 requests per minute per IP
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX = 60;
+const rateLimitMap = new Map();
+
+const isRateLimited = (ip) => {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry) {
+    rateLimitMap.set(ip, { timestamps: [now] });
+    return false;
+  }
+  // Prune timestamps outside the window
+  entry.timestamps = entry.timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (entry.timestamps.length >= RATE_LIMIT_MAX) {
+    return true;
+  }
+  entry.timestamps.push(now);
+  return false;
+};
+
+// Periodically clean up stale rate limit entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    entry.timestamps = entry.timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+    if (entry.timestamps.length === 0) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, RATE_LIMIT_WINDOW_MS);
+
 const agentState = {};
 
 const initAgentState = () => {
@@ -185,6 +217,12 @@ setInterval(() => {
     if (agent.status !== 'idle' && agent.lastEvent) {
       const elapsed = now - new Date(agent.lastEvent).getTime();
       if (elapsed > AGENT_TIMEOUT_MS) {
+        const timeoutNow = new Date().toISOString();
+        addHistoryEntry(name, {
+          type: 'timeout',
+          task: agent.task,
+          timestamp: timeoutNow,
+        });
         agent.status = 'idle';
         agent.task = null;
         agent.startedAt = null;
@@ -193,14 +231,26 @@ setInterval(() => {
     }
   }
   if (changed) {
+    persistHistory();
     broadcastState();
   }
 }, TIMEOUT_CHECK_INTERVAL_MS);
 
+const MAX_PAYLOAD_BYTES = 64 * 1024; // 64KB
+
 const parseBody = (req) =>
   new Promise((resolve, reject) => {
     const chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
+    let totalBytes = 0;
+    req.on('data', (chunk) => {
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_PAYLOAD_BYTES) {
+        req.destroy();
+        reject(new RangeError('Payload too large'));
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString()));
@@ -253,6 +303,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && req.url === '/api/events') {
+    const clientIp = req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Too many requests' }));
+      return;
+    }
     try {
       const body = await parseBody(req);
       const result = handleEvent(body);
@@ -265,8 +321,13 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify(result));
       }
     } catch (e) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      if (e instanceof RangeError && e.message === 'Payload too large') {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      }
     }
     return;
   }

@@ -114,15 +114,20 @@
     }
 
     var html = '';
+    var validTypes = { start: 1, complete: 1, planning: 1, timeout: 1 };
     for (var i = entries.length - 1; i >= 0; i--) {
       var e = entries[i];
+      var dotClass = validTypes[e.type] ? e.type : 'unknown';
+      var typeLabel = e.type === 'complete' ? 'Completed '
+        : e.type === 'timeout' ? 'Timed out '
+        : 'Started ';
       html +=
         '<div class="history-entry">' +
-          '<div class="history-dot ' + e.type + '"></div>' +
+          '<div class="history-dot ' + dotClass + '"></div>' +
           '<div class="history-info">' +
             '<div class="history-task">' + escapeHtml(e.task || 'Unknown task') + '</div>' +
             '<div class="history-time">' +
-              (e.type === 'complete' ? 'Completed ' : 'Started ') +
+              typeLabel +
               History.formatRelativeTime(e.timestamp) +
               ' at ' + History.formatTime(e.timestamp) +
             '</div>' +

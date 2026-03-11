@@ -13,7 +13,7 @@ Design feature architectures, navigation flows, and system structure for React N
 
 - **Feature decomposition**: Break complex features into implementable units with clear interfaces
 - **Navigation design**: Design Expo Router file-based layouts, tab structures, modal patterns, deep linking
-- **State management selection**: Recommend Zustand (client), TanStack Query (server), or Jotai (atomic) based on requirements
+- **State management selection**: Recommend Zustand (client) + TanStack Query (server), or Redux Toolkit for complex state requirements
 - **API layer planning**: Design data fetching patterns, caching strategies, optimistic updates
 - **Monorepo structure**: Organize shared packages, platform-specific code, config management
 

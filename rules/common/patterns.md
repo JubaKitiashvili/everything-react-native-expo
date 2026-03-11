@@ -7,7 +7,7 @@ alwaysApply: false
 # Patterns
 
 ## State Management
-- **Client state**: Zustand (simple) or Jotai (atomic) — NOT Redux for new projects
+- **Client state**: Prefer Zustand for new projects. Redux Toolkit is supported for existing projects or complex state requirements.
 - **Server state**: TanStack Query (React Query) — handles caching, refetching, optimistic updates
 - **Form state**: React Hook Form or controlled components (small forms)
 - Avoid prop drilling beyond 2 levels — use Zustand store or composition

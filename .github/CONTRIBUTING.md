@@ -48,10 +48,12 @@ Docs live in `docs/`. Fix typos, add examples, clarify instructions — every im
 ## Project Structure
 
 ```
-agents/          8 AI agent definitions (.md)
+agents/          10 AI agent definitions (.md)
+  variants/      Stack-specific agent variants
 commands/        16 slash command definitions (.md)
 rules/           Coding rules organized by platform layer
-  common/        Rules for all projects (9 files)
+  variants/      Stack-specific rule variants
+  common/        Rules for all projects (10 files)
   expo/          Expo-managed specific (4 files)
   bare-rn/       Bare React Native specific (4 files)
   native-ios/    iOS native code (4 files)
@@ -62,7 +64,7 @@ contexts/        Behavior modes (dev, review, vibe)
 mcp-configs/     MCP server templates (10 integrations)
 scripts/hooks/   Hook implementation scripts (CJS)
 bin/             CLI entry point
-lib/             CLI logic (init, update)
+lib/             CLI logic (detect.js, generate.js, claude-md.js, init, update)
 tests/           Test suites
 website/         Landing page (erne.dev)
 ```

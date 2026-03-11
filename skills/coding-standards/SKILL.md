@@ -36,10 +36,10 @@ Check each category systematically:
 - [ ] Proper TypeScript types (no `any`)
 
 **Styling:**
-- [ ] NativeWind/Tailwind classes used (no `StyleSheet.create`)
+- [ ] Consistent styling approach (StyleSheet.create, NativeWind, or project's chosen styling system)
 - [ ] Consistent color usage (design tokens, not hex literals)
-- [ ] Responsive design using NativeWind breakpoints
-- [ ] Dark mode support via `dark:` variants
+- [ ] Responsive design using the project's styling system
+- [ ] Dark mode support via appropriate mechanism
 
 **State Management:**
 - [ ] Zustand for client state (no Redux, no Context for global state)

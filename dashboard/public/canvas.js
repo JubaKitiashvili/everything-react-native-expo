@@ -662,6 +662,7 @@
   };
 
   const drawOffice = (ctx, agents) => {
+    if (!ctx) return;
     // Background
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
