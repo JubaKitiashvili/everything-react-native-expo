@@ -4,12 +4,14 @@ You are working in an ERNE-powered React Native/Expo project.
 
 ## Project Stack
 
+> **Note:** When `erne init` runs in a project, this section is replaced with a stack summary generated from deep detection of the project's actual dependencies (state management, navigation, styling, lists, images, forms, storage, testing, build system).
+
 - **Framework**: React Native with Expo (managed or bare)
 - **Language**: TypeScript (strict mode)
-- **Navigation**: Expo Router (file-based)
-- **State**: Zustand (client) + TanStack Query (server)
+- **Navigation**: Detected at init (Expo Router, React Navigation, etc.)
+- **State**: Detected at init (Zustand, Redux Toolkit, MobX, etc.)
 - **Testing**: Jest + React Native Testing Library + Detox
-- **Styling**: StyleSheet.create (no inline styles)
+- **Styling**: Detected at init (StyleSheet.create, NativeWind, etc.)
 
 ## Key Rules
 
@@ -37,7 +39,7 @@ You are working in an ERNE-powered React Native/Expo project.
 - Never hardcode secrets — use environment variables
 - Validate all deep link parameters
 - Pin SSL certificates for sensitive API calls
-- Use `expo-secure-store` for tokens, never AsyncStorage
+- Use secure storage for tokens (expo-secure-store, react-native-keychain, etc.)
 
 ### Git
 - Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`

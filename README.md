@@ -13,18 +13,20 @@ npx erne-universal init
 ```
 
 This will:
-1. Detect your project type (Expo managed, bare RN, or monorepo)
+1. **Deep-scan your project** — detects 15 stack dimensions (state management, navigation, styling, lists, images, forms, storage, testing, build system, component style, monorepo, New Architecture, and more)
 2. Let you choose a hook profile (minimal / standard / strict)
 3. Select MCP integrations (simulator control, GitHub, etc.)
-4. Generate your `.claude/` configuration
+4. **Generate adaptive configuration** — selects from 24 variant templates matched to your exact stack (Zustand vs Redux, Expo Router vs React Navigation, NativeWind vs StyleSheet, etc.)
 
 ## What's Included
 
 | Component | Count | Description |
 |-----------|-------|-------------|
 | Agents | 10 | Specialized AI agents for architecture, development, review, testing, UI, native, and more |
+| Agent variants | 9 | Stack-adaptive agent configurations (StyleSheet vs NativeWind, Zustand vs Redux, etc.) |
 | Commands | 16 | Slash commands for every React Native workflow |
 | Rule layers | 5 | Conditional rules: common, expo, bare-rn, native-ios, native-android |
+| Rule variants | 15 | Stack-specific rules selected by deep detection (state, navigation, styling, security, etc.) |
 | Hook profiles | 3 | Minimal, standard, strict — quality enforcement your way |
 | Skills | 8 | Reusable knowledge modules loaded on-demand |
 | Contexts | 3 | Behavior modes: dev, review, vibe |
@@ -84,7 +86,7 @@ ERNE works with every major AI coding assistant out of the box:
 | `.windsurfrules` | Windsurf |
 | `.github/copilot-instructions.md` | GitHub Copilot |
 
-All config files share the same React Native & Expo conventions: TypeScript strict mode, Expo Router, Zustand + TanStack Query, testing with Jest/RNTL/Detox, and security best practices.
+All config files are generated adaptively based on your project's detected stack — state management, navigation, styling, and more — so the AI guidance matches your actual setup.
 
 ## Agents
 
@@ -141,6 +143,37 @@ Claude Code PostToolUse ┘
 - **Conditional loading** — rules, skills, and hooks load based on project type and profile
 - **Fresh subagent per task** — no context pollution between agent invocations
 - **Silent failure** — hooks never block Claude Code if something goes wrong
+
+## Contributing
+
+We welcome contributions from everyone — from typo fixes to new agents and skills.
+
+| I want to... | Start here |
+|--------------|-----------|
+| Report a bug | [Bug Report](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=bug_report.md) |
+| Request a feature | [Feature Request](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=feature_request.md) |
+| Propose a new skill | [Skill Proposal](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=new_skill.md) |
+| Submit a PR | [Contributing Guide](.github/CONTRIBUTING.md) |
+
+**Quick contribution ideas:** Add a variant template for your stack, improve an agent's knowledge, write a new slash command, add an MCP config for your favorite service.
+
+```bash
+git checkout -b feat/your-feature
+npm run validate && npm test   # Must pass before PR
+```
+
+## Partnerships
+
+Skills, agents, and MCP configs are open source — anyone can add them via PR. Partnerships are for deeper collaboration:
+
+| Partnership Type | What It Means |
+|-----------------|--------------|
+| **Co-Maintenance** | You keep your library's ERNE skill up to date as your API evolves |
+| **Early Access** | We update ERNE before your breaking changes ship, so users never hit stale guidance |
+| **Joint Promotion** | Your docs recommend ERNE for AI-assisted development, we feature you on [erne.dev](https://erne.dev) |
+| **Domain Expertise** | Co-develop specialized agents that require deep knowledge of your platform |
+
+If you maintain a React Native library, Expo tool, or developer service — [let's talk](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=partnership.md).
 
 ## Available On
 

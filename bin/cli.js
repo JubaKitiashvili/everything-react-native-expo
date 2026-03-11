@@ -23,7 +23,7 @@ const COMMANDS = {
   erne — AI coding agent harness for React Native & Expo
 
   Usage:
-    npx erne-universal <command>
+    npx erne-universal <command> [options]
 
   Commands:
     init       Set up ERNE in your project
@@ -32,6 +32,17 @@ const COMMANDS = {
     start      Init project and start dashboard
     version    Show installed version
     help       Show this help message
+
+  Init options:
+    --profile, -p <name>   Hook profile: minimal, standard, strict
+    --mcp, -m <list>       Comma-separated MCP servers: agent-device,github,...
+    --no-mcp               Skip all MCP integrations
+    --yes, -y              Accept all defaults (non-interactive)
+
+  Examples:
+    npx erne-universal init --yes
+    npx erne-universal init --profile strict --mcp agent-device,github
+    npx erne-universal init -p minimal --no-mcp -y
 
   Website: https://erne.dev
     `);
