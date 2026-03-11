@@ -83,8 +83,8 @@ canvas {
 .connection-dot.live { background: var(--green); }
 
 .panel-agents {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -99,9 +99,6 @@ canvas {
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 4px;
-  min-width: 200px;
-  flex: 1 1 200px;
-  max-width: 300px;
 }
 
 .agent-row:hover { background: rgba(255,255,255,0.05); }
