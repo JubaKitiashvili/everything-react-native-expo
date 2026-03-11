@@ -13,6 +13,8 @@ const { resolve, join } = require('path');
 const COMMANDS = {
   init: () => require('../lib/init'),
   update: () => require('../lib/update'),
+  dashboard: () => require('../lib/dashboard'),
+  start: () => require('../lib/start'),
   version: () => {
     const pkg = require('../package.json');
     console.log(`erne v${pkg.version}`);
@@ -28,6 +30,8 @@ const COMMANDS = {
   Commands:
     init       Set up ERNE in your project
     update     Update to the latest version
+    dashboard  Launch the ERNE Agent Dashboard
+    start      Init project and start dashboard
     version    Show installed version
     help       Show this help message
 
