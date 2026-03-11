@@ -1,13 +1,113 @@
 <!DOCTYPE html>
-<html><head><title>ERNE Dashboard</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERNE Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  </style>
+</head>
 <body>
-  <h1>ERNE Dashboard</h1>
-  <pre id="state"></pre>
+  <canvas id="dashboard"></canvas>
+  <script src="canvas.js"></script>
+  <script src="agents.js"></script>
+  <script src="sidebar.js"></script>
+  <script src="ws-client.js"></script>
   <script>
-    const ws = new WebSocket(`ws://${location.host}`);
-    ws.onmessage = (e) => {
-      document.getElementById('state').textContent = JSON.stringify(JSON.parse(e.data), null, 2);
-    };
+    (function () {
+      'use strict';
+
+      var CANVAS_W = OfficeCanvas.CANVAS_W;
+      var CANVAS_H = OfficeCanvas.CANVAS_H;
+      var SIDEBAR_W = Sidebar.SIDEBAR_W;
+      var totalW = CANVAS_W + SIDEBAR_W;
+      var totalH = CANVAS_H;
+
+      var canvas = document.getElementById('dashboard');
+      var ctx = canvas.getContext('2d');
+
+      // Scale to fit viewport
+      var scaleX = window.innerWidth / totalW;
+      var scaleY = window.innerHeight / totalH;
+      var scale = Math.min(scaleX, scaleY, 2);
+
+      canvas.width = totalW;
+      canvas.height = totalH;
+      canvas.style.width = Math.floor(totalW * scale) + 'px';
+      canvas.style.height = Math.floor(totalH * scale) + 'px';
+
+      // Handle resize
+      window.addEventListener('resize', function () {
+        var sx = window.innerWidth / totalW;
+        var sy = window.innerHeight / totalH;
+        var s = Math.min(sx, sy, 2);
+        canvas.style.width = Math.floor(totalW * s) + 'px';
+        canvas.style.height = Math.floor(totalH * s) + 'px';
+      });
+
+      // Init sprites
+      AgentSprites.initAgentSprites();
+
+      // Agent server state
+      var agentServerState = {};
+      var wsConnected = false;
+
+      // WebSocket connection
+      WSClient.createWSClient(
+        function onStateUpdate(agents) {
+          agentServerState = agents;
+          // Sync sprite states with server
+          for (var name in agents) {
+            if (agents.hasOwnProperty(name)) {
+              var status = agents[name].status || 'idle';
+              if (AgentSprites.agentSprites[name] &&
+                  AgentSprites.agentSprites[name].status !== status) {
+                AgentSprites.updateAgentState(name, status);
+              }
+            }
+          }
+        },
+        function onConnectionChange(connected) {
+          wsConnected = connected;
+        }
+      );
+
+      // Main render loop
+      var lastTime = performance.now();
+
+      var render = function (now) {
+        var dt = (now - lastTime) / 1000;
+        lastTime = now;
+
+        // Cap dt to avoid jumps
+        if (dt > 0.1) dt = 0.1;
+
+        // Update
+        AgentSprites.updateAgentSprites(dt);
+
+        // Clear
+        ctx.clearRect(0, 0, totalW, totalH);
+
+        // Draw office
+        OfficeCanvas.drawOffice(ctx);
+
+        // Draw agents
+        AgentSprites.drawAgentSprites(ctx);
+
+        // Draw sidebar
+        Sidebar.drawSidebar(ctx, agentServerState, CANVAS_W, CANVAS_H);
+
+        // Draw connection indicator
+        Sidebar.drawConnectionIndicator(ctx, CANVAS_W, CANVAS_H, wsConnected);
+
+        requestAnimationFrame(render);
+      };
+
+      requestAnimationFrame(render);
+    })();
   </script>
 </body>
 </html>
