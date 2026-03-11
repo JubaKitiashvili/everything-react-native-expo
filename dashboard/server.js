@@ -74,7 +74,10 @@ const handleEvent = (event) => {
   return { ok: true };
 };
 
+let wss;
+
 const broadcastState = () => {
+  if (!wss) return;
   const data = JSON.stringify(agentState);
   for (const client of wss.clients) {
     if (client.readyState === 1) {
@@ -126,7 +129,7 @@ const serveStatic = (req, res) => {
   const resolved = path.resolve(filePath);
 
   // Directory traversal prevention
-  if (!resolved.startsWith(PUBLIC_DIR)) {
+  if (!resolved.startsWith(PUBLIC_DIR + path.sep) && resolved !== PUBLIC_DIR) {
     res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('Forbidden');
     return;
@@ -175,7 +178,7 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res);
 });
 
-const wss = new WebSocketServer({ server });
+wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
   ws.send(JSON.stringify(agentState));
