@@ -262,6 +262,22 @@
     return null;
   };
 
+  const getAgentAtPoint = (canvasX, canvasY) => {
+    for (const [roomName, desks] of Object.entries(DESK_POSITIONS)) {
+      for (const d of desks) {
+        const room = ROOMS[roomName];
+        const ax = (room.x + d.x) * TILE_SIZE + 10;
+        const ay = (room.y + d.y) * TILE_SIZE + 20;
+        const half = 20;
+        if (canvasX >= ax - half && canvasX <= ax + half &&
+            canvasY >= ay - half && canvasY <= ay + half) {
+          return d.agent;
+        }
+      }
+    }
+    return null;
+  };
+
   window.OfficeCanvas = {
     TILE_SIZE,
     CANVAS_W,
@@ -271,5 +287,6 @@
     DESK_POSITIONS,
     drawOffice,
     getAgentDeskPosition,
+    getAgentAtPoint,
   };
 })();

@@ -1,0 +1,347 @@
+:root {
+  --bg: #0a0a1a;
+  --panel-bg: #12121e;
+  --panel-header: #1a1a2e;
+  --row-even: #16162a;
+  --row-odd: #1a1a30;
+  --text: #E0E0E0;
+  --text-muted: #888;
+  --text-dim: #555;
+  --border: #4A3F5C;
+  --green: #4CAF50;
+  --blue: #2196F3;
+  --orange: #FF9800;
+  --red: #f44336;
+  --grey: #9E9E9E;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'Courier New', monospace;
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.canvas-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+}
+
+/* ── Right Panel ── */
+
+.panel {
+  width: 340px;
+  min-width: 340px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  background: var(--panel-header);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header h2 {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.connection-dot.live { background: var(--green); }
+
+.panel-agents {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.agent-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.agent-row:nth-child(even) { background: var(--row-even); }
+.agent-row:nth-child(odd) { background: var(--row-odd); }
+.agent-row:hover { background: rgba(255,255,255,0.05); }
+
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.agent-dot.idle { background: var(--grey); }
+.agent-dot.working { background: var(--green); animation: pulse 1.5s infinite; }
+.agent-dot.done { background: var(--blue); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.agent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.agent-status {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agent-status.idle { color: var(--grey); }
+.agent-status.working { color: var(--green); }
+.agent-status.done { color: var(--blue); }
+
+.agent-task {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-duration {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 8px;
+  padding-top: 3px;
+}
+
+/* ── Agent Detail Overlay ── */
+
+.overlay-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-backdrop.open {
+  display: flex;
+}
+
+.overlay {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.overlay-header {
+  background: var(--panel-header);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.overlay-header h3 {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overlay-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.overlay-close:hover { color: var(--text); }
+
+.overlay-current {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.overlay-current-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.overlay-current-task {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.overlay-current-idle {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.overlay-stats {
+  display: flex;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.overlay-stat {
+  text-align: center;
+}
+
+.overlay-stat-value {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.overlay-stat-label {
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.overlay-history {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.overlay-history-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 20px 6px;
+}
+
+.history-entry {
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.history-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.history-dot.start { background: var(--green); }
+.history-dot.complete { background: var(--blue); }
+
+.history-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-task {
+  font-size: 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.history-time {
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+.history-duration {
+  font-size: 9px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.history-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .panel {
+    width: 100%;
+    min-width: unset;
+    max-height: 45vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .canvas-container {
+    flex: unset;
+    height: 55vh;
+  }
+}

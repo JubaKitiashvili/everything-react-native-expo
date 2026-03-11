@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const createWSClient = (onStateUpdate, onConnectionChange) => {
+  const createWSClient = (onStateUpdate, onConnectionChange, onHistoryUpdate) => {
     let ws = null;
     let connected = false;
     let reconnectDelay = 1000;
@@ -26,11 +26,16 @@
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          // Handle both wrapped {type:'state', agents:{...}} and raw agent state
-          if (data.type === 'state' && data.agents) {
+          if (data.type === 'init' && data.agents) {
+            // Initial payload with agents + history
+            onStateUpdate(data.agents);
+            if (onHistoryUpdate && data.history) {
+              onHistoryUpdate(data.history);
+            }
+          } else if (data.type === 'state' && data.agents) {
             onStateUpdate(data.agents);
           } else if (!data.type) {
-            // Raw agent state object from server
+            // Raw agent state object (incremental broadcast)
             onStateUpdate(data);
           }
         } catch (e) {
