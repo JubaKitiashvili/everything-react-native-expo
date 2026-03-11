@@ -423,3 +423,110 @@ canvas {
   font-weight: bold;
   color: var(--text);
 }
+
+/* ── Mobile Responsive (< 768px) ── */
+
+@media (max-width: 767px) {
+  body {
+    overflow: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .dashboard-layout {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  /* Canvas takes ~65vh on mobile */
+  .canvas-container {
+    height: 65vh;
+    flex: none;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Bottom panel scrollable */
+  .panel {
+    flex-shrink: 0;
+    overflow: visible;
+  }
+
+  .panel-agents {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    overflow-y: auto;
+    max-height: 30vh;
+    padding: 6px 8px;
+    gap: 2px;
+  }
+
+  /* Agent rows stack vertically, 1 per row */
+  .agent-row {
+    min-width: 0;
+    max-width: none;
+    flex: none;
+    width: 100%;
+    padding: 8px 10px;
+  }
+
+  /* Stats bar wraps with smaller gaps */
+  .stats-bar {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    padding: 6px 12px;
+    justify-content: center;
+  }
+
+  /* Toast notifications: smaller width at top-right */
+  .toast-container {
+    top: 8px;
+    right: 8px;
+  }
+
+  .toast {
+    min-width: 200px;
+    max-width: 280px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .toast-task {
+    max-width: 180px;
+  }
+
+  /* Overlay nearly full-screen */
+  .overlay {
+    width: 96vw;
+    max-width: 96vw;
+    max-height: 92vh;
+    border-radius: 6px;
+  }
+
+  .overlay-header {
+    padding: 14px 16px;
+  }
+
+  .overlay-header h3 {
+    font-size: 16px;
+  }
+
+  .overlay-current {
+    padding: 14px 16px;
+  }
+
+  .overlay-stats {
+    gap: 16px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .history-entry {
+    padding: 10px 16px;
+  }
+
+  .overlay-history-label {
+    padding: 12px 16px 8px;
+  }
+}

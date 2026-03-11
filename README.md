@@ -3,7 +3,7 @@
 Complete AI coding agent harness for React Native and Expo development.
 
 <p align="center">
-  <img src="docs/assets/dashboard-preview.png" alt="ERNE Agent Dashboard — pixel-art office with 10 agents working in real-time" width="800">
+  <video src="demo-dashboard.mp4" autoplay loop muted playsinline width="800"></video>
 </p>
 
 ## Quick Start
