@@ -8,8 +8,6 @@
 
 'use strict';
 
-const { resolve, join } = require('path');
-
 const COMMANDS = {
   init: () => require('../lib/init'),
   update: () => require('../lib/update'),

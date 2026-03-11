@@ -11,12 +11,14 @@
   const STATUS_COLORS = {
     idle: '#9E9E9E',
     working: '#4CAF50',
+    moving: '#FF9800',
     done: '#2196F3',
   };
 
   const STATUS_LABELS = {
     idle: 'IDLE',
     working: 'WORKING',
+    moving: 'MOVING',
     done: 'DONE',
   };
 

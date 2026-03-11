@@ -61,11 +61,11 @@ const handleEvent = (event) => {
   } else if (type === 'agent:complete') {
     state.status = 'done';
     state.task = task || state.task;
+    state.startedAt = null;
     setTimeout(() => {
       if (agentState[agent].status === 'done') {
         agentState[agent].status = 'idle';
         agentState[agent].task = null;
-        agentState[agent].startedAt = null;
         broadcastState();
       }
     }, DONE_TO_IDLE_DELAY_MS);
