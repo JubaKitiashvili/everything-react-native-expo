@@ -59,6 +59,9 @@
       Toasts.init();
       StatsBar.init(layout);
 
+      // Re-size canvas after panel is added (takes space from bottom)
+      resizeCanvas();
+
       // Canvas click → agent detection
       canvas.addEventListener('click', function (e) {
         var rect = canvas.getBoundingClientRect();

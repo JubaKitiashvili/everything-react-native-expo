@@ -417,11 +417,11 @@
       ctx.arc(sprite.x, sprite.y - FRAME_SIZE / 2 - 4, 3, 0, Math.PI * 2);
       ctx.fill();
 
-      // Name label
+      // Name label (use short display names)
       ctx.fillStyle = '#E0E0E0';
       ctx.font = '8px monospace';
       ctx.textAlign = 'center';
-      const shortName = name.length > 12 ? name.substring(0, 11) + '\u2026' : name;
+      const shortName = (window.OfficeCanvas.SHORT_NAMES && window.OfficeCanvas.SHORT_NAMES[name]) || name;
       ctx.fillText(shortName, sprite.x, sprite.y + FRAME_SIZE / 2 + 8);
 
       // Thought bubble for working agents

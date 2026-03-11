@@ -27,6 +27,7 @@ body {
 
 .dashboard-layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
@@ -36,7 +37,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
+  min-height: 0;
 }
 
 canvas {
@@ -45,21 +46,21 @@ canvas {
   cursor: pointer;
 }
 
-/* ── Right Panel ── */
+/* ── Bottom Panel ── */
 
 .panel {
-  width: 340px;
-  min-width: 340px;
+  width: 100%;
   background: var(--panel-bg);
-  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .panel-header {
   background: var(--panel-header);
-  padding: 12px 16px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -67,14 +68,14 @@ canvas {
 }
 
 .panel-header h2 {
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.1em;
   font-weight: bold;
 }
 
 .connection-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--red);
 }
@@ -82,30 +83,33 @@ canvas {
 .connection-dot.live { background: var(--green); }
 
 .panel-agents {
-  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  padding: 6px 12px;
+  gap: 4px;
 }
 
 .agent-row {
   display: flex;
-  align-items: flex-start;
-  padding: 10px 16px;
+  align-items: center;
+  padding: 6px 12px;
   cursor: pointer;
   transition: background 0.15s;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-radius: 4px;
+  min-width: 200px;
+  flex: 1 1 200px;
+  max-width: 300px;
 }
 
-.agent-row:nth-child(even) { background: var(--row-even); }
-.agent-row:nth-child(odd) { background: var(--row-odd); }
 .agent-row:hover { background: rgba(255,255,255,0.05); }
 
 .agent-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-top: 4px;
   margin-right: 10px;
   flex-shrink: 0;
 }
@@ -126,15 +130,15 @@ canvas {
 }
 
 .agent-name {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: bold;
-  margin-bottom: 2px;
 }
 
 .agent-status {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  display: inline;
 }
 
 .agent-status.idle { color: var(--grey); }
@@ -143,21 +147,19 @@ canvas {
 .agent-status.planning { color: var(--orange); }
 
 .agent-task {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .agent-duration {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--text-dim);
   margin-left: auto;
   flex-shrink: 0;
-  padding-left: 8px;
-  padding-top: 3px;
+  padding-left: 10px;
 }
 
 /* ── Agent Detail Overlay ── */
@@ -180,7 +182,7 @@ canvas {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  width: 520px;
+  width: 560px;
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
@@ -190,7 +192,7 @@ canvas {
 
 .overlay-header {
   background: var(--panel-header);
-  padding: 16px 20px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -198,17 +200,17 @@ canvas {
 }
 
 .overlay-header h3 {
-  font-size: 14px;
+  font-size: 18px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .overlay-close {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 18px;
+  font-size: 22px;
   cursor: pointer;
   padding: 4px 8px;
 }
@@ -216,34 +218,34 @@ canvas {
 .overlay-close:hover { color: var(--text); }
 
 .overlay-current {
-  padding: 16px 20px;
+  padding: 18px 24px;
   border-bottom: 1px solid var(--border);
 }
 
 .overlay-current-label {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .overlay-current-task {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text);
   line-height: 1.5;
 }
 
 .overlay-current-idle {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-dim);
   font-style: italic;
 }
 
 .overlay-stats {
   display: flex;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 24px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--border);
   background: rgba(255,255,255,0.02);
 }
@@ -253,12 +255,12 @@ canvas {
 }
 
 .overlay-stat-value {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
 }
 
 .overlay-stat-label {
-  font-size: 8px;
+  font-size: 11px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -272,26 +274,26 @@ canvas {
 }
 
 .overlay-history-label {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: 12px 20px 6px;
+  padding: 14px 24px 8px;
 }
 
 .history-entry {
-  padding: 8px 20px;
+  padding: 10px 24px;
   border-bottom: 1px solid rgba(255,255,255,0.03);
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .history-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  margin-top: 5px;
+  margin-top: 6px;
   flex-shrink: 0;
 }
 
@@ -304,27 +306,27 @@ canvas {
 }
 
 .history-task {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--text);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .history-time {
-  font-size: 8px;
+  font-size: 11px;
   color: var(--text-dim);
 }
 
 .history-duration {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .history-empty {
-  padding: 20px;
+  padding: 24px;
   text-align: center;
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 /* ── Toast Notifications ── */
@@ -332,7 +334,7 @@ canvas {
 .toast-container {
   position: fixed;
   top: 12px;
-  right: 356px;
+  right: 12px;
   z-index: 90;
   display: flex;
   flex-direction: column;
@@ -345,12 +347,12 @@ canvas {
   border: 1px solid var(--border);
   border-left: 3px solid var(--blue);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  min-width: 240px;
-  max-width: 320px;
+  gap: 10px;
+  min-width: 260px;
+  max-width: 360px;
   opacity: 0;
   transform: translateX(20px);
   transition: opacity 0.3s, transform 0.3s;
@@ -369,8 +371,8 @@ canvas {
 }
 
 .toast-icon {
-  font-size: 12px;
-  margin-top: 1px;
+  font-size: 14px;
+  margin-top: 2px;
   flex-shrink: 0;
 }
 
@@ -378,18 +380,18 @@ canvas {
 .toast-start .toast-icon { color: var(--green); }
 
 .toast-agent {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: bold;
   color: var(--text);
 }
 
 .toast-task {
-  font-size: 8px;
+  font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 250px;
+  max-width: 280px;
 }
 
 /* ── Stats Bar ── */
@@ -399,7 +401,7 @@ canvas {
   border-top: 1px solid var(--border);
   padding: 6px 20px;
   display: flex;
-  gap: 32px;
+  gap: 36px;
   justify-content: center;
   flex-shrink: 0;
 }
@@ -407,49 +409,17 @@ canvas {
 .stats-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .stats-label {
-  font-size: 8px;
+  font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.08em;
 }
 
 .stats-value {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   color: var(--text);
-}
-
-/* ── Responsive ── */
-
-@media (max-width: 900px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-
-  .panel {
-    width: 100%;
-    min-width: unset;
-    max-height: 45vh;
-    border-left: none;
-    border-top: 1px solid var(--border);
-  }
-
-  .canvas-container {
-    flex: unset;
-    height: 55vh;
-  }
-
-  .toast-container {
-    right: 12px;
-    top: auto;
-    bottom: 50vh;
-  }
-
-  .stats-bar {
-    gap: 16px;
-    padding: 6px 12px;
-  }
 }
