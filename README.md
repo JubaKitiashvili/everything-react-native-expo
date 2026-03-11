@@ -57,10 +57,16 @@ erne start                  # Init project + dashboard in background
 ```
 
 **Features:**
-- 4 office rooms (Development, Code Review, Testing, Conference)
-- 8 unique procedural pixel-art agent sprites with animations
+- 4 office rooms — Development, Code Review, Testing, and Conference (brainstorming)
+- 10 animated agent sprites with walking, typing, and done animations
+- Conference room brainstorming — agents gather for planning sessions
+- Thought bubbles showing the current task above working agents
+- Animated monitor screens (green code when working, screensaver when idle)
+- Toast notifications for agent start/complete events
+- Bottom stats bar with session duration, tasks completed, working/planning counts
+- Agent detail overlay with full activity history (click any agent)
+- Office decorations: plants, coffee machine, water cooler, bookshelves, posters, wall clocks
 - Real-time status updates via WebSocket (connected to Claude Code hooks)
-- Sidebar with agent status, task descriptions, and connection indicator
 - Auto-reconnect with exponential backoff
 
 The dashboard hooks into Claude Code's `PreToolUse` and `PostToolUse` events (pattern: `Agent`) to track which agents are actively working and what they're doing.
