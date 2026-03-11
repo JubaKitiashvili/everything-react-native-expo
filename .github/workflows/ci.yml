@@ -43,8 +43,8 @@ jobs:
 
           echo "Checking agent count..."
           AGENT_COUNT=$(ls -1 agents/*.md 2>/dev/null | wc -l | tr -d ' ')
-          if [ "$AGENT_COUNT" -ne 8 ]; then
-            echo "FAIL: Expected 8 agents, found $AGENT_COUNT"
+          if [ "$AGENT_COUNT" -ne 10 ]; then
+            echo "FAIL: Expected 10 agents, found $AGENT_COUNT"
             exit 1
           fi
           echo "OK: $AGENT_COUNT agents"
