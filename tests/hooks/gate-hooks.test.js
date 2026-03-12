@@ -31,6 +31,10 @@ describe('pre-edit-test-gate', () => {
       const { add } = require('../src/utils');
       test('add works', () => { expect(add(1,2)).toBe(3); });
     `);
+    // Create a fake jest binary so npx resolves locally (avoids download timeout on CI)
+    const binDir = path.join(projectDir, 'node_modules', '.bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(path.join(binDir, 'jest'), '#!/usr/bin/env node\nprocess.exit(0);\n', { mode: 0o755 });
     fs.writeFileSync(path.join(projectDir, 'package.json'), JSON.stringify({
       devDependencies: { jest: '29.7.0' },
     }));
