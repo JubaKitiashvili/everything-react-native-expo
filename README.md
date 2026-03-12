@@ -8,7 +8,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://makeapullrequest.com)
 
 <p align="center">
-  <video src="https://github.com/JubaKitiashvili/everything-react-native-expo/raw/main/demo-dashboard.mp4" autoplay loop muted playsinline width="800"></video>
+  <video src="demo-dashboard.mp4" autoplay loop muted playsinline width="800"></video>
 </p>
 
 ---
