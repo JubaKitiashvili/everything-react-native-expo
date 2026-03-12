@@ -60,7 +60,7 @@ console.log('\n  ERNE Content Validation\n');
 
 // Agents
 console.log('  Agents:');
-validateCount('agents', '.md', 10, 'agents/');
+validateCount('agents', '.md', 11, 'agents/');
 const agentFiles = fs.readdirSync('agents').filter(f => f.endsWith('.md'));
 for (const f of agentFiles) {
   validateFrontmatter(path.join('agents', f), ['name', 'description']);
@@ -68,7 +68,7 @@ for (const f of agentFiles) {
 
 // Commands
 console.log('  Commands:');
-validateCount('commands', '.md', 16, 'commands/');
+validateCount('commands', '.md', 19, 'commands/');
 const cmdFiles = fs.readdirSync('commands').filter(f => f.endsWith('.md'));
 for (const f of cmdFiles) {
   validateFrontmatter(path.join('commands', f), ['name', 'description']);
