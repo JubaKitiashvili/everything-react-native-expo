@@ -8,7 +8,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://makeapullrequest.com)
 
 <p align="center">
-  <video src="demo-dashboard.mp4" autoplay loop muted playsinline width="800"></video>
+  <video src="https://github.com/user-attachments/assets/08e578e9-1bbd-49af-bac4-0b18365137af" autoplay loop muted playsinline width="800"></video>
 </p>
 
 ---
