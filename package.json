@@ -11,11 +11,15 @@
     "coding-assistant"
   ],
   "license": "MIT",
+  "author": "Juba Kitiashvili",
   "repository": {
     "type": "git",
     "url": "https://github.com/JubaKitiashvili/everything-react-native-expo"
   },
   "homepage": "https://erne.dev",
+  "bugs": {
+    "url": "https://github.com/JubaKitiashvili/everything-react-native-expo/issues"
+  },
   "bin": {
     "erne": "./bin/cli.js"
   },

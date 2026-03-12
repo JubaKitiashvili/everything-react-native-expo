@@ -1,6 +1,6 @@
 # Memory Integration for Multi-Agent Workflows
 
-ERNE agents use persistent memory to build project knowledge over time. This document defines the tagging convention, save/retrieve patterns, and MCP integration for all 10 core agents.
+ERNE agents use persistent memory to build project knowledge over time. This document defines the tagging convention, save/retrieve patterns, and MCP integration for all 11 core agents.
 
 ## Tagging Convention
 
@@ -10,7 +10,7 @@ All memory observations follow a three-part tag pattern:
 [agent-name, project-name, category]
 ```
 
-- **agent-name**: One of the 10 core agents (e.g., `architect`, `code-reviewer`)
+- **agent-name**: One of the 11 core agents (e.g., `architect`, `code-reviewer`, `pipeline-orchestrator`)
 - **project-name**: The current project identifier (e.g., `my-app`, `acme-mobile`)
 - **category**: One of the defined categories below
 
@@ -178,6 +178,21 @@ save_observation(
 search(query: "expo SDK upgrade breaking changes reanimated", tags: ["upgrade-assistant", "my-app"])
 ```
 
+### 11. pipeline-orchestrator
+
+**Save:**
+```
+save_observation(
+  content: "Profile screen pipeline: architect phase took 2 min, parallel implement (senior-developer + feature-builder) took 8 min, test phase needed 1 retry due to missing mock. Total: 18 min for 3 files.",
+  tags: ["pipeline-orchestrator", "my-app", "architecture-decisions"]
+)
+```
+
+**Search:**
+```
+search(query: "pipeline timing retries profile feature", tags: ["pipeline-orchestrator", "my-app"])
+```
+
 ## When to Save vs. When to Retrieve
 
 ### Save (save_observation) When:
@@ -247,3 +262,4 @@ Agents can and should read observations from other agents. Common flows:
 3. **performance-profiler** saves baselines -> **code-reviewer** searches during review to catch regressions
 4. **upgrade-assistant** saves migration results -> **expo-config-resolver** searches when diagnosing build failures
 5. **senior-developer** saves implementation patterns -> **feature-builder** searches to maintain consistency in parallel work
+6. **pipeline-orchestrator** saves pipeline timing and retry data -> **pipeline-orchestrator** searches to optimize future pipeline runs

@@ -23,7 +23,7 @@ ERNE's `init` command deep-scans your project across 15 stack dimensions — nav
 ```
 .claude/
   agents/       # 11 specialized AI agents
-  rules/        # 25 coding standard rules (layered by platform)
+  rules/        # 26 coding standard rules (layered by platform)
   commands/     # 19 slash commands
   contexts/     # 3 behavior modes (dev, review, vibe)
   hooks.json    # Git-style hooks for quality enforcement
@@ -56,9 +56,35 @@ Control quality enforcement level:
 
 Change profile: set `ERNE_PROFILE=minimal|standard|strict` in your environment.
 
+## Multi-Agent Orchestration
+
+Use `/orchestrate` to coordinate agents through a 5-phase pipeline:
+
+```
+/orchestrate "build user profile screen"
+```
+
+The pipeline orchestrator decomposes the task, dispatches agents (some in parallel), and validates results. See [Pipeline Documentation](pipeline.md) for details.
+
+## Memory Integration
+
+ERNE agents build persistent knowledge about your project across sessions. Patterns learned by one agent (e.g., architect discovering a naming convention) are available to all other agents in future sessions. See [Memory Integration](memory-integration.md) for details.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `init` fails with "No React Native project detected" | Make sure `package.json` has `react-native` or `expo` in dependencies |
+| Hooks not running | Check `ERNE_PROFILE` env var and `.claude/hooks.json` |
+| Wrong variant selected | Re-run `npx erne-universal init` — it's safe to run multiple times |
+| Dashboard won't start | Run `erne doctor` to check setup, ensure port 3333 is free |
+| MCP server errors | Verify required tools are installed (Xcode for agent-device, etc.) |
+
 ## Learn More
 
-- [Agents](agents.md) — How specialized agents work
+- [Agents](agents.md) — How 11 specialized agents work
 - [Commands](commands.md) — All 19 slash commands
+- [Pipeline & Orchestration](pipeline.md) — Multi-agent workflow coordination
+- [Memory Integration](memory-integration.md) — Cross-session learning
 - [Hook Profiles](hooks-profiles.md) — Quality enforcement system
 - [Creating Skills](creating-skills.md) — Extend ERNE with custom knowledge
