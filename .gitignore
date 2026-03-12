@@ -3,6 +3,8 @@ node_modules/
 coverage/
 .claude/erne/
 docs/ANALYSIS/
+docs/superpowers/
+docs/assets/
 .DS_Store
 .env
 .env.*
