@@ -28,6 +28,7 @@
     'performance-profiler': { bodyColor: '#e67e22', traitColor: '#d35400', trait: 'stopwatch' },
     'senior-developer':     { bodyColor: '#3455db', traitColor: '#2a44b0', trait: 'laptop' },
     'feature-builder':      { bodyColor: '#00bcd4', traitColor: '#0097a7', trait: 'hammer' },
+    'pipeline-orchestrator': { bodyColor: '#FF6B35', traitColor: '#E85D26', trait: 'baton', emoji: '\u{1F3AF}' },
   };
 
   // Conference room seating positions (pixels) — around the table
@@ -44,6 +45,7 @@
     'upgrade-assistant':      { x: 690, y: 462 },
     'tdd-guide':              { x: 538, y: 400 },
     'performance-profiler':   { x: 538, y: 432 },
+    'pipeline-orchestrator':  { x: 630, y: 350 },
   };
 
   /* ---- Drawing primitives ---- */
@@ -189,6 +191,18 @@
         ctx.fillRect(ox + 26, oy + 6, 2, 10);
         ctx.fillStyle = def.traitColor;
         ctx.fillRect(ox + 23, oy + 3, 8, 4);
+        break;
+      case 'baton':
+        // Conductor's baton — diagonal stick
+        ctx.fillStyle = '#F5F5DC';
+        ctx.fillRect(ox + 25, oy + 4, 2, 2);
+        ctx.fillRect(ox + 26, oy + 5, 2, 2);
+        ctx.fillRect(ox + 27, oy + 6, 2, 2);
+        ctx.fillRect(ox + 28, oy + 7, 2, 2);
+        ctx.fillRect(ox + 29, oy + 8, 2, 2);
+        // Handle grip
+        ctx.fillStyle = def.traitColor;
+        ctx.fillRect(ox + 24, oy + 3, 3, 3);
         break;
     }
   };

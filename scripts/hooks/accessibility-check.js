@@ -7,7 +7,7 @@ const filePath = getEditedFilePath(input);
 
 if (!filePath) return pass();
 
-const JSX_EXTS = ['.jsx', '.tsx'];
+const JSX_EXTS = ['.jsx', '.tsx', '.js', '.ts'];
 if (!hasExtension(filePath, JSX_EXTS)) return pass();
 if (isTestFile(filePath)) return pass();
 

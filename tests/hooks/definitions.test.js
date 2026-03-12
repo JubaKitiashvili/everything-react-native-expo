@@ -1,4 +1,6 @@
 'use strict';
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,43 +15,44 @@ const VALID_PROFILES = ['minimal', 'standard', 'strict'];
 describe('hooks.json definitions', () => {
   let config;
 
-  beforeAll(() => {
+  before(() => {
     config = JSON.parse(fs.readFileSync(HOOKS_PATH, 'utf8'));
   });
 
-  test('has hooks array', () => {
-    expect(Array.isArray(config.hooks)).toBe(true);
-    expect(config.hooks.length).toBeGreaterThan(0);
+  it('has hooks array', () => {
+    assert.ok(Array.isArray(config.hooks));
+    assert.ok(config.hooks.length > 0);
   });
 
-  test('each hook has required fields', () => {
+  it('each hook has required fields', () => {
     for (const hook of config.hooks) {
-      expect(hook).toHaveProperty('event');
-      expect(hook).toHaveProperty('script');
-      expect(hook).toHaveProperty('command');
-      expect(hook).toHaveProperty('profiles');
-      expect(VALID_EVENTS).toContain(hook.event);
-      expect(Array.isArray(hook.profiles)).toBe(true);
-      hook.profiles.forEach(p => expect(VALID_PROFILES).toContain(p));
+      assert.ok(hook.event !== undefined, 'hook should have event');
+      assert.ok(hook.script !== undefined, 'hook should have script');
+      assert.ok(hook.command !== undefined, 'hook should have command');
+      assert.ok(hook.profiles !== undefined, 'hook should have profiles');
+      assert.ok(VALID_EVENTS.includes(hook.event), `event "${hook.event}" should be valid`);
+      assert.ok(Array.isArray(hook.profiles));
+      hook.profiles.forEach(p => assert.ok(VALID_PROFILES.includes(p), `profile "${p}" should be valid`));
     }
   });
 
-  test('has exactly 16 hooks', () => {
-    expect(config.hooks.length).toBe(16);
+  it('has exactly 17 hooks', () => {
+    assert.strictEqual(config.hooks.length, 17);
   });
 
-  test('each command routes through run-with-flags.js', () => {
+  it('each command routes through run-with-flags.js', () => {
     for (const hook of config.hooks) {
-      expect(hook.command).toMatch(
+      assert.match(
+        hook.command,
         /^node scripts\/hooks\/run-with-flags\.js /
       );
-      expect(hook.command).toContain(hook.script);
+      assert.ok(hook.command.includes(hook.script));
     }
   });
 });
 
 describe('profile definitions', () => {
-  test('minimal is subset of standard', () => {
+  it('minimal is subset of standard', () => {
     const minimal = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'minimal.json'), 'utf8')
     );
@@ -57,11 +60,11 @@ describe('profile definitions', () => {
       fs.readFileSync(path.join(PROFILES_DIR, 'standard.json'), 'utf8')
     );
     for (const script of minimal.hooks) {
-      expect(standard.hooks).toContain(script);
+      assert.ok(standard.hooks.includes(script), `standard should include ${script}`);
     }
   });
 
-  test('standard is subset of strict', () => {
+  it('standard is subset of strict', () => {
     const standard = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'standard.json'), 'utf8')
     );
@@ -69,32 +72,32 @@ describe('profile definitions', () => {
       fs.readFileSync(path.join(PROFILES_DIR, 'strict.json'), 'utf8')
     );
     for (const script of standard.hooks) {
-      expect(strict.hooks).toContain(script);
+      assert.ok(strict.hooks.includes(script), `strict should include ${script}`);
     }
   });
 
-  test('minimal has exactly 3 hooks', () => {
+  it('minimal has exactly 4 hooks', () => {
     const minimal = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'minimal.json'), 'utf8')
     );
-    expect(minimal.hooks.length).toBe(3);
+    assert.strictEqual(minimal.hooks.length, 4);
   });
 
-  test('standard has exactly 11 hooks', () => {
+  it('standard has exactly 12 hooks', () => {
     const standard = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'standard.json'), 'utf8')
     );
-    expect(standard.hooks.length).toBe(11);
+    assert.strictEqual(standard.hooks.length, 12);
   });
 
-  test('strict has exactly 16 hooks', () => {
+  it('strict has exactly 16 hooks', () => {
     const strict = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'strict.json'), 'utf8')
     );
-    expect(strict.hooks.length).toBe(16);
+    assert.strictEqual(strict.hooks.length, 16);
   });
 
-  test('profile files match hooks.json profiles', () => {
+  it('profile files match hooks.json profiles', () => {
     const config = JSON.parse(fs.readFileSync(HOOKS_PATH, 'utf8'));
     for (const profileName of VALID_PROFILES) {
       const profile = JSON.parse(
@@ -106,7 +109,9 @@ describe('profile definitions', () => {
       const fromConfig = config.hooks
         .filter(h => h.profiles.includes(profileName))
         .map(h => h.script);
-      expect(profile.hooks.sort()).toEqual(fromConfig.sort());
+      // Remove duplicates (dashboard-event.js appears twice in hooks.json)
+      const uniqueFromConfig = [...new Set(fromConfig)];
+      assert.deepStrictEqual(profile.hooks.sort(), uniqueFromConfig.sort());
     }
   });
 });

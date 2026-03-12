@@ -13,10 +13,10 @@
     "pre-commit-lint.js",
     "pre-edit-test-gate.js",
     "security-scan.js",
-    "performance-budget.js",
     "native-compat-check.js",
     "accessibility-check.js",
     "continuous-learning-observer.js",
-    "evaluate-session.js"
+    "evaluate-session.js",
+    "dashboard-event.js"
   ]
 }

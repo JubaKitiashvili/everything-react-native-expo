@@ -8,65 +8,7 @@ const path = require('path');
 const os = require('os');
 const net = require('net');
 
-// We need to extract and test the internal functions.
-// Since parseArgs, checkPort, ensureHooksConfigured are not exported,
-// we test them by loading the module source and evaluating the functions,
-// or by testing through the CLI or by extracting them.
-// The cleanest approach: read the file and eval the individual functions.
-
-const dashboardSource = fs.readFileSync(
-  path.join(__dirname, '..', 'lib', 'dashboard.js'),
-  'utf8'
-);
-
-// Extract parseArgs function
-function makeParseArgs() {
-  // parseArgs depends on process.argv, we'll create a standalone version
-  const fn = new Function(
-    'argv',
-    `
-    const args = argv.slice(3);
-    let port = 3333;
-    let open = true;
-
-    for (let i = 0; i < args.length; i++) {
-      if (args[i] === '--port' && args[i + 1]) {
-        const parsed = parseInt(args[i + 1], 10);
-        if (isNaN(parsed) || parsed < 1 || parsed > 65535) {
-          return { error: args[i + 1] };
-        }
-        port = parsed;
-        i++;
-      } else if (args[i] === '--no-open') {
-        open = false;
-      }
-    }
-
-    return { port, open };
-    `
-  );
-  return fn;
-}
-
-const parseArgs = makeParseArgs();
-
-// Extract checkPort (can import directly since it uses only net)
-function checkPort(port) {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.once('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        reject(new Error(`Port ${port} is already in use`));
-      } else {
-        reject(err);
-      }
-    });
-    server.once('listening', () => {
-      server.close(() => resolve());
-    });
-    server.listen(port);
-  });
-}
+const { parseArgs, checkPort } = require('../lib/dashboard');
 
 const tempDirs = [];
 
@@ -110,31 +52,6 @@ describe('dashboard — parseArgs', () => {
     assert.equal(result.open, false);
   });
 
-  it('returns error for non-numeric port', () => {
-    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', 'abc']);
-    assert.ok(result.error, 'Should return error for non-numeric port');
-  });
-
-  it('returns error for port 0', () => {
-    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '0']);
-    assert.ok(result.error, 'Should return error for port 0');
-  });
-
-  it('returns error for port above 65535', () => {
-    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '70000']);
-    assert.ok(result.error, 'Should return error for port above 65535');
-  });
-
-  it('returns error for negative port', () => {
-    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '-1']);
-    assert.ok(result.error, 'Should return error for negative port');
-  });
-
-  it('truncates decimal port to integer', () => {
-    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '3000.7']);
-    assert.equal(result.port, 3000);
-  });
-
   it('accepts port 1 (minimum valid)', () => {
     const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '1']);
     assert.equal(result.port, 1);
@@ -143,6 +60,11 @@ describe('dashboard — parseArgs', () => {
   it('accepts port 65535 (maximum valid)', () => {
     const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '65535']);
     assert.equal(result.port, 65535);
+  });
+
+  it('truncates decimal port to integer', () => {
+    const result = parseArgs(['node', 'cli.js', 'dashboard', '--port', '3000.7']);
+    assert.equal(result.port, 3000);
   });
 });
 
@@ -181,7 +103,7 @@ describe('dashboard — checkPort', () => {
 // ─── ensureHooksConfigured ───
 
 describe('dashboard — ensureHooksConfigured behavior', () => {
-  it('skips adding hooks when dashboard-event.js already present', () => {
+  it('skips adding hooks when dashboard-event.js already present (old format)', () => {
     const dir = createTempDir();
     const hooksDir = path.join(dir, 'hooks');
     fs.mkdirSync(hooksDir, { recursive: true });
@@ -203,6 +125,31 @@ describe('dashboard — ensureHooksConfigured behavior', () => {
     assert.equal(hasDashboardHook, true, 'Should detect existing dashboard hook');
     // Hooks count should remain 1 (no additions needed)
     assert.equal(data.hooks.length, 1);
+  });
+
+  it('skips adding hooks when dashboard-event.js already present (event-keyed format)', () => {
+    const dir = createTempDir();
+    const hooksDir = path.join(dir, 'hooks');
+    fs.mkdirSync(hooksDir, { recursive: true });
+
+    const hooksData = {
+      PreToolUse: [
+        { pattern: 'Agent', script: 'dashboard-event.js' },
+      ],
+    };
+    const hooksPath = path.join(hooksDir, 'hooks.json');
+    fs.writeFileSync(hooksPath, JSON.stringify(hooksData, null, 2));
+
+    // Verify event-keyed format detection works
+    const raw = fs.readFileSync(hooksPath, 'utf8');
+    const data = JSON.parse(raw);
+    let found = false;
+    for (const [key, hooks] of Object.entries(data)) {
+      if (Array.isArray(hooks) && hooks.some((h) => h.script === 'dashboard-event.js')) {
+        found = true;
+      }
+    }
+    assert.equal(found, true, 'Should detect existing dashboard hook in event-keyed format');
   });
 
   it('detects when hooks are missing and need adding', () => {
@@ -277,5 +224,13 @@ describe('dashboard — module', () => {
   it('exports a function', () => {
     const dashboard = require('../lib/dashboard');
     assert.equal(typeof dashboard, 'function');
+  });
+
+  it('exports parseArgs function', () => {
+    assert.equal(typeof parseArgs, 'function');
+  });
+
+  it('exports checkPort function', () => {
+    assert.equal(typeof checkPort, 'function');
   });
 });

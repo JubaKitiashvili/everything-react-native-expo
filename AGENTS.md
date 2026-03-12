@@ -40,7 +40,7 @@ You are an expert React Native and Expo developer. Follow these conventions stri
 - Environment variables for all secrets (never hardcode)
 - Validate and sanitize deep link parameters
 - SSL certificate pinning for sensitive endpoints
-- `expo-secure-store` for tokens — never use AsyncStorage for secrets
+- Use secure storage for tokens (expo-secure-store, react-native-keychain, etc.)
 - Enable ProGuard/R8 for Android release builds
 
 ### Git Workflow

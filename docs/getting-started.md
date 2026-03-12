@@ -22,12 +22,12 @@ ERNE's `init` command deep-scans your project across 15 stack dimensions — nav
 
 ```
 .claude/
-  agents/       # 10 specialized AI agents
+  agents/       # 11 specialized AI agents
   rules/        # 25 coding standard rules (layered by platform)
-  commands/     # 16 slash commands
+  commands/     # 19 slash commands
   contexts/     # 3 behavior modes (dev, review, vibe)
   hooks.json    # Git-style hooks for quality enforcement
-  skills/       # 8 reusable knowledge skills
+  skills/       # 7 reusable knowledge skills
   mcp-configs/  # Optional MCP server configurations
 ```
 
@@ -50,7 +50,7 @@ Switch contexts to change how the AI works:
 
 Control quality enforcement level:
 
-- **minimal** — Only pre-commit lint
+- **minimal** — Session-start, post-edit format, continuous-learning observer, dashboard event
 - **standard** — Format + typecheck + common validations
 - **strict** — All checks including security, performance budgets, accessibility
 
@@ -59,6 +59,6 @@ Change profile: set `ERNE_PROFILE=minimal|standard|strict` in your environment.
 ## Learn More
 
 - [Agents](agents.md) — How specialized agents work
-- [Commands](commands.md) — All 16 slash commands
+- [Commands](commands.md) — All 19 slash commands
 - [Hook Profiles](hooks-profiles.md) — Quality enforcement system
 - [Creating Skills](creating-skills.md) — Extend ERNE with custom knowledge

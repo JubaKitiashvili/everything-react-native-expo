@@ -34,9 +34,6 @@
             }
           } else if (data.type === 'state' && data.agents) {
             onStateUpdate(data.agents);
-          } else if (!data.type) {
-            // Raw agent state object (incremental broadcast)
-            onStateUpdate(data);
           }
         } catch (e) {
           // Ignore malformed messages

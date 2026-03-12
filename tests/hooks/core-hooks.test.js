@@ -1,4 +1,6 @@
 'use strict';
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const path = require('path');
 const {
   runHook,
@@ -7,7 +9,7 @@ const {
 } = require('./helpers');
 
 describe('session-start.js', () => {
-  test('detects expo project from package.json dependencies', () => {
+  it('detects expo project from package.json dependencies', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { expo: '~51.0.0', react: '18.2.0' },
@@ -17,15 +19,15 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('expo');
-      expect(result.stdout).toContain('common');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('expo'));
+      assert.ok(result.stdout.includes('common'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects expo from devDependencies', () => {
+  it('detects expo from devDependencies', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         devDependencies: { expo: '~51.0.0' },
@@ -35,14 +37,14 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('expo');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('expo'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects bare-rn project (ios + android dirs, no expo)', () => {
+  it('detects bare-rn project (ios + android dirs, no expo)', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { 'react-native': '0.74.0' },
@@ -54,16 +56,16 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('bare-rn');
-      expect(result.stdout).toContain('common');
-      expect(result.stdout).not.toContain('expo');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('bare-rn'));
+      assert.ok(result.stdout.includes('common'));
+      assert.ok(!result.stdout.includes('expo'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects native-ios layer from Swift files', () => {
+  it('detects native-ios layer from Swift files', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { 'react-native': '0.74.0' },
@@ -75,14 +77,14 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('native-ios');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('native-ios'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects native-android layer from Kotlin files', () => {
+  it('detects native-android layer from Kotlin files', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { 'react-native': '0.74.0' },
@@ -94,14 +96,14 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('native-android');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('native-android'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects ejected expo (expo + native code)', () => {
+  it('detects ejected expo (expo + native code)', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' },
@@ -113,30 +115,30 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('expo');
-      expect(result.stdout).not.toContain('bare-rn');
-      expect(result.stdout).toContain('native-ios');
-      expect(result.stdout).toContain('native-android');
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes('expo'));
+      assert.ok(!result.stdout.includes('bare-rn'));
+      assert.ok(result.stdout.includes('native-ios'));
+      assert.ok(result.stdout.includes('native-android'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('warns when no project signals found', () => {
+  it('warns when no project signals found', () => {
     const dir = createTempProject({});
     try {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(2);
-      expect(result.stdout).toContain('common');
+      assert.strictEqual(result.exitCode, 2);
+      assert.ok(result.stdout.includes('common'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('warns when no package.json found', () => {
+  it('warns when no package.json found', () => {
     const dir = createTempProject({
       'README.md': '# hello',
     });
@@ -144,7 +146,7 @@ describe('session-start.js', () => {
       const result = runHook('session-start.js', {}, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect(result.exitCode).toBe(2);
+      assert.strictEqual(result.exitCode, 2);
     } finally {
       cleanupTempProject(dir);
     }
@@ -152,7 +154,7 @@ describe('session-start.js', () => {
 });
 
 describe('post-edit-format.js', () => {
-  test('exits 0 for supported file extension', () => {
+  it('exits 0 for supported file extension', () => {
     const dir = createTempProject({
       'src/app.tsx': 'const x=1;',
       'node_modules/.bin/prettier': '',
@@ -164,41 +166,41 @@ describe('post-edit-format.js', () => {
       }, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips unsupported file extensions silently', () => {
+  it('skips unsupported file extensions silently', () => {
     const result = runHook('post-edit-format.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/some/image.png' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips when no file path in stdin', () => {
+  it('skips when no file path in stdin', () => {
     const result = runHook('post-edit-format.js', {
       tool_name: 'Edit',
       tool_input: {},
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips when stdin is empty', () => {
+  it('skips when stdin is empty', () => {
     const result = runHook('post-edit-format.js', {});
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('handles missing tool_input gracefully', () => {
+  it('handles missing tool_input gracefully', () => {
     const result = runHook('post-edit-format.js', {
       tool_name: 'Write',
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('formats .json files', () => {
+  it('formats .json files', () => {
     const dir = createTempProject({
       'config.json': '{"a":1}',
     });
@@ -209,13 +211,13 @@ describe('post-edit-format.js', () => {
       }, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('formats .css files', () => {
+  it('formats .css files', () => {
     const dir = createTempProject({
       'styles.css': 'body{color:red}',
     });
@@ -226,7 +228,7 @@ describe('post-edit-format.js', () => {
       }, {
         ERNE_PROJECT_DIR: dir,
       });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }

@@ -1,4 +1,6 @@
 'use strict';
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const path = require('path');
 const {
   runHook,
@@ -7,7 +9,7 @@ const {
 } = require('./helpers');
 
 describe('post-edit-typecheck.js', () => {
-  test('exits 0 for .ts/.tsx files (attempts tsc)', () => {
+  it('exits 0 for .ts/.tsx files (attempts tsc)', () => {
     const dir = createTempProject({
       'src/App.tsx': 'export const App = () => null;',
       'tsconfig.json': JSON.stringify({
@@ -19,36 +21,36 @@ describe('post-edit-typecheck.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/App.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-TS files', () => {
+  it('skips non-TS files', () => {
     const result = runHook('post-edit-typecheck.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/src/utils.js' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips when no file path', () => {
+  it('skips when no file path', () => {
     const result = runHook('post-edit-typecheck.js', {});
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips test files', () => {
+  it('skips test files', () => {
     const result = runHook('post-edit-typecheck.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/src/App.test.tsx' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 });
 
 describe('check-console-log.js', () => {
-  test('warns on console.log in production code', () => {
+  it('warns on console.log in production code', () => {
     const dir = createTempProject({
       'src/app.ts': 'console.log("debug");\nconst x = 1;',
     });
@@ -57,14 +59,14 @@ describe('check-console-log.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.ts') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(2);
-      expect(result.stdout).toContain('console.log');
+      assert.strictEqual(result.exitCode, 2);
+      assert.ok(result.stdout.includes('console.log'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('passes when no console.log found', () => {
+  it('passes when no console.log found', () => {
     const dir = createTempProject({
       'src/app.ts': 'const x = 1;\nexport default x;',
     });
@@ -73,13 +75,13 @@ describe('check-console-log.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.ts') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('ignores console.log in test files', () => {
+  it('ignores console.log in test files', () => {
     const dir = createTempProject({
       'src/app.test.ts': 'console.log("test output");',
     });
@@ -88,13 +90,13 @@ describe('check-console-log.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.test.ts') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('detects console.warn and console.error too', () => {
+  it('detects console.warn and console.error too', () => {
     const dir = createTempProject({
       'src/app.ts': 'console.warn("oops");\nconsole.error("bad");',
     });
@@ -103,23 +105,23 @@ describe('check-console-log.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.ts') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(2);
+      assert.strictEqual(result.exitCode, 2);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-JS/TS files', () => {
+  it('skips non-JS/TS files', () => {
     const result = runHook('check-console-log.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/README.md' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 });
 
 describe('check-platform-specific.js', () => {
-  test('warns when Platform.OS only checks one platform', () => {
+  it('warns when Platform.OS only checks one platform', () => {
     const dir = createTempProject({
       'src/app.tsx': [
         "import { Platform } from 'react-native';",
@@ -131,13 +133,13 @@ describe('check-platform-specific.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('passes when Platform.select has both platforms', () => {
+  it('passes when Platform.select has both platforms', () => {
     const dir = createTempProject({
       'src/app.tsx': [
         "import { Platform } from 'react-native';",
@@ -149,21 +151,21 @@ describe('check-platform-specific.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-RN files', () => {
+  it('skips non-RN files', () => {
     const result = runHook('check-platform-specific.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/config.json' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('passes when no Platform usage found', () => {
+  it('passes when no Platform usage found', () => {
     const dir = createTempProject({
       'src/app.tsx': 'const x = 1;\nexport default x;',
     });
@@ -172,7 +174,7 @@ describe('check-platform-specific.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
@@ -180,7 +182,7 @@ describe('check-platform-specific.js', () => {
 });
 
 describe('check-reanimated-worklet.js', () => {
-  test('warns on non-serializable reference in worklet', () => {
+  it('warns on non-serializable reference in worklet', () => {
     const dir = createTempProject({
       'src/anim.tsx': [
         "import Animated, { useAnimatedStyle } from 'react-native-reanimated';",
@@ -195,13 +197,13 @@ describe('check-reanimated-worklet.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/anim.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('passes for files without reanimated', () => {
+  it('passes for files without reanimated', () => {
     const dir = createTempProject({
       'src/app.tsx': 'const x = 1;\nexport default x;',
     });
@@ -210,23 +212,23 @@ describe('check-reanimated-worklet.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'src/app.tsx') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-JS/TS files', () => {
+  it('skips non-JS/TS files', () => {
     const result = runHook('check-reanimated-worklet.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/styles.css' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 });
 
 describe('check-expo-config.js', () => {
-  test('passes for valid app.json', () => {
+  it('passes for valid app.json', () => {
     const dir = createTempProject({
       'app.json': JSON.stringify({
         expo: { name: 'MyApp', slug: 'myapp', version: '1.0.0' },
@@ -237,13 +239,13 @@ describe('check-expo-config.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'app.json') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('warns on missing expo.name', () => {
+  it('warns on missing expo.name', () => {
     const dir = createTempProject({
       'app.json': JSON.stringify({
         expo: { slug: 'myapp', version: '1.0.0' },
@@ -254,22 +256,22 @@ describe('check-expo-config.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'app.json') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(2);
-      expect(result.stdout).toContain('name');
+      assert.strictEqual(result.exitCode, 2);
+      assert.ok(result.stdout.includes('name'));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-config files', () => {
+  it('skips non-config files', () => {
     const result = runHook('check-expo-config.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/src/app.tsx' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('warns on invalid JSON in app.json', () => {
+  it('warns on invalid JSON in app.json', () => {
     const dir = createTempProject({
       'app.json': '{ invalid json',
     });
@@ -278,7 +280,7 @@ describe('check-expo-config.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'app.json') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect(result.exitCode).toBe(2);
+      assert.strictEqual(result.exitCode, 2);
     } finally {
       cleanupTempProject(dir);
     }
@@ -286,7 +288,7 @@ describe('check-expo-config.js', () => {
 });
 
 describe('bundle-size-check.js', () => {
-  test('warns on large dependency additions', () => {
+  it('warns on large dependency additions', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({
         dependencies: { 'moment': '^2.30.0', 'react': '18.2.0' },
@@ -297,28 +299,28 @@ describe('bundle-size-check.js', () => {
         tool_name: 'Edit',
         tool_input: { file_path: path.join(dir, 'package.json') },
       }, { ERNE_PROJECT_DIR: dir });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('passes for non-package.json files', () => {
+  it('passes for non-package.json files', () => {
     const result = runHook('bundle-size-check.js', {
       tool_name: 'Edit',
       tool_input: { file_path: '/project/src/app.tsx' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips when no file path', () => {
+  it('skips when no file path', () => {
     const result = runHook('bundle-size-check.js', {});
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 });
 
 describe('pre-commit-lint.js', () => {
-  test('handles missing eslint gracefully', () => {
+  it('handles missing eslint gracefully', () => {
     const dir = createTempProject({
       'package.json': JSON.stringify({ name: 'test' }),
     });
@@ -327,25 +329,25 @@ describe('pre-commit-lint.js', () => {
         tool_name: 'Bash',
         tool_input: { command: 'git commit -m "test"' },
       }, { ERNE_PROJECT_DIR: dir });
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     } finally {
       cleanupTempProject(dir);
     }
   });
 
-  test('skips non-commit bash commands', () => {
+  it('skips non-commit bash commands', () => {
     const result = runHook('pre-commit-lint.js', {
       tool_name: 'Bash',
       tool_input: { command: 'ls -la' },
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 
-  test('skips when no command in stdin', () => {
+  it('skips when no command in stdin', () => {
     const result = runHook('pre-commit-lint.js', {
       tool_name: 'Bash',
       tool_input: {},
     });
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
   });
 });

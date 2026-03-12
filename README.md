@@ -22,15 +22,17 @@ This will:
 
 | Component | Count | Description |
 |-----------|-------|-------------|
-| Agents | 10 | Specialized AI agents for architecture, development, review, testing, UI, native, and more |
+| Agents | 11 | Specialized AI agents for architecture, development, review, testing, UI, native, and more |
 | Agent variants | 9 | Stack-adaptive agent configurations (StyleSheet vs NativeWind, Zustand vs Redux, etc.) |
-| Commands | 16 | Slash commands for every React Native workflow |
+| Commands | 19 | Slash commands for every React Native workflow |
 | Rule layers | 5 | Conditional rules: common, expo, bare-rn, native-ios, native-android |
 | Rule variants | 15 | Stack-specific rules selected by deep detection (state, navigation, styling, security, etc.) |
 | Hook profiles | 3 | Minimal, standard, strict — quality enforcement your way |
-| Skills | 8 | Reusable knowledge modules loaded on-demand |
+| Skills | 7 | Reusable knowledge modules loaded on-demand |
 | Contexts | 3 | Behavior modes: dev, review, vibe |
 | MCP configs | 10 | Pre-configured server integrations |
+| Workflow examples | 4 | End-to-end multi-agent workflow guides |
+| Handoff templates | 4 | Structured agent-to-agent context passing |
 
 ## Token Efficiency
 
@@ -38,18 +40,18 @@ ERNE's architecture is designed to minimize token usage through six layered mech
 
 | Mechanism | How it works | Savings |
 |-----------|-------------|---------|
-| **Profile-gated hooks** | Minimal profile runs 3 hooks instead of 17 | ~31% |
+| **Profile-gated hooks** | Minimal profile runs 4 hooks instead of 16 | ~31% |
 | **Conditional rules** | Only loads rules matching your project type (Expo, bare RN, native) | ~26% |
 | **On-demand skills** | Skills load only when their command is invoked, not always in context | ~12% |
 | **Subagent isolation** | Fresh agent per task with only its own definition + relevant rules | ~12% |
-| **Task-specific commands** | 16 focused prompts instead of one monolithic instruction set | ~13% |
+| **Task-specific commands** | 19 focused prompts instead of one monolithic instruction set | ~13% |
 | **Context-based behavior** | Modes change behavior dynamically without loading new rulesets | ~3% |
 
 **Result:** Typical workflows use **60–67% fewer tokens** compared to a naive all-in-context approach. Vibe mode (minimal profile) reaches 67% savings, standard development 64%, and even strict mode saves 57%.
 
 ## Agent Dashboard
 
-ERNE includes a real-time pixel-art dashboard that visualizes all 10 agents working in an animated office environment.
+ERNE includes a real-time pixel-art dashboard that visualizes all 11 agents working in an animated office environment.
 
 ```bash
 erne dashboard              # Start on port 3333, open browser
@@ -60,8 +62,9 @@ erne start                  # Init project + dashboard in background
 
 **Features:**
 - 4 office rooms — Development, Code Review, Testing, and Conference (brainstorming)
-- 10 animated agent sprites with walking, typing, and done animations
+- 11 animated agent sprites with walking, typing, and done animations
 - Conference room brainstorming — agents gather for planning sessions
+- Pipeline orchestrator coordination view in conference room
 - Thought bubbles showing the current task above working agents
 - Animated monitor screens (green code when working, screensaver when idle)
 - Toast notifications for agent start/complete events
@@ -72,6 +75,23 @@ erne start                  # Init project + dashboard in background
 - Auto-reconnect with exponential backoff
 
 The dashboard hooks into Claude Code's `PreToolUse` and `PostToolUse` events (pattern: `Agent`) to track which agents are actively working and what they're doing.
+
+## Multi-Agent Orchestration
+
+ERNE supports coordinated multi-agent workflows through the pipeline orchestrator:
+
+```bash
+/orchestrate "build user profile screen"
+```
+
+**Pipeline phases:**
+1. **Plan** — architect decomposes the task
+2. **Implement** — senior-developer + feature-builder work in parallel
+3. **Test** — tdd-guide writes and runs tests
+4. **Review** — code-reviewer validates with evidence
+5. **Validate** — performance-profiler checks performance
+
+Features retry logic (max 3 attempts), escalation to user on persistent failures, and structured handoff templates for context passing between agents. See [Pipeline Documentation](docs/pipeline.md) for details.
 
 ## IDE & Editor Support
 
@@ -102,22 +122,25 @@ All config files are generated adaptively based on your project's detected stack
 | **upgrade-assistant** | Version migration guidance | Code Review |
 | **tdd-guide** | Test-driven development workflow | Testing |
 | **performance-profiler** | FPS diagnostics and bundle optimization | Testing |
+| **pipeline-orchestrator** | Multi-agent workflow coordination | Conference |
 
 ## Hook Profiles
 
 | Profile | Hooks | Use Case |
 |---------|-------|----------|
-| minimal | 3 | Fast iteration, vibe coding — maximum speed, minimum friction |
-| standard | 11 | Balanced quality + speed (recommended) — catches real issues |
-| strict | 17 | Production-grade enforcement — full security, accessibility, perf budgets |
+| minimal | 4 | Fast iteration, vibe coding — maximum speed, minimum friction |
+| standard | 12 | Balanced quality + speed (recommended) — catches real issues |
+| strict | 16 | Production-grade enforcement — full security, accessibility, perf budgets |
 
 Change profile: set `ERNE_PROFILE` env var, add `<!-- Hook Profile: standard -->` to CLAUDE.md, or use `/vibe` context.
 
 ## Commands
 
-**Core:** `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`
+**Core:** `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/code`, `/feature`
 
 **Extended:** `/animate`, `/deploy`, `/component`, `/debug`, `/quality-gate`
+
+**Orchestration:** `/orchestrate`
 
 **Learning:** `/learn`, `/retrospective`, `/setup-device`
 
@@ -153,7 +176,7 @@ We welcome contributions from everyone — from typo fixes to new agents and ski
 | Report a bug | [Bug Report](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=bug_report.md) |
 | Request a feature | [Feature Request](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=feature_request.md) |
 | Propose a new skill | [Skill Proposal](https://github.com/JubaKitiashvili/everything-react-native-expo/issues/new?template=new_skill.md) |
-| Submit a PR | [Contributing Guide](.github/CONTRIBUTING.md) |
+| Submit a PR | [Contributing Guide](CONTRIBUTING.md) |
 
 **Quick contribution ideas:** Add a variant template for your stack, improve an agent's knowledge, write a new slash command, add an MCP config for your favorite service.
 
@@ -189,6 +212,10 @@ If you maintain a React Native library, Expo tool, or developer service — [let
 - [Commands Reference](docs/commands.md)
 - [Hooks & Profiles](docs/hooks-profiles.md)
 - [Creating Skills](docs/creating-skills.md)
+- [Pipeline & Orchestration](docs/pipeline.md)
+- [Memory Integration](docs/memory-integration.md)
+- [Handoff Templates](docs/handoff-templates.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## Links
 

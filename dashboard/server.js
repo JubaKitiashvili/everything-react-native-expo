@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { WebSocketServer } = require('ws');
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
@@ -9,7 +10,11 @@ const AGENT_TIMEOUT_MS = 5 * 60 * 1000;
 const TIMEOUT_CHECK_INTERVAL_MS = 30 * 1000;
 const DONE_TO_IDLE_DELAY_MS = 3000;
 const MAX_HISTORY_PER_AGENT = 50;
-const HISTORY_FILE = path.join(__dirname, 'activity-history.json');
+const ERNE_DIR = path.join(os.homedir(), '.erne');
+const HISTORY_FILE = path.join(ERNE_DIR, 'activity-history.json');
+
+// Ensure ~/.erne/ directory exists
+try { fs.mkdirSync(ERNE_DIR, { recursive: true }); } catch { /* ignore */ }
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -112,10 +117,10 @@ const addHistoryEntry = (agentName, entry) => {
 let persistTimer = null;
 const persistHistory = () => {
   if (persistTimer) return;
-  persistTimer = setTimeout(() => {
+  persistTimer = setTimeout(async () => {
     persistTimer = null;
     try {
-      fs.writeFileSync(HISTORY_FILE, JSON.stringify(activityHistory, null, 2));
+      await fs.promises.writeFile(HISTORY_FILE, JSON.stringify(activityHistory, null, 2));
     } catch {
       // Silent fail — persistence is best-effort
     }
@@ -149,6 +154,7 @@ const handleEvent = (event) => {
         agentState[name].lastEvent = now;
       }
     }
+    persistHistory();
     return { ok: true };
   }
 
@@ -200,7 +206,7 @@ let wss;
 
 const broadcastState = () => {
   if (!wss) return;
-  const data = JSON.stringify(agentState);
+  const data = JSON.stringify({ type: 'state', agents: agentState });
   for (const client of wss.clients) {
     if (client.readyState === 1) {
       client.send(data);
@@ -335,7 +341,7 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res);
 });
 
-wss = new WebSocketServer({ server });
+wss = new WebSocketServer({ server, maxPayload: 65536 });
 
 wss.on('connection', (ws) => {
   ws.send(JSON.stringify({
@@ -343,6 +349,21 @@ wss.on('connection', (ws) => {
     agents: agentState,
     history: activityHistory,
   }));
+
+  ws.on('message', (message) => {
+    let data;
+    try {
+      data = JSON.parse(message);
+    } catch (err) {
+      console.warn('Invalid WebSocket message:', err.message);
+      return;
+    }
+
+    const result = handleEvent(data);
+    if (!result.error) {
+      broadcastState();
+    }
+  });
 });
 
 server.listen(PORT, () => {

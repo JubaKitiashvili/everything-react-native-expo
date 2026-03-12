@@ -1,4 +1,6 @@
 'use strict';
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const path = require('path');
 const {
   runDispatcher,
@@ -10,7 +12,7 @@ const HOOKS_CONFIG = path.resolve(__dirname, '../../hooks/hooks.json');
 
 describe('run-with-flags.js dispatcher', () => {
   describe('profile gating', () => {
-    test('runs hook when profile matches', () => {
+    it('runs hook when profile matches', () => {
       const dir = createTempProject({
         'package.json': JSON.stringify({
           dependencies: { expo: '~51.0.0' },
@@ -23,43 +25,43 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_PROJECT_DIR: dir,
         });
         // session-start.js is in minimal — should run (exit 0)
-        expect(result.exitCode).toBe(0);
+        assert.strictEqual(result.exitCode, 0);
       } finally {
         cleanupTempProject(dir);
       }
     });
 
-    test('skips hook when profile does not match', () => {
+    it('skips hook when profile does not match', () => {
       const result = runDispatcher('post-edit-typecheck.js', {}, {
         ERNE_PROFILE: 'minimal',
         ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
       });
       // post-edit-typecheck.js is NOT in minimal — skip (exit 0, no output)
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe('');
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout, '');
     });
 
-    test('runs strict-only hook when profile is strict', () => {
+    it('runs strict-only hook when profile is strict', () => {
       const result = runDispatcher('security-scan.js', {}, {
         ERNE_PROFILE: 'strict',
         ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
       });
       // security-scan.js is in strict — should attempt to run
-      expect([0, 2]).toContain(result.exitCode);
+      assert.ok([0, 2].includes(result.exitCode));
     });
 
-    test('skips strict-only hook when profile is standard', () => {
+    it('skips strict-only hook when profile is standard', () => {
       const result = runDispatcher('security-scan.js', {}, {
         ERNE_PROFILE: 'standard',
         ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
       });
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe('');
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout, '');
     });
   });
 
   describe('profile resolution', () => {
-    test('env var takes highest priority', () => {
+    it('env var takes highest priority', () => {
       const dir = createTempProject({
         'CLAUDE.md': '<!-- Hook Profile: strict -->',
       });
@@ -70,14 +72,14 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
         });
         // env says minimal — typecheck should be skipped
-        expect(result.exitCode).toBe(0);
-        expect(result.stdout).toBe('');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.stdout, '');
       } finally {
         cleanupTempProject(dir);
       }
     });
 
-    test('CLAUDE.md comment used when no env var', () => {
+    it('CLAUDE.md comment used when no env var', () => {
       const dir = createTempProject({
         'CLAUDE.md': '# Project\n<!-- Hook Profile: strict -->',
       });
@@ -87,13 +89,13 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
         });
         // strict from CLAUDE.md — security-scan should attempt to run
-        expect([0, 2]).toContain(result.exitCode);
+        assert.ok([0, 2].includes(result.exitCode));
       } finally {
         cleanupTempProject(dir);
       }
     });
 
-    test('defaults to standard when no config', () => {
+    it('defaults to standard when no config', () => {
       const dir = createTempProject({});
       try {
         const result = runDispatcher('pre-commit-lint.js', {}, {
@@ -101,13 +103,13 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
         });
         // standard by default — pre-commit-lint should attempt to run
-        expect([0, 2]).toContain(result.exitCode);
+        assert.ok([0, 2].includes(result.exitCode));
       } finally {
         cleanupTempProject(dir);
       }
     });
 
-    test('reads CLAUDE.md from .claude/ subdirectory', () => {
+    it('reads CLAUDE.md from .claude/ subdirectory', () => {
       const dir = createTempProject({
         '.claude/CLAUDE.md': '<!-- Hook Profile: minimal -->',
       });
@@ -117,8 +119,8 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
         });
         // minimal from .claude/CLAUDE.md — typecheck skipped
-        expect(result.exitCode).toBe(0);
-        expect(result.stdout).toBe('');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.stdout, '');
       } finally {
         cleanupTempProject(dir);
       }
@@ -126,25 +128,25 @@ describe('run-with-flags.js dispatcher', () => {
   });
 
   describe('error handling', () => {
-    test('exits 0 when no hook script argument', () => {
+    it('exits 0 when no hook script argument', () => {
       const result = runDispatcher('', {}, {
         ERNE_PROFILE: 'standard',
         ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
       });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     });
 
-    test('exits 0 when hook script not in config', () => {
+    it('exits 0 when hook script not in config', () => {
       const result = runDispatcher('nonexistent-hook.js', {}, {
         ERNE_PROFILE: 'standard',
         ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
       });
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     });
   });
 
   describe('stdin forwarding', () => {
-    test('forwards stdin data to hook script', () => {
+    it('forwards stdin data to hook script', () => {
       const dir = createTempProject({
         'package.json': JSON.stringify({
           dependencies: { expo: '~51.0.0' },
@@ -160,7 +162,7 @@ describe('run-with-flags.js dispatcher', () => {
           ERNE_HOOKS_CONFIG: HOOKS_CONFIG,
           ERNE_PROJECT_DIR: dir,
         });
-        expect(result.exitCode).toBe(0);
+        assert.strictEqual(result.exitCode, 0);
       } finally {
         cleanupTempProject(dir);
       }

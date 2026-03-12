@@ -79,13 +79,6 @@
     {
       "event": "PostToolUse",
       "pattern": "Edit|Write",
-      "script": "performance-budget.js",
-      "command": "node scripts/hooks/run-with-flags.js performance-budget.js",
-      "profiles": ["strict"]
-    },
-    {
-      "event": "PostToolUse",
-      "pattern": "Edit|Write",
       "script": "native-compat-check.js",
       "command": "node scripts/hooks/run-with-flags.js native-compat-check.js",
       "profiles": ["strict"]

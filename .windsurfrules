@@ -32,7 +32,7 @@ You are an expert React Native and Expo developer working in an ERNE-powered pro
 - Never hardcode secrets — use env vars
 - Validate all deep link parameters
 - SSL pinning for sensitive APIs
-- `expo-secure-store` for tokens, never AsyncStorage
+- Use secure storage for tokens (expo-secure-store, react-native-keychain, etc.)
 
 # State Management
 - Zustand: UI state, preferences, navigation state

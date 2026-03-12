@@ -252,18 +252,18 @@ describe('Scenario C — Existing ERNE-generated CLAUDE.md', () => {
 // ─── Backup protection ───
 
 describe('Backup protection', () => {
-  it('does not overwrite existing backup file', () => {
-    const originalBackup = 'This is the original backup content.';
+  it('always updates backup with current content before overwriting', () => {
+    const currentContent = '# Second version\n';
     const dir = createTempProject({
       'package.json': { name: 'test-app' },
-      'CLAUDE.md': '# Second version\n',
-      'CLAUDE.md.pre-erne': originalBackup,
+      'CLAUDE.md': currentContent,
+      'CLAUDE.md.pre-erne': 'This is the original backup content.',
     });
 
     handleClaudeMd(dir, mockDetection, 'standard', mockRuleLayers);
 
     const backup = fs.readFileSync(path.join(dir, 'CLAUDE.md.pre-erne'), 'utf8');
-    assert.equal(backup, originalBackup, 'Original backup must be preserved');
+    assert.equal(backup, currentContent, 'Backup must contain the most recent content before overwrite');
   });
 });
 

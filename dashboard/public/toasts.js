@@ -24,7 +24,7 @@
     toast.innerHTML =
       '<span class="toast-icon">' + icon + '</span>' +
       '<div class="toast-body">' +
-        '<div class="toast-agent">' + agentName + ' ' + label + '</div>' +
+        '<div class="toast-agent">' + escapeHtml(agentName) + ' ' + label + '</div>' +
         '<div class="toast-task">' + escapeHtml(task || '') + '</div>' +
       '</div>';
 

@@ -44,6 +44,6 @@ You are executing the `/plan` command. Use the **architect** agent to design a f
 5. **Review with user** — Present the plan and ask for approval before implementation
 
 ## Notes
-- Reference `rules/common/patterns.md` and `rules/common/navigation.md` for conventions
+- Reference the active platform rules layer (`rules/expo/patterns.md` or `rules/bare-rn/patterns.md`) for conventions
 - Consider whether this is Expo managed, bare RN, or has native modules
 - Include test strategy in the plan

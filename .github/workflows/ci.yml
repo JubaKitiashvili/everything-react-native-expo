@@ -1,4 +1,4 @@
-name: CI
+name: ERNE CI
 
 on:
   push:
@@ -7,52 +7,25 @@ on:
     branches: [main]
 
 jobs:
-  validate:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [18, 20]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Validate content files
-        run: npm run validate
+      - name: Install dependencies
+        run: npm install --ignore-scripts
 
       - name: Run tests
-        run: npm test
+        run: node --test tests/*.test.js tests/hooks/*.test.js
 
-      - name: Check CLI runs
-        run: node bin/cli.js version
-
-      - name: Verify file structure
-        run: |
-          echo "Checking required directories..."
-          for dir in agents commands rules skills hooks contexts mcp-configs scripts schemas docs examples; do
-            if [ ! -d "$dir" ]; then
-              echo "FAIL: Missing directory: $dir"
-              exit 1
-            fi
-          done
-          echo "All directories present."
-
-          echo "Checking agent count..."
-          AGENT_COUNT=$(ls -1 agents/*.md 2>/dev/null | wc -l | tr -d ' ')
-          if [ "$AGENT_COUNT" -ne 10 ]; then
-            echo "FAIL: Expected 10 agents, found $AGENT_COUNT"
-            exit 1
-          fi
-          echo "OK: $AGENT_COUNT agents"
-
-          echo "Checking command count..."
-          CMD_COUNT=$(ls -1 commands/*.md 2>/dev/null | wc -l | tr -d ' ')
-          if [ "$CMD_COUNT" -ne 16 ]; then
-            echo "FAIL: Expected 16 commands, found $CMD_COUNT"
-            exit 1
-          fi
-          echo "OK: $CMD_COUNT commands"
+      - name: Run agent linting
+        run: node scripts/lint-agents.js

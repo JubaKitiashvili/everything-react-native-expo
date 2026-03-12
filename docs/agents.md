@@ -7,15 +7,16 @@ Agents are specialized AI personas with focused expertise. Each agent has specif
 | Agent | Specialty | Used By Commands |
 |-------|-----------|-----------------|
 | architect | System design, navigation, file structure | /plan, /navigate |
+| senior-developer | End-to-end feature implementation, screens, hooks, API, state | /code, /feature, /plan |
+| feature-builder | Focused feature units, works in parallel with senior-developer | /feature, /code, /component |
 | code-reviewer | Code quality, best practices, security | /code-review, /quality-gate, /deploy |
 | tdd-guide | Test-driven development, testing patterns | /tdd, /component |
 | performance-profiler | FPS, memory, bundle size, animations | /perf, /quality-gate, /debug |
+| ui-designer | NativeWind, Reanimated, components | /animate, /component |
 | native-bridge-builder | Swift/Kotlin bridges, Expo Modules | /native-module |
 | expo-config-resolver | EAS, app.config, build fixes | /build-fix, /deploy |
-| ui-designer | NativeWind, Reanimated, components | /animate, /component |
 | upgrade-assistant | Version migrations, breaking changes | /upgrade |
-| senior-developer | End-to-end feature implementation, screens, hooks, API, state | /code, /feature, /plan |
-| feature-builder | Focused feature units, works in parallel with senior-developer | /code, /feature, /component |
+| pipeline-orchestrator | Multi-agent pipeline coordination, workflow sequencing | /orchestrate |
 
 ## How Agents Work
 

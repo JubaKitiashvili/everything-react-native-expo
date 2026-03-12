@@ -2,8 +2,23 @@
 node_modules/
 coverage/
 .claude/erne/
+docs/ANALYSIS/
 .DS_Store
 .env
 .env.*
 .playwright-mcp/
-.playwright-mcp/
+
+# Dashboard runtime files
+dashboard/package-lock.json
+dashboard/activity-history.json
+
+# Claude Code skill plugin symlinks
+agent-device
+building-native-ui
+github
+react-native-best-practices
+upgrading-react-native
+validate-skills
+
+# Local assets
+buildwithclaude/

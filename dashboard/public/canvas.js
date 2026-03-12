@@ -56,7 +56,9 @@
       { x: 4, y: 5, agent: 'tdd-guide' },
       { x: 13, y: 5, agent: 'performance-profiler' },
     ],
-    conference: [],
+    conference: [
+      { x: 12, y: 5, agent: 'pipeline-orchestrator' },
+    ],
   };
 
   const ROOM_LABELS = {
@@ -78,6 +80,7 @@
     'performance-profiler': 'profiler',
     'senior-developer': 'senior-dev',
     'feature-builder': 'feat-builder',
+    'pipeline-orchestrator': 'orchestrator',
   };
 
   /* ---- Drawing helpers ---- */

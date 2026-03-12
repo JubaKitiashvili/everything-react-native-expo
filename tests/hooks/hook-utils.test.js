@@ -1,4 +1,6 @@
 'use strict';
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
 const { execFileSync } = require('child_process');
 const path = require('path');
 
@@ -28,7 +30,7 @@ function runSnippet(code, stdin = '') {
 }
 
 describe('readStdin', () => {
-  test('parses valid JSON from stdin', () => {
+  it('parses valid JSON from stdin', () => {
     const input = JSON.stringify({
       tool_name: 'Edit',
       tool_input: { file_path: '/a/b.ts' },
@@ -37,116 +39,116 @@ describe('readStdin', () => {
       'const d = utils.readStdin(); console.log(JSON.stringify(d));',
       input
     );
-    expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout).tool_name).toBe('Edit');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(JSON.parse(result.stdout).tool_name, 'Edit');
   });
 
-  test('returns empty object for empty stdin', () => {
+  it('returns empty object for empty stdin', () => {
     const result = runSnippet(
       'const d = utils.readStdin(); console.log(JSON.stringify(d));',
       ''
     );
-    expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({});
+    assert.strictEqual(result.exitCode, 0);
+    assert.deepStrictEqual(JSON.parse(result.stdout), {});
   });
 
-  test('returns empty object for invalid JSON', () => {
+  it('returns empty object for invalid JSON', () => {
     const result = runSnippet(
       'const d = utils.readStdin(); console.log(JSON.stringify(d));',
       'not json'
     );
-    expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({});
+    assert.strictEqual(result.exitCode, 0);
+    assert.deepStrictEqual(JSON.parse(result.stdout), {});
   });
 });
 
 describe('getEditedFilePath', () => {
-  test('extracts file_path from tool_input', () => {
+  it('extracts file_path from tool_input', () => {
     const r = runSnippet(
       `console.log(utils.getEditedFilePath({
         tool_input: { file_path: '/a/b.ts' }
       }));`
     );
-    expect(r.stdout.trim()).toBe('/a/b.ts');
+    assert.strictEqual(r.stdout.trim(), '/a/b.ts');
   });
 
-  test('falls back to path from tool_input', () => {
+  it('falls back to path from tool_input', () => {
     const r = runSnippet(
       `console.log(utils.getEditedFilePath({
         tool_input: { path: '/c/d.js' }
       }));`
     );
-    expect(r.stdout.trim()).toBe('/c/d.js');
+    assert.strictEqual(r.stdout.trim(), '/c/d.js');
   });
 
-  test('returns null for missing input', () => {
+  it('returns null for missing input', () => {
     const r = runSnippet('console.log(utils.getEditedFilePath(null));');
-    expect(r.stdout.trim()).toBe('null');
+    assert.strictEqual(r.stdout.trim(), 'null');
   });
 });
 
 describe('exit helpers', () => {
-  test('pass exits with code 0', () => {
+  it('pass exits with code 0', () => {
     const r = runSnippet('utils.pass("ok");');
-    expect(r.exitCode).toBe(0);
-    expect(r.stdout.trim()).toBe('ok');
+    assert.strictEqual(r.exitCode, 0);
+    assert.strictEqual(r.stdout.trim(), 'ok');
   });
 
-  test('fail exits with code 1', () => {
+  it('fail exits with code 1', () => {
     const r = runSnippet('utils.fail("blocked");');
-    expect(r.exitCode).toBe(1);
-    expect(r.stdout.trim()).toBe('blocked');
+    assert.strictEqual(r.exitCode, 1);
+    assert.strictEqual(r.stdout.trim(), 'blocked');
   });
 
-  test('warn exits with code 2', () => {
+  it('warn exits with code 2', () => {
     const r = runSnippet('utils.warn("warning");');
-    expect(r.exitCode).toBe(2);
-    expect(r.stdout.trim()).toBe('warning');
+    assert.strictEqual(r.exitCode, 2);
+    assert.strictEqual(r.stdout.trim(), 'warning');
   });
 });
 
 describe('isTestFile', () => {
-  test('detects .test.ts', () => {
+  it('detects .test.ts', () => {
     const r = runSnippet(
       'console.log(utils.isTestFile("src/Button.test.ts"));'
     );
-    expect(r.stdout.trim()).toBe('true');
+    assert.strictEqual(r.stdout.trim(), 'true');
   });
 
-  test('detects .spec.tsx', () => {
+  it('detects .spec.tsx', () => {
     const r = runSnippet(
       'console.log(utils.isTestFile("src/Button.spec.tsx"));'
     );
-    expect(r.stdout.trim()).toBe('true');
+    assert.strictEqual(r.stdout.trim(), 'true');
   });
 
-  test('detects __tests__ directory', () => {
+  it('detects __tests__ directory', () => {
     const r = runSnippet(
       'console.log(utils.isTestFile("src/__tests__/Button.tsx"));'
     );
-    expect(r.stdout.trim()).toBe('true');
+    assert.strictEqual(r.stdout.trim(), 'true');
   });
 
-  test('rejects normal source file', () => {
+  it('rejects normal source file', () => {
     const r = runSnippet(
       'console.log(utils.isTestFile("src/Button.tsx"));'
     );
-    expect(r.stdout.trim()).toBe('false');
+    assert.strictEqual(r.stdout.trim(), 'false');
   });
 });
 
 describe('hasExtension', () => {
-  test('matches .ts extension', () => {
+  it('matches .ts extension', () => {
     const r = runSnippet(
       'console.log(utils.hasExtension("a/b.ts", [".ts", ".tsx"]));'
     );
-    expect(r.stdout.trim()).toBe('true');
+    assert.strictEqual(r.stdout.trim(), 'true');
   });
 
-  test('rejects .js when checking .ts', () => {
+  it('rejects .js when checking .ts', () => {
     const r = runSnippet(
       'console.log(utils.hasExtension("a/b.js", [".ts", ".tsx"]));'
     );
-    expect(r.stdout.trim()).toBe('false');
+    assert.strictEqual(r.stdout.trim(), 'false');
   });
 });

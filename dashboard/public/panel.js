@@ -14,6 +14,7 @@
     'native-bridge-builder', 'expo-config-resolver', 'ui-designer',
     'code-reviewer', 'upgrade-assistant',
     'tdd-guide', 'performance-profiler',
+    'pipeline-orchestrator',
   ];
 
   const init = (container, agentClickHandler) => {
@@ -37,10 +38,12 @@
       var row = document.createElement('div');
       row.className = 'agent-row';
       row.dataset.agent = name;
+      var emoji = (window.AgentSprites && window.AgentSprites.AGENT_DEFS[name] && window.AgentSprites.AGENT_DEFS[name].emoji) || '';
+      var emojiSpan = emoji ? '<span class="agent-emoji">' + emoji + '</span> ' : '';
       row.innerHTML =
         '<div class="agent-dot idle" id="dot-' + name + '"></div>' +
         '<div class="agent-info">' +
-          '<div class="agent-name">' + name + '</div>' +
+          '<div class="agent-name">' + emojiSpan + name + '</div>' +
           '<div class="agent-status idle" id="status-' + name + '">IDLE</div>' +
           '<div class="agent-task" id="task-' + name + '"></div>' +
         '</div>' +

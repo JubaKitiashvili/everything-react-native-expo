@@ -12,6 +12,7 @@
     "bundle-size-check.js",
     "pre-commit-lint.js",
     "continuous-learning-observer.js",
-    "evaluate-session.js"
+    "evaluate-session.js",
+    "dashboard-event.js"
   ]
 }

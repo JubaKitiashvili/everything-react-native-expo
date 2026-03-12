@@ -54,10 +54,17 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js",
-    "lint": "node scripts/lint-content.js",
+    "test": "node --test tests/*.test.js tests/hooks/*.test.js",
+    "lint": "eslint lib/ scripts/ bin/",
+    "lint:agents": "node scripts/lint-agents.js",
+    "lint:content": "node scripts/lint-content.js",
+    "format": "prettier --write 'lib/**/*.js' 'scripts/**/*.js' 'bin/**/*.js'",
+    "format:check": "prettier --check 'lib/**/*.js' 'scripts/**/*.js' 'bin/**/*.js'",
     "validate": "node scripts/validate-all.js",
     "prepublishOnly": "npm run validate"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  }
 }

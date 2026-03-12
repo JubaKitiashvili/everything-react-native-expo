@@ -44,6 +44,7 @@ describe('Framework detection', () => {
   it('detects expo-bare project with iOS native code', () => {
     const dir = createTempProject({
       'package.json': { dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' } },
+      'ios/Podfile': 'platform :ios',
       'ios/AppDelegate.swift': 'import UIKit',
     });
     const result = detectProject(dir);
@@ -54,6 +55,7 @@ describe('Framework detection', () => {
   it('detects expo-bare project with Android native code', () => {
     const dir = createTempProject({
       'package.json': { dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' } },
+      'android/build.gradle': 'apply plugin: "com.android.application"',
       'android/MainActivity.kt': 'package com.test',
     });
     const result = detectProject(dir);
@@ -63,6 +65,7 @@ describe('Framework detection', () => {
   it('detects expo-bare with .m files', () => {
     const dir = createTempProject({
       'package.json': { dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' } },
+      'ios/Podfile': 'platform :ios',
       'ios/AppDelegate.m': '#import <UIKit/UIKit.h>',
     });
     const result = detectProject(dir);
@@ -72,6 +75,7 @@ describe('Framework detection', () => {
   it('detects expo-bare with .mm files', () => {
     const dir = createTempProject({
       'package.json': { dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' } },
+      'ios/Podfile': 'platform :ios',
       'ios/Module.mm': '// obj-c++',
     });
     const result = detectProject(dir);
@@ -81,6 +85,7 @@ describe('Framework detection', () => {
   it('detects expo-bare with .java files', () => {
     const dir = createTempProject({
       'package.json': { dependencies: { expo: '~51.0.0', 'react-native': '0.74.0' } },
+      'android/build.gradle': 'apply plugin: "com.android.application"',
       'android/app/src/main/java/Main.java': 'public class Main {}',
     });
     const result = detectProject(dir);
@@ -545,6 +550,120 @@ describe('Metadata detection', () => {
     });
     const result = detectProject(dir);
     assert.equal(result.hasNewArch, false);
+  });
+});
+
+// ─── Monorepo Detection ───
+
+describe('Monorepo detection', () => {
+  it('detects pnpm-workspace.yaml and parses workspace globs', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+      'pnpm-workspace.yaml': 'packages:\n  - apps/*\n  - packages/*',
+      'apps/mobile/package.json': { name: '@test/mobile', dependencies: { 'react-native': '0.74.0', expo: '~51.0.0' } },
+      'packages/shared/package.json': { name: '@test/shared', dependencies: {} },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'pnpm');
+    assert.equal(result.monorepo.packages.length, 2);
+    const mobile = result.monorepo.packages.find(p => p.name === '@test/mobile');
+    assert.equal(mobile.hasReactNative, true);
+    assert.equal(mobile.hasExpo, true);
+    const shared = result.monorepo.packages.find(p => p.name === '@test/shared');
+    assert.equal(shared.hasReactNative, false);
+    assert.equal(shared.hasExpo, false);
+  });
+
+  it('detects lerna.json with custom packages config', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+      'lerna.json': { version: '0.0.0', packages: ['modules/*'] },
+      'modules/app/package.json': { name: '@test/app', dependencies: { 'react-native': '0.74.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'lerna');
+    assert.equal(result.monorepo.packages.length, 1);
+    assert.equal(result.monorepo.packages[0].hasReactNative, true);
+  });
+
+  it('detects package.json workspaces field (npm/yarn)', () => {
+    const dir = createTempProject({
+      'package.json': {
+        dependencies: { 'react-native': '0.74.0' },
+        workspaces: ['packages/*', 'apps/*'],
+      },
+      'packages/ui/package.json': { name: '@test/ui', dependencies: {} },
+      'apps/mobile/package.json': { name: '@test/mobile', dependencies: { 'react-native': '0.74.0', expo: '~51.0.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'npm');
+    assert.equal(result.monorepo.packages.length, 2);
+    const mobile = result.monorepo.packages.find(p => p.name === '@test/mobile');
+    assert.equal(mobile.hasReactNative, true);
+    assert.equal(mobile.hasExpo, true);
+    assert.equal(mobile.path, path.join('apps', 'mobile'));
+  });
+
+  it('detects turbo.json monorepo', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+      'turbo.json': { pipeline: { build: { dependsOn: ['^build'] } } },
+      'packages/app/package.json': { name: '@test/app', dependencies: { 'react-native': '0.74.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'turbo');
+    assert.equal(result.monorepo.packages.length, 1);
+  });
+
+  it('detects nx.json monorepo with default globs', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+      'nx.json': { npmScope: 'myorg' },
+      'apps/mobile/package.json': { name: '@myorg/mobile', dependencies: { 'react-native': '0.74.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'nx');
+    assert.equal(result.monorepo.packages.length, 1);
+    assert.equal(result.monorepo.packages[0].name, '@myorg/mobile');
+  });
+
+  it('returns null monorepo for non-monorepo project', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, false);
+    assert.equal(result.monorepo, null);
+  });
+
+  it('handles workspaces as object (yarn classic format)', () => {
+    const dir = createTempProject({
+      'package.json': {
+        dependencies: { 'react-native': '0.74.0' },
+        workspaces: { packages: ['packages/*'] },
+      },
+      'packages/lib/package.json': { name: '@test/lib', dependencies: { 'react-native': '0.74.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'npm');
+    assert.equal(result.monorepo.packages.length, 1);
+  });
+
+  it('returns empty packages when workspace dirs do not exist', () => {
+    const dir = createTempProject({
+      'package.json': { dependencies: { 'react-native': '0.74.0' } },
+      'turbo.json': { pipeline: {} },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'turbo');
+    assert.equal(result.monorepo.packages.length, 0);
   });
 });
 

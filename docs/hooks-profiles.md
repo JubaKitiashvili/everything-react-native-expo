@@ -6,26 +6,35 @@ ERNE uses Claude Code hooks to enforce quality standards automatically. Hooks ar
 
 Three profiles control which hooks are active:
 
-### minimal
-- Pre-commit lint only
+### minimal (4 hooks)
+- Session-start environment check
+- Post-edit format
+- Continuous-learning observer
+- Dashboard event
 - Maximum speed, minimal friction
 - Best for: prototyping, vibe mode, quick experiments
 
-### standard (recommended)
+### standard (12 hooks, recommended)
+- Session-start environment check
 - Format on edit
 - TypeScript type checking
 - Console.log detection
 - Platform-specific code validation
+- Reanimated worklet validation
+- Expo config validation
+- Bundle size check
 - Pre-commit lint
+- Continuous-learning observer
+- Evaluate session
+- Dashboard event
 - Best for: daily development
 
-### strict
+### strict (16 hooks)
 - Everything in standard, plus:
+- Pre-edit test gate
 - Security scanning
-- Performance budget checking
-- Accessibility audit
-- Bundle size monitoring
 - Native compatibility checks
+- Accessibility audit
 - Best for: pre-release, production code
 
 ## Changing Profile
@@ -56,6 +65,7 @@ export ERNE_PROFILE=strict
 | PostToolUse | After a tool runs | Format code, typecheck, pattern capture |
 | PreCommit | Before git commit | Lint staged files |
 | SessionStart | On session start | Load profile, check environment |
+| Stop | On session end | Continuous-learning observer, evaluate-session |
 
 ## Adding Custom Hooks
 
@@ -65,7 +75,7 @@ Add hooks in `.claude/hooks.json`:
   "hooks": [
     {
       "event": "PostToolUse",
-      "tools": ["Edit", "Write"],
+      "pattern": "Edit|Write",
       "command": "node .claude/scripts/hooks/my-custom-hook.js $FILE"
     }
   ]

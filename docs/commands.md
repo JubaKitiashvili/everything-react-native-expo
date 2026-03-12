@@ -8,6 +8,8 @@ Commands are slash-prefixed actions that orchestrate agents for specific tasks.
 | Command | Purpose | Agents |
 |---------|---------|--------|
 | `/plan` | Design feature architecture | architect |
+| `/code` | Implement features | senior-developer |
+| `/feature` | Build focused feature unit | feature-builder |
 | `/code-review` | Full code review | code-reviewer + performance-profiler |
 | `/tdd` | Test-first development | tdd-guide |
 | `/build-fix` | Fix build failures | expo-config-resolver |
@@ -24,6 +26,7 @@ Commands are slash-prefixed actions that orchestrate agents for specific tasks.
 | `/component` | Design + test component | ui-designer + tdd-guide |
 | `/debug` | Systematic diagnosis | performance-profiler |
 | `/quality-gate` | Pre-merge checks | code-reviewer + performance-profiler |
+| `/orchestrate` | Run multi-agent pipeline | pipeline-orchestrator |
 
 ### Script-Driven
 | Command | Purpose | What It Runs |

@@ -4,6 +4,7 @@
   "hooks": [
     "session-start.js",
     "post-edit-format.js",
-    "continuous-learning-observer.js"
+    "continuous-learning-observer.js",
+    "dashboard-event.js"
   ]
 }

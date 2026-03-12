@@ -2,9 +2,10 @@
 // bin/cli.js — ERNE CLI entry point
 // Usage: npx erne-universal <command>
 //   Commands:
-//     init     — Interactive project setup
-//     update   — Update ERNE to latest version
-//     version  — Show installed version
+//     init        — Interactive project setup
+//     update      — Update ERNE to latest version
+//     add-agent   — Create a new custom agent definition
+//     version     — Show installed version
 
 'use strict';
 
@@ -13,6 +14,11 @@ const COMMANDS = {
   update: () => require('../lib/update'),
   dashboard: () => require('../lib/dashboard'),
   start: () => require('../lib/start'),
+  'add-agent': () => require('../lib/add-agent'),
+  doctor: () => require('../lib/doctor'),
+  status: () => require('../lib/status'),
+  'sync-configs': () => require('../lib/sync-configs'),
+  sync: () => require('../lib/sync-configs'),
   version: () => {
     const pkg = require('../package.json');
     console.log(`erne v${pkg.version}`);
@@ -26,12 +32,22 @@ const COMMANDS = {
     npx erne-universal <command> [options]
 
   Commands:
-    init       Set up ERNE in your project
-    update     Update to the latest version
-    dashboard  Launch the ERNE Agent Dashboard
-    start      Init project and start dashboard
-    version    Show installed version
-    help       Show this help message
+    init        Set up ERNE in your project
+    update      Update to the latest version
+    add-agent   Create a new custom agent definition
+    dashboard   Launch the ERNE Agent Dashboard
+    start       Init project and start dashboard
+    doctor      Check project health and ERNE setup
+    status      Show current ERNE configuration
+    sync-configs Sync IDE config files from CLAUDE.md (alias: sync)
+    version     Show installed version
+    help        Show this help message
+
+  Add-agent options:
+    --room <name>   Agent room: development, code-review, testing, conference (default: development)
+
+  Sync-configs options:
+    --dry-run              Preview changes without writing files
 
   Init options:
     --profile, -p <name>   Hook profile: minimal, standard, strict
@@ -43,6 +59,8 @@ const COMMANDS = {
     npx erne-universal init --yes
     npx erne-universal init --profile strict --mcp agent-device,github
     npx erne-universal init -p minimal --no-mcp -y
+    npx erne-universal add-agent api-specialist
+    npx erne-universal add-agent database-expert --room testing
 
   Website: https://erne.dev
     `);
@@ -50,7 +68,12 @@ const COMMANDS = {
   }
 };
 
-const command = process.argv[2] || 'help';
+let command = process.argv[2] || 'help';
+
+// Handle --version / -v flags
+if (command === '--version' || command === '-v') {
+  command = 'version';
+}
 
 if (!COMMANDS[command]) {
   console.error(`Unknown command: ${command}`);
