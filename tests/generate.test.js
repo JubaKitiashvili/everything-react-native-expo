@@ -1,10 +1,13 @@
 // tests/generate.test.js — Tests for variant selection and config generation
 'use strict';
 
-const { describe, it } = require('node:test');
+const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-const { selectVariant, VARIANT_MAP, determineRuleLayers } = require('../lib/generate');
+const { selectVariant, VARIANT_MAP, determineRuleLayers, generateConfig } = require('../lib/generate');
 
 // ─── VARIANT_MAP structure ─────────────────────────────────────────────────────
 
@@ -116,5 +119,101 @@ describe('determineRuleLayers', () => {
   it('unknown framework gets only common', () => {
     const layers = determineRuleLayers({ framework: 'unknown' });
     assert.deepEqual(layers, ['common']);
+  });
+});
+
+// ─── generateConfig integration — variant file copying ────────────────────────
+
+describe('generateConfig — variant file copying', () => {
+  let tmpDir;
+  const erneRoot = path.resolve(__dirname, '..');
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'erne-gen-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('copies zustand rule variant over base state-management.md', () => {
+    const detection = {
+      framework: 'expo-managed',
+      stack: { state: 'zustand', serverState: 'tanstack-query', navigation: 'expo-router', lists: 'flashlist', images: 'expo-image', styling: 'nativewind', storage: 'expo-secure-store' },
+      componentStyle: 'functional',
+      hasMonorepo: false,
+    };
+    generateConfig(erneRoot, tmpDir, detection, 'minimal', []);
+
+    const dest = path.join(tmpDir, 'rules', 'common', 'state-management.md');
+    assert.ok(fs.existsSync(dest), 'state-management.md should exist');
+
+    const content = fs.readFileSync(dest, 'utf8');
+    const variantContent = fs.readFileSync(path.join(erneRoot, 'rules', 'variants', 'state-management', 'zustand-tanstack.md'), 'utf8');
+    assert.equal(content, variantContent, 'should be the zustand-tanstack variant, not generic');
+  });
+
+  it('copies nativewind agent variant over base ui-designer.md', () => {
+    const detection = {
+      framework: 'expo-managed',
+      stack: { state: 'zustand', serverState: 'none', navigation: 'expo-router', lists: 'flashlist', images: 'expo-image', styling: 'nativewind', storage: 'expo-secure-store' },
+      componentStyle: 'functional',
+      hasMonorepo: false,
+    };
+    generateConfig(erneRoot, tmpDir, detection, 'minimal', []);
+
+    const dest = path.join(tmpDir, 'agents', 'ui-designer.md');
+    assert.ok(fs.existsSync(dest), 'ui-designer.md should exist');
+
+    const content = fs.readFileSync(dest, 'utf8');
+    const variantContent = fs.readFileSync(path.join(erneRoot, 'agents', 'variants', 'ui-designer', 'nativewind.md'), 'utf8');
+    assert.equal(content, variantContent, 'should be the nativewind variant, not generic');
+  });
+
+  it('copies monorepo architect variant when hasMonorepo is true', () => {
+    const detection = {
+      framework: 'expo-managed',
+      stack: { state: 'zustand', serverState: 'none', navigation: 'expo-router', lists: 'flatlist', images: 'rn-image', styling: 'stylesheet', storage: 'async-storage' },
+      componentStyle: 'functional',
+      hasMonorepo: true,
+    };
+    generateConfig(erneRoot, tmpDir, detection, 'minimal', []);
+
+    const dest = path.join(tmpDir, 'agents', 'architect.md');
+    const content = fs.readFileSync(dest, 'utf8');
+    const variantContent = fs.readFileSync(path.join(erneRoot, 'agents', 'variants', 'architect', 'monorepo.md'), 'utf8');
+    assert.equal(content, variantContent, 'should be the monorepo variant');
+  });
+
+  it('copies expo-router navigation variant', () => {
+    const detection = {
+      framework: 'expo-managed',
+      stack: { state: 'zustand', serverState: 'none', navigation: 'expo-router', lists: 'flatlist', images: 'rn-image', styling: 'stylesheet', storage: 'async-storage' },
+      componentStyle: 'functional',
+      hasMonorepo: false,
+    };
+    generateConfig(erneRoot, tmpDir, detection, 'minimal', []);
+
+    const dest = path.join(tmpDir, 'rules', 'common', 'navigation.md');
+    const content = fs.readFileSync(dest, 'utf8');
+    const variantContent = fs.readFileSync(path.join(erneRoot, 'rules', 'variants', 'navigation', 'expo-router.md'), 'utf8');
+    assert.equal(content, variantContent, 'should be the expo-router variant');
+  });
+
+  it('generates all expected directories', () => {
+    const detection = {
+      framework: 'expo-managed',
+      stack: { state: 'zustand', serverState: 'none', navigation: 'expo-router', lists: 'flatlist', images: 'rn-image', styling: 'stylesheet', storage: 'async-storage' },
+      componentStyle: 'functional',
+      hasMonorepo: false,
+    };
+    generateConfig(erneRoot, tmpDir, detection, 'standard', ['agent-device']);
+
+    assert.ok(fs.existsSync(path.join(tmpDir, 'agents')), 'agents/ should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'commands')), 'commands/ should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'rules', 'common')), 'rules/common/ should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'rules', 'expo')), 'rules/expo/ should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'contexts')), 'contexts/ should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'skills')), 'skills/ should exist');
   });
 });

@@ -14,7 +14,7 @@
   "author": "Juba Kitiashvili",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JubaKitiashvili/everything-react-native-expo"
+    "url": "git+https://github.com/JubaKitiashvili/everything-react-native-expo.git"
   },
   "homepage": "https://erne.dev",
   "bugs": {
