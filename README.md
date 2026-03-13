@@ -15,6 +15,8 @@
 
 ## ⚡ Quick Start
 
+> **Prerequisite:** [Claude Code](https://claude.ai/claude-code) is required for the full experience (11 agents, pipeline orchestration, dashboard, hooks). Other IDEs receive adaptive rules and configuration — see [IDE Support](#%EF%B8%8F-ide--editor-support).
+
 ```bash
 npx erne-universal init
 ```
@@ -157,18 +159,29 @@ Change profile: set `ERNE_PROFILE` env var, add `<!-- Hook Profile: standard -->
 
 ## 🖥️ IDE & Editor Support
 
-ERNE works with every major AI coding assistant out of the box:
+ERNE generates adaptive config files for multiple IDEs, but the **full agent experience requires Claude Code**:
+
+| Feature | Claude Code | Cursor / Windsurf / Copilot / Codex |
+|---------|:-----------:|:------------------------------------:|
+| Adaptive rules & config | ✅ | ✅ |
+| Stack detection (15 dimensions) | ✅ | ✅ |
+| 19 slash commands | ✅ | ❌ |
+| 11 specialized agents | ✅ | ❌ |
+| Pipeline orchestration | ✅ | ❌ |
+| Hook profiles | ✅ | ❌ |
+| Agent dashboard | ✅ | ❌ |
+| Cross-session memory | ✅ | ❌ |
+
+**Generated config files:**
 
 | File | IDE / Tool |
 |------|-----------|
-| `CLAUDE.md` | Claude Code |
+| `CLAUDE.md` | Claude Code (full experience) |
 | `AGENTS.md` | Codex, Windsurf, Cursor, GitHub Copilot |
-| `GEMINI.md` | Google Antigravity |
+| `GEMINI.md` | Gemini CLI |
 | `.cursorrules` | Cursor |
 | `.windsurfrules` | Windsurf |
 | `.github/copilot-instructions.md` | GitHub Copilot |
-
-All config files are generated adaptively based on your project's detected stack.
 
 ---
 
