@@ -344,6 +344,9 @@ const server = http.createServer(async (req, res) => {
 wss = new WebSocketServer({ server, maxPayload: 65536 });
 
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   ws.send(JSON.stringify({
     type: 'init',
     agents: agentState,
@@ -365,6 +368,15 @@ wss.on('connection', (ws) => {
     }
   });
 });
+
+// Heartbeat: ping every 30s, terminate dead connections
+setInterval(() => {
+  for (const ws of wss.clients) {
+    if (!ws.isAlive) { ws.terminate(); continue; }
+    ws.isAlive = false;
+    ws.ping();
+  }
+}, 30000);
 
 server.listen(PORT, () => {
   console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
