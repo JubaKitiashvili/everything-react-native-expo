@@ -24,17 +24,22 @@ if (toolName === 'Edit' || toolName === 'Write') {
     .catch(() => {});
 }
 
+function shellEscape(str) {
+  if (!str) return "''";
+  return "'" + str.replace(/'/g, "'\\''") + "'";
+}
+
 const SANDBOXED_TOOLS = {
-  Read: (args) => `cat -n "${args.file_path}"`,
+  Read: (args) => `cat -n ${shellEscape(args.file_path)}`,
   Bash: (args) => args.command,
   Grep: (args) => {
     const parts = ['rg'];
-    if (args.pattern) parts.push(`"${args.pattern}"`);
-    if (args.path) parts.push(args.path);
-    if (args.glob) parts.push(`--glob "${args.glob}"`);
+    if (args.pattern) parts.push(shellEscape(args.pattern));
+    if (args.path) parts.push(shellEscape(args.path));
+    if (args.glob) parts.push('--glob', shellEscape(args.glob));
     return parts.join(' ');
   },
-  Glob: (args) => `find . -name "${args.pattern}" -type f 2>/dev/null | head -50`
+  Glob: (args) => `find . -name ${shellEscape(args.pattern)} -type f 2>/dev/null | head -50`
 };
 
 const builder = SANDBOXED_TOOLS[toolName];

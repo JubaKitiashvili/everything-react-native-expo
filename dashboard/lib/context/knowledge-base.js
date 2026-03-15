@@ -81,7 +81,7 @@ class KnowledgeBase {
     // Layer 2: Trigram (if insufficient results)
     if (results.length < 3) {
       try {
-        const trigram = query.length >= 3 ? query.slice(0, 3) : query;
+        const trigram = query;
         const trigramResults = this._searchTrigram.all(trigram);
         const existingIds = new Set(results.map(r => r.id));
         for (const r of trigramResults) {
@@ -95,7 +95,10 @@ class KnowledgeBase {
       const all = this._allTitles.all();
       for (const row of all) {
         if (results.find(r => r.id === row.id)) continue;
-        if (levenshtein(query.toLowerCase(), row.title.toLowerCase()) <= 2) {
+        const titleWords = row.title.toLowerCase().split(/\s+/);
+        const queryWords = query.toLowerCase().split(/\s+/);
+        const hasClose = queryWords.some(qw => titleWords.some(tw => levenshtein(qw, tw) <= 2));
+        if (hasClose) {
           results.push(row);
         }
       }
@@ -141,14 +144,14 @@ class KnowledgeBase {
 
   prune() {
     const threshold = new Date(Date.now() - 90 * 86400000).toISOString();
-    this.db.exec(`
+    this.db.prepare(`
       INSERT INTO knowledge_archive (original_id, category, title, content, source, tags, relevance_score, created_at)
       SELECT id, category, title, content, source, tags, relevance_score, created_at
-      FROM knowledge WHERE relevance_score < 0.1 AND accessed_at < '${threshold}'
-    `);
-    this.db.exec(`
-      DELETE FROM knowledge WHERE relevance_score < 0.1 AND accessed_at < '${threshold}'
-    `);
+      FROM knowledge WHERE relevance_score < 0.1 AND accessed_at < ?
+    `).run(threshold);
+    this.db.prepare(`
+      DELETE FROM knowledge WHERE relevance_score < 0.1 AND accessed_at < ?
+    `).run(threshold);
   }
 }
 

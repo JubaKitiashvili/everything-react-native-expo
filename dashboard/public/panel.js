@@ -1,5 +1,5 @@
 /**
- * ERNE Dashboard — HTML right panel replacing canvas sidebar
+ * ERNE Dashboard — HTML bottom panel with agent cards
  */
 (function () {
   'use strict';
@@ -7,6 +7,7 @@
   let panelEl = null;
   let agentListEl = null;
   let connectionDotEl = null;
+  let connectionLabel = null;
   let onAgentClick = null;
 
   const AGENT_ORDER = [
@@ -25,13 +26,19 @@
     panelEl.innerHTML =
       '<div class="panel-header">' +
         '<h2>AGENTS</h2>' +
-        '<div class="connection-dot" id="connDot"></div>' +
+        '<div class="panel-header-right">' +
+          '<div class="connection-badge">' +
+            '<div class="connection-dot" id="connDot"></div>' +
+            '<span id="connLabel">Disconnected</span>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
       '<div class="panel-agents" id="agentList"></div>';
     container.appendChild(panelEl);
 
     agentListEl = document.getElementById('agentList');
     connectionDotEl = document.getElementById('connDot');
+    connectionLabel = document.getElementById('connLabel');
 
     for (var i = 0; i < AGENT_ORDER.length; i++) {
       var name = AGENT_ORDER[i];
@@ -39,13 +46,19 @@
       row.className = 'agent-row';
       row.dataset.agent = name;
       var emoji = (window.AgentSprites && window.AgentSprites.AGENT_DEFS[name] && window.AgentSprites.AGENT_DEFS[name].emoji) || '';
-      var emojiSpan = emoji ? '<span class="agent-emoji">' + emoji + '</span> ' : '';
+      var emojiSpan = emoji ? '<span class="agent-emoji">' + emoji + '</span>' : '';
       row.innerHTML =
         '<div class="agent-dot idle" id="dot-' + name + '"></div>' +
         '<div class="agent-info">' +
-          '<div class="agent-name">' + emojiSpan + name + '</div>' +
-          '<div class="agent-status idle" id="status-' + name + '">IDLE</div>' +
+          '<div class="agent-name-row">' +
+            emojiSpan +
+            '<span class="agent-name">' + name + '</span>' +
+            '<span class="agent-status idle" id="status-' + name + '">IDLE</span>' +
+          '</div>' +
           '<div class="agent-task" id="task-' + name + '"></div>' +
+          '<div class="agent-progress" id="prog-' + name + '" style="display:none">' +
+            '<div class="agent-progress-fill" id="prog-fill-' + name + '"></div>' +
+          '</div>' +
         '</div>' +
         '<div class="agent-duration" id="dur-' + name + '"></div>';
       row.addEventListener('click', (function (n) {
@@ -54,7 +67,6 @@
       agentListEl.appendChild(row);
     }
 
-    // Update durations every second
     setInterval(updateDurations, 1000);
   };
 
@@ -70,10 +82,14 @@
       var status = agent.status || 'idle';
       var task = agent.task || '';
 
-      var dot = document.getElementById('dot-' + name);
-      if (dot) {
-        dot.className = 'agent-dot ' + status;
+      // Row highlight
+      var rowEl = agentListEl.querySelector('[data-agent="' + name + '"]');
+      if (rowEl) {
+        rowEl.className = 'agent-row' + (status !== 'idle' ? ' is-' + status : '');
       }
+
+      var dot = document.getElementById('dot-' + name);
+      if (dot) dot.className = 'agent-dot ' + status;
 
       var statusEl = document.getElementById('status-' + name);
       if (statusEl) {
@@ -85,6 +101,18 @@
       if (taskEl) {
         taskEl.textContent = task;
         taskEl.title = task;
+      }
+
+      // Progress bar
+      var progEl = document.getElementById('prog-' + name);
+      var progFill = document.getElementById('prog-fill-' + name);
+      if (progEl && progFill) {
+        if (status === 'working' || status === 'planning') {
+          progEl.style.display = 'block';
+          progFill.className = 'agent-progress-fill' + (status === 'planning' ? ' planning' : '');
+        } else {
+          progEl.style.display = 'none';
+        }
       }
     }
     updateDurations();
@@ -109,6 +137,9 @@
   const setConnected = (connected) => {
     if (connectionDotEl) {
       connectionDotEl.className = 'connection-dot' + (connected ? ' live' : '');
+    }
+    if (connectionLabel) {
+      connectionLabel.textContent = connected ? 'Live' : 'Disconnected';
     }
   };
 

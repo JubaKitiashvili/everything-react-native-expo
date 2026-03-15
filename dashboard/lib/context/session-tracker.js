@@ -12,6 +12,7 @@ class SessionTracker {
     this.db = db;
     this.pendingErrors = new Map();
     this.contextSavedBytes = 0;
+    this.contextOriginalBytes = 0;
     this.startTime = Date.now();
 
     this._insert = db.prepare(`
@@ -24,7 +25,9 @@ class SessionTracker {
     const priority = PRIORITY_MAP[eventType] || 3;
     const agent = data.agent || opts.agent || null;
     const contextBytes = opts.context_bytes || 0;
+    const originalBytes = opts.original_bytes || 0;
     this.contextSavedBytes += contextBytes;
+    this.contextOriginalBytes += originalBytes;
 
     const event = {
       timestamp: new Date().toISOString(),
@@ -93,7 +96,7 @@ class SessionTracker {
       agents_active: activeAgents,
       agents_completed: completedAgents,
       context_saved_bytes: this.contextSavedBytes,
-      context_saved_pct: 0,
+      context_saved_pct: this.contextOriginalBytes > 0 ? Math.round((this.contextSavedBytes / this.contextOriginalBytes) * 100) : 0,
       errors_fixed: byType.error_fix || 0,
       knowledge_entries_added: byType.knowledge_hit || 0
     };

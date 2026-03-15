@@ -89,9 +89,9 @@ CREATE TABLE IF NOT EXISTS agent_sequences (
 
 CREATE TABLE IF NOT EXISTS budget_settings (
   id INTEGER PRIMARY KEY CHECK(id = 1),
-  enabled INTEGER DEFAULT 1,
-  session_limit INTEGER DEFAULT 100000,
-  overflow TEXT DEFAULT 'summarize',
+  enabled INTEGER DEFAULT 0,
+  session_limit INTEGER DEFAULT 50000,
+  overflow TEXT DEFAULT 'aggressive_truncation',
   agent_limits TEXT DEFAULT '{}'
 );
 
@@ -114,5 +114,8 @@ CREATE TABLE IF NOT EXISTS file_access_patterns (
   last_agent TEXT,
   description TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge(category);
+CREATE INDEX IF NOT EXISTS idx_knowledge_accessed ON knowledge(accessed_at);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (1);

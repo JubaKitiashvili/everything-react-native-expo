@@ -5,12 +5,21 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 async function restore() {
-  const sessionId = crypto.randomUUID();
   const erneDir = path.join(process.env.ERNE_PROJECT_DIR || process.cwd(), '.erne');
+  let sessionId;
+  const sessionIdFile = path.join(erneDir, 'current-session-id');
   try {
-    if (!fs.existsSync(erneDir)) fs.mkdirSync(erneDir, { recursive: true });
-    fs.writeFileSync(path.join(erneDir, 'current-session-id'), sessionId);
+    if (fs.existsSync(sessionIdFile)) {
+      sessionId = fs.readFileSync(sessionIdFile, 'utf8').trim();
+    }
   } catch { /* ignore */ }
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    try {
+      if (!fs.existsSync(erneDir)) fs.mkdirSync(erneDir, { recursive: true });
+      fs.writeFileSync(sessionIdFile, sessionId);
+    } catch { /* ignore */ }
+  }
 
   const snapshot = await getSync('snapshot', 2000);
   if (!snapshot || !snapshot.active) return;

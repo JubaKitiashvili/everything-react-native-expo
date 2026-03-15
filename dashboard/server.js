@@ -448,6 +448,28 @@ function handleContextApi(req, res, urlPath, body) {
       return;
     }
 
+    // POST /api/context/graduate — promote session knowledge to project DB
+    if (urlPath === '/api/context/graduate' && req.method === 'POST') {
+      if (sessionTracker && knowledgeBase && sessionDb) {
+        const p1Events = sessionDb.prepare('SELECT * FROM events WHERE priority <= 2 AND event_type IN (\'error_fix\', \'decision\') ORDER BY timestamp').all();
+        for (const evt of p1Events) {
+          try {
+            const data = JSON.parse(evt.data);
+            knowledgeBase.add({
+              category: evt.event_type === 'decision' ? 'decision' : 'error',
+              title: data.choice || data.error_summary || evt.event_type,
+              content: JSON.stringify(data),
+              source: 'session-graduate',
+              tags: 'auto-graduated'
+            });
+          } catch { /* skip malformed */ }
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+      return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end('{"error":"not found"}');
   } catch (err) {
@@ -493,6 +515,41 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/api/history') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(activityHistory));
+    return;
+  }
+
+  // Audit API
+  if (req.method === 'GET' && req.url === '/api/audit') {
+    try {
+      const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+      const auditJsonPath = path.join(projectDir, '.erne', 'audit.json');
+      if (fs.existsSync(auditJsonPath)) {
+        const data = fs.readFileSync(auditJsonPath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(data);
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('{"score":null,"message":"Run erne audit first"}');
+      }
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/audit/run') {
+    try {
+      const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+      const erneRoot = path.resolve(__dirname, '..');
+      const { runAudit } = require(path.join(erneRoot, 'lib', 'audit'));
+      const result = runAudit(projectDir);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.jsonReport));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
     return;
   }
 

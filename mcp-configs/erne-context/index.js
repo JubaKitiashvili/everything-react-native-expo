@@ -5,14 +5,15 @@ const readline = require('node:readline');
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
 
-function dashboardRequest(endpoint, data) {
+function dashboardRequest(endpoint, data, method = 'POST') {
   return new Promise((resolve, reject) => {
-    const payload = JSON.stringify(data);
+    const isGet = method === 'GET';
+    const payload = isGet ? '' : JSON.stringify(data);
     const req = http.request({
       hostname: '127.0.0.1', port: PORT,
       path: `/api/context/${endpoint}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+      method: method,
+      headers: isGet ? {} : { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
       timeout: 30000
     }, res => {
       let body = '';
@@ -20,7 +21,7 @@ function dashboardRequest(endpoint, data) {
       res.on('end', () => { try { resolve(JSON.parse(body)); } catch { resolve({ output: body }); } });
     });
     req.on('error', reject);
-    req.write(payload);
+    if (!isGet) req.write(payload);
     req.end();
   });
 }
@@ -46,8 +47,18 @@ rl.on('line', async (line) => {
       ]}}));
     } else if (msg.method === 'tools/call') {
       const { name, arguments: args } = msg.params;
-      const endpoint = name === 'ctx_execute' ? 'execute' : name === 'ctx_search' ? 'search' : 'stats';
-      const result = await dashboardRequest(endpoint, args);
+      let endpoint, method = 'POST';
+      if (name === 'ctx_execute') {
+        endpoint = 'execute';
+      } else if (name === 'ctx_search') {
+        endpoint = 'search';
+      } else if (name === 'ctx_session') {
+        const action = args.action || 'stats';
+        if (action === 'snapshot') { endpoint = 'snapshot'; method = 'GET'; }
+        else if (action === 'full') { endpoint = 'snapshot'; }
+        else { endpoint = 'stats'; method = 'GET'; }
+      }
+      const result = await dashboardRequest(endpoint, args, method);
       console.log(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: {
         content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result, null, 2) }]
       }}));

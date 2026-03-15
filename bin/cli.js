@@ -17,6 +17,7 @@ const COMMANDS = {
   'add-agent': () => require('../lib/add-agent'),
   doctor: () => require('../lib/doctor'),
   status: () => require('../lib/status'),
+  audit: () => require('../lib/audit-cli'),
   'sync-configs': () => require('../lib/sync-configs'),
   sync: () => require('../lib/sync-configs'),
   version: () => {
@@ -33,6 +34,7 @@ const COMMANDS = {
 
   Commands:
     init        Set up ERNE in your project
+    audit       Run project audit and generate report
     update      Update to the latest version
     add-agent   Create a new custom agent definition
     dashboard   Launch the ERNE Agent Dashboard

@@ -35,8 +35,8 @@ function classifyBash(inp, out) {
   }
   if (/npm test|jest|vitest|node --test/.test(cmd)) {
     const stdout = out.stdout || '';
-    const passed = (stdout.match(/(\d+) pass/i) || [])[1] || 0;
-    const failed = (stdout.match(/(\d+) fail/i) || [])[1] || 0;
+    const passed = parseInt((stdout.match(/(\d+) pass/i) || [])[1], 10) || 0;
+    const failed = parseInt((stdout.match(/(\d+) fail/i) || [])[1], 10) || 0;
     return { type: 'test_run', data: { passed: +passed, failed: +failed, total: +passed + +failed } };
   }
   if (/npm install|yarn add|pnpm add/.test(cmd)) {

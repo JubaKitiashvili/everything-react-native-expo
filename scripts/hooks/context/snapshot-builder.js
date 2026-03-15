@@ -7,5 +7,5 @@ sendSync('snapshot', {}, 1000).then(snapshot => {
     console.log(JSON.stringify({ snapshot_saved: true, session_id: snapshot.session_id }));
   }
 }).catch(() => {
-  process.exit(0);
+  process.exit(1);
 });
