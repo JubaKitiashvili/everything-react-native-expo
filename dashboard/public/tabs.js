@@ -58,6 +58,13 @@
       btn.classList.toggle('active', btn.dataset.tab === name);
     });
 
+    // Hide previous tab's container
+    if (prev !== 'hq' && tabs[prev]) {
+      tabs[prev].deactivate();
+      var prevContainer = tabContentEl.querySelector('[data-tab-panel="' + prev + '"]');
+      if (prevContainer) prevContainer.style.display = 'none';
+    }
+
     if (name === 'hq') {
       canvasContainer.style.display = '';
       tabContentEl.style.display = 'none';
@@ -68,13 +75,19 @@
       if (window.Panel && Panel.collapse) Panel.collapse();
 
       if (!initialized[name] && tabs[name]) {
-        tabs[name].init(tabContentEl);
+        // Create a wrapper div for this tab's content
+        var wrapper = document.createElement('div');
+        wrapper.dataset.tabPanel = name;
+        wrapper.style.height = '100%';
+        tabContentEl.appendChild(wrapper);
+        tabs[name].init(wrapper);
         initialized[name] = true;
       }
+      // Show this tab's container
+      var panel = tabContentEl.querySelector('[data-tab-panel="' + name + '"]');
+      if (panel) panel.style.display = '';
       if (tabs[name]) tabs[name].activate();
     }
-
-    if (prev !== 'hq' && tabs[prev]) tabs[prev].deactivate();
     setBadge(name, 0);
     return true;
   }
