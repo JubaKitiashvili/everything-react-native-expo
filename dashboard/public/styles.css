@@ -1076,3 +1076,25 @@ canvas {
 .upg-plan h4 { font-size: 12px; color: var(--text); margin: 0 0 8px; }
 .upg-plan ol { margin: 0; padding-left: 20px; font-size: 11px; color: var(--text-muted); }
 .upg-plan li { margin: 4px 0; }
+
+/* ── Insights Tab ── */
+.ins-container { display: flex; flex-direction: column; gap: 20px; }
+.ins-cards { display: flex; gap: 12px; }
+.ins-card { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: flex-start; }
+.ins-card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 4px; }
+.ins-card-value { font-size: 28px; font-weight: bold; color: var(--text); }
+.ins-card-spark { margin: 8px 0; }
+.ins-card-delta { font-size: 12px; font-weight: bold; }
+.ins-card-delta.green { color: var(--green); }
+.ins-card-delta.red { color: var(--red); }
+.ins-section { margin-top: 8px; }
+.ins-section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 0 0 12px; }
+.ins-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.ins-bar-name { width: 140px; font-size: 12px; color: var(--text-muted); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ins-bar-track { flex: 1; height: 14px; background: rgba(255,255,255,0.05); border-radius: 7px; overflow: hidden; }
+.ins-bar-fill { height: 100%; background: var(--green); border-radius: 7px; transition: width 0.5s ease; }
+.ins-bar-pct { width: 36px; font-size: 11px; color: var(--text-muted); }
+.ins-empty { text-align: center; padding: 32px; color: var(--text-dim); }
+@media (max-width: 767px) {
+  .ins-cards { flex-direction: column; }
+}
