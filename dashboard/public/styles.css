@@ -1044,3 +1044,35 @@ canvas {
 .eco-banner { padding: 8px 12px; border-radius: 4px; font-size: 11px; margin-bottom: 8px; }
 .eco-banner.yellow { background: rgba(255,152,0,0.1); color: var(--orange); border: 1px solid rgba(255,152,0,0.2); }
 .eco-banner.orange { background: rgba(255,152,0,0.1); color: var(--orange); border: 1px solid rgba(255,152,0,0.2); }
+
+/* ── Upgrades Tab ── */
+.upg-container { display: flex; flex-direction: column; height: 100%; }
+.upg-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.upg-title { font-size: 14px; color: var(--text); font-weight: bold; }
+.upg-list { flex: 1; overflow-y: auto; margin-top: 12px; }
+.upg-section-header { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 4px; font-weight: bold; }
+.upg-section-header.major { color: var(--red); }
+.upg-section-header.minor { color: var(--orange); }
+.upg-section-header.patch { color: var(--green); }
+.upg-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.03); margin-bottom: 4px; cursor: pointer; transition: background var(--transition); flex-wrap: wrap; }
+.upg-row:hover { background: rgba(255,255,255,0.06); }
+.upg-name { flex: 2; font-size: 13px; color: var(--text); font-weight: 500; }
+.upg-version { flex: 2; font-size: 11px; color: var(--text-muted); font-family: inherit; }
+.upg-bump { font-size: 9px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; font-weight: bold; }
+.upg-bump.red { background: rgba(244,67,54,0.2); color: var(--red); }
+.upg-bump.orange { background: rgba(255,152,0,0.2); color: var(--orange); }
+.upg-bump.green { background: rgba(76,175,80,0.2); color: var(--green); }
+.upg-dots { font-size: 12px; letter-spacing: 1px; }
+.upg-dots.risk-1, .upg-dots.risk-2 { color: var(--green); }
+.upg-dots.risk-3 { color: var(--orange); }
+.upg-dots.risk-4, .upg-dots.risk-5 { color: var(--red); }
+.upg-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 10px; cursor: pointer; transition: all var(--transition); background: transparent; }
+.upg-btn.update { color: var(--green); border-color: rgba(76,175,80,0.3); }
+.upg-btn.update:hover { background: rgba(76,175,80,0.1); }
+.upg-btn.plan { color: var(--orange); border-color: rgba(255,152,0,0.3); }
+.upg-btn.plan:hover { background: rgba(255,152,0,0.1); }
+.upg-btn.done { color: var(--blue); border-color: rgba(33,150,243,0.3); }
+.upg-plan { width: 100%; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 4px; margin-top: 8px; border: 1px solid var(--border); }
+.upg-plan h4 { font-size: 12px; color: var(--text); margin: 0 0 8px; }
+.upg-plan ol { margin: 0; padding-left: 20px; font-size: 11px; color: var(--text-muted); }
+.upg-plan li { margin: 4px 0; }
