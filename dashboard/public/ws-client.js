@@ -34,6 +34,10 @@
             }
           } else if (data.type === 'state' && data.agents) {
             onStateUpdate(data.agents);
+          } else if (data.type === 'context_stats') {
+            if (window.contextPanel) window.contextPanel.updateStats(data.data);
+          } else if (data.type === 'session_event') {
+            if (window.contextPanel) window.contextPanel.addTimelineEvent(data.data);
           }
         } catch (e) {
           // Ignore malformed messages

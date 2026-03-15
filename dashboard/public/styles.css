@@ -527,3 +527,41 @@ canvas {
     padding: 12px 16px 8px;
   }
 }
+
+/* Context Optimization Sidebar */
+.ctx-sidebar {
+  position: fixed; right: 0; top: 0; width: 280px; height: 100vh;
+  background: rgba(10, 10, 26, 0.92); border-left: 2px solid var(--border);
+  padding: 16px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 16px; z-index: 100;
+}
+.ctx-panel {
+  background: var(--panel-header); border-radius: 8px; padding: 12px;
+}
+.ctx-panel h3 {
+  color: var(--green); font-size: 14px; margin: 0 0 8px;
+  font-family: 'Courier New', monospace; text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.ctx-pct {
+  color: var(--green); font-size: 32px;
+  font-family: 'Courier New', monospace; font-weight: bold;
+}
+.ctx-bar {
+  background: #333; height: 8px; border-radius: 4px; margin: 8px 0;
+}
+.ctx-bar-fill {
+  background: var(--green); height: 100%; border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.ctx-details {
+  display: flex; justify-content: space-between;
+  color: var(--text-muted); font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+.ctx-event {
+  color: var(--text); font-size: 11px;
+  font-family: 'Courier New', monospace;
+  padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
