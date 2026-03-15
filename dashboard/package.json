@@ -5,6 +5,7 @@
   "description": "ERNE Agent Visual Dashboard",
   "main": "server.js",
   "dependencies": {
+    "better-sqlite3": "^12.8.0",
     "ws": "^8.0.0"
   }
 }

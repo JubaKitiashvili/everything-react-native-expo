@@ -74,16 +74,51 @@ if (!fs.existsSync(scriptPath)) {
   process.exit(2);
 }
 
+// Set ERNE_HOOK_CHAIN so context hooks know they're in a chain
+const env = { ...process.env, ERNE_HOOK_CHAIN: 'true' };
+
+const startMs = Date.now();
+
 const result = spawnSync('node', [scriptPath], {
   input: stdinData,
   encoding: 'utf8',
   stdio: ['pipe', 'pipe', 'pipe'],
   timeout: 30000,
-  env: process.env,
+  env,
 });
+
+const durationMs = Date.now() - startMs;
 
 if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);
+
+// Report hook execution metrics to dashboard (fire-and-forget)
+if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
+  try {
+    const http = require('http');
+    const port = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+    const payload = JSON.stringify({
+      event_type: 'hook_execution',
+      data: {
+        hook: HOOK_SCRIPT,
+        profile,
+        duration_ms: durationMs,
+        exit_code: result.status ?? 0,
+        skipped: false,
+      }
+    });
+    const req = http.request({
+      hostname: '127.0.0.1', port,
+      path: '/api/context/event',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+      timeout: 300
+    });
+    req.on('error', () => {});
+    req.write(payload);
+    req.end();
+  } catch {}
+}
 
 if (result.signal === 'SIGTERM') {
   console.error('ERNE: hook timed out after 30s');

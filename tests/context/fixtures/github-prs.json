@@ -1,0 +1,298 @@
+[
+  {
+    "number": 342,
+    "title": "feat: add streaming support for real-time data sync",
+    "state": "open",
+    "author": {
+      "login": "sarahchen",
+      "url": "https://github.com/sarahchen"
+    },
+    "labels": [
+      { "name": "enhancement", "color": "a2eeef" },
+      { "name": "priority: high", "color": "d93f0b" }
+    ],
+    "created_at": "2026-03-10T14:23:45Z",
+    "updated_at": "2026-03-14T09:12:33Z",
+    "html_url": "https://github.com/acme/webapp/pull/342",
+    "head": { "ref": "feat/streaming-sync" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Implements WebSocket-based streaming for real-time data synchronization between client and server. Includes automatic reconnection logic and backpressure handling."
+  },
+  {
+    "number": 341,
+    "title": "fix: resolve memory leak in useDataFetcher hook",
+    "state": "open",
+    "author": {
+      "login": "marcusj",
+      "url": "https://github.com/marcusj"
+    },
+    "labels": [
+      { "name": "bug", "color": "d73a4a" },
+      { "name": "performance", "color": "f9d0c4" }
+    ],
+    "created_at": "2026-03-09T11:45:22Z",
+    "updated_at": "2026-03-13T16:30:11Z",
+    "html_url": "https://github.com/acme/webapp/pull/341",
+    "head": { "ref": "fix/data-fetcher-leak" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Fixes a memory leak caused by uncleared abort controllers when components unmount during active fetch operations."
+  },
+  {
+    "number": 340,
+    "title": "refactor: migrate auth module to new token service",
+    "state": "open",
+    "author": {
+      "login": "emilyw",
+      "url": "https://github.com/emilyw"
+    },
+    "labels": [
+      { "name": "refactor", "color": "c5def5" },
+      { "name": "auth", "color": "bfdadc" }
+    ],
+    "created_at": "2026-03-08T09:15:00Z",
+    "updated_at": "2026-03-14T11:22:45Z",
+    "html_url": "https://github.com/acme/webapp/pull/340",
+    "head": { "ref": "refactor/auth-token-service" },
+    "base": { "ref": "main" },
+    "draft": true,
+    "body": "Migrates the authentication module from the legacy JWT handler to the new centralized token service. Part of the auth modernization initiative."
+  },
+  {
+    "number": 339,
+    "title": "feat: implement dark mode toggle with system preference detection",
+    "state": "closed",
+    "author": {
+      "login": "alexk",
+      "url": "https://github.com/alexk"
+    },
+    "labels": [
+      { "name": "enhancement", "color": "a2eeef" },
+      { "name": "ui", "color": "7057ff" }
+    ],
+    "created_at": "2026-03-07T16:42:18Z",
+    "updated_at": "2026-03-12T14:08:52Z",
+    "html_url": "https://github.com/acme/webapp/pull/339",
+    "head": { "ref": "feat/dark-mode" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Adds a dark mode toggle that respects the user's system preference via prefers-color-scheme media query. Includes smooth CSS transitions."
+  },
+  {
+    "number": 338,
+    "title": "test: add integration tests for payment processing flow",
+    "state": "closed",
+    "author": {
+      "login": "priyap",
+      "url": "https://github.com/priyap"
+    },
+    "labels": [
+      { "name": "testing", "color": "bfd4f2" },
+      { "name": "payments", "color": "f9d0c4" }
+    ],
+    "created_at": "2026-03-06T10:30:00Z",
+    "updated_at": "2026-03-11T08:45:33Z",
+    "html_url": "https://github.com/acme/webapp/pull/338",
+    "head": { "ref": "test/payment-integration" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Adds comprehensive integration tests covering the full payment flow including card validation, charge creation, and webhook handling."
+  },
+  {
+    "number": 337,
+    "title": "fix: correct timezone handling in scheduled notifications",
+    "state": "open",
+    "author": {
+      "login": "jamesl",
+      "url": "https://github.com/jamesl"
+    },
+    "labels": [
+      { "name": "bug", "color": "d73a4a" }
+    ],
+    "created_at": "2026-03-05T13:20:44Z",
+    "updated_at": "2026-03-14T15:12:08Z",
+    "html_url": "https://github.com/acme/webapp/pull/337",
+    "head": { "ref": "fix/timezone-notifications" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Fixes incorrect timezone conversion when scheduling push notifications. Users in UTC+ timezones were receiving notifications early."
+  },
+  {
+    "number": 336,
+    "title": "chore: upgrade dependencies and fix audit vulnerabilities",
+    "state": "closed",
+    "author": {
+      "login": "dependabot[bot]",
+      "url": "https://github.com/apps/dependabot"
+    },
+    "labels": [
+      { "name": "dependencies", "color": "0366d6" },
+      { "name": "security", "color": "d93f0b" }
+    ],
+    "created_at": "2026-03-04T08:00:00Z",
+    "updated_at": "2026-03-10T09:15:22Z",
+    "html_url": "https://github.com/acme/webapp/pull/336",
+    "head": { "ref": "chore/deps-upgrade-mar" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Upgrades 12 packages including express (4.19.1 -> 4.21.0), next (15.1.0 -> 15.2.3), and patches 3 moderate vulnerabilities."
+  },
+  {
+    "number": 335,
+    "title": "feat: add CSV export for analytics dashboard",
+    "state": "open",
+    "author": {
+      "login": "lisaw",
+      "url": "https://github.com/lisaw"
+    },
+    "labels": [
+      { "name": "enhancement", "color": "a2eeef" },
+      { "name": "analytics", "color": "c2e0c6" }
+    ],
+    "created_at": "2026-03-03T15:45:30Z",
+    "updated_at": "2026-03-13T10:22:15Z",
+    "html_url": "https://github.com/acme/webapp/pull/335",
+    "head": { "ref": "feat/csv-export" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Adds the ability to export analytics data as CSV files. Supports date range filtering and column selection."
+  },
+  {
+    "number": 334,
+    "title": "fix: prevent duplicate form submissions on slow networks",
+    "state": "closed",
+    "author": {
+      "login": "marcusj",
+      "url": "https://github.com/marcusj"
+    },
+    "labels": [
+      { "name": "bug", "color": "d73a4a" },
+      { "name": "ux", "color": "7057ff" }
+    ],
+    "created_at": "2026-03-02T09:30:00Z",
+    "updated_at": "2026-03-08T14:20:45Z",
+    "html_url": "https://github.com/acme/webapp/pull/334",
+    "head": { "ref": "fix/duplicate-submissions" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Implements request deduplication and optimistic UI locking to prevent users from accidentally submitting forms multiple times."
+  },
+  {
+    "number": 333,
+    "title": "docs: update API reference for v3 endpoints",
+    "state": "closed",
+    "author": {
+      "login": "techwriter01",
+      "url": "https://github.com/techwriter01"
+    },
+    "labels": [
+      { "name": "documentation", "color": "0075ca" }
+    ],
+    "created_at": "2026-03-01T11:00:00Z",
+    "updated_at": "2026-03-07T16:45:33Z",
+    "html_url": "https://github.com/acme/webapp/pull/333",
+    "head": { "ref": "docs/api-v3-reference" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Updates the API reference documentation to reflect the new v3 endpoints including request/response examples and migration notes."
+  },
+  {
+    "number": 332,
+    "title": "feat: implement role-based access control for team workspaces",
+    "state": "open",
+    "author": {
+      "login": "emilyw",
+      "url": "https://github.com/emilyw"
+    },
+    "labels": [
+      { "name": "enhancement", "color": "a2eeef" },
+      { "name": "auth", "color": "bfdadc" },
+      { "name": "priority: high", "color": "d93f0b" }
+    ],
+    "created_at": "2026-02-28T14:15:22Z",
+    "updated_at": "2026-03-14T08:30:00Z",
+    "html_url": "https://github.com/acme/webapp/pull/332",
+    "head": { "ref": "feat/rbac-workspaces" },
+    "base": { "ref": "main" },
+    "draft": true,
+    "body": "Implements RBAC for team workspaces with owner, admin, member, and viewer roles. Includes permission guards for all workspace operations."
+  },
+  {
+    "number": 331,
+    "title": "perf: optimize image loading with progressive JPEG and lazy loading",
+    "state": "closed",
+    "author": {
+      "login": "alexk",
+      "url": "https://github.com/alexk"
+    },
+    "labels": [
+      { "name": "performance", "color": "f9d0c4" }
+    ],
+    "created_at": "2026-02-27T10:00:00Z",
+    "updated_at": "2026-03-05T12:30:45Z",
+    "html_url": "https://github.com/acme/webapp/pull/331",
+    "head": { "ref": "perf/image-loading" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Converts all product images to progressive JPEG format and adds native lazy loading. Reduces initial page load by ~40%."
+  },
+  {
+    "number": 330,
+    "title": "fix: handle edge case in pagination when items are deleted",
+    "state": "open",
+    "author": {
+      "login": "sarahchen",
+      "url": "https://github.com/sarahchen"
+    },
+    "labels": [
+      { "name": "bug", "color": "d73a4a" }
+    ],
+    "created_at": "2026-02-26T08:45:00Z",
+    "updated_at": "2026-03-12T11:15:22Z",
+    "html_url": "https://github.com/acme/webapp/pull/330",
+    "head": { "ref": "fix/pagination-deletion" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Fixes cursor-based pagination skipping items or showing duplicates when items are deleted between page fetches."
+  },
+  {
+    "number": 329,
+    "title": "feat: add webhook retry mechanism with exponential backoff",
+    "state": "closed",
+    "author": {
+      "login": "priyap",
+      "url": "https://github.com/priyap"
+    },
+    "labels": [
+      { "name": "enhancement", "color": "a2eeef" },
+      { "name": "infrastructure", "color": "d4c5f9" }
+    ],
+    "created_at": "2026-02-25T12:30:00Z",
+    "updated_at": "2026-03-04T09:00:00Z",
+    "html_url": "https://github.com/acme/webapp/pull/329",
+    "head": { "ref": "feat/webhook-retry" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Implements automatic retry for failed webhook deliveries with exponential backoff (1s, 2s, 4s, 8s, 16s) and dead letter queue for persistent failures."
+  },
+  {
+    "number": 328,
+    "title": "refactor: extract shared validation logic into reusable schemas",
+    "state": "closed",
+    "author": {
+      "login": "jamesl",
+      "url": "https://github.com/jamesl"
+    },
+    "labels": [
+      { "name": "refactor", "color": "c5def5" }
+    ],
+    "created_at": "2026-02-24T16:00:00Z",
+    "updated_at": "2026-03-02T13:45:11Z",
+    "html_url": "https://github.com/acme/webapp/pull/328",
+    "head": { "ref": "refactor/shared-validation" },
+    "base": { "ref": "main" },
+    "draft": false,
+    "body": "Extracts duplicated validation logic from 8 API routes into shared Zod schemas. Reduces validation code by ~60%."
+  }
+]

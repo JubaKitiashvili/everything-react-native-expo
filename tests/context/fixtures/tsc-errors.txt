@@ -1,0 +1,82 @@
+src/components/DataGrid.tsx(23,15): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/DataGrid.tsx(47,9): error TS2322: Type '{ columns: Column[]; data: unknown[]; onSort: (key: string) => void; }' is not assignable to type 'IntrinsicAttributes & GridProps'.
+  Property 'onSort' does not exist on type 'IntrinsicAttributes & GridProps'.
+src/components/DataGrid.tsx(89,22): error TS2339: Property 'sortDirection' does not exist on type 'GridState'.
+src/components/DataGrid.tsx(112,5): error TS2741: Property 'pageSize' is missing in type '{ page: number; }' but required in type 'PaginationConfig'.
+src/components/UserProfile.tsx(15,31): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/components/UserProfile.tsx(34,7): error TS2532: Object is possibly 'undefined'.
+src/components/UserProfile.tsx(67,18): error TS2352: Conversion of type 'UserRole' to type 'AdminRole' may be a mistake because neither type sufficiently overlaps with the other.
+src/components/UserProfile.tsx(98,11): error TS18046: 'user' is of type 'unknown'.
+src/hooks/useWebSocket.ts(12,34): error TS2345: Argument of type '(message: MessageEvent) => void' is not assignable to parameter of type '(this: WebSocket, ev: MessageEvent<any>) => any'.
+src/hooks/useWebSocket.ts(28,15): error TS2322: Type 'WebSocket | null' is not assignable to type 'WebSocket'.
+  Type 'null' is not assignable to type 'WebSocket'.
+src/hooks/useWebSocket.ts(45,9): error TS2554: Expected 2 arguments, but got 1.
+src/hooks/useWebSocket.ts(63,22): error TS2339: Property 'readyState' does not exist on type 'never'.
+src/hooks/useAnalytics.ts(8,18): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/hooks/useAnalytics.ts(22,5): error TS2345: Argument of type '{ name: string; properties: Record<string, unknown>; }' is not assignable to parameter of type 'AnalyticsEvent'.
+  Types of property 'properties' are incompatible.
+src/hooks/useAnalytics.ts(41,28): error TS2571: Object is of type 'unknown'.
+src/services/api/client.ts(18,14): error TS2345: Argument of type 'Headers' is not assignable to parameter of type 'Record<string, string>'.
+  Index signature for type 'string' is missing in type 'Headers'.
+src/services/api/client.ts(34,9): error TS2322: Type 'Promise<Response>' is not assignable to type 'Promise<ApiResponse<T>>'.
+  Type 'Response' is not assignable to type 'ApiResponse<T>'.
+src/services/api/client.ts(56,22): error TS2339: Property 'data' does not exist on type 'Response'.
+src/services/api/client.ts(78,5): error TS2554: Expected 3 arguments, but got 2.
+src/services/api/client.ts(95,16): error TS2352: Conversion of type 'unknown' to type 'T' may be a mistake because neither type sufficiently overlaps with the other.
+src/services/auth/session.ts(11,25): error TS2345: Argument of type 'Date | null' is not assignable to parameter of type 'Date'.
+  Type 'null' is not assignable to type 'Date'.
+src/services/auth/session.ts(29,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/auth/session.ts(44,18): error TS2339: Property 'refreshToken' does not exist on type 'SessionData'.
+src/services/auth/session.ts(67,11): error TS2532: Object is possibly 'undefined'.
+src/services/auth/session.ts(88,5): error TS2741: Property 'expiresAt' is missing in type '{ token: string; userId: string; }' but required in type 'Session'.
+src/stores/cartStore.ts(14,23): error TS2345: Argument of type '{ id: string; quantity: number; }' is not assignable to parameter of type 'CartItem'.
+  Property 'price' is missing in type '{ id: string; quantity: number; }' but required in type 'CartItem'.
+src/stores/cartStore.ts(32,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/stores/cartStore.ts(51,22): error TS2532: Object is possibly 'undefined'.
+src/stores/cartStore.ts(78,5): error TS18048: 'item.variant' is possibly 'undefined'.
+src/stores/userStore.ts(9,14): error TS2345: Argument of type 'Partial<User>' is not assignable to parameter of type 'User'.
+  Property 'id' is optional in type 'Partial<User>' but required in type 'User'.
+src/stores/userStore.ts(25,18): error TS2339: Property 'preferences' does not exist on type 'UserState'.
+src/stores/userStore.ts(43,7): error TS2322: Type 'null' is not assignable to type 'User'.
+src/utils/format.ts(7,34): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'number'.
+  Type 'string' is not assignable to type 'number'.
+src/utils/format.ts(18,15): error TS2322: Type 'string' is not assignable to type 'FormattedCurrency'.
+src/utils/format.ts(31,9): error TS2554: Expected 2 arguments, but got 3.
+src/utils/format.ts(45,22): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'DateFormatOptions'.
+src/utils/validate.ts(12,14): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/utils/validate.ts(28,9): error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+src/utils/validate.ts(44,5): error TS2345: Argument of type 'RegExp' is not assignable to parameter of type 'string'.
+src/utils/validate.ts(59,18): error TS2339: Property 'isValid' does not exist on type 'ValidationResult'.
+src/pages/Dashboard.tsx(22,15): error TS2345: Argument of type '(data: DashboardData | null) => void' is not assignable to parameter of type '(data: DashboardData) => void'.
+  Types of parameters 'data' and 'data' are incompatible.
+src/pages/Dashboard.tsx(45,9): error TS2532: Object is possibly 'undefined'.
+src/pages/Dashboard.tsx(78,22): error TS2339: Property 'metrics' does not exist on type 'DashboardState'.
+src/pages/Dashboard.tsx(112,5): error TS2322: Type '{ children: Element; layout: string; }' is not assignable to type 'IntrinsicAttributes & PanelProps'.
+  Property 'layout' does not exist on type 'IntrinsicAttributes & PanelProps'.
+src/pages/Checkout.tsx(18,14): error TS2345: Argument of type 'CartItem[]' is not assignable to parameter of type 'OrderItem[]'.
+  Type 'CartItem' is not assignable to type 'OrderItem'.
+    Property 'unitPrice' is missing in type 'CartItem' but required in type 'OrderItem'.
+src/pages/Checkout.tsx(34,9): error TS2554: Expected 1 argument, but got 2.
+src/pages/Checkout.tsx(56,22): error TS2532: Object is possibly 'undefined'.
+src/pages/Checkout.tsx(89,7): error TS2741: Property 'shippingAddress' is missing in type '{ items: OrderItem[]; total: number; }' but required in type 'Order'.
+src/pages/Checkout.tsx(115,18): error TS18046: 'coupon' is of type 'unknown'.
+
+Found 50 errors in 12 files.
+
+Errors  Files
+     4  src/components/DataGrid.tsx
+     4  src/components/UserProfile.tsx
+     4  src/hooks/useWebSocket.ts
+     3  src/hooks/useAnalytics.ts
+     5  src/services/api/client.ts
+     5  src/services/auth/session.ts
+     4  src/stores/cartStore.ts
+     3  src/stores/userStore.ts
+     4  src/utils/format.ts
+     4  src/utils/validate.ts
+     4  src/pages/Dashboard.tsx
+     5  src/pages/Checkout.tsx

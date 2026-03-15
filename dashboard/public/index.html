@@ -11,7 +11,27 @@
     <div class="canvas-container" id="canvasContainer">
       <canvas id="dashboard"></canvas>
     </div>
+    <div class="tab-content" id="tabContent" style="display:none"></div>
     <!-- Panel, stats bar, toasts, and overlay are created by JS modules -->
+  </div>
+
+  <!-- Sidebar toggle button -->
+  <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Context Panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+
+  <!-- Context sidebar (hidden by default) -->
+  <div id="context-sidebar" class="ctx-sidebar">
+    <div id="system-info-panel" class="ctx-panel"></div>
+    <div id="audit-panel" class="ctx-panel"></div>
+    <div id="agent-activity-panel" class="ctx-panel"></div>
+    <div id="context-toggle-panel" class="ctx-panel" style="display:none"></div>
+    <div id="context-stats" class="ctx-panel" style="display:none"></div>
+    <div id="context-timeline" class="ctx-panel" style="display:none"></div>
+    <div id="knowledge-browser" class="ctx-panel" style="display:none"></div>
+    <div id="budget-panel" class="ctx-panel" style="display:none"></div>
   </div>
 
   <script src="canvas.js"></script>
@@ -22,6 +42,18 @@
   <script src="toasts.js"></script>
   <script src="statsbar.js"></script>
   <script src="ws-client.js"></script>
+  <script src="context-panel.js"></script>
+  <script src="knowledge-browser.js"></script>
+  <script src="budget-panel.js"></script>
+  <script src="audit-panel.js"></script>
+  <script src="context-toggle.js"></script>
+  <script src="sidebar-panels.js"></script>
+  <script src="tabs.js"></script>
+  <script src="sparkline.js"></script>
+  <script src="ecosystem-tab.js"></script>
+  <script src="myapp-tab.js"></script>
+  <script src="insights-tab.js"></script>
+
   <script>
     (function () {
       'use strict';
@@ -50,6 +82,20 @@
       window.addEventListener('resize', resizeCanvas);
       resizeCanvas();
 
+      // ── Sidebar toggle ──
+      var sidebar = document.getElementById('context-sidebar');
+      var toggleBtn = document.getElementById('sidebarToggle');
+      var sidebarOpen = false;
+
+      toggleBtn.addEventListener('click', function () {
+        sidebarOpen = !sidebarOpen;
+        sidebar.classList.toggle('open', sidebarOpen);
+        toggleBtn.classList.toggle('open', sidebarOpen);
+        layout.classList.toggle('sidebar-open', sidebarOpen);
+        // Re-fit canvas after layout shift
+        setTimeout(resizeCanvas, 300);
+      });
+
       // Init modules
       AgentSprites.initAgentSprites();
       Panel.init(layout, function onAgentClick(agentName) {
@@ -58,11 +104,53 @@
       Overlay.init(document.body);
       Toasts.init();
       StatsBar.init(layout);
+      Tabs.init(layout);
 
-      // Re-size canvas after panel is added (takes space from bottom)
+      // Re-size canvas after panel is added
       resizeCanvas();
 
-      // Canvas click → agent detection
+      // ── Collapsible sidebar panels ──
+      function initCollapsiblePanels() {
+        var panels = document.querySelectorAll('.ctx-panel');
+        panels.forEach(function (panel) {
+          var wrapped = false;
+          var observer = new MutationObserver(function () {
+            if (wrapped) return;
+            var h3 = panel.querySelector('h3');
+            if (!h3) return;
+
+            // Only wrap once
+            wrapped = true;
+            observer.disconnect();
+
+            var header = document.createElement('div');
+            header.className = 'ctx-panel-header';
+            var chevron = document.createElement('span');
+            chevron.className = 'ctx-panel-chevron';
+            chevron.innerHTML = '&#9660;';
+
+            h3.parentNode.insertBefore(header, h3);
+            header.appendChild(h3);
+            header.appendChild(chevron);
+
+            var body = document.createElement('div');
+            body.className = 'ctx-panel-body';
+            while (header.nextSibling) {
+              body.appendChild(header.nextSibling);
+            }
+            panel.appendChild(body);
+
+            header.addEventListener('click', function () {
+              var isCollapsed = body.classList.toggle('collapsed');
+              chevron.classList.toggle('collapsed', isCollapsed);
+            });
+          });
+          observer.observe(panel, { childList: true, subtree: true });
+        });
+      }
+      initCollapsiblePanels();
+
+      // Canvas click -> agent detection
       canvas.addEventListener('click', function (e) {
         var rect = canvas.getBoundingClientRect();
         var sx = CANVAS_W / rect.width;
@@ -127,13 +215,16 @@
           Panel.update(agents);
           Overlay.updateState(agents);
           StatsBar.update(agents);
+          Tabs.updateNavStats(agents);
         },
         function onConnectionChange(connected) {
           Panel.setConnected(connected);
+          Tabs.setNavConnected(connected);
         },
         function onHistoryUpdate(history) {
           History.setHistory(history);
-        }
+        },
+        function onBadgeUpdate(tabName, count) { Tabs.setBadge(tabName, count); }
       );
 
       // Main render loop

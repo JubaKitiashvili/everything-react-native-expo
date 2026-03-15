@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const createWSClient = (onStateUpdate, onConnectionChange, onHistoryUpdate) => {
+  const createWSClient = (onStateUpdate, onConnectionChange, onHistoryUpdate, onBadgeUpdate) => {
     let ws = null;
     let connected = false;
     let reconnectDelay = 1000;
@@ -34,6 +34,14 @@
             }
           } else if (data.type === 'state' && data.agents) {
             onStateUpdate(data.agents);
+          } else if (data.type === 'context_stats') {
+            if (window.contextPanel) window.contextPanel.updateStats(data.data);
+          } else if (data.type === 'session_event') {
+            if (window.contextPanel) window.contextPanel.addTimelineEvent(data.data);
+          } else if (data.type === 'ecosystem_update') {
+            if (onBadgeUpdate) onBadgeUpdate('ecosystem', data.count);
+          } else if (data.type === 'upgrade_available') {
+            if (onBadgeUpdate) onBadgeUpdate('upgrades', data.count);
           }
         } catch (e) {
           // Ignore malformed messages

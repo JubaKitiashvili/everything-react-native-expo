@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "project": "erne-universal",
+  "date": "2026-03-15T15:15:26.010Z",
+  "score": 86,
+  "strengths": [
+    {
+      "category": "Security",
+      "title": ".env properly gitignored"
+    },
+    {
+      "category": "Security",
+      "title": "No hardcoded secrets detected in source"
+    },
+    {
+      "category": "Testing",
+      "title": "29 test file(s) found"
+    },
+    {
+      "category": "Dependencies",
+      "title": "Reasonable dependency count (0 packages)"
+    },
+    {
+      "category": "Dependencies",
+      "title": "Lock file present for reproducible builds"
+    },
+    {
+      "category": "Code Quality",
+      "title": "ESLint configured"
+    },
+    {
+      "category": "Code Quality",
+      "title": "Prettier configured"
+    },
+    {
+      "category": "Code Quality",
+      "title": "Functional components (modern pattern)"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "warning",
+      "category": "Performance",
+      "title": "Using FlatList instead of FlashList",
+      "detail": "FlashList provides significantly better performance for large lists (100+ items).",
+      "fix": "npm install @shopify/flash-list"
+    },
+    {
+      "severity": "info",
+      "category": "Performance",
+      "title": "No optimized image library detected",
+      "detail": "expo-image or react-native-fast-image provide better caching and performance.",
+      "fix": "npm install expo-image"
+    },
+    {
+      "severity": "warning",
+      "category": "Performance",
+      "title": "10 component(s) exceed 250 lines",
+      "detail": "buildwithclaude/plugins/all-skills/skills/pptx/scripts/html2pptx.js (979 lines), buildwithclaude/web-ui/app/docs/installation/page.tsx (882 lines), buildwithclaude/web-ui/app/contribute/page.tsx (698 lines), buildwithclaude/web-ui/app/skills/skills-client.tsx (471 lines), buildwithclaude/web-ui/app/mcp-server/[slug]/page-client.tsx (467 lines), buildwithclaude/web-ui/app/plugins/plugins-client.tsx (447 lines), buildwithclaude/web-ui/app/page-client.tsx (381 lines), buildwithclaude/web-ui/app/mcp-servers/mcp-client.tsx (370 lines), buildwithclaude/scripts/fetch-official-mcp.js (343 lines), buildwithclaude/web-ui/components/installation-modal.tsx (284 lines)",
+      "fix": "Extract sub-components to improve readability and performance"
+    },
+    {
+      "severity": "warning",
+      "category": "Architecture",
+      "title": "No error boundary detected",
+      "detail": "App crashes will show white screen instead of graceful error UI.",
+      "fix": "Add an ErrorBoundary component wrapping your root navigator"
+    },
+    {
+      "severity": "warning",
+      "category": "Code Quality",
+      "title": "No TypeScript configuration found",
+      "detail": "TypeScript significantly reduces runtime errors in React Native apps.",
+      "fix": "npx expo install typescript @types/react"
+    }
+  ],
+  "stack": {
+    "state": "none",
+    "serverState": "none",
+    "navigation": "none",
+    "styling": "stylesheet",
+    "lists": "flatlist",
+    "images": "rn-image",
+    "forms": "none",
+    "storage": "async-storage",
+    "testing": "none",
+    "build": "manual"
+  },
+  "meta": {
+    "framework": "unknown",
+    "typescript": false,
+    "newArch": false,
+    "monorepo": false
+  }
+}

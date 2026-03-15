@@ -49,7 +49,7 @@ This will:
 
 ## 🎮 Agent Dashboard
 
-ERNE includes a real-time pixel-art dashboard that visualizes all 11 agents working in an animated office environment.
+ERNE includes a real-time pixel-art dashboard with 4 tabs, a context sidebar, and animated office visualization.
 
 ```bash
 erne dashboard              # Start on port 3333, open browser
@@ -58,7 +58,12 @@ erne dashboard --no-open    # Don't open browser
 erne start                  # Init project + dashboard in background
 ```
 
-**Features:**
+### HQ — Pixel-Art Office
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-hq.png" alt="ERNE HQ — 4 office rooms with 11 animated agents" width="800" />
+</p>
+
 - 🏢 4 office rooms — Development, Code Review, Testing, and Conference
 - 🎨 11 animated agent sprites with walking, typing, and done animations
 - 💬 Thought bubbles showing the current task above working agents
@@ -68,6 +73,56 @@ erne start                  # Init project + dashboard in background
 - 👤 Agent detail overlay with full activity history (click any agent)
 - 🎯 Pipeline orchestrator coordination view in conference room
 - 🔄 Real-time WebSocket updates with auto-reconnect
+
+### My App — Project Intelligence
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-myapp.png" alt="My App tab — project overview, MCP integrations, audit, environment" width="800" />
+</p>
+
+- 📋 App overview with framework detection, health grade, and stack chips
+- 🔌 10 MCP integration statuses with requirements
+- 🔍 Project audit with score, findings (with FIX buttons), and strengths
+- ⚡ Quick actions — run tests, lint, start dev, build iOS/Android, pod install
+- 💡 Smart recommendations based on audit findings
+- 🛠️ Environment checks for all dev tools (Node, Xcode, CocoaPods, etc.)
+
+### Ecosystem — Release Radar
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-ecosystem.png" alt="Ecosystem tab — release feed for React Native packages" width="800" />
+</p>
+
+- 📰 Live release feed for React Native ecosystem packages
+- 🏷️ Tags: NEW, BREAK, security patches
+- 🔍 Filter by category: Updates, Trending, Tips, Security
+- 📊 Quick stats sidebar
+
+### Insights — Project Analytics
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-insights.png" alt="Insights tab — audit score, outdated deps, agent utilization" width="800" />
+</p>
+
+- 📈 KPI cards: Audit Score, Outdated Deps, Agent Tasks (with deltas)
+- 📊 Agent utilization breakdown with horizontal bar chart
+
+### Context Sidebar
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-sidebar.png" alt="Context sidebar — system info, audit, activity, knowledge base" width="800" />
+</p>
+
+The sidebar auto-enables with the dashboard and provides 6 collapsible panels:
+
+- 🖥️ **System Info** — project metadata, environment checks, git branch
+- 🔍 **Project Audit** — 22-point score with one-click FIX buttons and strength checks
+- 📋 **Agent Activity** — real-time task history with timestamps
+- 💾 **Context Savings** — live savings percentage, KB saved, and event timeline
+- 📚 **Knowledge Base** — FTS5-powered search across 5 categories (pattern, decision, error, api, component)
+- 💰 **Context Budget** — set session/agent token limits, choose overflow strategy (truncate / warn / stop)
+
+Context optimization runs automatically — no flags or configuration needed. See [Context Optimization](#-context-optimization) for details.
 
 ---
 
@@ -117,9 +172,69 @@ Each agent has a distinct personality, quantified success metrics, and memory in
 
 ---
 
+## 🧠 Context Optimization
+
+ERNE includes a built-in context intelligence system that reduces tool output bloat by **97–100%**, preserves exact code examples via FTS5 search, and manages your context budget — all auto-enabled with the dashboard.
+
+```
+erne dashboard   # Context system starts automatically
+```
+
+### Benchmark-verified savings
+
+| Layer | What it does | Savings |
+|-------|-------------|---------|
+| **Summarizer** | Auto-detects 14 content types (docs, JSON, logs, test output, build output, CSV, git history, etc.) and compresses to statistical summaries | **97–100%** |
+| **Index + Search** | Chunks content by headings, indexes in FTS5 with BM25 ranking. Returns only relevant chunks — code examples preserved exactly | **80%** |
+| **Full session** | Combined summarizer + search across a real debugging session (docs, snapshots, issues, tests, builds) | **99%** |
+
+> **Real numbers:** 537 KB of tool outputs → 2.6 KB of context. That's **0.4%** of a 200K context window instead of 44.5%. See [BENCHMARK.md](BENCHMARK.md) for the full 21-scenario breakdown.
+
+### How it works
+
+```
+Tool Output ──▶ Smart Summarizer ──▶ 97-100% compression (14 content types)
+                     │
+Raw Docs ──▶ FTS5 Index+Search ──▶ 80% savings, exact code preserved
+                     │
+Session Events ──▶ Session Tracker ──▶ Error→Fix correlation
+                     │
+Knowledge ──▶ 3-Layer Search (FTS5 → Trigram → Levenshtein)
+                     │
+Session End ──▶ Snapshot (<2KB) ──▶ Next session restores context
+```
+
+| Feature | What it does |
+|---------|-------------|
+| **Content summarizer** | 14 auto-detected content types: markdown, HTML, JSON, test output, TypeScript errors, build output, logs, git history, CSV, and more. Each type gets a specialized summary format |
+| **Content store** | FTS5-powered index with Porter stemming. Markdown chunked by headings, code blocks never split or truncated. BM25 relevance ranking with byte budget management |
+| **Smart truncation** | 4-tier fallback cascade: Structured → Pattern → Head/Tail → Hash. Handles anything the summarizer doesn't cover |
+| **Knowledge base** | SQLite-backed with FTS5 full-text search, trigram fuzzy matching, and Levenshtein fallback. Entries scored by recency + access frequency |
+| **Session continuity** | Snapshots capture active tasks, decisions, errors, and commits at session end. Next session restores context in <2KB |
+| **Budget manager** | Set per-session and per-agent token limits. Throttles at 80%, supports aggressive truncation / warn / hard stop overflow strategies |
+| **Agent preloader** | Tracks agent-to-agent transitions and predicts the next agent for parallel context warmup |
+| **Error→Fix tracking** | Correlates errors with subsequent file modifications to build fix patterns over time |
+
+### Dashboard sidebar panels
+
+The context sidebar (toggle with the chevron button) shows 6 live panels:
+
+- **System Info** — project metadata, environment health, git branch
+- **Project Audit** — 22-point audit with score, one-click FIX buttons, and strengths
+- **Agent Activity** — real-time task history with timestamps
+- **Context Savings** — live savings percentage, KB saved, and event timeline
+- **Knowledge Base** — searchable entries with category filters (pattern, decision, error, api, component)
+- **Context Budget** — configure session limits and overflow strategy directly from the UI
+
+If the context system is disabled, the sidebar shows an **Enable Context** button to activate it at runtime.
+
+---
+
 ## 💰 Token Efficiency
 
-ERNE's architecture is designed to minimize token usage through six layered mechanisms:
+ERNE minimizes token usage through two complementary systems: **architecture-level savings** (what gets loaded into context) and **runtime context optimization** (how tool outputs and session state are compressed).
+
+### Architecture savings
 
 | Mechanism | How it works | Savings |
 |-----------|-------------|---------|
@@ -130,7 +245,17 @@ ERNE's architecture is designed to minimize token usage through six layered mech
 | **Task-specific commands** | 19 focused prompts instead of one monolithic instruction set | ~13% |
 | **Context-based behavior** | Modes change behavior dynamically without loading new rulesets | ~3% |
 
-**Result:** Typical workflows use **60–67% fewer tokens** compared to a naive all-in-context approach.
+### Runtime context optimization (benchmark-verified)
+
+| Mechanism | How it works | Savings |
+|-----------|-------------|---------|
+| **Content summarizer** | Auto-detects 14 content types, produces statistical summaries | **97–100%** per output |
+| **Index + Search** | FTS5 BM25 retrieval returns only relevant chunks, code preserved exactly | **80%** per search |
+| **Smart truncation** | 4-tier fallback: Structured → Pattern → Head/Tail → Hash | 85–100% per output |
+| **Session snapshots** | Captures full session state in <2KB | ~50% vs log replay |
+| **Budget enforcement** | Throttling at 80% prevents runaway token usage | Prevents overflow |
+
+**Result:** Architecture saves **60–67%** on what enters context. Runtime optimization achieves **97–100%** compression on tool outputs (verified across 21 benchmark scenarios with 537 KB of real data). In a full debugging session, **99% of tool output tokens are eliminated** — leaving 99.6% of your context window free for actual problem solving. See [BENCHMARK.md](BENCHMARK.md) for complete results.
 
 ---
 

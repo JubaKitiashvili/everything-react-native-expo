@@ -48,8 +48,27 @@
     return Math.floor(diff / 86400000) + 'd ago';
   };
 
+  const getHistory = () => historyData;
+
+  const getAllEntries = () => {
+    var all = [];
+    for (var agent in historyData) {
+      if (!historyData.hasOwnProperty(agent)) continue;
+      var entries = historyData[agent] || [];
+      entries.forEach(function (e) {
+        all.push(Object.assign({ agent: agent }, e));
+      });
+    }
+    all.sort(function (a, b) {
+      return new Date(b.timestamp || b.completedAt || 0) - new Date(a.timestamp || a.completedAt || 0);
+    });
+    return all;
+  };
+
   window.History = {
     setHistory,
+    getHistory,
+    getAllEntries,
     getAgentHistory,
     getAgentStats,
     formatDuration,

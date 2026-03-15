@@ -14,6 +14,10 @@ docs/assets/
 dashboard/package-lock.json
 dashboard/activity-history.json
 
+# ERNE runtime data
+.erne/*.json
+.erne/*.md
+
 # Claude Code skill plugin symlinks
 agent-device
 building-native-ui
@@ -24,4 +28,4 @@ validate-skills
 
 # Local assets
 buildwithclaude/
-screenshots/
+/screenshots/

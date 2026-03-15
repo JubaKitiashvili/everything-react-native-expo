@@ -1,0 +1,119 @@
+<h2>Ecosystem Tab: Content Layout</h2>
+<p class="subtitle">This tab shows Release Radar, Community Pulse, and Recommended Additions. How should they be arranged?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a1a;padding:10px;">
+      <!-- Three column layout -->
+      <div style="display:flex;gap:6px;height:180px;">
+        <div style="flex:1;background:#1a1a2e;border-radius:6px;padding:8px;overflow:hidden;">
+          <div style="color:#4CAF50;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:bold;">Release Radar</div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;margin-bottom:4px;border-left:2px solid #4CAF50;">
+            <div style="color:#ccc;font-size:9px;font-weight:bold;">expo@53.0.0</div>
+            <div style="color:#888;font-size:8px;">2 days ago</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;margin-bottom:4px;border-left:2px solid #FF9800;">
+            <div style="color:#ccc;font-size:9px;font-weight:bold;">react-native@0.78</div>
+            <div style="color:#888;font-size:8px;">1 week ago</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;border-left:2px solid #4CAF50;">
+            <div style="color:#ccc;font-size:9px;font-weight:bold;">zustand@5.1.0</div>
+            <div style="color:#888;font-size:8px;">3 days ago</div>
+          </div>
+        </div>
+        <div style="flex:1;background:#1a1a2e;border-radius:6px;padding:8px;overflow:hidden;">
+          <div style="color:#2196F3;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:bold;">Community Pulse</div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;margin-bottom:4px;">
+            <div style="color:#ccc;font-size:9px;">react-native-mmkv</div>
+            <div style="color:#4CAF50;font-size:8px;">+342 stars this week</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;margin-bottom:4px;">
+            <div style="color:#ccc;font-size:9px;">expo-sqlite</div>
+            <div style="color:#4CAF50;font-size:8px;">+128 stars this week</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:4px;">
+            <div style="color:#ccc;font-size:9px;">legend-state</div>
+            <div style="color:#4CAF50;font-size:8px;">+97 stars this week</div>
+          </div>
+        </div>
+        <div style="flex:1;background:#1a1a2e;border-radius:6px;padding:8px;overflow:hidden;">
+          <div style="color:#FF9800;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:bold;">Recommended</div>
+          <div style="background:rgba(255,152,0,0.08);padding:4px 6px;border-radius:4px;margin-bottom:4px;border:1px solid rgba(255,152,0,0.2);">
+            <div style="color:#ccc;font-size:9px;">Add FlashList</div>
+            <div style="color:#888;font-size:8px;">+40% list perf</div>
+          </div>
+          <div style="background:rgba(255,152,0,0.08);padding:4px 6px;border-radius:4px;border:1px solid rgba(255,152,0,0.2);">
+            <div style="color:#ccc;font-size:9px;">Add expo-image</div>
+            <div style="color:#888;font-size:8px;">Better caching</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Three Columns</h3>
+      <p>All sections visible at once. Dense but comprehensive. Works well on wide screens, tight on narrow.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a1a;padding:10px;">
+      <!-- Feed layout: main + sidebar -->
+      <div style="display:flex;gap:6px;height:180px;">
+        <div style="flex:2;background:#1a1a2e;border-radius:6px;padding:8px;overflow:hidden;">
+          <div style="color:#E0E0E0;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:bold;">Feed</div>
+          <!-- Mixed feed items -->
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.03);padding:5px 6px;border-radius:4px;margin-bottom:3px;">
+            <div style="background:#4CAF50;color:#000;font-size:7px;padding:2px 4px;border-radius:2px;font-weight:bold;flex-shrink:0;">NEW</div>
+            <div>
+              <div style="color:#ccc;font-size:9px;">expo@53.0.0 released</div>
+              <div style="color:#666;font-size:8px;">SDK 53 with RSC support — 2h ago</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.03);padding:5px 6px;border-radius:4px;margin-bottom:3px;">
+            <div style="background:#2196F3;color:#fff;font-size:7px;padding:2px 4px;border-radius:2px;font-weight:bold;flex-shrink:0;">HOT</div>
+            <div>
+              <div style="color:#ccc;font-size:9px;">react-native-mmkv trending</div>
+              <div style="color:#666;font-size:8px;">+342 stars — faster than AsyncStorage</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.03);padding:5px 6px;border-radius:4px;margin-bottom:3px;">
+            <div style="background:#FF9800;color:#000;font-size:7px;padding:2px 4px;border-radius:2px;font-weight:bold;flex-shrink:0;">TIP</div>
+            <div>
+              <div style="color:#ccc;font-size:9px;">Add FlashList to your project</div>
+              <div style="color:#666;font-size:8px;">You use FlatList — FlashList is 5x faster</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.03);padding:5px 6px;border-radius:4px;">
+            <div style="background:#f44336;color:#fff;font-size:7px;padding:2px 4px;border-radius:2px;font-weight:bold;flex-shrink:0;">SEC</div>
+            <div>
+              <div style="color:#ccc;font-size:9px;">react-native-webview patch</div>
+              <div style="color:#666;font-size:8px;">XSS vulnerability fixed in 13.8.1</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div style="background:#1a1a2e;border-radius:6px;padding:8px;flex:1;">
+            <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Your Stack</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;">
+              <span style="background:rgba(76,175,80,0.15);color:#4CAF50;font-size:8px;padding:2px 6px;border-radius:8px;">expo@52</span>
+              <span style="background:rgba(76,175,80,0.15);color:#4CAF50;font-size:8px;padding:2px 6px;border-radius:8px;">RN 0.76</span>
+              <span style="background:rgba(76,175,80,0.15);color:#4CAF50;font-size:8px;padding:2px 6px;border-radius:8px;">zustand</span>
+              <span style="background:rgba(76,175,80,0.15);color:#4CAF50;font-size:8px;padding:2px 6px;border-radius:8px;">expo-router</span>
+            </div>
+          </div>
+          <div style="background:#1a1a2e;border-radius:6px;padding:8px;flex:1;">
+            <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Quick Stats</div>
+            <div style="color:#4CAF50;font-size:16px;font-weight:bold;">3</div>
+            <div style="color:#666;font-size:8px;">updates available</div>
+            <div style="color:#FF9800;font-size:16px;font-weight:bold;margin-top:4px;">1</div>
+            <div style="color:#666;font-size:8px;">security patch</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Unified Feed + Sidebar</h3>
+      <p>All news types mixed in a single chronological feed with colored tags. Sidebar shows your stack and quick stats. Social media style — easy to scan.</p>
+    </div>
+  </div>
+</div>

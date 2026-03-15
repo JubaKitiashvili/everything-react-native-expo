@@ -13,6 +13,12 @@
     "pre-commit-lint.js",
     "continuous-learning-observer.js",
     "evaluate-session.js",
-    "dashboard-event.js"
+    "dashboard-event.js",
+    "context/sandbox-router.js",
+    "context/event-tracker.js",
+    "context/knowledge-indexer.js",
+    "context/snapshot-builder.js",
+    "context/session-restore.js",
+    "context/session-graduate.js"
   ]
 }
