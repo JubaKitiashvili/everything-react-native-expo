@@ -74,12 +74,15 @@ if (!fs.existsSync(scriptPath)) {
   process.exit(2);
 }
 
+// Set ERNE_HOOK_CHAIN so context hooks know they're in a chain
+const env = { ...process.env, ERNE_HOOK_CHAIN: 'true' };
+
 const result = spawnSync('node', [scriptPath], {
   input: stdinData,
   encoding: 'utf8',
   stdio: ['pipe', 'pipe', 'pipe'],
   timeout: 30000,
-  env: process.env,
+  env,
 });
 
 if (result.stdout) process.stdout.write(result.stdout);
