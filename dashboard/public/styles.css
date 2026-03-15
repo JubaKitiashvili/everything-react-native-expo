@@ -1012,32 +1012,34 @@ canvas {
 /* ── Ecosystem Tab ── */
 .eco-container { display: flex; flex-direction: column; height: 100%; }
 .eco-filters { display: flex; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.eco-filter-btn { padding: 4px 12px; background: transparent; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-family: inherit; font-size: 11px; cursor: pointer; transition: all var(--transition); }
+.eco-filter-btn { padding: 6px 14px; background: transparent; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-family: inherit; font-size: 13px; cursor: pointer; transition: all var(--transition); }
 .eco-filter-btn:hover { border-color: var(--text-muted); color: var(--text); }
 .eco-filter-btn.active { background: var(--green); border-color: var(--green); color: #000; font-weight: bold; }
-.eco-refresh-btn { margin-left: auto; padding: 4px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-family: inherit; font-size: 11px; cursor: pointer; }
+.eco-refresh-btn { margin-left: auto; padding: 6px 14px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-family: inherit; font-size: 13px; cursor: pointer; }
 .eco-refresh-btn:hover { border-color: var(--green); color: var(--green); }
 .eco-layout { display: flex; gap: 16px; flex: 1; overflow: hidden; margin-top: 12px; }
 .eco-feed { flex: 2; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .eco-sidebar { flex: 1; min-width: 180px; }
-.eco-item { padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid transparent; cursor: default; transition: border-color var(--transition); }
+.eco-item { padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid transparent; cursor: default; transition: border-color var(--transition); }
 .eco-item:hover { border-color: var(--border); }
-.eco-item-header { display: flex; align-items: center; gap: 8px; }
-.eco-tag { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+.eco-item-header { display: flex; align-items: center; gap: 10px; }
+.eco-tag { padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
 .eco-tag.green { background: rgba(76,175,80,0.2); color: var(--green); }
 .eco-tag.red { background: rgba(244,67,54,0.2); color: var(--red); }
 .eco-tag.blue { background: rgba(33,150,243,0.2); color: var(--blue); }
 .eco-tag.orange { background: rgba(255,152,0,0.2); color: var(--orange); }
-.eco-item-title { flex: 1; font-size: 13px; color: var(--text); }
-.eco-item-time { font-size: 10px; color: var(--text-dim); }
-.eco-item-summary { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.eco-stats h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 0 0 8px; }
-.eco-stat { font-size: 12px; color: var(--text-muted); margin: 4px 0; }
-.eco-stat-num { font-weight: bold; font-size: 16px; margin-right: 4px; }
+.eco-item-pkg { font-size: 15px; font-weight: 600; color: var(--text); }
+.eco-item-ver { font-size: 14px; color: var(--text-muted); flex: 1; }
+.eco-item-title { flex: 1; font-size: 15px; color: var(--text); }
+.eco-item-time { font-size: 12px; color: var(--text-dim); }
+.eco-item-summary { font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+.eco-stats h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 0 0 10px; }
+.eco-stat { font-size: 14px; color: var(--text-muted); margin: 6px 0; }
+.eco-stat-num { font-weight: bold; font-size: 20px; margin-right: 4px; }
 .eco-stat-num.green { color: var(--green); }
 .eco-stat-num.red { color: var(--red); }
 .eco-info { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
-.eco-info small { font-size: 10px; color: var(--text-dim); }
+.eco-info small { font-size: 12px; color: var(--text-dim); }
 .eco-loading { display: flex; flex-direction: column; gap: 8px; }
 .eco-skeleton { height: 56px; background: rgba(255,255,255,0.03); border-radius: 6px; animation: pulse 1.5s infinite; }
 .eco-empty, .eco-error { padding: 24px; text-align: center; color: var(--text-dim); }

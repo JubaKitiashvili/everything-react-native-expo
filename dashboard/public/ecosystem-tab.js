@@ -103,10 +103,12 @@
     filtered.forEach(function (item) {
       var el = document.createElement('div');
       el.className = 'eco-item';
+      var displayTitle = item.package ? escapeHtml(item.package) + '  ' + escapeHtml(item.title) : escapeHtml(item.title);
       el.innerHTML =
         '<div class="eco-item-header">' +
           '<span class="eco-tag ' + (TAG_COLORS[item.tag] || '') + '">' + item.tag + '</span>' +
-          '<span class="eco-item-title">' + escapeHtml(item.title) + '</span>' +
+          '<span class="eco-item-pkg">' + escapeHtml(item.package || '') + '</span>' +
+          '<span class="eco-item-ver">' + escapeHtml(item.title) + '</span>' +
           '<span class="eco-item-time">' + formatTimeAgo(item.timestamp) + '</span>' +
         '</div>' +
         '<div class="eco-item-summary">' + escapeHtml(item.summary) + '</div>';
