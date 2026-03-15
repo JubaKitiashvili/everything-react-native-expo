@@ -2,6 +2,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
 const { parseGitHubRelease, parseNpmPackage, classifyTag, buildFeedItem } = require('../dashboard/lib/ecosystem/fetcher');
+const { analyzeRelevance } = require('../dashboard/lib/ecosystem/analyzer');
 
 describe('ecosystem fetcher', () => {
   describe('parseGitHubRelease', () => {
@@ -33,4 +34,24 @@ describe('ecosystem fetcher', () => {
       assert.strictEqual(item.package, 'zustand');
     });
   });
+});
+
+describe('ecosystem analyzer', () => {
+  it('scores direct dependency matches higher', () => {
+    var items = [{ package: 'zustand', tag: 'NEW', relevance: 0 }, { package: 'unknown-lib', tag: 'NEW', relevance: 0 }];
+    var scored = analyzeRelevance(items, { dependencies: { zustand: '5.0.0' } });
+    assert.ok(scored[0].relevance > scored[1].relevance);
+    assert.ok(scored[0].relevance >= 50);
+  });
+  it('gives security items a bonus', () => {
+    var items = [{ package: 'unknown', tag: 'SEC', relevance: 0 }, { package: 'unknown', tag: 'NEW', relevance: 0 }];
+    var scored = analyzeRelevance(items, { dependencies: {} });
+    assert.ok(scored[0].relevance > scored[1].relevance);
+  });
+  it('sorts by relevance desc then timestamp desc', () => {
+    var items = [{ package: 'a', tag: 'NEW', relevance: 0, timestamp: '2026-03-15T00:00:00Z' }, { package: 'zustand', tag: 'NEW', relevance: 0, timestamp: '2026-03-14T00:00:00Z' }];
+    var scored = analyzeRelevance(items, { dependencies: { zustand: '5.0.0' } });
+    assert.strictEqual(scored[0].package, 'zustand');
+  });
+  it('returns empty array for empty input', () => { assert.deepStrictEqual(analyzeRelevance([], { dependencies: {} }), []); });
 });
