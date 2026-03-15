@@ -26,7 +26,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(
   tags,
   content=knowledge,
   content_rowid=id,
-  tokenize='porter'
+  tokenize='porter unicode61'
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_trigram USING fts5(
