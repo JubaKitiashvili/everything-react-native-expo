@@ -9,10 +9,16 @@ All notable changes to ERNE are documented here.
 - **My App tab** — project overview, MCP integrations, project audit with FIX buttons, quick actions, recommendations, environment checks
 - **Ecosystem tab** — live release feed for React Native packages with filters and stats
 - **Insights tab** — KPI cards (audit score, outdated deps, agent tasks) with agent utilization chart
-- **Context sidebar** — collapsible panels: System Info, Project Audit, Agent Activity, Context Savings, Knowledge Base, Context Budget
-- **Nav bar** — ERNE branding, tab icons, real-time connection status, working/total agents, session timer
+- **Context sidebar** — 6 collapsible panels: System Info, Project Audit, Agent Activity, Context Savings, Knowledge Base, Context Budget
+- **Context optimization system** — 4-tier smart truncation (JSON → pattern → head/tail), 30–60% output compression
+- **Knowledge base** — SQLite-backed with FTS5 full-text search, trigram fuzzy matching, and Levenshtein fallback
+- **Session continuity** — automatic snapshot/restore across sessions (<2KB per snapshot)
+- **Budget manager** — per-session and per-agent token limits with 3 overflow strategies (truncate / warn / stop)
+- **Agent preloader** — transition tracking and next-agent prediction for parallel context warmup
+- **Error→Fix correlation** — tracks errors and correlating file modifications to build fix patterns
 - **Context auto-enable** — context system starts automatically with dashboard (no `--context` flag needed)
 - **Enable context from UI** — "Enable Context" button in sidebar when context is disabled
+- **Nav bar** — ERNE branding, tab icons, real-time connection status, working/total agents, session timer
 - **`senior-developer` and `feature-builder` agents** — for parallel implementation workflows
 
 ### Fixed

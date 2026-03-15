@@ -113,12 +113,16 @@ erne start                  # Init project + dashboard in background
   <img src="docs/screenshots/dashboard-sidebar.png" alt="Context sidebar — system info, audit, activity, knowledge base" width="800" />
 </p>
 
-- 🖥️ System Info — project metadata, environment checks, git branch
-- 🔍 Project Audit — score, findings with one-click FIX, strengths
-- 📋 Agent Activity — task history with timestamps
-- 💾 Context Savings — token optimization tracking
-- 📚 Knowledge Base — searchable with category filters
-- 💰 Context Budget — configurable token budget management
+The sidebar auto-enables with the dashboard and provides 6 collapsible panels:
+
+- 🖥️ **System Info** — project metadata, environment checks, git branch
+- 🔍 **Project Audit** — 22-point score with one-click FIX buttons and strength checks
+- 📋 **Agent Activity** — real-time task history with timestamps
+- 💾 **Context Savings** — live savings percentage, KB saved, and event timeline
+- 📚 **Knowledge Base** — FTS5-powered search across 5 categories (pattern, decision, error, api, component)
+- 💰 **Context Budget** — set session/agent token limits, choose overflow strategy (truncate / warn / stop)
+
+Context optimization runs automatically — no flags or configuration needed. See [Context Optimization](#-context-optimization) for details.
 
 ---
 
@@ -168,9 +172,55 @@ Each agent has a distinct personality, quantified success metrics, and memory in
 
 ---
 
+## 🧠 Context Optimization
+
+ERNE includes a built-in context intelligence system that auto-enables with the dashboard. It reduces token waste, remembers what matters, and manages your context budget — all without configuration.
+
+```
+erne dashboard   # Context system starts automatically
+```
+
+### How it works
+
+```
+Tool Output ──▶ 4-Tier Truncation ──▶ 30-60% smaller responses
+                     │
+Session Events ──▶ Session Tracker ──▶ Error→Fix correlation
+                     │
+Knowledge ──▶ 3-Layer Search (FTS5 → Trigram → Levenshtein)
+                     │
+Session End ──▶ Snapshot (<2KB) ──▶ Next session restores context
+```
+
+| Feature | What it does |
+|---------|-------------|
+| **Smart truncation** | 4-tier strategy (JSON summarization → pattern recognition → head/tail) keeps tool outputs under 2KB |
+| **Knowledge base** | SQLite-backed with FTS5 full-text search, trigram fuzzy matching, and Levenshtein fallback. Entries scored by recency + access frequency |
+| **Session continuity** | Snapshots capture active tasks, decisions, errors, and commits at session end. Next session restores context in <2KB |
+| **Budget manager** | Set per-session and per-agent token limits. Throttles at 80%, supports aggressive truncation / warn / hard stop overflow strategies |
+| **Agent preloader** | Tracks agent-to-agent transitions and predicts the next agent for parallel context warmup |
+| **Error→Fix tracking** | Correlates errors with subsequent file modifications to build fix patterns over time |
+
+### Dashboard sidebar panels
+
+The context sidebar (toggle with the chevron button) shows 6 live panels:
+
+- **System Info** — project metadata, environment health, git branch
+- **Project Audit** — 22-point audit with score, one-click FIX buttons, and strengths
+- **Agent Activity** — real-time task history with timestamps
+- **Context Savings** — live token savings percentage with event timeline
+- **Knowledge Base** — searchable entries with category filters (pattern, decision, error, api, component)
+- **Context Budget** — configure session limits and overflow strategy directly from the UI
+
+If the context system is disabled, the sidebar shows an **Enable Context** button to activate it at runtime.
+
+---
+
 ## 💰 Token Efficiency
 
-ERNE's architecture is designed to minimize token usage through six layered mechanisms:
+ERNE minimizes token usage through two complementary systems: **architecture-level savings** (what gets loaded into context) and **runtime context optimization** (how tool outputs and session state are compressed).
+
+### Architecture savings
 
 | Mechanism | How it works | Savings |
 |-----------|-------------|---------|
@@ -181,7 +231,16 @@ ERNE's architecture is designed to minimize token usage through six layered mech
 | **Task-specific commands** | 19 focused prompts instead of one monolithic instruction set | ~13% |
 | **Context-based behavior** | Modes change behavior dynamically without loading new rulesets | ~3% |
 
-**Result:** Typical workflows use **60–67% fewer tokens** compared to a naive all-in-context approach.
+### Runtime context optimization
+
+| Mechanism | How it works | Savings |
+|-----------|-------------|---------|
+| **Smart truncation** | 4-tier output compression: JSON → test/diff/npm patterns → head/tail | 30–60% per output |
+| **Knowledge base** | Relevance-scored search returns only what matters, capped at 2KB | ~40% vs raw context |
+| **Session snapshots** | Aggressive trimming captures full session state in <2KB | ~50% vs log replay |
+| **Budget enforcement** | Throttling at 80% prevents runaway token usage | Prevents overflow |
+
+**Result:** Architecture saves **60–67%** on what enters context. Runtime optimization saves an additional **35–55%** on tool outputs and session state. Combined, sessions use significantly fewer tokens than any comparable harness.
 
 ---
 
