@@ -10,6 +10,8 @@ const { truncate } = require('./lib/context/truncation');
 const { KnowledgeBase } = require('./lib/context/knowledge-base');
 const { SessionTracker } = require('./lib/context/session-tracker');
 const { buildSnapshot, saveSnapshot, loadLatestSnapshot, restorePrompt } = require('./lib/context/session-continuity');
+const { BudgetManager } = require('./lib/context/budget-manager');
+const { AgentPreloader } = require('./lib/context/preloader');
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -97,6 +99,8 @@ let projectDb = null;
 let sessionDb = null;
 let knowledgeBase = null;
 let sessionTracker = null;
+let budgetManager = null;
+let preloader = null;
 let contextEnabled = false;
 
 function initContext(projectDir) {
@@ -112,6 +116,8 @@ function initContext(projectDir) {
 
     knowledgeBase = new KnowledgeBase(projectDb);
     sessionTracker = new SessionTracker(sessionDb);
+    budgetManager = new BudgetManager(projectDb);
+    preloader = new AgentPreloader(projectDb);
     contextEnabled = true;
 
     // Write session ID for hooks
@@ -422,6 +428,23 @@ function handleContextApi(req, res, urlPath, body) {
       const stats = sessionTracker.getStats();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(stats));
+      return;
+    }
+
+    // GET /api/context/budget
+    if (urlPath === '/api/context/budget' && req.method === 'GET') {
+      const settings = budgetManager.getSettings();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(settings));
+      return;
+    }
+
+    // PUT /api/context/budget
+    if (urlPath === '/api/context/budget' && req.method === 'PUT') {
+      const data = JSON.parse(body);
+      budgetManager.updateSettings(data);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
       return;
     }
 

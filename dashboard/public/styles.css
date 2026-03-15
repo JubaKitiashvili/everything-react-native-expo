@@ -565,3 +565,36 @@ canvas {
   padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.ctx-input {
+  width: 100%; padding: 6px; background: #0d0d1a; border: 1px solid #333;
+  color: #ccc; border-radius: 4px; font-family: monospace; font-size: 12px; margin-bottom: 8px;
+}
+.ctx-input-sm {
+  width: 80px; padding: 4px; background: #0d0d1a; border: 1px solid #333;
+  color: #ccc; border-radius: 4px; font-family: monospace; font-size: 11px;
+}
+.ctx-categories { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.ctx-cat {
+  background: #222; border: 1px solid #444; color: #888; padding: 2px 8px;
+  border-radius: 12px; font-size: 10px; cursor: pointer; font-family: monospace;
+}
+.ctx-cat.active { background: var(--green); color: #000; border-color: var(--green); }
+.ctx-entries { max-height: 200px; overflow-y: auto; }
+.ctx-entry {
+  display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #1a1a1a;
+  font-size: 11px; font-family: monospace;
+}
+.ctx-entry-cat { color: #666; min-width: 60px; }
+.ctx-entry-title { color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctx-entry-score { color: var(--green); min-width: 35px; text-align: right; }
+.ctx-toggle {
+  display: flex; align-items: center; gap: 8px; color: #ccc;
+  font-size: 12px; font-family: monospace; margin-bottom: 8px;
+}
+.ctx-budget-settings label {
+  display: block; color: #aaa; font-size: 11px; font-family: monospace; margin-bottom: 6px;
+}
+.ctx-btn {
+  background: var(--green); color: #000; border: none; padding: 4px 16px;
+  border-radius: 4px; font-family: monospace; font-size: 11px; cursor: pointer; margin-top: 8px;
+}
