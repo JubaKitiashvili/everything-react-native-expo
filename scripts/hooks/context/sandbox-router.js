@@ -11,6 +11,19 @@ if (!input) process.exit(0);
 const toolName = input.tool_name;
 const toolInput = input.tool_input || {};
 
+// Error prevention — check for known warnings on file modifications
+if (toolName === 'Edit' || toolName === 'Write') {
+  const filePath = toolInput.file_path || toolInput.path || '';
+  sendSync('search', { query: filePath, category: 'error', min_score: 0.7, limit: 2 }, 500)
+    .then(result => {
+      if (result && result.items && result.items.length > 0) {
+        const warnings = result.items.map(w => `⚠️ ERNE: ${w.snippet}`).join('\n');
+        console.error(warnings);
+      }
+    })
+    .catch(() => {});
+}
+
 const SANDBOXED_TOOLS = {
   Read: (args) => `cat -n "${args.file_path}"`,
   Bash: (args) => args.command,
