@@ -3,6 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { WebSocketServer } = require('ws');
+const { execFile } = require('node:child_process');
+const crypto = require('node:crypto');
+const { openProjectDb, openSessionDb, closeDb } = require('./lib/context/db');
+const { truncate } = require('./lib/context/truncation');
+const { KnowledgeBase } = require('./lib/context/knowledge-base');
+const { SessionTracker } = require('./lib/context/session-tracker');
+const { buildSnapshot, saveSnapshot, loadLatestSnapshot, restorePrompt } = require('./lib/context/session-continuity');
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -84,6 +91,39 @@ const initAgentState = () => {
 };
 
 initAgentState();
+
+// Context optimization state
+let projectDb = null;
+let sessionDb = null;
+let knowledgeBase = null;
+let sessionTracker = null;
+let contextEnabled = false;
+
+function initContext(projectDir) {
+  try {
+    const erneDir = path.join(projectDir, '.erne');
+    const sessionsDir = path.join(erneDir, 'sessions');
+    if (!fs.existsSync(erneDir)) fs.mkdirSync(erneDir, { recursive: true });
+    if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
+
+    projectDb = openProjectDb(path.join(erneDir, 'project.db'));
+    const sessionId = crypto.randomUUID();
+    sessionDb = openSessionDb(path.join(sessionsDir, `${sessionId}.db`));
+
+    knowledgeBase = new KnowledgeBase(projectDb);
+    sessionTracker = new SessionTracker(sessionDb);
+    contextEnabled = true;
+
+    // Write session ID for hooks
+    fs.writeFileSync(path.join(erneDir, 'current-session-id'), sessionId);
+
+    console.log(`[ERNE] Context optimization enabled (session: ${sessionId.slice(0, 8)})`);
+    return sessionId;
+  } catch (err) {
+    console.error('[ERNE] Context init failed:', err.message);
+    return null;
+  }
+}
 
 // Activity history — ring buffer per agent with JSON persistence
 const activityHistory = {};
@@ -295,7 +335,132 @@ const serveStatic = (req, res) => {
   });
 };
 
+function handleContextApi(req, res, urlPath, body) {
+  if (!contextEnabled) {
+    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.end('{"error":"context not enabled"}');
+    return;
+  }
+
+  try {
+    // POST /api/context/execute — sandbox execution
+    if (urlPath === '/api/context/execute' && req.method === 'POST') {
+      const { command, original_tool, timeout = 30000 } = JSON.parse(body);
+      const cwd = process.env.ERNE_PROJECT_DIR || process.cwd();
+      execFile('sh', ['-c', command], { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+        const output = truncate(stdout || '', original_tool || 'Bash');
+        const saved = (stdout || '').length - output.length;
+        if (sessionTracker) sessionTracker.contextSavedBytes += Math.max(saved, 0);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          output, stderr: (stderr || '').slice(0, 500),
+          exit_code: err ? err.code || 1 : 0,
+          original_bytes: (stdout || '').length,
+          truncated_bytes: output.length
+        }));
+      });
+      return;
+    }
+
+    // POST /api/context/search — FTS5 knowledge search
+    if (urlPath === '/api/context/search' && req.method === 'POST') {
+      const { query, category, min_score, limit } = JSON.parse(body);
+      const results = knowledgeBase.search(query, { category, minScore: min_score, limit });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(results));
+      return;
+    }
+
+    // POST /api/context/event — track session event
+    if (urlPath === '/api/context/event' && req.method === 'POST') {
+      const { event_type, data, agent, context_bytes } = JSON.parse(body);
+      sessionTracker.track(event_type, data, { agent, context_bytes });
+      broadcastContextEvent(event_type, data);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+      return;
+    }
+
+    // GET /api/context/snapshot
+    if (urlPath === '/api/context/snapshot' && req.method === 'GET') {
+      const snap = loadLatestSnapshot(projectDb);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(snap || {}));
+      return;
+    }
+
+    // POST /api/context/snapshot — save snapshot (PreCompact)
+    if (urlPath === '/api/context/snapshot' && req.method === 'POST') {
+      const sessionIdFile = path.join(process.env.ERNE_PROJECT_DIR || process.cwd(), '.erne', 'current-session-id');
+      const sessionId = fs.existsSync(sessionIdFile) ? fs.readFileSync(sessionIdFile, 'utf8').trim() : 'unknown';
+      const snap = buildSnapshot(sessionDb, sessionId);
+      saveSnapshot(projectDb, snap);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(snap));
+      return;
+    }
+
+    // GET /api/context/knowledge — browse knowledge base
+    if (urlPath === '/api/context/knowledge' && req.method === 'GET') {
+      const all = projectDb.prepare('SELECT id, category, title, relevance_score, access_count, created_at FROM knowledge ORDER BY relevance_score DESC LIMIT 50').all();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(all));
+      return;
+    }
+
+    // POST /api/context/knowledge — add knowledge entry
+    if (urlPath === '/api/context/knowledge' && req.method === 'POST') {
+      const entry = JSON.parse(body);
+      const id = knowledgeBase.add(entry);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ id }));
+      return;
+    }
+
+    // GET /api/context/stats — current session stats
+    if (urlPath === '/api/context/stats' && req.method === 'GET') {
+      const stats = sessionTracker.getStats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(stats));
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end('{"error":"not found"}');
+  } catch (err) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  }
+}
+
+function broadcastContextEvent(eventType, data) {
+  const PRIORITY_EVENTS = ['task_start', 'task_complete', 'file_create', 'error', 'error_fix',
+    'file_modify', 'decision', 'git_commit', 'test_run'];
+  if (!PRIORITY_EVENTS.includes(eventType)) return;
+
+  const icons = { task_start: '🏗️', task_complete: '✅', file_create: '📝', error: '❌',
+    error_fix: '✅', file_modify: '📝', decision: '💡', git_commit: '📦', test_run: '🧪' };
+
+  const msg = JSON.stringify({
+    type: 'session_event',
+    data: { time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      icon: icons[eventType] || '📌',
+      text: `${eventType}: ${data.task || data.path || data.command || data.agent || ''}`
+    }
+  });
+  wss?.clients?.forEach(c => { if (c.readyState === 1) c.send(msg); });
+}
+
 const server = http.createServer(async (req, res) => {
+  // Route context API requests
+  const urlPath = req.url.split('?')[0];
+  if (urlPath.startsWith('/api/context/')) {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => handleContextApi(req, res, urlPath, body));
+    return;
+  }
+
   if (req.method === 'GET' && req.url === '/api/state') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(agentState));
@@ -377,6 +542,20 @@ setInterval(() => {
     ws.ping();
   }
 }, 30000);
+
+// Init context if --context flag or env var
+if (process.argv.includes('--context') || process.env.ERNE_CONTEXT === 'true') {
+  const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+  initContext(projectDir);
+}
+
+// Broadcast context stats every 5 seconds
+setInterval(() => {
+  if (!contextEnabled || !sessionTracker) return;
+  const stats = sessionTracker.getStats();
+  const msg = JSON.stringify({ type: 'context_stats', data: stats });
+  wss?.clients?.forEach(c => { if (c.readyState === 1) c.send(msg); });
+}, 5000);
 
 server.listen(PORT, () => {
   console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
