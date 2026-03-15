@@ -4,6 +4,7 @@ class BudgetManager {
   constructor(db) {
     this.db = db;
     this.agentUsage = new Map();
+    this.sessionUsage = 0;
     this._ensureSettings();
   }
 
@@ -21,6 +22,8 @@ class BudgetManager {
       session_limit: row.session_limit,
       overflow: row.overflow,
       agent_limits: JSON.parse(row.agent_limits || '{}'),
+      session_usage: this.sessionUsage,
+      session_pct: row.session_limit > 0 ? Math.round((this.sessionUsage / row.session_limit) * 100) : 0,
       agents: Object.fromEntries(
         [...this.agentUsage.entries()].map(([k, v]) => [k, { limit: JSON.parse(row.agent_limits || '{}')[k] || 0, used: v }])
       )
@@ -42,22 +45,63 @@ class BudgetManager {
   trackUsage(agent, bytes) {
     const current = this.agentUsage.get(agent) || 0;
     this.agentUsage.set(agent, current + bytes);
+    this.sessionUsage += bytes;
   }
 
   getUsage(agent) {
     return this.agentUsage.get(agent) || 0;
   }
 
+  /**
+   * Check if an agent should be throttled (at 80% of limit).
+   * Returns false if budget is disabled or no limit is set.
+   */
   shouldThrottle(agent) {
     const settings = this.getSettings();
     if (!settings.enabled) return false;
-    const limit = settings.agent_limits[agent];
-    if (!limit) return false;
-    return this.getUsage(agent) >= limit * 0.8;
+
+    // Check session-level limit
+    if (this.sessionUsage >= settings.session_limit * 0.8) return true;
+
+    // Check per-agent limit
+    const agentLimit = settings.agent_limits[agent];
+    if (agentLimit && this.getUsage(agent) >= agentLimit * 0.8) return true;
+
+    return false;
+  }
+
+  /**
+   * Check if output should be blocked entirely (hard_stop overflow at 100%).
+   * Returns { blocked: bool, reason: string }
+   */
+  shouldBlock(agent) {
+    const settings = this.getSettings();
+    if (!settings.enabled) return { blocked: false, reason: null };
+    if (settings.overflow !== 'hard_stop') return { blocked: false, reason: null };
+
+    if (this.sessionUsage >= settings.session_limit) {
+      return { blocked: true, reason: `Session budget exceeded (${this.sessionUsage}/${settings.session_limit} bytes)` };
+    }
+
+    const agentLimit = settings.agent_limits[agent];
+    if (agentLimit && this.getUsage(agent) >= agentLimit) {
+      return { blocked: true, reason: `Agent ${agent} budget exceeded (${this.getUsage(agent)}/${agentLimit} bytes)` };
+    }
+
+    return { blocked: false, reason: null };
+  }
+
+  /**
+   * Get the overflow strategy for the current settings.
+   * Returns 'aggressive_truncation' | 'warn' | 'hard_stop'
+   */
+  getOverflowStrategy() {
+    return this.getSettings().overflow;
   }
 
   resetSession() {
     this.agentUsage.clear();
+    this.sessionUsage = 0;
   }
 }
 

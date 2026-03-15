@@ -1,0 +1,755 @@
+commit a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Sat Mar 15 09:45:12 2026 +0000
+
+    feat: add real-time collaboration indicators to dashboard
+
+commit b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Fri Mar 14 16:30:45 2026 +0000
+
+    fix: resolve WebSocket reconnection loop on token refresh
+
+commit c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Fri Mar 14 11:22:18 2026 +0000
+
+    refactor: extract shared pagination logic into usePagination hook
+
+commit d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3
+Author: Emily Watson <emily.w@company.com>
+Date:   Thu Mar 13 14:55:33 2026 +0000
+
+    feat: implement CSV export for analytics dashboard
+
+commit e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Thu Mar 13 09:10:02 2026 +0000
+
+    test: add E2E tests for checkout payment flow
+
+commit f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
+Author: James Li <james.li@company.com>
+Date:   Wed Mar 12 17:42:19 2026 +0000
+
+    fix: correct timezone offset in scheduled notification delivery
+
+commit a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Wed Mar 12 10:15:44 2026 +0000
+
+    chore: upgrade TypeScript to 5.7.2 and fix new strict errors
+
+commit b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Tue Mar 11 15:30:28 2026 +0000
+
+    feat: add role-based access control for team workspaces
+
+commit c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8
+Author: Emily Watson <emily.w@company.com>
+Date:   Tue Mar 11 08:45:55 2026 +0000
+
+    fix: prevent duplicate form submissions on slow connections
+
+commit d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Mon Mar 10 13:20:11 2026 +0000
+
+    perf: optimize dashboard query by adding composite index
+
+commit e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+Author: James Li <james.li@company.com>
+Date:   Mon Mar 10 09:05:37 2026 +0000
+
+    docs: update API reference for v3 endpoints
+
+commit f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Sun Mar 9 14:38:22 2026 +0000
+
+    feat: implement webhook retry with exponential backoff
+
+commit a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Sat Mar 8 11:12:45 2026 +0000
+
+    fix: handle cursor pagination when items are deleted mid-page
+
+commit b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3
+Author: Emily Watson <emily.w@company.com>
+Date:   Fri Mar 7 16:55:09 2026 +0000
+
+    refactor: migrate auth module to centralized token service
+
+commit c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Fri Mar 7 10:28:33 2026 +0000
+
+    feat: add dark mode toggle with system preference detection
+
+commit d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5
+Author: James Li <james.li@company.com>
+Date:   Thu Mar 6 14:42:17 2026 +0000
+
+    test: add unit tests for payment processing service
+
+commit e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Thu Mar 6 08:15:44 2026 +0000
+
+    fix: resolve race condition in concurrent cart updates
+
+commit f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Wed Mar 5 15:30:21 2026 +0000
+
+    chore: configure Renovate for automated dependency updates
+
+commit a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8
+Author: Emily Watson <emily.w@company.com>
+Date:   Wed Mar 5 09:48:56 2026 +0000
+
+    feat: implement file upload with drag-and-drop support
+
+commit b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Tue Mar 4 13:22:38 2026 +0000
+
+    fix: correct discount calculation in checkout total
+
+commit c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0
+Author: James Li <james.li@company.com>
+Date:   Tue Mar 4 07:55:14 2026 +0000
+
+    refactor: extract shared validation schemas into common module
+
+commit d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Mon Mar 3 16:40:29 2026 +0000
+
+    feat: add search with autocomplete and recent queries
+
+commit e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Mon Mar 3 10:18:47 2026 +0000
+
+    perf: implement virtual scrolling for large data tables
+
+commit f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3
+Author: Emily Watson <emily.w@company.com>
+Date:   Sun Mar 2 14:35:11 2026 +0000
+
+    fix: prevent XSS in user-generated content renderer
+
+commit a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Sat Mar 1 11:50:33 2026 +0000
+
+    test: add accessibility tests for all form components
+
+commit b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5
+Author: James Li <james.li@company.com>
+Date:   Fri Feb 28 15:25:08 2026 +0000
+
+    feat: implement multi-factor authentication setup wizard
+
+commit c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Fri Feb 28 09:42:55 2026 +0000
+
+    fix: resolve memory leak in useDataFetcher abort controller
+
+commit d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Thu Feb 27 14:18:22 2026 +0000
+
+    chore: migrate from Jest to Vitest for faster test execution
+
+commit e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+Author: Emily Watson <emily.w@company.com>
+Date:   Thu Feb 27 08:33:41 2026 +0000
+
+    feat: add notification preferences with granular controls
+
+commit f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Wed Feb 26 16:55:17 2026 +0000
+
+    refactor: consolidate API error handling into middleware
+
+commit a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a901
+Author: James Li <james.li@company.com>
+Date:   Wed Feb 26 10:20:34 2026 +0000
+
+    fix: handle session expiry gracefully with re-auth prompt
+
+commit b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a901c2
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Tue Feb 25 14:45:58 2026 +0000
+
+    feat: implement team invitation flow with email verification
+
+commit c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a901c2d3
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Tue Feb 25 08:12:23 2026 +0000
+
+    perf: reduce initial bundle size by 23% with code splitting
+
+commit d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a901c2d3e4
+Author: Emily Watson <emily.w@company.com>
+Date:   Mon Feb 24 15:38:47 2026 +0000
+
+    fix: correct currency formatting for non-USD locales
+
+commit e5f6a7b8c9d0e1f2a3b4c5d6e7f8a901c2d3e4f5
+Author: Alex Kim <alex.kim@company.com>
+Date:   Mon Feb 24 09:55:12 2026 +0000
+
+    test: add smoke tests for critical user journeys
+
+commit f6a7b8c9d0e1f2a3b4c5d6e7f8a901c2d3e4f5a6
+Author: James Li <james.li@company.com>
+Date:   Sun Feb 23 13:22:39 2026 +0000
+
+    feat: add audit log for admin actions with filtering
+
+commit a7b8c9d0e1f2a3b4c5d6e7f8a901c2d3e4f5a6b7
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Sat Feb 22 17:48:05 2026 +0000
+
+    fix: resolve image upload failing for files over 5MB
+
+commit b8c9d0e1f2a3b4c5d6e7f8a901c2d3e4f5a6b7c8
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Fri Feb 21 11:15:28 2026 +0000
+
+    chore: set up GitHub Actions CI pipeline with caching
+
+commit c9d0e1f2a3b4c5d6e7f8a901c2d3e4f5a6b7c8d9
+Author: Emily Watson <emily.w@company.com>
+Date:   Fri Feb 21 07:42:53 2026 +0000
+
+    feat: implement user activity feed with infinite scroll
+
+commit d0e1f2a3b4c5d6e7f8a901c2d3e4f5a6b7c8d9e0
+Author: Alex Kim <alex.kim@company.com>
+Date:   Thu Feb 20 14:30:17 2026 +0000
+
+    refactor: replace Redux with Zustand for simpler state management
+
+commit e1f2a3b4c5d6e7f8a901c2d3e4f5a6b7c8d9e0f1
+Author: James Li <james.li@company.com>
+Date:   Thu Feb 20 08:55:44 2026 +0000
+
+    fix: prevent stale data display after background tab switch
+
+commit f2a3b4c5d6e7f8a901c2d3e4f5a6b7c8d9e0f1a2
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Wed Feb 19 15:20:31 2026 +0000
+
+    feat: add keyboard shortcuts for common actions
+
+commit a3b4c5d6e7f8a901c2d3e4f5a6b7c8d9e0f1a2b3
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Wed Feb 19 09:38:56 2026 +0000
+
+    perf: implement server-side rendering for product pages
+
+commit b4c5d6e7f8a901c2d3e4f5a6b7c8d9e0f1a2b3c4
+Author: Emily Watson <emily.w@company.com>
+Date:   Tue Feb 18 13:45:22 2026 +0000
+
+    fix: resolve infinite redirect loop on expired OAuth tokens
+
+commit c5d6e7f8a901c2d3e4f5a6b7c8d9e0f1a2b3c4d5
+Author: Alex Kim <alex.kim@company.com>
+Date:   Tue Feb 18 07:12:48 2026 +0000
+
+    test: add visual regression tests for UI components
+
+commit d6e7f8a901c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6
+Author: James Li <james.li@company.com>
+Date:   Mon Feb 17 16:30:15 2026 +0000
+
+    feat: implement breadcrumb navigation for nested pages
+
+commit e7f8a901c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Mon Feb 17 10:55:39 2026 +0000
+
+    fix: correct off-by-one error in date range picker
+
+commit f8a901c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Sun Feb 16 14:22:04 2026 +0000
+
+    chore: add pre-commit hooks for linting and type checking
+
+commit a901c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9
+Author: Emily Watson <emily.w@company.com>
+Date:   Sat Feb 15 11:48:31 2026 +0000
+
+    feat: add real-time search suggestions with debouncing
+
+commit b012c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0
+Author: Alex Kim <alex.kim@company.com>
+Date:   Fri Feb 14 15:15:57 2026 +0000
+
+    refactor: decompose monolithic API route into microservices
+
+commit c123d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1
+Author: James Li <james.li@company.com>
+Date:   Fri Feb 14 08:42:23 2026 +0000
+
+    fix: handle network errors gracefully in offline mode
+
+commit d234e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Thu Feb 13 14:08:48 2026 +0000
+
+    feat: implement SSO login with SAML 2.0 support
+
+commit e345f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Thu Feb 13 07:35:14 2026 +0000
+
+    perf: lazy load images below the fold with intersection observer
+
+commit f456a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+Author: Emily Watson <emily.w@company.com>
+Date:   Wed Feb 12 13:52:37 2026 +0000
+
+    fix: prevent data loss when session expires during form editing
+
+commit a567b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
+Author: Alex Kim <alex.kim@company.com>
+Date:   Wed Feb 12 08:18:02 2026 +0000
+
+    test: add load testing scripts for API endpoints
+
+commit b678c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6
+Author: James Li <james.li@company.com>
+Date:   Tue Feb 11 15:45:28 2026 +0000
+
+    feat: add custom dashboard widgets with drag-and-drop layout
+
+commit c789d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Tue Feb 11 09:12:53 2026 +0000
+
+    fix: resolve CSS specificity conflict in navigation component
+
+commit d890e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Mon Feb 10 14:38:19 2026 +0000
+
+    chore: update Node.js to v22 LTS in CI and Docker images
+
+commit e901f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9
+Author: Emily Watson <emily.w@company.com>
+Date:   Mon Feb 10 08:05:44 2026 +0000
+
+    feat: implement email template editor with live preview
+
+commit f012a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+Author: Alex Kim <alex.kim@company.com>
+Date:   Sun Feb 9 13:22:10 2026 +0000
+
+    refactor: migrate from Moment.js to date-fns for smaller bundle
+
+commit a123b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1
+Author: James Li <james.li@company.com>
+Date:   Sat Feb 8 17:48:35 2026 +0000
+
+    fix: correct sorting order for multi-column table headers
+
+commit b234c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Fri Feb 7 11:15:01 2026 +0000
+
+    feat: add two-factor authentication via authenticator app
+
+commit c345d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Fri Feb 7 07:42:26 2026 +0000
+
+    perf: implement connection pooling for database queries
+
+commit d456e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4
+Author: Emily Watson <emily.w@company.com>
+Date:   Thu Feb 6 14:08:52 2026 +0000
+
+    fix: handle Unicode characters in search queries correctly
+
+commit e567f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5
+Author: Alex Kim <alex.kim@company.com>
+Date:   Thu Feb 6 08:35:17 2026 +0000
+
+    test: add contract tests for third-party API integrations
+
+commit f678a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6
+Author: James Li <james.li@company.com>
+Date:   Wed Feb 5 15:52:43 2026 +0000
+
+    feat: implement progressive web app with service worker caching
+
+commit a789b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Wed Feb 5 09:18:08 2026 +0000
+
+    fix: resolve flaky test caused by animation timing in modal
+
+commit b890c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Tue Feb 4 13:45:34 2026 +0000
+
+    chore: configure Sentry error tracking with source maps
+
+commit c901d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9
+Author: Emily Watson <emily.w@company.com>
+Date:   Tue Feb 4 07:12:59 2026 +0000
+
+    feat: add data visualization charts for analytics dashboard
+
+commit d012e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0
+Author: Alex Kim <alex.kim@company.com>
+Date:   Mon Feb 3 14:38:25 2026 +0000
+
+    refactor: simplify routing configuration with file-based routes
+
+commit e123f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1
+Author: James Li <james.li@company.com>
+Date:   Mon Feb 3 08:05:50 2026 +0000
+
+    fix: prevent flash of unstyled content during hydration
+
+commit f234a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Sun Feb 2 13:22:16 2026 +0000
+
+    feat: implement API rate limiting with sliding window algorithm
+
+commit a345b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Sat Feb 1 17:48:41 2026 +0000
+
+    perf: optimize React render cycles with useMemo and useCallback
+
+commit b456c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4
+Author: Emily Watson <emily.w@company.com>
+Date:   Fri Jan 31 11:15:07 2026 +0000
+
+    fix: resolve viewport height issue on mobile Safari
+
+commit c567d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5
+Author: Alex Kim <alex.kim@company.com>
+Date:   Fri Jan 31 07:42:32 2026 +0000
+
+    test: add performance benchmarks for critical rendering paths
+
+commit d678e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+Author: James Li <james.li@company.com>
+Date:   Thu Jan 30 14:08:58 2026 +0000
+
+    feat: add webhook management UI with payload inspector
+
+commit e789f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Thu Jan 30 08:35:23 2026 +0000
+
+    fix: correct content-type header for multipart file uploads
+
+commit f890a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Wed Jan 29 15:52:49 2026 +0000
+
+    chore: add Docker Compose for local development environment
+
+commit a901b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9
+Author: Emily Watson <emily.w@company.com>
+Date:   Wed Jan 29 09:18:14 2026 +0000
+
+    feat: implement granular notification preferences per channel
+
+commit b012c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a910
+Author: Alex Kim <alex.kim@company.com>
+Date:   Tue Jan 28 13:45:40 2026 +0000
+
+    refactor: replace callback-based API with async/await pattern
+
+commit c123d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a910b0
+Author: James Li <james.li@company.com>
+Date:   Tue Jan 28 07:12:05 2026 +0000
+
+    fix: handle race condition in optimistic UI updates
+
+commit d234e5f6a7b8c9d0e1f2a3b4c5d6e7f8a910b0c1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Mon Jan 27 14:38:31 2026 +0000
+
+    feat: add bulk operations for admin user management
+
+commit e345f6a7b8c9d0e1f2a3b4c5d6e7f8a910b0c1d2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Mon Jan 27 08:05:56 2026 +0000
+
+    perf: implement incremental static regeneration for blog posts
+
+commit f456a7b8c9d0e1f2a3b4c5d6e7f8a910b0c1d2e3
+Author: Emily Watson <emily.w@company.com>
+Date:   Sun Jan 26 13:22:22 2026 +0000
+
+    fix: resolve CORS preflight failure for custom headers
+
+commit a567b8c9d0e1f2a3b4c5d6e7f8a910b0c1d2e3f4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Sat Jan 25 17:48:47 2026 +0000
+
+    test: add mutation testing to identify weak test coverage
+
+commit b678c9d0e1f2a3b4c5d6e7f8a910b0c1d2e3f4a5
+Author: James Li <james.li@company.com>
+Date:   Fri Jan 24 11:15:13 2026 +0000
+
+    feat: implement in-app messaging with read receipts
+
+commit c789d0e1f2a3b4c5d6e7f8a910b0c1d2e3f4a5b6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Fri Jan 24 07:42:38 2026 +0000
+
+    fix: prevent infinite scroll from fetching past the last page
+
+commit d890e1f2a3b4c5d6e7f8a910b0c1d2e3f4a5b6c7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Thu Jan 23 14:09:04 2026 +0000
+
+    chore: migrate database from PostgreSQL 15 to 16
+
+commit e901f2a3b4c5d6e7f8a910b0c1d2e3f4a5b6c7d8
+Author: Emily Watson <emily.w@company.com>
+Date:   Thu Jan 23 08:35:29 2026 +0000
+
+    feat: add accessibility audit report generation
+
+commit f012a3b4c5d6e7f8a910b0c1d2e3f4a5b6c7d8e9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Wed Jan 22 15:52:55 2026 +0000
+
+    refactor: split monorepo into separate packages with workspaces
+
+commit a123b4c5d6e7f8a910b0c1d2e3f4a5b6c7d8e9f0
+Author: James Li <james.li@company.com>
+Date:   Wed Jan 22 09:18:20 2026 +0000
+
+    fix: correct locale detection for right-to-left languages
+
+commit b234c5d6e7f8a910b0c1d2e3f4a5b6c7d8e9f0a1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Tue Jan 21 13:45:46 2026 +0000
+
+    feat: implement A/B testing framework with feature flags
+
+commit c345d6e7f8a910b0c1d2e3f4a5b6c7d8e9f0a1b2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Tue Jan 21 07:12:11 2026 +0000
+
+    perf: cache GraphQL queries with normalized response store
+
+commit d456e7f8a910b0c1d2e3f4a5b6c7d8e9f0a1b2c3
+Author: Emily Watson <emily.w@company.com>
+Date:   Mon Jan 20 14:38:37 2026 +0000
+
+    fix: handle empty state correctly in data table component
+
+commit e567f8a910b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Mon Jan 20 08:05:02 2026 +0000
+
+    test: add snapshot tests for email template rendering
+
+commit f678a910b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5
+Author: James Li <james.li@company.com>
+Date:   Sun Jan 19 13:22:28 2026 +0000
+
+    feat: implement custom report builder with saved templates
+
+commit a789b0c1d2e3f4a5b6c7d8e910f0a1b2c3d4e5f6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Sat Jan 18 17:48:53 2026 +0000
+
+    fix: resolve token refresh loop when server returns 401
+
+commit b890c1d2e3f4a5b6c7d8e910f0a1b2c3d4e5f6a7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Fri Jan 17 11:15:19 2026 +0000
+
+    chore: add automated release notes generation from commits
+
+commit c901d2e3f4a5b6c7d8e910f0a1b2c3d4e5f6a7b8
+Author: Emily Watson <emily.w@company.com>
+Date:   Fri Jan 17 07:42:44 2026 +0000
+
+    feat: add user segmentation for targeted notifications
+
+commit d012e3f4a5b6c7d8e910f0a1b2c3d4e5f6a7b8c9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Thu Jan 16 14:09:10 2026 +0000
+
+    refactor: extract GraphQL resolvers into domain-specific modules
+
+commit e123f4a5b6c7d8e910f0a1b2c3d4e5f6a7b8c9d0
+Author: James Li <james.li@company.com>
+Date:   Thu Jan 16 08:35:35 2026 +0000
+
+    fix: prevent memory leak from unsubscribed event listeners
+
+commit f234a5b6c7d8e910f0a1b2c3d4e5f6a7b8c9d0e1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Wed Jan 15 15:53:01 2026 +0000
+
+    feat: implement end-to-end encryption for private messages
+
+commit a345b6c7d8e910f0a1b2c3d4e5f6a7b8c9d0e1f2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Wed Jan 15 09:18:26 2026 +0000
+
+    perf: implement request deduplication for concurrent API calls
+
+commit b456c7d8e910f0a1b2c3d4e5f6a7b8c9d0e1f2a3
+Author: Emily Watson <emily.w@company.com>
+Date:   Tue Jan 14 13:45:52 2026 +0000
+
+    fix: resolve hydration mismatch in server-rendered components
+
+commit c567d8e910f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Tue Jan 14 07:12:17 2026 +0000
+
+    test: add chaos engineering tests for failure scenarios
+
+commit d678e910f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5
+Author: James Li <james.li@company.com>
+Date:   Mon Jan 13 14:38:43 2026 +0000
+
+    feat: add organization-level settings and branding
+
+commit e789f0a1b2c3d4e5f6a7b8c910d0e1f2a3b4c5d6
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Mon Jan 13 08:05:08 2026 +0000
+
+    fix: correct PDF generation layout for landscape orientation
+
+commit f890a1b2c3d4e5f6a7b8c910d0e1f2a3b4c5d6e7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Sun Jan 12 13:22:34 2026 +0000
+
+    chore: upgrade ESLint to v9 with flat config migration
+
+commit a901b2c3d4e5f6a7b8c910d0e1f2a3b4c5d6e7f8
+Author: Emily Watson <emily.w@company.com>
+Date:   Sat Jan 11 17:48:59 2026 +0000
+
+    feat: implement data import wizard with column mapping
+
+commit b012c3d4e5f6a7b8c910d0e1f2a3b4c5d6e7f8a9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Fri Jan 10 11:15:25 2026 +0000
+
+    refactor: migrate from CSS modules to Tailwind CSS utility classes
+
+commit c123d4e5f6a7b8c910d0e1f2a3b4c5d6e7f8a9b0
+Author: James Li <james.li@company.com>
+Date:   Fri Jan 10 07:42:50 2026 +0000
+
+    fix: handle concurrent file uploads without data corruption
+
+commit d234e5f6a7b8c910d0e1f2a3b4c5d6e7f8a9b0c1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Thu Jan 9 14:09:16 2026 +0000
+
+    feat: add Stripe subscription management with plan switching
+
+commit e345f6a7b8c910d0e1f2a3b4c5d6e7f8a9b0c1d2
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Thu Jan 9 08:35:41 2026 +0000
+
+    perf: implement database query result caching with Redis
+
+commit f456a7b8c910d0e1f2a3b4c5d6e7f8a9b0c1d2e3
+Author: Emily Watson <emily.w@company.com>
+Date:   Wed Jan 8 15:53:07 2026 +0000
+
+    fix: prevent form validation from blocking accessibility focus
+
+commit a567b8c910d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+Author: Alex Kim <alex.kim@company.com>
+Date:   Wed Jan 8 09:18:32 2026 +0000
+
+    test: add integration tests for webhook delivery pipeline
+
+commit b678c910d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
+Author: James Li <james.li@company.com>
+Date:   Tue Jan 7 13:45:58 2026 +0000
+
+    feat: implement custom domain support for white-label deployments
+
+commit c789d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b611
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Tue Jan 7 07:12:23 2026 +0000
+
+    fix: resolve deadlock in background job queue processing
+
+commit d890e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b611c7
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Mon Jan 6 14:38:49 2026 +0000
+
+    chore: add database migration scripts for v2.0 schema changes
+
+commit e901f2a3b4c5d6e7f8a9b0c1d2e3f4a5b611c7d8
+Author: Emily Watson <emily.w@company.com>
+Date:   Mon Jan 6 08:05:14 2026 +0000
+
+    feat: add comprehensive error boundary with fallback UI
+
+commit f012a3b4c5d6e7f8a9b0c1d2e3f4a5b611c7d8e9
+Author: Alex Kim <alex.kim@company.com>
+Date:   Sun Jan 5 13:22:40 2026 +0000
+
+    refactor: introduce repository pattern for data access layer
+
+commit a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f80001
+Author: James Li <james.li@company.com>
+Date:   Sat Jan 4 17:49:05 2026 +0000
+
+    fix: correct decimal precision in financial calculations
+
+commit b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f80002a1
+Author: Marcus Johnson <marcus.j@company.com>
+Date:   Fri Jan 3 11:15:31 2026 +0000
+
+    feat: implement OpenID Connect provider integration
+
+commit c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f80003b2c1
+Author: Sarah Chen <sarah.chen@company.com>
+Date:   Fri Jan 3 07:42:56 2026 +0000
+
+    perf: reduce database round trips with batched queries
+
+commit d4e5f6a7b8c9d0e1f2a3b4c5d6e7f80004c3d2e1
+Author: Emily Watson <emily.w@company.com>
+Date:   Thu Jan 2 14:09:22 2026 +0000
+
+    fix: handle deep link routing for unauthenticated users
+
+commit e5f6a7b8c9d0e1f2a3b4c5d6e7f80005d4e3f2a1
+Author: Alex Kim <alex.kim@company.com>
+Date:   Thu Jan 2 08:35:47 2026 +0000
+
+    test: add database seeding scripts for development environment
+
+commit f6a7b8c9d0e1f2a3b4c5d6e7f80006e5f4a3b2c1
+Author: James Li <james.li@company.com>
+Date:   Wed Jan 1 15:53:13 2026 +0000
+
+    feat: initial project setup with Next.js 15 and TypeScript 5.7

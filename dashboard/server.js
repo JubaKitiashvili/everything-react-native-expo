@@ -381,15 +381,24 @@ function handleContextApi(req, res, urlPath, body) {
       const { command, original_tool, timeout = 30000 } = JSON.parse(body);
       const cwd = process.env.ERNE_PROJECT_DIR || process.cwd();
       execFile('sh', ['-c', command], { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
-        const output = truncate(stdout || '', original_tool || 'Bash');
-        const saved = (stdout || '').length - output.length;
-        if (sessionTracker) sessionTracker.contextSavedBytes += Math.max(saved, 0);
+        const raw = stdout || '';
+        const aggressive = budgetManager && budgetManager.shouldThrottle(original_tool || 'Bash');
+        const tr = truncate(raw, original_tool || 'Bash', { aggressive });
+        if (sessionTracker) {
+          sessionTracker.track('file_read', { tool: original_tool || 'Bash', tier: tr.tier }, {
+            context_bytes: tr.truncatedBytes,
+            original_bytes: tr.originalBytes
+          });
+        }
+        if (budgetManager) budgetManager.trackUsage(original_tool || 'Bash', tr.truncatedBytes);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-          output, stderr: (stderr || '').slice(0, 500),
+          output: tr.output, stderr: (stderr || '').slice(0, 500),
           exit_code: err ? err.code || 1 : 0,
-          original_bytes: (stdout || '').length,
-          truncated_bytes: output.length
+          original_bytes: tr.originalBytes,
+          truncated_bytes: tr.truncatedBytes,
+          tier: tr.tier,
+          savings_pct: tr.savingsPct
         }));
       });
       return;

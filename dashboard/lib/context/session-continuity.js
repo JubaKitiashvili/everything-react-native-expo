@@ -42,11 +42,22 @@ function buildSnapshot(sessionDb, sessionId) {
       .map(e => ({ command: e.data.command, error: (e.data.stderr || '').slice(0, 150) })).slice(0, 3),
     commits: p2.filter(e => e.event_type === 'git_commit')
       .map(e => `${(e.data.sha || '').slice(0, 7)} ${e.data.message}`).slice(0, 5),
-    stats: {
-      context_saved_pct: 0,
-      events_total: sessionDb.prepare('SELECT COUNT(*) as c FROM events').get().c,
-      knowledge_added: 0
-    }
+    stats: (function () {
+      const eventsTotal = sessionDb.prepare('SELECT COUNT(*) as c FROM events').get().c;
+      const bytesRow = sessionDb.prepare('SELECT SUM(context_bytes) as saved FROM events WHERE context_bytes > 0').get();
+      const savedBytes = bytesRow ? bytesRow.saved || 0 : 0;
+      // Estimate original bytes from events that tracked savings
+      const origRow = sessionDb.prepare(
+        "SELECT SUM(json_extract(data, '$.original_bytes')) as orig FROM events WHERE json_extract(data, '$.original_bytes') > 0"
+      ).get();
+      const origBytes = origRow ? origRow.orig || 0 : 0;
+      return {
+        context_saved_pct: origBytes > 0 ? Math.round(((origBytes - savedBytes) / origBytes) * 100) : 0,
+        context_saved_bytes: savedBytes,
+        events_total: eventsTotal,
+        knowledge_added: sessionDb.prepare("SELECT COUNT(*) as c FROM events WHERE event_type = 'knowledge_hit'").get().c
+      };
+    })()
   };
 
   return trimSnapshot(snapshot);

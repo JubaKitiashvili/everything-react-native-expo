@@ -1,0 +1,88 @@
+   ▲ Next.js 15.2.3
+   - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+ ✓ Linting and checking validity of types
+   Collecting page data ...
+ ✓ Collecting page data
+   Generating static pages (0/23) ...
+   Generating static pages (6/23) ...
+   Generating static pages (12/23) ...
+   Generating static pages (18/23) ...
+ ✓ Generating static pages (23/23)
+   Finalizing page optimization ...
+ ✓ Finalizing page optimization
+   Collecting build traces ...
+ ✓ Collecting build traces
+
+Route (app)                                    Size     First Load JS
+┌ ○ /                                          5.23 kB        89.4 kB
+├ ○ /_not-found                                0.87 kB        85.1 kB
+├ ○ /about                                     3.12 kB        87.3 kB
+├ λ /api/auth/[...nextauth]                    0 B            84.2 kB
+├ λ /api/checkout                              0 B            84.2 kB
+├ λ /api/products                              0 B            84.2 kB
+├ λ /api/users/[id]                            0 B            84.2 kB
+├ λ /api/webhooks/stripe                       0 B            84.2 kB
+├ ○ /blog                                      4.56 kB        88.8 kB
+├ ƒ /blog/[slug]                               2.89 kB        87.1 kB
+├ ○ /careers                                   2.34 kB        86.5 kB
+├ λ /dashboard                                 8.45 kB        92.7 kB
+├ λ /dashboard/analytics                       12.3 kB        96.5 kB
+├ λ /dashboard/settings                        6.78 kB        91.0 kB
+├ λ /dashboard/team                            7.12 kB        91.3 kB
+├ ○ /docs                                      3.45 kB        87.7 kB
+├ ƒ /docs/[...slug]                            4.23 kB        88.4 kB
+├ ○ /pricing                                   5.67 kB        89.9 kB
+├ ƒ /products/[id]                             6.34 kB        90.5 kB
+├ ○ /products                                  4.89 kB        89.1 kB
+├ ○ /privacy                                   1.23 kB        85.4 kB
+├ ○ /terms                                     1.45 kB        85.7 kB
+└ λ /checkout                                  9.12 kB        93.3 kB
++ First Load JS shared by all routes           84.2 kB
+  ├ chunks/framework-3bc812de6947af89.js       45.2 kB
+  ├ chunks/main-app-c6404ef5da498378.js        33.1 kB
+  ├ chunks/pages/_app-b77b26843e923014.js      1.23 kB
+  └ other shared chunks (total)                4.67 kB
+
+Route (pages)                                  Size     First Load JS
+─ ○ /404                                       0.19 kB        78.4 kB
+
+○  (Static)    prerendered as static content
+λ  (Server)    server-side renders at runtime
+ƒ  (Dynamic)   dynamically rendered at request time
+
+Middleware                                     Size
+─ middleware                                   2.34 kB
+
+Modules
+├ app/layout.tsx                               2.45 kB
+├ app/page.tsx                                 1.89 kB
+├ components/ui/                               18.3 kB (12 modules)
+├ components/layout/                           8.45 kB (5 modules)
+├ components/forms/                            14.2 kB (8 modules)
+├ lib/                                         6.78 kB (4 modules)
+├ stores/                                      3.45 kB (3 modules)
+└ utils/                                       2.12 kB (6 modules)
+
+Images Coverage Summary
+├ Optimized:    34 images
+├ Unoptimized:  2 images
+└ Total:        36 images
+
+⚠ Warnings:
+  - Image with src "/hero-bg.jpg" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property to this Image component.
+  - You have a "dynamic" route that will be matched at request time. Consider using "generateStaticParams" for /blog/[slug] to improve performance.
+  - Package "moment" is imported in 3 pages. Consider switching to "date-fns" for smaller bundle size.
+
+Build Summary:
+  Total Pages:       23
+  Static Pages:      11
+  Server Pages:      8
+  Dynamic Pages:     4
+  Total Size:        142.8 kB (First Load JS)
+  Build Duration:    28.4s
+
+ ✓ Build completed in 28.4s

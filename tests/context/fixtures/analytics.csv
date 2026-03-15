@@ -1,0 +1,501 @@
+timestamp,event,user_id,page,duration,country,device,browser,referrer
+2026-03-14T22:09:20.000Z,scroll,usr_001247,/pricing,50,US,desktop,Chrome Mobile,hacker-news
+2026-03-15T14:02:45.000Z,pageview,usr_002925,/pricing,237,US,desktop,Safari Mobile,producthunt.com
+2026-03-15T12:33:07.000Z,scroll,usr_001519,/dashboard,258,DE,desktop,Safari,direct
+2026-03-14T21:29:43.000Z,pageview,usr_001307,/pricing,239,DE,desktop,Safari,bing.com
+2026-03-15T03:05:16.000Z,pageview,usr_002717,/checkout,214,DE,desktop,Firefox,direct
+2026-03-15T11:05:06.000Z,purchase,usr_002207,/home,292,KR,mobile,Safari Mobile,github.com
+2026-03-15T02:38:03.000Z,pageview,usr_001388,/docs,222,BR,mobile,Safari,bing.com
+2026-03-15T11:41:37.000Z,purchase,usr_001879,/products,298,US,mobile,Safari,facebook.com
+2026-03-15T04:03:43.000Z,pageview,usr_002472,/checkout,196,US,mobile,Safari,twitter.com
+2026-03-14T20:34:42.000Z,scroll,usr_001840,/docs,16,US,mobile,Safari Mobile,bing.com
+2026-03-15T12:38:53.000Z,signup,usr_002929,/docs,207,BR,desktop,Chrome Mobile,reddit.com
+2026-03-14T21:10:24.000Z,click,usr_001395,/products,270,NL,mobile,Chrome,facebook.com
+2026-03-14T20:20:41.000Z,purchase,usr_001424,/home,73,BR,desktop,Safari,linkedin.com
+2026-03-15T14:45:56.000Z,signup,usr_002889,/products,172,AU,mobile,Safari Mobile,twitter.com
+2026-03-15T16:23:50.000Z,scroll,usr_002351,/home,247,US,mobile,Safari Mobile,linkedin.com
+2026-03-15T01:50:30.000Z,scroll,usr_002010,/contact,209,IN,desktop,Edge,reddit.com
+2026-03-15T19:05:28.000Z,pageview,usr_001659,/contact,60,UK,mobile,Safari Mobile,facebook.com
+2026-03-14T22:30:19.000Z,signup,usr_001876,/blog,159,NL,desktop,Firefox,hacker-news
+2026-03-15T16:43:18.000Z,pageview,usr_002208,/pricing,218,BR,desktop,Safari Mobile,hacker-news
+2026-03-14T20:37:45.000Z,click,usr_002943,/about,50,CA,mobile,Chrome,producthunt.com
+2026-03-15T00:13:52.000Z,pageview,usr_001395,/docs,62,NL,tablet,Chrome Mobile,reddit.com
+2026-03-15T11:24:51.000Z,pageview,usr_001362,/pricing,127,IN,mobile,Edge,linkedin.com
+2026-03-15T06:16:18.000Z,pageview,usr_001539,/products,235,SE,mobile,Chrome Mobile,producthunt.com
+2026-03-15T04:08:22.000Z,pageview,usr_001615,/pricing,168,US,desktop,Edge,google.com
+2026-03-14T20:16:41.000Z,scroll,usr_002823,/contact,268,CA,desktop,Safari,facebook.com
+2026-03-15T14:05:40.000Z,pageview,usr_001459,/contact,292,US,desktop,Chrome,direct
+2026-03-15T01:25:26.000Z,click,usr_001936,/about,25,SE,mobile,Firefox,reddit.com
+2026-03-15T10:10:50.000Z,pageview,usr_002024,/settings,153,US,mobile,Chrome Mobile,hacker-news
+2026-03-15T19:12:11.000Z,pageview,usr_001470,/checkout,160,CA,mobile,Chrome Mobile,github.com
+2026-03-14T21:12:22.000Z,pageview,usr_002526,/contact,20,US,mobile,Safari Mobile,reddit.com
+2026-03-15T15:43:36.000Z,click,usr_001724,/pricing,233,US,desktop,Safari,producthunt.com
+2026-03-15T08:24:33.000Z,pageview,usr_001897,/contact,33,US,mobile,Chrome,direct
+2026-03-15T08:29:00.000Z,click,usr_001010,/home,263,NL,mobile,Safari Mobile,direct
+2026-03-15T10:46:49.000Z,pageview,usr_002232,/checkout,160,CA,desktop,Safari,hacker-news
+2026-03-15T12:53:53.000Z,scroll,usr_002080,/blog,210,US,desktop,Firefox,linkedin.com
+2026-03-15T16:37:31.000Z,click,usr_002712,/home,43,KR,desktop,Safari,github.com
+2026-03-15T16:15:37.000Z,click,usr_002273,/about,169,BR,mobile,Safari,github.com
+2026-03-15T06:47:14.000Z,pageview,usr_001188,/dashboard,119,CA,mobile,Chrome,twitter.com
+2026-03-15T01:58:42.000Z,pageview,usr_002948,/pricing,224,FR,mobile,Chrome,linkedin.com
+2026-03-15T18:34:30.000Z,pageview,usr_001956,/about,130,JP,desktop,Chrome Mobile,reddit.com
+2026-03-15T17:33:59.000Z,pageview,usr_001124,/checkout,116,CA,mobile,Safari,google.com
+2026-03-15T10:51:02.000Z,click,usr_001463,/contact,83,UK,tablet,Safari,facebook.com
+2026-03-14T22:18:39.000Z,purchase,usr_001205,/home,169,IN,desktop,Safari Mobile,linkedin.com
+2026-03-15T05:37:37.000Z,pageview,usr_001266,/pricing,278,US,desktop,Edge,twitter.com
+2026-03-15T13:35:00.000Z,click,usr_001452,/about,104,US,desktop,Safari,twitter.com
+2026-03-15T11:31:12.000Z,pageview,usr_002519,/docs,97,CA,mobile,Edge,reddit.com
+2026-03-15T17:16:30.000Z,pageview,usr_002999,/settings,152,US,mobile,Safari,twitter.com
+2026-03-15T05:10:46.000Z,pageview,usr_002234,/contact,193,KR,mobile,Chrome,direct
+2026-03-14T20:18:38.000Z,pageview,usr_002645,/dashboard,151,JP,mobile,Firefox,reddit.com
+2026-03-15T04:09:57.000Z,signup,usr_002123,/dashboard,274,AU,tablet,Chrome Mobile,hacker-news
+2026-03-15T15:38:27.000Z,scroll,usr_001632,/checkout,69,JP,mobile,Safari Mobile,twitter.com
+2026-03-15T07:35:03.000Z,signup,usr_002771,/checkout,79,BR,tablet,Chrome,reddit.com
+2026-03-15T04:18:17.000Z,scroll,usr_002091,/products,109,DE,desktop,Edge,linkedin.com
+2026-03-15T01:56:05.000Z,click,usr_001588,/blog,123,SE,mobile,Safari,google.com
+2026-03-15T08:34:04.000Z,scroll,usr_001671,/pricing,133,KR,mobile,Safari Mobile,hacker-news
+2026-03-15T04:06:46.000Z,pageview,usr_001774,/settings,123,IN,desktop,Safari,reddit.com
+2026-03-15T18:26:28.000Z,signup,usr_001725,/pricing,25,FR,mobile,Safari Mobile,reddit.com
+2026-03-14T23:36:46.000Z,pageview,usr_001049,/dashboard,149,UK,desktop,Safari,google.com
+2026-03-15T11:24:55.000Z,pageview,usr_001454,/checkout,47,NL,mobile,Chrome,google.com
+2026-03-15T17:06:43.000Z,pageview,usr_001918,/products,210,SE,tablet,Safari,linkedin.com
+2026-03-15T09:33:32.000Z,pageview,usr_001409,/contact,262,AU,mobile,Chrome,direct
+2026-03-15T04:16:06.000Z,pageview,usr_001452,/pricing,193,AU,desktop,Safari Mobile,linkedin.com
+2026-03-15T10:35:13.000Z,pageview,usr_001708,/pricing,294,IN,tablet,Chrome,hacker-news
+2026-03-15T16:32:06.000Z,click,usr_002260,/contact,171,US,mobile,Chrome,direct
+2026-03-14T21:45:12.000Z,pageview,usr_001938,/products,192,DE,desktop,Chrome Mobile,google.com
+2026-03-15T18:08:31.000Z,pageview,usr_002519,/products,297,US,desktop,Safari,twitter.com
+2026-03-15T01:43:02.000Z,scroll,usr_002680,/checkout,79,NL,tablet,Safari Mobile,direct
+2026-03-14T22:08:07.000Z,click,usr_002941,/blog,24,US,mobile,Chrome,bing.com
+2026-03-15T10:58:33.000Z,pageview,usr_002143,/contact,110,US,desktop,Firefox,linkedin.com
+2026-03-15T17:06:31.000Z,click,usr_001272,/contact,169,UK,tablet,Safari,producthunt.com
+2026-03-15T19:24:35.000Z,pageview,usr_001757,/checkout,126,KR,desktop,Edge,producthunt.com
+2026-03-15T15:10:27.000Z,signup,usr_002294,/settings,149,NL,mobile,Chrome,github.com
+2026-03-15T01:33:51.000Z,scroll,usr_002154,/products,103,BR,mobile,Firefox,hacker-news
+2026-03-15T07:39:14.000Z,pageview,usr_002895,/docs,292,US,mobile,Chrome Mobile,facebook.com
+2026-03-15T07:28:08.000Z,pageview,usr_002019,/checkout,205,SE,desktop,Firefox,github.com
+2026-03-14T21:56:11.000Z,purchase,usr_002716,/dashboard,215,US,desktop,Safari,github.com
+2026-03-15T10:53:11.000Z,scroll,usr_001890,/docs,97,NL,desktop,Safari,direct
+2026-03-15T17:24:13.000Z,click,usr_002844,/docs,211,FR,mobile,Chrome,direct
+2026-03-15T13:22:38.000Z,purchase,usr_001411,/products,258,IN,tablet,Safari Mobile,twitter.com
+2026-03-15T03:54:45.000Z,pageview,usr_001009,/products,101,JP,mobile,Chrome Mobile,bing.com
+2026-03-15T18:33:21.000Z,scroll,usr_002917,/pricing,289,BR,mobile,Safari,twitter.com
+2026-03-15T17:35:09.000Z,pageview,usr_001509,/docs,119,UK,desktop,Edge,direct
+2026-03-15T09:52:03.000Z,pageview,usr_002183,/blog,96,BR,mobile,Safari,bing.com
+2026-03-15T16:46:20.000Z,pageview,usr_002882,/docs,103,US,mobile,Firefox,direct
+2026-03-15T18:11:42.000Z,scroll,usr_001089,/settings,63,US,desktop,Chrome,linkedin.com
+2026-03-15T03:10:29.000Z,pageview,usr_001387,/products,91,JP,desktop,Chrome Mobile,linkedin.com
+2026-03-15T06:52:20.000Z,pageview,usr_001392,/checkout,37,JP,mobile,Firefox,producthunt.com
+2026-03-15T14:41:31.000Z,pageview,usr_001760,/dashboard,118,KR,desktop,Chrome Mobile,github.com
+2026-03-15T08:24:50.000Z,pageview,usr_002820,/home,141,US,mobile,Firefox,reddit.com
+2026-03-15T17:26:28.000Z,pageview,usr_001379,/pricing,294,UK,mobile,Chrome Mobile,reddit.com
+2026-03-15T03:23:37.000Z,pageview,usr_002718,/checkout,96,UK,mobile,Safari,google.com
+2026-03-15T00:46:41.000Z,pageview,usr_001152,/products,152,US,mobile,Safari Mobile,hacker-news
+2026-03-15T00:18:56.000Z,pageview,usr_002422,/docs,258,CA,desktop,Chrome Mobile,reddit.com
+2026-03-15T09:04:23.000Z,pageview,usr_001474,/pricing,284,IN,mobile,Chrome,direct
+2026-03-15T17:41:26.000Z,pageview,usr_002449,/home,282,UK,desktop,Safari Mobile,direct
+2026-03-15T19:04:25.000Z,pageview,usr_001415,/checkout,163,JP,desktop,Firefox,twitter.com
+2026-03-15T08:32:29.000Z,signup,usr_002012,/settings,190,FR,desktop,Edge,github.com
+2026-03-14T22:54:23.000Z,scroll,usr_001769,/dashboard,139,DE,desktop,Safari Mobile,hacker-news
+2026-03-14T21:31:54.000Z,pageview,usr_002454,/products,127,US,mobile,Edge,github.com
+2026-03-15T02:31:28.000Z,signup,usr_001599,/contact,18,FR,desktop,Safari,github.com
+2026-03-15T14:49:32.000Z,pageview,usr_001506,/contact,225,BR,desktop,Chrome Mobile,linkedin.com
+2026-03-15T15:19:28.000Z,pageview,usr_002155,/docs,149,AU,tablet,Firefox,github.com
+2026-03-15T12:39:09.000Z,scroll,usr_001849,/about,214,IN,desktop,Edge,direct
+2026-03-15T18:58:39.000Z,click,usr_001766,/contact,280,KR,mobile,Chrome,facebook.com
+2026-03-15T18:09:45.000Z,pageview,usr_002671,/pricing,107,NL,mobile,Chrome,direct
+2026-03-14T21:29:12.000Z,pageview,usr_001443,/docs,87,DE,mobile,Edge,github.com
+2026-03-15T10:06:47.000Z,scroll,usr_001147,/home,210,KR,mobile,Firefox,bing.com
+2026-03-15T16:01:26.000Z,pageview,usr_001917,/contact,32,CA,tablet,Firefox,twitter.com
+2026-03-15T15:22:41.000Z,pageview,usr_002412,/blog,154,DE,mobile,Chrome Mobile,facebook.com
+2026-03-15T06:12:59.000Z,click,usr_002479,/dashboard,144,SE,mobile,Safari,linkedin.com
+2026-03-15T17:43:15.000Z,pageview,usr_002654,/settings,47,IN,mobile,Chrome Mobile,twitter.com
+2026-03-14T23:28:08.000Z,scroll,usr_001043,/pricing,61,IN,desktop,Safari Mobile,twitter.com
+2026-03-15T14:15:02.000Z,pageview,usr_001479,/about,221,AU,mobile,Edge,facebook.com
+2026-03-14T20:47:15.000Z,purchase,usr_002415,/docs,90,FR,tablet,Safari,facebook.com
+2026-03-14T23:17:01.000Z,scroll,usr_002567,/settings,81,AU,desktop,Firefox,reddit.com
+2026-03-15T18:02:45.000Z,click,usr_001427,/home,141,SE,tablet,Safari,bing.com
+2026-03-15T02:57:19.000Z,signup,usr_001848,/settings,67,US,tablet,Safari,bing.com
+2026-03-15T03:06:22.000Z,click,usr_002210,/checkout,48,US,mobile,Safari Mobile,facebook.com
+2026-03-15T19:37:11.000Z,pageview,usr_002251,/home,294,BR,desktop,Safari Mobile,github.com
+2026-03-14T20:25:11.000Z,pageview,usr_001139,/pricing,233,US,desktop,Safari Mobile,linkedin.com
+2026-03-15T17:34:16.000Z,scroll,usr_001318,/dashboard,79,US,mobile,Safari,direct
+2026-03-15T15:25:53.000Z,click,usr_001597,/blog,30,NL,mobile,Edge,google.com
+2026-03-15T09:36:13.000Z,click,usr_002187,/blog,295,JP,mobile,Safari,reddit.com
+2026-03-15T00:34:53.000Z,pageview,usr_001357,/dashboard,63,DE,mobile,Safari Mobile,google.com
+2026-03-15T06:23:31.000Z,pageview,usr_002895,/checkout,274,AU,desktop,Safari,google.com
+2026-03-15T07:47:22.000Z,pageview,usr_001275,/dashboard,141,IN,desktop,Safari Mobile,linkedin.com
+2026-03-15T00:32:25.000Z,purchase,usr_001598,/pricing,127,UK,desktop,Chrome,bing.com
+2026-03-15T16:35:17.000Z,signup,usr_002529,/docs,122,FR,mobile,Firefox,twitter.com
+2026-03-15T05:42:03.000Z,scroll,usr_002583,/pricing,83,NL,desktop,Edge,direct
+2026-03-15T17:45:09.000Z,scroll,usr_002316,/dashboard,58,NL,desktop,Edge,reddit.com
+2026-03-15T12:37:35.000Z,pageview,usr_001234,/dashboard,150,UK,desktop,Safari Mobile,github.com
+2026-03-15T13:40:10.000Z,pageview,usr_002009,/dashboard,112,BR,mobile,Edge,bing.com
+2026-03-15T07:53:01.000Z,click,usr_001869,/dashboard,218,SE,mobile,Safari,linkedin.com
+2026-03-14T23:08:37.000Z,scroll,usr_002906,/blog,179,FR,desktop,Chrome Mobile,linkedin.com
+2026-03-15T01:10:09.000Z,pageview,usr_001003,/checkout,120,NL,mobile,Safari Mobile,hacker-news
+2026-03-15T07:01:28.000Z,pageview,usr_002669,/docs,80,BR,desktop,Edge,linkedin.com
+2026-03-15T19:57:19.000Z,signup,usr_001340,/dashboard,88,UK,mobile,Safari Mobile,hacker-news
+2026-03-15T08:17:17.000Z,click,usr_002325,/home,145,IN,mobile,Chrome,twitter.com
+2026-03-15T04:06:52.000Z,pageview,usr_002362,/pricing,296,BR,tablet,Chrome,bing.com
+2026-03-15T12:11:03.000Z,scroll,usr_002496,/pricing,130,BR,mobile,Safari Mobile,twitter.com
+2026-03-15T03:34:04.000Z,scroll,usr_002459,/docs,73,DE,desktop,Chrome Mobile,facebook.com
+2026-03-15T12:46:18.000Z,pageview,usr_002990,/blog,98,IN,mobile,Safari Mobile,twitter.com
+2026-03-15T10:28:42.000Z,pageview,usr_001311,/checkout,188,US,desktop,Safari Mobile,linkedin.com
+2026-03-15T02:39:04.000Z,pageview,usr_001379,/dashboard,294,IN,mobile,Firefox,bing.com
+2026-03-15T12:46:48.000Z,pageview,usr_002907,/about,10,UK,mobile,Chrome,direct
+2026-03-15T12:36:39.000Z,signup,usr_001173,/products,85,DE,desktop,Safari Mobile,direct
+2026-03-15T01:09:27.000Z,scroll,usr_001105,/dashboard,155,IN,mobile,Firefox,direct
+2026-03-15T00:53:18.000Z,pageview,usr_002348,/docs,271,UK,tablet,Chrome Mobile,twitter.com
+2026-03-15T16:39:03.000Z,pageview,usr_002743,/pricing,95,BR,desktop,Edge,hacker-news
+2026-03-15T19:56:41.000Z,click,usr_002388,/products,207,JP,mobile,Chrome Mobile,producthunt.com
+2026-03-15T00:13:56.000Z,pageview,usr_001332,/checkout,195,DE,desktop,Firefox,twitter.com
+2026-03-15T15:14:55.000Z,pageview,usr_002974,/contact,81,IN,desktop,Safari,github.com
+2026-03-15T04:31:37.000Z,pageview,usr_001448,/settings,28,UK,mobile,Chrome,hacker-news
+2026-03-15T12:23:50.000Z,click,usr_002728,/contact,138,FR,mobile,Firefox,facebook.com
+2026-03-15T18:54:59.000Z,pageview,usr_002280,/home,176,UK,tablet,Safari Mobile,producthunt.com
+2026-03-15T10:04:15.000Z,pageview,usr_001022,/home,11,UK,mobile,Safari Mobile,reddit.com
+2026-03-14T20:19:44.000Z,purchase,usr_001954,/about,284,UK,desktop,Safari Mobile,github.com
+2026-03-15T19:34:16.000Z,pageview,usr_001966,/home,184,UK,mobile,Safari Mobile,google.com
+2026-03-15T03:49:41.000Z,click,usr_001959,/home,20,US,mobile,Safari,hacker-news
+2026-03-15T01:06:22.000Z,signup,usr_002483,/contact,201,NL,desktop,Edge,twitter.com
+2026-03-14T20:18:02.000Z,click,usr_001439,/home,14,UK,desktop,Chrome Mobile,reddit.com
+2026-03-15T17:18:15.000Z,pageview,usr_001761,/docs,127,NL,mobile,Chrome,linkedin.com
+2026-03-15T08:23:57.000Z,scroll,usr_002474,/settings,5,SE,desktop,Edge,twitter.com
+2026-03-14T23:42:19.000Z,signup,usr_002796,/contact,13,SE,desktop,Safari Mobile,direct
+2026-03-15T10:59:41.000Z,signup,usr_002382,/checkout,102,SE,tablet,Chrome,bing.com
+2026-03-14T23:51:52.000Z,pageview,usr_001306,/products,42,US,tablet,Safari Mobile,github.com
+2026-03-15T12:17:27.000Z,pageview,usr_001879,/about,56,BR,desktop,Safari Mobile,linkedin.com
+2026-03-15T10:57:48.000Z,pageview,usr_002271,/dashboard,130,IN,mobile,Safari Mobile,reddit.com
+2026-03-15T17:12:58.000Z,scroll,usr_002311,/docs,45,KR,mobile,Safari Mobile,facebook.com
+2026-03-14T21:31:18.000Z,signup,usr_002466,/products,65,US,desktop,Safari Mobile,direct
+2026-03-14T22:43:19.000Z,pageview,usr_001707,/blog,23,IN,desktop,Safari,direct
+2026-03-15T06:36:38.000Z,signup,usr_001357,/blog,66,NL,desktop,Safari,github.com
+2026-03-15T05:04:00.000Z,signup,usr_002392,/checkout,238,NL,desktop,Edge,facebook.com
+2026-03-15T11:06:58.000Z,pageview,usr_002812,/products,35,US,desktop,Safari Mobile,linkedin.com
+2026-03-15T15:17:34.000Z,click,usr_001144,/products,229,UK,mobile,Edge,github.com
+2026-03-15T02:37:21.000Z,pageview,usr_001939,/dashboard,77,BR,mobile,Firefox,bing.com
+2026-03-14T23:13:18.000Z,click,usr_002408,/contact,299,JP,mobile,Firefox,bing.com
+2026-03-15T09:45:05.000Z,pageview,usr_001625,/checkout,197,US,tablet,Chrome Mobile,twitter.com
+2026-03-15T09:49:57.000Z,pageview,usr_001868,/settings,96,JP,desktop,Safari Mobile,facebook.com
+2026-03-15T00:39:16.000Z,pageview,usr_001380,/pricing,139,BR,tablet,Edge,twitter.com
+2026-03-15T10:42:17.000Z,pageview,usr_001205,/checkout,145,UK,desktop,Chrome Mobile,facebook.com
+2026-03-15T18:08:23.000Z,pageview,usr_001050,/products,162,JP,desktop,Safari,github.com
+2026-03-15T10:13:42.000Z,purchase,usr_001963,/products,271,SE,desktop,Edge,twitter.com
+2026-03-15T16:36:22.000Z,purchase,usr_001018,/docs,19,AU,desktop,Safari Mobile,bing.com
+2026-03-14T22:20:54.000Z,pageview,usr_001662,/dashboard,153,SE,mobile,Chrome,bing.com
+2026-03-15T13:03:09.000Z,signup,usr_002744,/home,96,SE,desktop,Firefox,twitter.com
+2026-03-15T11:27:03.000Z,click,usr_002670,/settings,69,US,mobile,Safari,producthunt.com
+2026-03-15T07:16:23.000Z,scroll,usr_002740,/about,204,SE,desktop,Chrome,producthunt.com
+2026-03-15T19:49:45.000Z,scroll,usr_001808,/settings,249,US,desktop,Chrome,twitter.com
+2026-03-15T03:06:53.000Z,signup,usr_001572,/contact,75,KR,mobile,Firefox,github.com
+2026-03-15T18:12:43.000Z,scroll,usr_001264,/dashboard,170,US,mobile,Safari Mobile,linkedin.com
+2026-03-15T11:04:09.000Z,pageview,usr_002634,/pricing,215,UK,desktop,Safari Mobile,hacker-news
+2026-03-15T17:03:19.000Z,click,usr_001427,/products,4,US,mobile,Chrome Mobile,facebook.com
+2026-03-15T14:23:02.000Z,pageview,usr_001285,/dashboard,81,US,desktop,Firefox,reddit.com
+2026-03-14T23:35:36.000Z,pageview,usr_002674,/pricing,160,AU,mobile,Chrome Mobile,hacker-news
+2026-03-15T03:17:07.000Z,scroll,usr_001029,/pricing,253,BR,mobile,Chrome Mobile,producthunt.com
+2026-03-15T18:26:41.000Z,scroll,usr_002893,/blog,37,CA,tablet,Safari Mobile,facebook.com
+2026-03-15T19:23:10.000Z,scroll,usr_001269,/home,122,JP,desktop,Chrome Mobile,google.com
+2026-03-15T19:57:37.000Z,purchase,usr_002223,/settings,223,US,mobile,Safari Mobile,reddit.com
+2026-03-14T22:18:46.000Z,pageview,usr_002749,/pricing,117,DE,tablet,Safari Mobile,reddit.com
+2026-03-15T03:11:53.000Z,purchase,usr_002574,/blog,122,AU,mobile,Edge,facebook.com
+2026-03-15T04:28:00.000Z,pageview,usr_001690,/home,137,NL,desktop,Chrome,direct
+2026-03-15T00:25:54.000Z,signup,usr_001406,/docs,260,CA,desktop,Edge,hacker-news
+2026-03-14T20:54:09.000Z,click,usr_002990,/contact,29,US,tablet,Edge,bing.com
+2026-03-14T21:27:00.000Z,purchase,usr_001522,/settings,214,DE,desktop,Edge,facebook.com
+2026-03-15T17:20:52.000Z,signup,usr_002907,/checkout,26,BR,mobile,Safari,bing.com
+2026-03-15T19:07:32.000Z,pageview,usr_002360,/pricing,196,NL,tablet,Safari,reddit.com
+2026-03-15T01:10:25.000Z,purchase,usr_002273,/pricing,245,KR,mobile,Safari Mobile,hacker-news
+2026-03-15T15:32:42.000Z,pageview,usr_001223,/about,180,KR,mobile,Chrome Mobile,facebook.com
+2026-03-15T07:30:35.000Z,pageview,usr_002909,/checkout,116,NL,tablet,Firefox,facebook.com
+2026-03-15T05:57:14.000Z,pageview,usr_002873,/home,105,BR,desktop,Chrome Mobile,twitter.com
+2026-03-15T09:00:48.000Z,pageview,usr_002050,/checkout,168,JP,tablet,Edge,google.com
+2026-03-15T00:34:00.000Z,pageview,usr_002672,/settings,111,AU,desktop,Safari Mobile,github.com
+2026-03-15T16:39:49.000Z,signup,usr_002848,/checkout,193,CA,mobile,Safari Mobile,linkedin.com
+2026-03-15T13:11:52.000Z,signup,usr_002358,/contact,139,JP,tablet,Chrome,linkedin.com
+2026-03-15T15:07:57.000Z,scroll,usr_001377,/docs,113,UK,mobile,Chrome,direct
+2026-03-15T04:07:29.000Z,pageview,usr_001856,/products,5,UK,mobile,Chrome Mobile,github.com
+2026-03-15T00:23:58.000Z,pageview,usr_001647,/contact,205,US,mobile,Safari,facebook.com
+2026-03-15T00:54:42.000Z,pageview,usr_002855,/pricing,74,UK,mobile,Safari Mobile,bing.com
+2026-03-15T00:01:11.000Z,pageview,usr_001046,/about,91,DE,mobile,Firefox,bing.com
+2026-03-15T09:49:04.000Z,pageview,usr_001663,/dashboard,175,SE,desktop,Edge,hacker-news
+2026-03-15T04:00:35.000Z,purchase,usr_002016,/blog,207,SE,mobile,Chrome,producthunt.com
+2026-03-15T16:21:42.000Z,scroll,usr_001324,/home,108,US,mobile,Chrome,linkedin.com
+2026-03-15T07:17:49.000Z,pageview,usr_001436,/dashboard,246,DE,mobile,Edge,linkedin.com
+2026-03-15T05:46:08.000Z,click,usr_001417,/docs,81,NL,desktop,Safari,twitter.com
+2026-03-15T02:33:37.000Z,pageview,usr_002358,/checkout,7,JP,desktop,Chrome,direct
+2026-03-15T10:17:50.000Z,scroll,usr_002219,/checkout,38,SE,desktop,Chrome,facebook.com
+2026-03-15T01:07:20.000Z,signup,usr_002363,/contact,210,BR,mobile,Firefox,direct
+2026-03-15T11:32:18.000Z,signup,usr_002226,/pricing,176,IN,desktop,Chrome,google.com
+2026-03-15T18:01:26.000Z,click,usr_001291,/blog,117,SE,mobile,Chrome,direct
+2026-03-15T06:44:28.000Z,scroll,usr_001443,/contact,184,US,mobile,Edge,linkedin.com
+2026-03-15T18:37:58.000Z,signup,usr_002921,/home,210,CA,mobile,Edge,facebook.com
+2026-03-15T08:00:43.000Z,pageview,usr_002758,/dashboard,66,JP,mobile,Chrome Mobile,google.com
+2026-03-15T18:06:25.000Z,pageview,usr_002748,/pricing,165,BR,mobile,Chrome,bing.com
+2026-03-15T04:28:08.000Z,pageview,usr_001919,/settings,144,BR,mobile,Chrome,direct
+2026-03-14T22:50:24.000Z,pageview,usr_002393,/dashboard,47,KR,mobile,Safari,reddit.com
+2026-03-15T09:00:01.000Z,pageview,usr_002456,/checkout,46,UK,tablet,Firefox,bing.com
+2026-03-15T07:38:37.000Z,click,usr_002237,/about,175,FR,mobile,Safari,twitter.com
+2026-03-15T08:14:58.000Z,pageview,usr_002153,/products,275,FR,mobile,Safari,google.com
+2026-03-15T10:07:24.000Z,pageview,usr_002758,/home,195,DE,mobile,Chrome,google.com
+2026-03-15T02:34:22.000Z,pageview,usr_001289,/settings,183,US,mobile,Safari Mobile,producthunt.com
+2026-03-15T03:02:42.000Z,signup,usr_001259,/checkout,56,IN,mobile,Edge,producthunt.com
+2026-03-15T03:08:41.000Z,pageview,usr_002375,/dashboard,164,US,mobile,Chrome,bing.com
+2026-03-15T11:40:57.000Z,pageview,usr_002112,/home,278,US,desktop,Firefox,reddit.com
+2026-03-15T19:30:58.000Z,pageview,usr_001021,/checkout,261,SE,mobile,Safari Mobile,producthunt.com
+2026-03-15T12:18:23.000Z,scroll,usr_001719,/settings,153,UK,mobile,Chrome Mobile,linkedin.com
+2026-03-15T01:36:59.000Z,click,usr_002742,/docs,23,AU,mobile,Safari,bing.com
+2026-03-15T13:35:57.000Z,pageview,usr_002367,/docs,250,US,mobile,Safari Mobile,producthunt.com
+2026-03-14T23:45:18.000Z,scroll,usr_002450,/pricing,235,US,mobile,Chrome,hacker-news
+2026-03-14T20:34:48.000Z,click,usr_002279,/contact,58,BR,desktop,Chrome,github.com
+2026-03-15T00:45:56.000Z,pageview,usr_002175,/settings,37,KR,mobile,Chrome Mobile,github.com
+2026-03-15T00:07:01.000Z,signup,usr_001752,/checkout,142,BR,desktop,Firefox,github.com
+2026-03-15T11:04:58.000Z,signup,usr_001526,/dashboard,91,KR,desktop,Safari,github.com
+2026-03-15T14:02:09.000Z,pageview,usr_002259,/blog,200,UK,desktop,Firefox,bing.com
+2026-03-15T01:59:45.000Z,pageview,usr_001810,/blog,299,FR,tablet,Safari,google.com
+2026-03-15T08:14:13.000Z,click,usr_002139,/dashboard,153,BR,desktop,Firefox,bing.com
+2026-03-15T04:01:15.000Z,pageview,usr_002732,/products,106,BR,mobile,Chrome Mobile,google.com
+2026-03-15T14:14:49.000Z,pageview,usr_002401,/home,32,CA,desktop,Chrome Mobile,google.com
+2026-03-15T12:10:17.000Z,pageview,usr_002901,/products,181,NL,desktop,Edge,twitter.com
+2026-03-15T13:14:18.000Z,signup,usr_001181,/home,233,UK,mobile,Chrome,direct
+2026-03-15T05:08:50.000Z,pageview,usr_001810,/pricing,256,SE,desktop,Chrome Mobile,hacker-news
+2026-03-15T19:18:07.000Z,scroll,usr_001025,/docs,284,BR,mobile,Chrome,github.com
+2026-03-15T11:28:15.000Z,pageview,usr_002178,/dashboard,266,US,mobile,Chrome,linkedin.com
+2026-03-15T05:41:22.000Z,click,usr_002450,/blog,25,CA,tablet,Firefox,twitter.com
+2026-03-15T06:55:02.000Z,pageview,usr_001907,/settings,112,IN,desktop,Chrome Mobile,hacker-news
+2026-03-15T13:40:07.000Z,pageview,usr_002539,/dashboard,247,IN,tablet,Safari,github.com
+2026-03-14T20:28:52.000Z,click,usr_002404,/docs,118,KR,desktop,Safari Mobile,hacker-news
+2026-03-15T19:10:10.000Z,pageview,usr_002347,/about,136,IN,mobile,Safari Mobile,linkedin.com
+2026-03-14T20:59:10.000Z,scroll,usr_001676,/blog,252,NL,mobile,Safari,google.com
+2026-03-15T12:22:54.000Z,click,usr_001751,/settings,48,UK,desktop,Chrome Mobile,direct
+2026-03-15T14:52:58.000Z,pageview,usr_001825,/contact,194,IN,tablet,Safari,facebook.com
+2026-03-14T21:13:45.000Z,click,usr_001522,/docs,144,IN,desktop,Chrome,linkedin.com
+2026-03-14T22:48:36.000Z,pageview,usr_002655,/docs,12,FR,desktop,Safari Mobile,producthunt.com
+2026-03-14T23:09:14.000Z,click,usr_002626,/contact,37,DE,mobile,Firefox,google.com
+2026-03-15T11:17:55.000Z,scroll,usr_002489,/contact,31,FR,mobile,Firefox,github.com
+2026-03-14T22:39:54.000Z,signup,usr_002584,/dashboard,118,US,desktop,Chrome,facebook.com
+2026-03-15T11:56:39.000Z,pageview,usr_002223,/products,254,FR,desktop,Firefox,bing.com
+2026-03-15T08:41:12.000Z,pageview,usr_002217,/checkout,182,DE,desktop,Safari,google.com
+2026-03-15T00:44:06.000Z,pageview,usr_002214,/settings,26,DE,desktop,Chrome,linkedin.com
+2026-03-15T08:15:19.000Z,pageview,usr_001876,/home,296,IN,desktop,Safari Mobile,github.com
+2026-03-15T06:25:44.000Z,pageview,usr_001295,/dashboard,172,KR,mobile,Chrome,twitter.com
+2026-03-15T19:38:03.000Z,pageview,usr_002026,/settings,189,DE,desktop,Safari,linkedin.com
+2026-03-15T01:11:34.000Z,pageview,usr_001686,/blog,17,UK,desktop,Chrome,producthunt.com
+2026-03-15T10:03:50.000Z,pageview,usr_002456,/blog,202,UK,desktop,Chrome,reddit.com
+2026-03-15T10:22:52.000Z,pageview,usr_002376,/pricing,201,US,desktop,Chrome,linkedin.com
+2026-03-15T15:49:04.000Z,signup,usr_002966,/products,149,KR,desktop,Edge,bing.com
+2026-03-14T21:10:47.000Z,pageview,usr_002841,/settings,253,US,tablet,Chrome,facebook.com
+2026-03-15T04:28:38.000Z,scroll,usr_002704,/about,84,NL,desktop,Safari Mobile,twitter.com
+2026-03-15T08:42:17.000Z,pageview,usr_001912,/about,148,UK,desktop,Edge,twitter.com
+2026-03-15T16:31:20.000Z,click,usr_001771,/blog,58,UK,desktop,Edge,producthunt.com
+2026-03-14T22:25:32.000Z,pageview,usr_002313,/products,107,FR,desktop,Chrome,google.com
+2026-03-15T10:43:11.000Z,signup,usr_002656,/checkout,140,CA,mobile,Edge,github.com
+2026-03-15T06:44:56.000Z,scroll,usr_001228,/blog,147,SE,mobile,Safari Mobile,direct
+2026-03-15T18:51:19.000Z,scroll,usr_001396,/dashboard,63,AU,mobile,Firefox,google.com
+2026-03-15T04:37:55.000Z,pageview,usr_001634,/docs,200,AU,desktop,Chrome Mobile,linkedin.com
+2026-03-15T01:52:30.000Z,pageview,usr_001665,/settings,171,US,mobile,Firefox,direct
+2026-03-15T18:36:03.000Z,purchase,usr_001241,/dashboard,163,UK,mobile,Firefox,facebook.com
+2026-03-15T06:40:43.000Z,purchase,usr_001104,/dashboard,281,DE,desktop,Chrome Mobile,bing.com
+2026-03-15T16:08:17.000Z,purchase,usr_002238,/home,80,AU,desktop,Edge,github.com
+2026-03-15T03:06:53.000Z,pageview,usr_001482,/contact,146,FR,desktop,Chrome,github.com
+2026-03-15T04:47:40.000Z,pageview,usr_001770,/products,236,US,mobile,Safari Mobile,twitter.com
+2026-03-15T18:02:15.000Z,signup,usr_001880,/dashboard,88,KR,mobile,Firefox,producthunt.com
+2026-03-15T01:06:00.000Z,pageview,usr_002437,/docs,155,AU,desktop,Firefox,bing.com
+2026-03-15T03:22:53.000Z,pageview,usr_002710,/dashboard,225,UK,mobile,Chrome,producthunt.com
+2026-03-15T10:49:33.000Z,pageview,usr_002911,/docs,271,DE,mobile,Chrome Mobile,reddit.com
+2026-03-14T22:53:35.000Z,pageview,usr_002933,/checkout,192,AU,mobile,Firefox,reddit.com
+2026-03-15T12:46:10.000Z,scroll,usr_002582,/dashboard,62,NL,desktop,Chrome Mobile,hacker-news
+2026-03-14T22:16:01.000Z,pageview,usr_002503,/home,81,CA,desktop,Firefox,github.com
+2026-03-14T21:38:33.000Z,pageview,usr_001778,/pricing,180,AU,desktop,Edge,facebook.com
+2026-03-15T14:15:22.000Z,pageview,usr_001148,/pricing,97,BR,tablet,Firefox,hacker-news
+2026-03-15T04:00:45.000Z,scroll,usr_001463,/dashboard,225,IN,desktop,Safari Mobile,linkedin.com
+2026-03-15T09:45:17.000Z,click,usr_002875,/docs,294,IN,desktop,Safari,producthunt.com
+2026-03-14T21:53:04.000Z,pageview,usr_002165,/blog,256,FR,desktop,Safari Mobile,google.com
+2026-03-15T03:44:16.000Z,pageview,usr_001437,/contact,18,FR,desktop,Chrome,google.com
+2026-03-15T07:24:57.000Z,pageview,usr_001191,/dashboard,114,JP,mobile,Safari Mobile,facebook.com
+2026-03-15T17:36:38.000Z,pageview,usr_001170,/checkout,274,DE,mobile,Edge,google.com
+2026-03-15T00:55:37.000Z,pageview,usr_002761,/blog,240,NL,desktop,Safari Mobile,hacker-news
+2026-03-15T12:09:46.000Z,pageview,usr_001084,/blog,111,FR,desktop,Chrome,producthunt.com
+2026-03-15T06:04:47.000Z,pageview,usr_001168,/home,80,DE,desktop,Safari Mobile,producthunt.com
+2026-03-15T08:49:41.000Z,pageview,usr_002625,/blog,71,JP,desktop,Edge,reddit.com
+2026-03-15T11:56:08.000Z,purchase,usr_002807,/home,60,US,tablet,Chrome,google.com
+2026-03-15T12:28:59.000Z,purchase,usr_002298,/dashboard,127,KR,mobile,Chrome,direct
+2026-03-15T10:53:05.000Z,click,usr_002822,/about,225,UK,mobile,Firefox,twitter.com
+2026-03-15T04:59:00.000Z,scroll,usr_001265,/settings,140,BR,tablet,Chrome Mobile,facebook.com
+2026-03-15T19:08:22.000Z,pageview,usr_001061,/pricing,26,IN,mobile,Safari Mobile,reddit.com
+2026-03-15T02:59:52.000Z,pageview,usr_002191,/contact,246,US,mobile,Edge,linkedin.com
+2026-03-15T00:55:47.000Z,pageview,usr_001453,/products,160,US,mobile,Safari Mobile,producthunt.com
+2026-03-15T06:06:16.000Z,pageview,usr_001481,/checkout,129,JP,desktop,Chrome,linkedin.com
+2026-03-14T23:45:01.000Z,scroll,usr_002567,/pricing,63,US,mobile,Safari Mobile,google.com
+2026-03-15T10:50:22.000Z,scroll,usr_001434,/home,101,CA,desktop,Safari,linkedin.com
+2026-03-15T13:26:35.000Z,scroll,usr_001501,/checkout,267,KR,mobile,Chrome Mobile,twitter.com
+2026-03-15T19:48:05.000Z,scroll,usr_001112,/dashboard,199,SE,desktop,Firefox,bing.com
+2026-03-14T21:46:08.000Z,pageview,usr_001028,/products,128,DE,desktop,Chrome,twitter.com
+2026-03-14T23:51:09.000Z,pageview,usr_002031,/about,157,KR,mobile,Edge,producthunt.com
+2026-03-15T00:00:39.000Z,click,usr_001719,/docs,151,DE,mobile,Chrome,hacker-news
+2026-03-14T20:26:15.000Z,pageview,usr_002388,/about,165,UK,mobile,Edge,google.com
+2026-03-15T13:39:37.000Z,pageview,usr_001745,/docs,11,JP,desktop,Edge,twitter.com
+2026-03-15T13:43:47.000Z,scroll,usr_001962,/checkout,52,KR,desktop,Edge,google.com
+2026-03-15T13:09:20.000Z,pageview,usr_001312,/about,235,CA,desktop,Firefox,github.com
+2026-03-15T02:52:48.000Z,pageview,usr_002582,/pricing,256,US,desktop,Firefox,bing.com
+2026-03-15T07:10:08.000Z,pageview,usr_002858,/home,108,DE,desktop,Edge,bing.com
+2026-03-15T13:38:56.000Z,scroll,usr_002985,/home,273,FR,desktop,Chrome,facebook.com
+2026-03-14T22:43:36.000Z,scroll,usr_001225,/products,2,UK,mobile,Chrome,reddit.com
+2026-03-14T20:12:37.000Z,pageview,usr_002591,/docs,109,UK,desktop,Safari Mobile,direct
+2026-03-15T14:26:55.000Z,pageview,usr_001304,/docs,137,NL,tablet,Safari Mobile,hacker-news
+2026-03-15T08:49:59.000Z,click,usr_001433,/checkout,109,BR,desktop,Chrome Mobile,github.com
+2026-03-15T03:43:04.000Z,pageview,usr_001284,/blog,84,US,tablet,Edge,producthunt.com
+2026-03-15T10:56:04.000Z,scroll,usr_001150,/pricing,255,JP,mobile,Chrome Mobile,direct
+2026-03-15T10:06:51.000Z,click,usr_001399,/blog,134,AU,mobile,Edge,linkedin.com
+2026-03-15T09:14:16.000Z,purchase,usr_001262,/contact,260,US,mobile,Safari Mobile,twitter.com
+2026-03-15T04:24:46.000Z,pageview,usr_002937,/settings,148,US,mobile,Chrome Mobile,reddit.com
+2026-03-15T15:49:01.000Z,pageview,usr_002321,/home,87,DE,mobile,Safari,twitter.com
+2026-03-14T23:23:38.000Z,purchase,usr_002260,/checkout,275,AU,tablet,Firefox,reddit.com
+2026-03-15T13:09:21.000Z,pageview,usr_001197,/about,8,CA,desktop,Chrome Mobile,hacker-news
+2026-03-15T12:24:50.000Z,pageview,usr_001517,/products,109,SE,mobile,Edge,bing.com
+2026-03-15T17:41:26.000Z,pageview,usr_001248,/settings,18,KR,mobile,Chrome Mobile,bing.com
+2026-03-15T00:37:05.000Z,pageview,usr_001288,/dashboard,70,US,mobile,Chrome,reddit.com
+2026-03-15T13:55:57.000Z,pageview,usr_002878,/pricing,19,NL,desktop,Edge,github.com
+2026-03-15T16:10:55.000Z,pageview,usr_002085,/blog,112,AU,mobile,Chrome,direct
+2026-03-15T03:40:47.000Z,scroll,usr_002978,/about,207,US,tablet,Chrome,producthunt.com
+2026-03-15T18:59:34.000Z,pageview,usr_001986,/docs,150,US,desktop,Chrome Mobile,google.com
+2026-03-15T09:41:07.000Z,pageview,usr_002700,/dashboard,110,AU,mobile,Firefox,github.com
+2026-03-15T15:31:38.000Z,pageview,usr_002000,/about,90,KR,tablet,Safari,direct
+2026-03-15T02:40:49.000Z,signup,usr_002342,/dashboard,274,SE,mobile,Edge,bing.com
+2026-03-15T08:28:17.000Z,scroll,usr_002048,/pricing,278,AU,desktop,Chrome Mobile,twitter.com
+2026-03-15T04:01:03.000Z,pageview,usr_002991,/dashboard,32,AU,mobile,Edge,google.com
+2026-03-15T18:49:25.000Z,scroll,usr_002007,/contact,52,US,desktop,Chrome,facebook.com
+2026-03-15T02:05:20.000Z,signup,usr_002096,/products,89,US,mobile,Chrome Mobile,github.com
+2026-03-15T03:58:48.000Z,purchase,usr_001745,/about,13,UK,mobile,Safari,facebook.com
+2026-03-14T22:06:51.000Z,pageview,usr_002354,/about,298,KR,mobile,Firefox,producthunt.com
+2026-03-15T03:18:53.000Z,click,usr_001660,/pricing,182,UK,mobile,Safari Mobile,google.com
+2026-03-15T12:54:09.000Z,click,usr_002051,/contact,282,US,mobile,Chrome Mobile,reddit.com
+2026-03-15T10:03:01.000Z,click,usr_001492,/docs,114,FR,desktop,Firefox,bing.com
+2026-03-15T01:36:23.000Z,pageview,usr_001520,/contact,253,DE,desktop,Chrome,linkedin.com
+2026-03-15T04:19:02.000Z,pageview,usr_002444,/contact,147,SE,desktop,Edge,producthunt.com
+2026-03-15T18:02:01.000Z,click,usr_001269,/home,196,IN,desktop,Chrome Mobile,facebook.com
+2026-03-15T11:02:42.000Z,signup,usr_001499,/contact,71,JP,tablet,Firefox,google.com
+2026-03-15T09:46:07.000Z,scroll,usr_002197,/about,90,US,mobile,Safari Mobile,github.com
+2026-03-14T22:22:15.000Z,pageview,usr_002242,/blog,202,US,tablet,Chrome Mobile,facebook.com
+2026-03-15T08:02:54.000Z,purchase,usr_002259,/docs,36,UK,tablet,Edge,reddit.com
+2026-03-15T15:16:55.000Z,purchase,usr_001295,/checkout,170,US,desktop,Chrome,google.com
+2026-03-14T23:43:47.000Z,pageview,usr_002152,/dashboard,297,US,desktop,Safari,reddit.com
+2026-03-15T05:24:44.000Z,pageview,usr_001792,/products,154,NL,tablet,Firefox,bing.com
+2026-03-15T07:56:55.000Z,pageview,usr_001133,/docs,167,US,desktop,Chrome Mobile,reddit.com
+2026-03-15T07:39:48.000Z,click,usr_002883,/contact,1,CA,desktop,Chrome Mobile,bing.com
+2026-03-15T19:30:40.000Z,pageview,usr_001089,/docs,120,US,mobile,Chrome,reddit.com
+2026-03-15T19:22:07.000Z,click,usr_001394,/dashboard,49,SE,desktop,Safari Mobile,twitter.com
+2026-03-15T03:44:40.000Z,click,usr_002166,/contact,263,CA,mobile,Edge,linkedin.com
+2026-03-15T13:29:14.000Z,purchase,usr_002136,/docs,144,CA,desktop,Edge,twitter.com
+2026-03-15T07:40:14.000Z,pageview,usr_002769,/home,135,US,mobile,Edge,google.com
+2026-03-15T09:42:27.000Z,click,usr_001341,/settings,186,US,mobile,Chrome Mobile,direct
+2026-03-15T04:44:45.000Z,pageview,usr_001463,/pricing,287,US,desktop,Firefox,facebook.com
+2026-03-15T05:26:00.000Z,pageview,usr_001783,/settings,66,UK,desktop,Safari Mobile,reddit.com
+2026-03-15T13:52:08.000Z,signup,usr_002574,/dashboard,40,CA,desktop,Firefox,producthunt.com
+2026-03-15T07:03:54.000Z,scroll,usr_002811,/home,116,US,desktop,Safari Mobile,github.com
+2026-03-15T17:22:18.000Z,pageview,usr_001881,/checkout,149,NL,mobile,Firefox,linkedin.com
+2026-03-15T07:40:49.000Z,signup,usr_001067,/pricing,6,US,desktop,Edge,linkedin.com
+2026-03-15T19:28:00.000Z,pageview,usr_001612,/docs,48,US,mobile,Safari Mobile,direct
+2026-03-15T12:59:51.000Z,pageview,usr_001085,/contact,104,NL,mobile,Chrome,bing.com
+2026-03-15T03:56:32.000Z,click,usr_001901,/about,9,UK,desktop,Safari Mobile,google.com
+2026-03-15T16:43:49.000Z,signup,usr_001233,/contact,242,US,desktop,Safari Mobile,linkedin.com
+2026-03-14T21:50:16.000Z,click,usr_002454,/settings,278,SE,tablet,Firefox,twitter.com
+2026-03-15T18:43:36.000Z,click,usr_001513,/about,192,UK,mobile,Firefox,google.com
+2026-03-15T05:54:13.000Z,pageview,usr_002281,/pricing,68,BR,mobile,Chrome Mobile,linkedin.com
+2026-03-15T19:54:49.000Z,scroll,usr_002525,/pricing,144,AU,desktop,Edge,producthunt.com
+2026-03-15T09:34:12.000Z,pageview,usr_002478,/home,180,FR,desktop,Chrome Mobile,hacker-news
+2026-03-15T18:45:33.000Z,click,usr_001079,/about,214,KR,mobile,Chrome Mobile,hacker-news
+2026-03-14T21:04:10.000Z,scroll,usr_002179,/dashboard,60,NL,mobile,Safari Mobile,twitter.com
+2026-03-15T09:33:34.000Z,pageview,usr_002155,/products,290,JP,desktop,Chrome Mobile,github.com
+2026-03-15T15:37:42.000Z,signup,usr_002790,/dashboard,253,DE,desktop,Edge,github.com
+2026-03-15T10:49:12.000Z,pageview,usr_002176,/home,173,AU,mobile,Chrome Mobile,direct
+2026-03-14T23:01:53.000Z,click,usr_002031,/contact,151,SE,desktop,Safari Mobile,producthunt.com
+2026-03-15T13:22:32.000Z,signup,usr_002566,/pricing,132,UK,mobile,Chrome,bing.com
+2026-03-14T21:31:37.000Z,signup,usr_002811,/pricing,268,US,desktop,Safari,google.com
+2026-03-15T00:10:26.000Z,click,usr_002842,/products,253,US,mobile,Edge,hacker-news
+2026-03-15T15:53:06.000Z,pageview,usr_001867,/products,71,AU,desktop,Chrome Mobile,bing.com
+2026-03-15T05:18:44.000Z,pageview,usr_001747,/products,160,UK,mobile,Chrome,twitter.com
+2026-03-15T08:12:15.000Z,scroll,usr_002363,/pricing,98,AU,desktop,Safari,bing.com
+2026-03-14T22:11:06.000Z,click,usr_002552,/pricing,159,US,mobile,Edge,github.com
+2026-03-15T01:11:25.000Z,pageview,usr_001914,/products,13,JP,mobile,Chrome Mobile,reddit.com
+2026-03-15T14:21:06.000Z,signup,usr_002326,/contact,61,AU,mobile,Safari,direct
+2026-03-15T03:12:57.000Z,purchase,usr_001913,/blog,130,AU,desktop,Chrome Mobile,hacker-news
+2026-03-15T13:01:13.000Z,scroll,usr_002681,/settings,177,CA,desktop,Chrome Mobile,twitter.com
+2026-03-15T00:31:44.000Z,purchase,usr_001860,/blog,171,KR,tablet,Safari,github.com
+2026-03-15T11:50:11.000Z,pageview,usr_001391,/checkout,178,US,mobile,Chrome,linkedin.com
+2026-03-14T20:21:06.000Z,pageview,usr_002290,/checkout,209,JP,tablet,Firefox,bing.com
+2026-03-15T10:49:01.000Z,pageview,usr_001878,/docs,256,JP,desktop,Chrome Mobile,facebook.com
+2026-03-15T13:09:43.000Z,pageview,usr_001947,/pricing,87,BR,tablet,Edge,reddit.com
+2026-03-15T19:07:33.000Z,pageview,usr_001715,/blog,267,NL,desktop,Chrome,direct
+2026-03-14T23:57:57.000Z,click,usr_001339,/products,143,UK,desktop,Firefox,producthunt.com
+2026-03-15T11:17:56.000Z,pageview,usr_001988,/pricing,174,US,desktop,Firefox,twitter.com
+2026-03-15T16:07:16.000Z,purchase,usr_002468,/blog,261,US,tablet,Safari Mobile,direct
+2026-03-15T00:47:25.000Z,scroll,usr_002723,/docs,116,UK,mobile,Safari Mobile,google.com
+2026-03-15T13:45:08.000Z,pageview,usr_002427,/about,124,CA,mobile,Safari,github.com
+2026-03-15T19:52:28.000Z,pageview,usr_001861,/dashboard,106,FR,desktop,Safari Mobile,google.com
+2026-03-15T00:57:49.000Z,pageview,usr_002098,/blog,222,US,tablet,Edge,twitter.com
+2026-03-15T11:45:24.000Z,pageview,usr_001834,/home,132,DE,desktop,Safari,linkedin.com
+2026-03-14T21:12:30.000Z,pageview,usr_002810,/docs,183,NL,desktop,Safari Mobile,producthunt.com
+2026-03-15T10:20:49.000Z,pageview,usr_001914,/about,148,KR,mobile,Edge,twitter.com
+2026-03-15T15:00:30.000Z,pageview,usr_002560,/contact,145,UK,desktop,Firefox,facebook.com
+2026-03-14T22:18:58.000Z,purchase,usr_002585,/checkout,247,KR,desktop,Chrome Mobile,direct
+2026-03-15T09:23:03.000Z,scroll,usr_001771,/pricing,196,JP,tablet,Edge,github.com
+2026-03-15T15:43:39.000Z,click,usr_001810,/products,255,FR,mobile,Firefox,producthunt.com
+2026-03-15T15:05:28.000Z,pageview,usr_001704,/about,189,KR,desktop,Safari Mobile,facebook.com
+2026-03-14T23:12:18.000Z,purchase,usr_002218,/home,210,US,desktop,Safari,direct
+2026-03-15T02:50:29.000Z,pageview,usr_001654,/settings,49,US,mobile,Chrome Mobile,bing.com
+2026-03-15T15:43:59.000Z,pageview,usr_001857,/checkout,160,SE,desktop,Safari Mobile,linkedin.com
+2026-03-15T06:58:43.000Z,scroll,usr_001488,/dashboard,253,US,desktop,Firefox,twitter.com
+2026-03-15T09:38:16.000Z,pageview,usr_001505,/blog,130,IN,desktop,Edge,facebook.com
+2026-03-14T20:21:51.000Z,pageview,usr_001126,/settings,128,IN,desktop,Edge,producthunt.com
+2026-03-14T22:10:57.000Z,pageview,usr_001116,/pricing,216,NL,desktop,Edge,reddit.com
+2026-03-15T08:17:05.000Z,click,usr_002477,/about,41,US,desktop,Firefox,github.com
+2026-03-14T22:37:10.000Z,purchase,usr_001524,/settings,231,US,desktop,Chrome Mobile,reddit.com
+2026-03-15T08:45:21.000Z,pageview,usr_002762,/docs,51,AU,tablet,Firefox,twitter.com
+2026-03-15T01:08:23.000Z,pageview,usr_002104,/contact,265,UK,desktop,Firefox,github.com
+2026-03-15T19:00:12.000Z,purchase,usr_002214,/blog,4,SE,mobile,Chrome,hacker-news
+2026-03-15T06:12:16.000Z,click,usr_001510,/checkout,43,NL,mobile,Safari,twitter.com
+2026-03-15T07:37:06.000Z,scroll,usr_002468,/about,232,UK,desktop,Firefox,twitter.com
+2026-03-15T16:46:11.000Z,pageview,usr_002882,/about,240,US,tablet,Chrome,twitter.com
+2026-03-14T21:19:42.000Z,click,usr_001283,/docs,152,FR,desktop,Chrome,github.com
+2026-03-15T15:00:52.000Z,scroll,usr_001215,/settings,208,UK,desktop,Chrome Mobile,linkedin.com
+2026-03-15T00:38:49.000Z,signup,usr_002771,/settings,132,US,desktop,Firefox,github.com
+2026-03-15T18:20:04.000Z,pageview,usr_002850,/settings,143,SE,mobile,Safari,producthunt.com
+2026-03-15T03:01:18.000Z,signup,usr_001319,/blog,282,NL,mobile,Safari Mobile,github.com
+2026-03-15T10:11:33.000Z,click,usr_002600,/home,92,AU,desktop,Chrome Mobile,bing.com
+2026-03-15T19:52:36.000Z,pageview,usr_002221,/docs,45,US,desktop,Safari Mobile,google.com
+2026-03-15T01:41:57.000Z,signup,usr_002816,/blog,289,IN,mobile,Safari,bing.com
+2026-03-15T02:27:43.000Z,pageview,usr_001794,/products,287,IN,mobile,Chrome Mobile,direct
+2026-03-15T00:17:05.000Z,pageview,usr_002189,/about,228,CA,desktop,Safari Mobile,facebook.com
+2026-03-15T06:57:27.000Z,pageview,usr_002189,/about,115,CA,mobile,Edge,facebook.com
+2026-03-15T18:50:29.000Z,pageview,usr_001553,/home,151,UK,desktop,Edge,reddit.com
+2026-03-15T18:02:30.000Z,purchase,usr_001468,/checkout,74,US,desktop,Edge,twitter.com
+2026-03-15T14:00:36.000Z,pageview,usr_002662,/blog,132,UK,mobile,Safari,twitter.com
+2026-03-14T23:36:32.000Z,signup,usr_001362,/dashboard,137,US,desktop,Safari,github.com
+2026-03-14T21:42:37.000Z,pageview,usr_001321,/dashboard,269,US,mobile,Safari,google.com
+2026-03-15T06:59:59.000Z,pageview,usr_002313,/contact,187,SE,desktop,Chrome,google.com
+2026-03-14T23:56:50.000Z,click,usr_001341,/dashboard,7,KR,desktop,Edge,twitter.com
+2026-03-15T18:06:19.000Z,pageview,usr_002600,/blog,167,NL,desktop,Chrome Mobile,twitter.com
+2026-03-15T10:42:10.000Z,scroll,usr_001316,/checkout,222,US,mobile,Edge,hacker-news
+2026-03-15T15:11:44.000Z,click,usr_002932,/checkout,216,DE,mobile,Safari Mobile,direct
+2026-03-14T23:33:21.000Z,pageview,usr_002734,/pricing,135,JP,mobile,Chrome Mobile,bing.com
+2026-03-15T16:51:09.000Z,scroll,usr_002499,/settings,293,DE,mobile,Chrome Mobile,bing.com
+2026-03-15T11:37:42.000Z,pageview,usr_002603,/products,293,US,mobile,Safari Mobile,github.com
+2026-03-15T04:49:23.000Z,signup,usr_001333,/pricing,241,KR,mobile,Safari,direct
+2026-03-15T12:01:23.000Z,pageview,usr_001352,/home,52,BR,desktop,Edge,google.com
+2026-03-15T15:59:59.000Z,click,usr_002681,/settings,158,SE,desktop,Chrome,hacker-news
+2026-03-15T04:31:38.000Z,pageview,usr_002185,/settings,56,AU,desktop,Chrome,hacker-news
+2026-03-15T07:32:45.000Z,pageview,usr_001633,/docs,227,SE,mobile,Edge,direct
+2026-03-15T07:34:12.000Z,purchase,usr_002579,/dashboard,195,JP,mobile,Chrome Mobile,twitter.com
+2026-03-14T22:22:46.000Z,pageview,usr_002273,/about,177,US,mobile,Safari,direct
+2026-03-15T13:13:51.000Z,click,usr_001906,/dashboard,150,US,desktop,Chrome Mobile,twitter.com
+2026-03-15T07:56:43.000Z,scroll,usr_002112,/about,232,CA,desktop,Chrome Mobile,bing.com
+2026-03-15T12:33:57.000Z,scroll,usr_001704,/contact,248,SE,mobile,Edge,direct
+2026-03-15T09:00:28.000Z,purchase,usr_001008,/contact,24,NL,tablet,Chrome Mobile,hacker-news
+2026-03-15T02:58:23.000Z,pageview,usr_001961,/contact,190,UK,tablet,Safari,linkedin.com
+2026-03-15T09:59:18.000Z,purchase,usr_001159,/about,181,KR,tablet,Firefox,direct
+2026-03-15T13:03:53.000Z,pageview,usr_002120,/about,44,SE,desktop,Safari,twitter.com
+2026-03-15T02:57:16.000Z,pageview,usr_001098,/docs,172,SE,tablet,Chrome Mobile,twitter.com
+2026-03-15T00:17:24.000Z,scroll,usr_002451,/settings,119,UK,mobile,Chrome,twitter.com
+2026-03-14T23:52:01.000Z,click,usr_002929,/blog,83,BR,tablet,Safari,reddit.com

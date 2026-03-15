@@ -1,0 +1,911 @@
+[
+  {
+    "name": "browser_click",
+    "description": "Interact with web browser: click. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_navigate",
+    "description": "Interact with web browser: navigate. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_snapshot",
+    "description": "Interact with web browser: snapshot. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_type",
+    "description": "Interact with web browser: type. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_fill_form",
+    "description": "Interact with web browser: fill form. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_select_option",
+    "description": "Interact with web browser: select option. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_hover",
+    "description": "Interact with web browser: hover. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_press_key",
+    "description": "Interact with web browser: press key. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_drag",
+    "description": "Interact with web browser: drag. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_take_screenshot",
+    "description": "Interact with web browser: take screenshot. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_evaluate",
+    "description": "Interact with web browser: evaluate. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "browser_wait_for",
+    "description": "Interact with web browser: wait for. Performs the specified browser action on the current page context and returns the result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector or accessibility name to target"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Maximum wait time in milliseconds",
+          "default": 30000
+        },
+        "optional_value": {
+          "type": "string",
+          "description": "Value to type or fill"
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    }
+  },
+  {
+    "name": "file_read",
+    "description": "File system operation: read. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_write",
+    "description": "File system operation: write. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_edit",
+    "description": "File system operation: edit. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_delete",
+    "description": "File system operation: delete. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_glob",
+    "description": "File system operation: glob. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_grep",
+    "description": "File system operation: grep. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_list",
+    "description": "File system operation: list. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "file_move",
+    "description": "File system operation: move. Operates on the local filesystem within the allowed workspace directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "optional_content": {
+          "type": "string",
+          "description": "Content to write (for write/edit operations)"
+        },
+        "optional_pattern": {
+          "type": "string",
+          "description": "Pattern to search for (glob or regex)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "search_web",
+    "description": "Search operation: web. Returns ranked results matching the query with relevance scores.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query string"
+        },
+        "optional_limit": {
+          "type": "number",
+          "description": "Maximum results to return",
+          "default": 10
+        },
+        "optional_filter": {
+          "type": "string",
+          "description": "Filter expression to narrow results"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "search_code",
+    "description": "Search operation: code. Returns ranked results matching the query with relevance scores.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query string"
+        },
+        "optional_limit": {
+          "type": "number",
+          "description": "Maximum results to return",
+          "default": 10
+        },
+        "optional_filter": {
+          "type": "string",
+          "description": "Filter expression to narrow results"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "search_docs",
+    "description": "Search operation: docs. Returns ranked results matching the query with relevance scores.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query string"
+        },
+        "optional_limit": {
+          "type": "number",
+          "description": "Maximum results to return",
+          "default": 10
+        },
+        "optional_filter": {
+          "type": "string",
+          "description": "Filter expression to narrow results"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "search_files",
+    "description": "Search operation: files. Returns ranked results matching the query with relevance scores.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query string"
+        },
+        "optional_limit": {
+          "type": "number",
+          "description": "Maximum results to return",
+          "default": 10
+        },
+        "optional_filter": {
+          "type": "string",
+          "description": "Filter expression to narrow results"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "search_symbols",
+    "description": "Search operation: symbols. Returns ranked results matching the query with relevance scores.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query string"
+        },
+        "optional_limit": {
+          "type": "number",
+          "description": "Maximum results to return",
+          "default": 10
+        },
+        "optional_filter": {
+          "type": "string",
+          "description": "Filter expression to narrow results"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "git_status",
+    "description": "Git operation: status. Executes the git command in the current repository context and returns formatted output.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "optional_args": {
+          "type": "string",
+          "description": "Additional arguments to pass to the command"
+        },
+        "optional_path": {
+          "type": "string",
+          "description": "Repository path (defaults to current directory)"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "git_diff",
+    "description": "Git operation: diff. Executes the git command in the current repository context and returns formatted output.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "optional_args": {
+          "type": "string",
+          "description": "Additional arguments to pass to the command"
+        },
+        "optional_path": {
+          "type": "string",
+          "description": "Repository path (defaults to current directory)"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "git_commit",
+    "description": "Git operation: commit. Executes the git command in the current repository context and returns formatted output.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "optional_args": {
+          "type": "string",
+          "description": "Additional arguments to pass to the command"
+        },
+        "optional_path": {
+          "type": "string",
+          "description": "Repository path (defaults to current directory)"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "git_log",
+    "description": "Git operation: log. Executes the git command in the current repository context and returns formatted output.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "optional_args": {
+          "type": "string",
+          "description": "Additional arguments to pass to the command"
+        },
+        "optional_path": {
+          "type": "string",
+          "description": "Repository path (defaults to current directory)"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "bash_execute",
+    "description": "Utility operation: bash execute. Execute a shell command and return stdout/stderr",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "task_create",
+    "description": "Utility operation: task create. Create a new task with subject and description",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "task_update",
+    "description": "Utility operation: task update. Update an existing task status or details",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "task_list",
+    "description": "Utility operation: task list. List all tasks with optional status filter",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "notification_send",
+    "description": "Utility operation: notification send. Send a notification to the user",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "calendar_create_event",
+    "description": "Utility operation: calendar create event. Create a calendar event with title and time",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "email_send",
+    "description": "Utility operation: email send. Send an email to the specified recipient",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "database_query",
+    "description": "Utility operation: database query. Execute a database query and return results",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "api_request",
+    "description": "Utility operation: api request. Make an HTTP request to an external API",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "config_get",
+    "description": "Utility operation: config get. Get a configuration value by key",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "config_set",
+    "description": "Utility operation: config set. Set a configuration value",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command or query to execute"
+        },
+        "optional_timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  }
+]

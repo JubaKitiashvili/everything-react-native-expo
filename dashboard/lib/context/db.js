@@ -16,11 +16,15 @@ const openProjectDb = (dbPath) => {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
-  const initialSql = fs.readFileSync(
-    path.join(SCHEMA_DIR, '001-initial.sql'),
-    'utf-8'
-  );
-  db.exec(initialSql);
+  // Apply migrations in order
+  const migrations = fs.readdirSync(SCHEMA_DIR)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+
+  for (const migration of migrations) {
+    const sql = fs.readFileSync(path.join(SCHEMA_DIR, migration), 'utf-8');
+    db.exec(sql);
+  }
 
   return db;
 };

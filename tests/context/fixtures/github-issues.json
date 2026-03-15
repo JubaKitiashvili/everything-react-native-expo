@@ -1,0 +1,3954 @@
+[
+  {
+    "number": 30000,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#30000)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      },
+      {
+        "name": "good first issue",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 17,
+    "created_at": "2024-12-31T20:00:00.000Z",
+    "updated_at": "2025-01-02T04:29:07.395Z",
+    "html_url": "https://github.com/facebook/react/issues/30000",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 18,
+      "+1": 22,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 2,
+      "rocket": 5,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29999,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29999)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      },
+      {
+        "name": "good first issue",
+        "color": "84b6eb"
+      },
+      {
+        "name": "help wanted",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [],
+    "comments": 24,
+    "created_at": "2025-01-01T20:00:00.000Z",
+    "updated_at": "2025-01-04T08:24:27.555Z",
+    "html_url": "https://github.com/facebook/react/issues/29999",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 4,
+      "+1": 9,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 1,
+      "heart": 1,
+      "rocket": 6,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29998,
+    "title": "Feature: Add support for async server actions in forms (#29998)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-01-02T20:00:00.000Z",
+    "updated_at": "2025-01-07T19:15:54.301Z",
+    "html_url": "https://github.com/facebook/react/issues/29998",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 4,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 2,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29997,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29997)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      },
+      {
+        "name": "documentation",
+        "color": "84b6eb"
+      },
+      {
+        "name": "performance",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 19,
+    "created_at": "2025-01-03T20:00:00.000Z",
+    "updated_at": "2025-02-02T13:06:21.164Z",
+    "html_url": "https://github.com/facebook/react/issues/29997",
+    "milestone": null,
+    "reactions": {
+      "total_count": 43,
+      "+1": 3,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 1,
+      "heart": 3,
+      "rocket": 0,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29996,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29996)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 3,
+    "created_at": "2025-01-04T20:00:00.000Z",
+    "updated_at": "2025-01-09T23:50:55.958Z",
+    "html_url": "https://github.com/facebook/react/issues/29996",
+    "milestone": null,
+    "reactions": {
+      "total_count": 20,
+      "+1": 25,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 0,
+      "heart": 8,
+      "rocket": 1,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29995,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29995)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 1,
+    "created_at": "2025-01-05T20:00:00.000Z",
+    "updated_at": "2025-02-03T19:43:48.474Z",
+    "html_url": "https://github.com/facebook/react/issues/29995",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 1,
+      "+1": 13,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 8,
+      "rocket": 5,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29994,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29994)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 3,
+    "created_at": "2025-01-06T20:00:00.000Z",
+    "updated_at": "2025-01-07T23:30:37.815Z",
+    "html_url": "https://github.com/facebook/react/issues/29994",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 9,
+      "+1": 10,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 3,
+      "rocket": 0,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29993,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29993)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [],
+    "comments": 14,
+    "created_at": "2025-01-07T20:00:00.000Z",
+    "updated_at": "2025-01-08T21:22:27.546Z",
+    "html_url": "https://github.com/facebook/react/issues/29993",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 5,
+      "+1": 24,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 8,
+      "rocket": 4,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29992,
+    "title": "Feature: useFormStatus should support nested form elements (#29992)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 29,
+    "created_at": "2025-01-08T20:00:00.000Z",
+    "updated_at": "2025-01-17T15:57:57.563Z",
+    "html_url": "https://github.com/facebook/react/issues/29992",
+    "milestone": null,
+    "reactions": {
+      "total_count": 1,
+      "+1": 17,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 5,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29991,
+    "title": "Fix: act() warning in tests with async state updates (#29991)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 27,
+    "created_at": "2025-01-09T20:00:00.000Z",
+    "updated_at": "2025-01-28T12:35:20.022Z",
+    "html_url": "https://github.com/facebook/react/issues/29991",
+    "milestone": null,
+    "reactions": {
+      "total_count": 2,
+      "+1": 4,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29990,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29990)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [
+      {
+        "login": "acdlite"
+      }
+    ],
+    "comments": 9,
+    "created_at": "2025-01-10T20:00:00.000Z",
+    "updated_at": "2025-01-27T07:51:31.770Z",
+    "html_url": "https://github.com/facebook/react/issues/29990",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 17,
+      "+1": 21,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 5,
+      "rocket": 6,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29989,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29989)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [],
+    "comments": 15,
+    "created_at": "2025-01-11T20:00:00.000Z",
+    "updated_at": "2025-01-12T00:49:21.811Z",
+    "html_url": "https://github.com/facebook/react/issues/29989",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 0,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 4,
+      "rocket": 3,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29988,
+    "title": "Feature: Add support for async server actions in forms (#29988)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      },
+      {
+        "name": "documentation",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [
+      {
+        "login": "rickhanlonii"
+      }
+    ],
+    "comments": 7,
+    "created_at": "2025-01-12T20:00:00.000Z",
+    "updated_at": "2025-02-06T15:57:16.499Z",
+    "html_url": "https://github.com/facebook/react/issues/29988",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 4,
+      "+1": 9,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 0,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29987,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29987)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 22,
+    "created_at": "2025-01-13T20:00:00.000Z",
+    "updated_at": "2025-01-28T04:33:45.568Z",
+    "html_url": "https://github.com/facebook/react/issues/29987",
+    "milestone": null,
+    "reactions": {
+      "total_count": 44,
+      "+1": 3,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 1,
+      "heart": 6,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29986,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29986)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      },
+      {
+        "name": "performance",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 16,
+    "created_at": "2025-01-14T20:00:00.000Z",
+    "updated_at": "2025-01-30T18:17:39.449Z",
+    "html_url": "https://github.com/facebook/react/issues/29986",
+    "milestone": null,
+    "reactions": {
+      "total_count": 24,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 2,
+      "rocket": 0,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29985,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29985)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 3,
+    "created_at": "2025-02-15T20:00:00.000Z",
+    "updated_at": "2025-02-19T05:10:39.608Z",
+    "html_url": "https://github.com/facebook/react/issues/29985",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 36,
+      "+1": 10,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 0,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29984,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29984)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 14,
+    "created_at": "2025-02-16T20:00:00.000Z",
+    "updated_at": "2025-02-19T00:37:39.617Z",
+    "html_url": "https://github.com/facebook/react/issues/29984",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 23,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29983,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29983)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 23,
+    "created_at": "2025-02-17T20:00:00.000Z",
+    "updated_at": "2025-03-09T23:06:28.725Z",
+    "html_url": "https://github.com/facebook/react/issues/29983",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 25,
+      "+1": 21,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29982,
+    "title": "Feature: useFormStatus should support nested form elements (#29982)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      },
+      {
+        "name": "bug",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [
+      {
+        "login": "kassens"
+      }
+    ],
+    "comments": 5,
+    "created_at": "2025-02-18T20:00:00.000Z",
+    "updated_at": "2025-03-05T22:59:09.863Z",
+    "html_url": "https://github.com/facebook/react/issues/29982",
+    "milestone": null,
+    "reactions": {
+      "total_count": 44,
+      "+1": 11,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 1,
+      "heart": 1,
+      "rocket": 5,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29981,
+    "title": "Fix: act() warning in tests with async state updates (#29981)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 19,
+    "created_at": "2025-02-19T20:00:00.000Z",
+    "updated_at": "2025-03-21T08:29:03.090Z",
+    "html_url": "https://github.com/facebook/react/issues/29981",
+    "milestone": null,
+    "reactions": {
+      "total_count": 29,
+      "+1": 5,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 4,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29980,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29980)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [
+      {
+        "login": "acdlite"
+      }
+    ],
+    "comments": 6,
+    "created_at": "2025-02-20T20:00:00.000Z",
+    "updated_at": "2025-03-08T17:58:21.900Z",
+    "html_url": "https://github.com/facebook/react/issues/29980",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 40,
+      "+1": 5,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 0,
+      "rocket": 5,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29979,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29979)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-02-21T20:00:00.000Z",
+    "updated_at": "2025-03-19T04:52:26.141Z",
+    "html_url": "https://github.com/facebook/react/issues/29979",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 29,
+      "+1": 22,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 9,
+      "rocket": 1,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29978,
+    "title": "Feature: Add support for async server actions in forms (#29978)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 27,
+    "created_at": "2025-02-22T20:00:00.000Z",
+    "updated_at": "2025-03-23T14:29:09.756Z",
+    "html_url": "https://github.com/facebook/react/issues/29978",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 33,
+      "+1": 12,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 8,
+      "rocket": 7,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29977,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29977)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 13,
+    "created_at": "2025-02-23T20:00:00.000Z",
+    "updated_at": "2025-03-23T20:58:05.828Z",
+    "html_url": "https://github.com/facebook/react/issues/29977",
+    "milestone": null,
+    "reactions": {
+      "total_count": 24,
+      "+1": 15,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 6,
+      "rocket": 3,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29976,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29976)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 16,
+    "created_at": "2025-02-24T20:00:00.000Z",
+    "updated_at": "2025-03-15T18:35:34.115Z",
+    "html_url": "https://github.com/facebook/react/issues/29976",
+    "milestone": null,
+    "reactions": {
+      "total_count": 48,
+      "+1": 19,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 1,
+      "rocket": 4,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29975,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29975)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 0,
+    "created_at": "2025-02-25T20:00:00.000Z",
+    "updated_at": "2025-03-20T08:19:39.635Z",
+    "html_url": "https://github.com/facebook/react/issues/29975",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 24,
+      "+1": 4,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 1,
+      "heart": 2,
+      "rocket": 5,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29974,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29974)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [
+      {
+        "login": "poteto"
+      }
+    ],
+    "comments": 15,
+    "created_at": "2025-02-26T20:00:00.000Z",
+    "updated_at": "2025-03-26T04:09:37.694Z",
+    "html_url": "https://github.com/facebook/react/issues/29974",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 45,
+      "+1": 23,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 9,
+      "rocket": 3,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29973,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29973)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [],
+    "comments": 14,
+    "created_at": "2025-02-27T20:00:00.000Z",
+    "updated_at": "2025-03-01T14:21:25.078Z",
+    "html_url": "https://github.com/facebook/react/issues/29973",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 1,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 7,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29972,
+    "title": "Feature: useFormStatus should support nested form elements (#29972)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      },
+      {
+        "name": "bug",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 23,
+    "created_at": "2025-01-31T20:00:00.000Z",
+    "updated_at": "2025-02-06T16:14:24.186Z",
+    "html_url": "https://github.com/facebook/react/issues/29972",
+    "milestone": null,
+    "reactions": {
+      "total_count": 8,
+      "+1": 8,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 9,
+      "rocket": 3,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29971,
+    "title": "Fix: act() warning in tests with async state updates (#29971)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [
+      {
+        "login": "gaearon"
+      }
+    ],
+    "comments": 7,
+    "created_at": "2025-02-01T20:00:00.000Z",
+    "updated_at": "2025-02-18T19:50:49.142Z",
+    "html_url": "https://github.com/facebook/react/issues/29971",
+    "milestone": null,
+    "reactions": {
+      "total_count": 26,
+      "+1": 29,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 9,
+      "rocket": 2,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29970,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29970)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 1,
+    "created_at": "2025-03-02T20:00:00.000Z",
+    "updated_at": "2025-03-21T02:32:55.760Z",
+    "html_url": "https://github.com/facebook/react/issues/29970",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 27,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 4,
+      "rocket": 5,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29969,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29969)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      },
+      {
+        "name": "good first issue",
+        "color": "84b6eb"
+      },
+      {
+        "name": "help wanted",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [],
+    "comments": 15,
+    "created_at": "2025-03-03T20:00:00.000Z",
+    "updated_at": "2025-03-31T21:51:30.910Z",
+    "html_url": "https://github.com/facebook/react/issues/29969",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 4,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 2,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29968,
+    "title": "Feature: Add support for async server actions in forms (#29968)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      },
+      {
+        "name": "documentation",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 9,
+    "created_at": "2025-03-04T20:00:00.000Z",
+    "updated_at": "2025-03-24T06:54:12.340Z",
+    "html_url": "https://github.com/facebook/react/issues/29968",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 36,
+      "+1": 7,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 5,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29967,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29967)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 24,
+    "created_at": "2025-03-05T20:00:00.000Z",
+    "updated_at": "2025-04-01T18:51:59.541Z",
+    "html_url": "https://github.com/facebook/react/issues/29967",
+    "milestone": null,
+    "reactions": {
+      "total_count": 16,
+      "+1": 26,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 7,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29966,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29966)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      },
+      {
+        "name": "performance",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 21,
+    "created_at": "2025-03-06T20:00:00.000Z",
+    "updated_at": "2025-03-21T00:17:36.175Z",
+    "html_url": "https://github.com/facebook/react/issues/29966",
+    "milestone": null,
+    "reactions": {
+      "total_count": 27,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 3,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29965,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29965)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-03-07T20:00:00.000Z",
+    "updated_at": "2025-03-22T14:45:39.171Z",
+    "html_url": "https://github.com/facebook/react/issues/29965",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 31,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 1,
+      "heart": 7,
+      "rocket": 6,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29964,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29964)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [
+      {
+        "login": "poteto"
+      }
+    ],
+    "comments": 14,
+    "created_at": "2025-03-08T20:00:00.000Z",
+    "updated_at": "2025-03-10T13:28:10.214Z",
+    "html_url": "https://github.com/facebook/react/issues/29964",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 3,
+      "+1": 17,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 3,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29963,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29963)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      },
+      {
+        "name": "wontfix",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [],
+    "comments": 1,
+    "created_at": "2025-03-09T20:00:00.000Z",
+    "updated_at": "2025-03-16T01:32:58.378Z",
+    "html_url": "https://github.com/facebook/react/issues/29963",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 48,
+      "+1": 19,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 0,
+      "heart": 9,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29962,
+    "title": "Feature: useFormStatus should support nested form elements (#29962)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      },
+      {
+        "name": "bug",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [
+      {
+        "login": "kassens"
+      }
+    ],
+    "comments": 9,
+    "created_at": "2025-03-10T20:00:00.000Z",
+    "updated_at": "2025-03-26T00:18:35.999Z",
+    "html_url": "https://github.com/facebook/react/issues/29962",
+    "milestone": null,
+    "reactions": {
+      "total_count": 41,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 1,
+      "heart": 0,
+      "rocket": 4,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29961,
+    "title": "Fix: act() warning in tests with async state updates (#29961)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      },
+      {
+        "name": "bug",
+        "color": "84b6eb"
+      },
+      {
+        "name": "enhancement",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 25,
+    "created_at": "2025-03-11T20:00:00.000Z",
+    "updated_at": "2025-04-02T21:46:58.267Z",
+    "html_url": "https://github.com/facebook/react/issues/29961",
+    "milestone": null,
+    "reactions": {
+      "total_count": 25,
+      "+1": 11,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 9,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29960,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29960)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [
+      {
+        "login": "acdlite"
+      }
+    ],
+    "comments": 15,
+    "created_at": "2025-03-12T20:00:00.000Z",
+    "updated_at": "2025-03-26T05:14:05.602Z",
+    "html_url": "https://github.com/facebook/react/issues/29960",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 3,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 1,
+      "heart": 6,
+      "rocket": 6,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29959,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29959)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      },
+      {
+        "name": "good first issue",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [
+      {
+        "login": "sebmarkbage"
+      }
+    ],
+    "comments": 21,
+    "created_at": "2025-03-13T20:00:00.000Z",
+    "updated_at": "2025-04-10T01:16:53.358Z",
+    "html_url": "https://github.com/facebook/react/issues/29959",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 21,
+      "+1": 8,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 6,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29958,
+    "title": "Feature: Add support for async server actions in forms (#29958)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [
+      {
+        "login": "rickhanlonii"
+      }
+    ],
+    "comments": 7,
+    "created_at": "2025-03-14T20:00:00.000Z",
+    "updated_at": "2025-04-04T04:42:26.042Z",
+    "html_url": "https://github.com/facebook/react/issues/29958",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 41,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 1,
+      "rocket": 1,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29957,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29957)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      },
+      {
+        "name": "documentation",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 15,
+    "created_at": "2025-03-15T20:00:00.000Z",
+    "updated_at": "2025-04-12T03:30:25.189Z",
+    "html_url": "https://github.com/facebook/react/issues/29957",
+    "milestone": null,
+    "reactions": {
+      "total_count": 22,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 1,
+      "rocket": 3,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29956,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29956)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-03-16T20:00:00.000Z",
+    "updated_at": "2025-03-21T08:40:08.451Z",
+    "html_url": "https://github.com/facebook/react/issues/29956",
+    "milestone": null,
+    "reactions": {
+      "total_count": 20,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 3,
+      "rocket": 7,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29955,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29955)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [
+      {
+        "login": "eps1lon"
+      }
+    ],
+    "comments": 9,
+    "created_at": "2025-04-17T20:00:00.000Z",
+    "updated_at": "2025-05-04T20:46:55.548Z",
+    "html_url": "https://github.com/facebook/react/issues/29955",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 41,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 2,
+      "heart": 8,
+      "rocket": 1,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29954,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29954)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [
+      {
+        "login": "poteto"
+      }
+    ],
+    "comments": 12,
+    "created_at": "2025-04-18T20:00:00.000Z",
+    "updated_at": "2025-04-19T00:17:09.651Z",
+    "html_url": "https://github.com/facebook/react/issues/29954",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 46,
+      "+1": 23,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 7,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29953,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29953)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 1,
+    "created_at": "2025-04-19T20:00:00.000Z",
+    "updated_at": "2025-05-08T08:33:35.488Z",
+    "html_url": "https://github.com/facebook/react/issues/29953",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 48,
+      "+1": 10,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 8,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29952,
+    "title": "Feature: useFormStatus should support nested form elements (#29952)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 27,
+    "created_at": "2025-04-20T20:00:00.000Z",
+    "updated_at": "2025-05-16T08:11:19.132Z",
+    "html_url": "https://github.com/facebook/react/issues/29952",
+    "milestone": null,
+    "reactions": {
+      "total_count": 24,
+      "+1": 10,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 0,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29951,
+    "title": "Fix: act() warning in tests with async state updates (#29951)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 22,
+    "created_at": "2025-04-21T20:00:00.000Z",
+    "updated_at": "2025-05-13T22:56:11.859Z",
+    "html_url": "https://github.com/facebook/react/issues/29951",
+    "milestone": null,
+    "reactions": {
+      "total_count": 20,
+      "+1": 4,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 1,
+      "rocket": 4,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29950,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29950)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [
+      {
+        "login": "acdlite"
+      }
+    ],
+    "comments": 28,
+    "created_at": "2025-04-22T20:00:00.000Z",
+    "updated_at": "2025-05-09T18:52:46.307Z",
+    "html_url": "https://github.com/facebook/react/issues/29950",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 15,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 5,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29949,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29949)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [
+      {
+        "login": "sebmarkbage"
+      }
+    ],
+    "comments": 1,
+    "created_at": "2025-04-23T20:00:00.000Z",
+    "updated_at": "2025-04-27T20:06:22.241Z",
+    "html_url": "https://github.com/facebook/react/issues/29949",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 11,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 9,
+      "rocket": 7,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29948,
+    "title": "Feature: Add support for async server actions in forms (#29948)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      },
+      {
+        "name": "documentation",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 27,
+    "created_at": "2025-04-24T20:00:00.000Z",
+    "updated_at": "2025-04-27T04:18:39.486Z",
+    "html_url": "https://github.com/facebook/react/issues/29948",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 40,
+      "+1": 23,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 2,
+      "rocket": 3,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29947,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29947)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 7,
+    "created_at": "2025-04-25T20:00:00.000Z",
+    "updated_at": "2025-05-15T06:56:09.883Z",
+    "html_url": "https://github.com/facebook/react/issues/29947",
+    "milestone": null,
+    "reactions": {
+      "total_count": 49,
+      "+1": 3,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 5,
+      "rocket": 2,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29946,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29946)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 6,
+    "created_at": "2025-04-26T20:00:00.000Z",
+    "updated_at": "2025-05-11T22:05:28.228Z",
+    "html_url": "https://github.com/facebook/react/issues/29946",
+    "milestone": null,
+    "reactions": {
+      "total_count": 2,
+      "+1": 22,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 2,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29945,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29945)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 15,
+    "created_at": "2025-04-27T20:00:00.000Z",
+    "updated_at": "2025-05-10T08:36:34.824Z",
+    "html_url": "https://github.com/facebook/react/issues/29945",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 33,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 1,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29944,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29944)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 22,
+    "created_at": "2025-03-31T20:00:00.000Z",
+    "updated_at": "2025-04-13T22:07:19.673Z",
+    "html_url": "https://github.com/facebook/react/issues/29944",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 3,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 6,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29943,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29943)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 19,
+    "created_at": "2025-04-01T20:00:00.000Z",
+    "updated_at": "2025-04-27T23:52:35.268Z",
+    "html_url": "https://github.com/facebook/react/issues/29943",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 5,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 7,
+      "rocket": 3,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29942,
+    "title": "Feature: useFormStatus should support nested form elements (#29942)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 3,
+    "created_at": "2025-04-02T20:00:00.000Z",
+    "updated_at": "2025-04-30T13:05:08.278Z",
+    "html_url": "https://github.com/facebook/react/issues/29942",
+    "milestone": null,
+    "reactions": {
+      "total_count": 37,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 3,
+      "rocket": 5,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29941,
+    "title": "Fix: act() warning in tests with async state updates (#29941)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      },
+      {
+        "name": "bug",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 5,
+    "created_at": "2025-04-03T20:00:00.000Z",
+    "updated_at": "2025-04-24T16:34:07.908Z",
+    "html_url": "https://github.com/facebook/react/issues/29941",
+    "milestone": null,
+    "reactions": {
+      "total_count": 41,
+      "+1": 3,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 2,
+      "rocket": 0,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29940,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29940)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 9,
+    "created_at": "2025-05-04T20:00:00.000Z",
+    "updated_at": "2025-05-29T11:39:42.598Z",
+    "html_url": "https://github.com/facebook/react/issues/29940",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 42,
+      "+1": 12,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 6,
+      "rocket": 0,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29939,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29939)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      },
+      {
+        "name": "good first issue",
+        "color": "84b6eb"
+      },
+      {
+        "name": "help wanted",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [],
+    "comments": 6,
+    "created_at": "2025-05-05T20:00:00.000Z",
+    "updated_at": "2025-05-26T23:43:07.501Z",
+    "html_url": "https://github.com/facebook/react/issues/29939",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 20,
+      "+1": 8,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 0,
+      "rocket": 5,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29938,
+    "title": "Feature: Add support for async server actions in forms (#29938)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      },
+      {
+        "name": "documentation",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 17,
+    "created_at": "2025-05-06T20:00:00.000Z",
+    "updated_at": "2025-05-14T16:50:57.869Z",
+    "html_url": "https://github.com/facebook/react/issues/29938",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 14,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 6,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29937,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29937)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      },
+      {
+        "name": "documentation",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [
+      {
+        "login": "sophiebits"
+      }
+    ],
+    "comments": 1,
+    "created_at": "2025-05-07T20:00:00.000Z",
+    "updated_at": "2025-05-09T20:57:22.837Z",
+    "html_url": "https://github.com/facebook/react/issues/29937",
+    "milestone": null,
+    "reactions": {
+      "total_count": 32,
+      "+1": 22,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 1,
+      "heart": 4,
+      "rocket": 2,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29936,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29936)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      },
+      {
+        "name": "performance",
+        "color": "84b6eb"
+      },
+      {
+        "name": "breaking change",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [
+      {
+        "login": "gnoff"
+      }
+    ],
+    "comments": 29,
+    "created_at": "2025-05-08T20:00:00.000Z",
+    "updated_at": "2025-05-25T11:34:13.117Z",
+    "html_url": "https://github.com/facebook/react/issues/29936",
+    "milestone": null,
+    "reactions": {
+      "total_count": 21,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 7,
+      "rocket": 1,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29935,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29935)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 18,
+    "created_at": "2025-05-09T20:00:00.000Z",
+    "updated_at": "2025-05-29T14:23:04.526Z",
+    "html_url": "https://github.com/facebook/react/issues/29935",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 36,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 3,
+      "rocket": 1,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29934,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29934)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-05-10T20:00:00.000Z",
+    "updated_at": "2025-05-16T10:04:24.296Z",
+    "html_url": "https://github.com/facebook/react/issues/29934",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 11,
+      "+1": 23,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 2,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29933,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29933)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 8,
+    "created_at": "2025-05-11T20:00:00.000Z",
+    "updated_at": "2025-05-27T09:47:31.186Z",
+    "html_url": "https://github.com/facebook/react/issues/29933",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 14,
+      "+1": 27,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 7,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29932,
+    "title": "Feature: useFormStatus should support nested form elements (#29932)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 6,
+    "created_at": "2025-05-12T20:00:00.000Z",
+    "updated_at": "2025-05-31T05:13:34.944Z",
+    "html_url": "https://github.com/facebook/react/issues/29932",
+    "milestone": null,
+    "reactions": {
+      "total_count": 3,
+      "+1": 15,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 0,
+      "rocket": 4,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29931,
+    "title": "Fix: act() warning in tests with async state updates (#29931)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      },
+      {
+        "name": "bug",
+        "color": "84b6eb"
+      },
+      {
+        "name": "enhancement",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 8,
+    "created_at": "2025-05-13T20:00:00.000Z",
+    "updated_at": "2025-05-24T07:52:51.788Z",
+    "html_url": "https://github.com/facebook/react/issues/29931",
+    "milestone": null,
+    "reactions": {
+      "total_count": 45,
+      "+1": 7,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 7,
+      "rocket": 2,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29930,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29930)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 6,
+    "created_at": "2025-05-14T20:00:00.000Z",
+    "updated_at": "2025-06-10T06:35:43.230Z",
+    "html_url": "https://github.com/facebook/react/issues/29930",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 20,
+      "+1": 4,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 5,
+      "rocket": 1,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29929,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29929)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [
+      {
+        "login": "sebmarkbage"
+      }
+    ],
+    "comments": 27,
+    "created_at": "2025-05-15T20:00:00.000Z",
+    "updated_at": "2025-05-27T12:29:57.778Z",
+    "html_url": "https://github.com/facebook/react/issues/29929",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 48,
+      "+1": 24,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 1,
+      "rocket": 0,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29928,
+    "title": "Feature: Add support for async server actions in forms (#29928)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      },
+      {
+        "name": "documentation",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 4,
+    "created_at": "2025-05-16T20:00:00.000Z",
+    "updated_at": "2025-06-08T04:39:41.641Z",
+    "html_url": "https://github.com/facebook/react/issues/29928",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 37,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 2,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29927,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29927)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      },
+      {
+        "name": "documentation",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 15,
+    "created_at": "2025-05-17T20:00:00.000Z",
+    "updated_at": "2025-06-10T17:15:23.863Z",
+    "html_url": "https://github.com/facebook/react/issues/29927",
+    "milestone": null,
+    "reactions": {
+      "total_count": 28,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 1,
+      "heart": 0,
+      "rocket": 5,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29926,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29926)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [
+      {
+        "login": "gnoff"
+      }
+    ],
+    "comments": 6,
+    "created_at": "2025-05-18T20:00:00.000Z",
+    "updated_at": "2025-06-06T04:13:26.508Z",
+    "html_url": "https://github.com/facebook/react/issues/29926",
+    "milestone": null,
+    "reactions": {
+      "total_count": 15,
+      "+1": 9,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 2,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29925,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29925)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      },
+      {
+        "name": "needs triage",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 20,
+    "created_at": "2025-06-19T20:00:00.000Z",
+    "updated_at": "2025-07-19T08:13:54.824Z",
+    "html_url": "https://github.com/facebook/react/issues/29925",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 36,
+      "+1": 8,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 7,
+      "rocket": 0,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29924,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29924)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 17,
+    "created_at": "2025-06-20T20:00:00.000Z",
+    "updated_at": "2025-06-25T08:53:07.922Z",
+    "html_url": "https://github.com/facebook/react/issues/29924",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 1,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 9,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29923,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29923)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      },
+      {
+        "name": "wontfix",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 13,
+    "created_at": "2025-06-21T20:00:00.000Z",
+    "updated_at": "2025-07-09T11:34:59.550Z",
+    "html_url": "https://github.com/facebook/react/issues/29923",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 16,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 3,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29922,
+    "title": "Feature: useFormStatus should support nested form elements (#29922)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      },
+      {
+        "name": "bug",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 2,
+    "created_at": "2025-06-22T20:00:00.000Z",
+    "updated_at": "2025-06-29T10:58:32.708Z",
+    "html_url": "https://github.com/facebook/react/issues/29922",
+    "milestone": null,
+    "reactions": {
+      "total_count": 8,
+      "+1": 8,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 2,
+      "heart": 3,
+      "rocket": 1,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29921,
+    "title": "Fix: act() warning in tests with async state updates (#29921)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      },
+      {
+        "name": "bug",
+        "color": "84b6eb"
+      },
+      {
+        "name": "enhancement",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [],
+    "comments": 12,
+    "created_at": "2025-06-23T20:00:00.000Z",
+    "updated_at": "2025-07-09T21:08:23.650Z",
+    "html_url": "https://github.com/facebook/react/issues/29921",
+    "milestone": null,
+    "reactions": {
+      "total_count": 33,
+      "+1": 27,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 9,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29920,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29920)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 2,
+    "created_at": "2025-06-24T20:00:00.000Z",
+    "updated_at": "2025-07-02T19:18:37.955Z",
+    "html_url": "https://github.com/facebook/react/issues/29920",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 10,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 1,
+      "heart": 1,
+      "rocket": 3,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29919,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29919)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [
+      {
+        "login": "sebmarkbage"
+      }
+    ],
+    "comments": 19,
+    "created_at": "2025-06-25T20:00:00.000Z",
+    "updated_at": "2025-07-09T07:00:59.082Z",
+    "html_url": "https://github.com/facebook/react/issues/29919",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 46,
+      "+1": 29,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 8,
+      "rocket": 2,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29918,
+    "title": "Feature: Add support for async server actions in forms (#29918)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 9,
+    "created_at": "2025-06-26T20:00:00.000Z",
+    "updated_at": "2025-07-25T06:40:00.811Z",
+    "html_url": "https://github.com/facebook/react/issues/29918",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 15,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 4,
+      "rocket": 6,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29917,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29917)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      },
+      {
+        "name": "documentation",
+        "color": "84b6eb"
+      },
+      {
+        "name": "performance",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [
+      {
+        "login": "sophiebits"
+      }
+    ],
+    "comments": 10,
+    "created_at": "2025-06-27T20:00:00.000Z",
+    "updated_at": "2025-07-17T16:27:43.360Z",
+    "html_url": "https://github.com/facebook/react/issues/29917",
+    "milestone": null,
+    "reactions": {
+      "total_count": 12,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 1,
+      "heart": 7,
+      "rocket": 5,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29916,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29916)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "open",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      },
+      {
+        "name": "performance",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [],
+    "comments": 0,
+    "created_at": "2025-05-31T20:00:00.000Z",
+    "updated_at": "2025-06-19T06:22:48.777Z",
+    "html_url": "https://github.com/facebook/react/issues/29916",
+    "milestone": null,
+    "reactions": {
+      "total_count": 28,
+      "+1": 4,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 4,
+      "rocket": 4,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29915,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29915)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 18,
+    "created_at": "2025-06-01T20:00:00.000Z",
+    "updated_at": "2025-07-01T05:51:39.053Z",
+    "html_url": "https://github.com/facebook/react/issues/29915",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 4,
+      "+1": 6,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 0,
+      "heart": 8,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29914,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29914)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      },
+      {
+        "name": "needs triage",
+        "color": "84b6eb"
+      },
+      {
+        "name": "duplicate",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [
+      {
+        "login": "poteto"
+      }
+    ],
+    "comments": 21,
+    "created_at": "2025-06-02T20:00:00.000Z",
+    "updated_at": "2025-06-06T23:58:03.172Z",
+    "html_url": "https://github.com/facebook/react/issues/29914",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 15,
+      "+1": 5,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 0,
+      "heart": 7,
+      "rocket": 1,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29913,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29913)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 21,
+    "created_at": "2025-06-03T20:00:00.000Z",
+    "updated_at": "2025-06-10T17:12:44.530Z",
+    "html_url": "https://github.com/facebook/react/issues/29913",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 13,
+      "+1": 27,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 0,
+      "rocket": 6,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29912,
+    "title": "Feature: useFormStatus should support nested form elements (#29912)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      },
+      {
+        "name": "wontfix",
+        "color": "84b6eb"
+      },
+      {
+        "name": "bug",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 14,
+    "created_at": "2025-06-04T20:00:00.000Z",
+    "updated_at": "2025-06-30T22:29:37.859Z",
+    "html_url": "https://github.com/facebook/react/issues/29912",
+    "milestone": null,
+    "reactions": {
+      "total_count": 31,
+      "+1": 7,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 2,
+      "heart": 5,
+      "rocket": 2,
+      "eyes": 2
+    }
+  },
+  {
+    "number": 29911,
+    "title": "Fix: act() warning in tests with async state updates (#29911)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      },
+      {
+        "name": "bug",
+        "color": "84b6eb"
+      },
+      {
+        "name": "enhancement",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [
+      {
+        "login": "gaearon"
+      }
+    ],
+    "comments": 20,
+    "created_at": "2025-06-05T20:00:00.000Z",
+    "updated_at": "2025-07-01T23:18:05.507Z",
+    "html_url": "https://github.com/facebook/react/issues/29911",
+    "milestone": null,
+    "reactions": {
+      "total_count": 34,
+      "+1": 29,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 2,
+      "rocket": 0,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29910,
+    "title": "Fix: useEffect cleanup runs twice in StrictMode (#29910)",
+    "body": "When using React with concurrent features enabled, I noticed that the component re-renders unexpectedly when state is updated from useEffect cleanup. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "bug",
+        "color": "fc2929"
+      },
+      {
+        "name": "enhancement",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "gaearon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000"
+    },
+    "assignees": [],
+    "comments": 9,
+    "created_at": "2025-07-06T20:00:00.000Z",
+    "updated_at": "2025-07-11T12:43:27.425Z",
+    "html_url": "https://github.com/facebook/react/issues/29910",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 21,
+      "+1": 24,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 2,
+      "heart": 5,
+      "rocket": 4,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29909,
+    "title": "Bug: Hydration mismatch with Suspense and streaming SSR (#29909)",
+    "body": "When using React with concurrent features enabled, I noticed that useTransition causes a brief flash of loading state even when the transition completes synchronously. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 121",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "enhancement",
+        "color": "fc2929"
+      },
+      {
+        "name": "good first issue",
+        "color": "84b6eb"
+      },
+      {
+        "name": "help wanted",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "acdlite",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1001"
+    },
+    "assignees": [
+      {
+        "login": "sebmarkbage"
+      }
+    ],
+    "comments": 9,
+    "created_at": "2025-07-07T20:00:00.000Z",
+    "updated_at": "2025-07-27T22:13:44.712Z",
+    "html_url": "https://github.com/facebook/react/issues/29909",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 2,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 2,
+      "heart": 7,
+      "rocket": 6,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29908,
+    "title": "Feature: Add support for async server actions in forms (#29908)",
+    "body": "When using React with concurrent features enabled, I noticed that Suspense boundaries sometimes show fallback unnecessarily when navigating between cached routes. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 122",
+    "state": "open",
+    "labels": [
+      {
+        "name": "good first issue",
+        "color": "fc2929"
+      },
+      {
+        "name": "help wanted",
+        "color": "84b6eb"
+      }
+    ],
+    "user": {
+      "login": "sebmarkbage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1002"
+    },
+    "assignees": [],
+    "comments": 6,
+    "created_at": "2025-07-08T20:00:00.000Z",
+    "updated_at": "2025-08-03T08:55:09.794Z",
+    "html_url": "https://github.com/facebook/react/issues/29908",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 30,
+      "+1": 26,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 4,
+      "rocket": 7,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29907,
+    "title": "Performance: Reduce re-renders in concurrent mode transitions (#29907)",
+    "body": "When using React with concurrent features enabled, I noticed that the ref callback fires twice in StrictMode even though the component only mounts once. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "help wanted",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "rickhanlonii",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1003"
+    },
+    "assignees": [],
+    "comments": 27,
+    "created_at": "2025-07-09T20:00:00.000Z",
+    "updated_at": "2025-08-07T20:11:40.257Z",
+    "html_url": "https://github.com/facebook/react/issues/29907",
+    "milestone": null,
+    "reactions": {
+      "total_count": 6,
+      "+1": 21,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 1,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 2,
+      "eyes": 0
+    }
+  },
+  {
+    "number": 29906,
+    "title": "Bug: useCallback dependencies not tracked with destructuring (#29906)",
+    "body": "When using React with concurrent features enabled, I noticed that act() warnings appear in tests when using React Testing Library with async state updates. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "documentation",
+        "color": "fc2929"
+      },
+      {
+        "name": "performance",
+        "color": "84b6eb"
+      },
+      {
+        "name": "breaking change",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "sophiebits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1004"
+    },
+    "assignees": [
+      {
+        "login": "gnoff"
+      }
+    ],
+    "comments": 23,
+    "created_at": "2025-07-10T20:00:00.000Z",
+    "updated_at": "2025-07-22T19:53:53.599Z",
+    "html_url": "https://github.com/facebook/react/issues/29906",
+    "milestone": null,
+    "reactions": {
+      "total_count": 30,
+      "+1": 28,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 2,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29905,
+    "title": "Enhancement: Better error messages for invalid hook calls (#29905)",
+    "body": "When using React with concurrent features enabled, I noticed that memo() does not prevent re-renders when using context providers that change reference identity. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 120",
+    "state": "open",
+    "labels": [
+      {
+        "name": "performance",
+        "color": "fc2929"
+      },
+      {
+        "name": "breaking change",
+        "color": "84b6eb"
+      },
+      {
+        "name": "needs triage",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "gnoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1005"
+    },
+    "assignees": [],
+    "comments": 12,
+    "created_at": "2025-07-11T20:00:00.000Z",
+    "updated_at": "2025-08-03T21:07:45.450Z",
+    "html_url": "https://github.com/facebook/react/issues/29905",
+    "milestone": {
+      "title": "v19.0"
+    },
+    "reactions": {
+      "total_count": 37,
+      "+1": 13,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 9,
+      "rocket": 3,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29904,
+    "title": "Fix: Context value identity check causes unnecessary renders (#29904)",
+    "body": "When using React with concurrent features enabled, I noticed that lazy() components cause hydration mismatches when used with streaming SSR. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 121",
+    "state": "open",
+    "labels": [
+      {
+        "name": "breaking change",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "eps1lon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1006"
+    },
+    "assignees": [],
+    "comments": 0,
+    "created_at": "2025-07-12T20:00:00.000Z",
+    "updated_at": "2025-07-28T04:06:07.355Z",
+    "html_url": "https://github.com/facebook/react/issues/29904",
+    "milestone": {
+      "title": "v19.1"
+    },
+    "reactions": {
+      "total_count": 5,
+      "+1": 21,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 1,
+      "heart": 6,
+      "rocket": 5,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29903,
+    "title": "Bug: lazy() SSR streaming produces hydration warnings (#29903)",
+    "body": "When using React with concurrent features enabled, I noticed that useCallback dependencies are not properly tracked when using object destructuring in parameters. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 18.3.1. Browser: Chrome 122",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "needs triage",
+        "color": "fc2929"
+      },
+      {
+        "name": "duplicate",
+        "color": "84b6eb"
+      },
+      {
+        "name": "wontfix",
+        "color": "0e8a16"
+      }
+    ],
+    "user": {
+      "login": "poteto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1007"
+    },
+    "assignees": [
+      {
+        "login": "lunaruan"
+      }
+    ],
+    "comments": 20,
+    "created_at": "2025-07-13T20:00:00.000Z",
+    "updated_at": "2025-08-05T11:27:19.221Z",
+    "html_url": "https://github.com/facebook/react/issues/29903",
+    "milestone": {
+      "title": "v20.0"
+    },
+    "reactions": {
+      "total_count": 35,
+      "+1": 20,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 2,
+      "confused": 2,
+      "heart": 2,
+      "rocket": 5,
+      "eyes": 1
+    }
+  },
+  {
+    "number": 29902,
+    "title": "Feature: useFormStatus should support nested form elements (#29902)",
+    "body": "When using React with concurrent features enabled, I noticed that forwardRef components lose their displayName in React DevTools after upgrading to v19. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.1.0-canary. Browser: Chrome 123",
+    "state": "open",
+    "labels": [
+      {
+        "name": "duplicate",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "lunaruan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1008"
+    },
+    "assignees": [],
+    "comments": 9,
+    "created_at": "2025-07-14T20:00:00.000Z",
+    "updated_at": "2025-08-07T20:13:22.494Z",
+    "html_url": "https://github.com/facebook/react/issues/29902",
+    "milestone": null,
+    "reactions": {
+      "total_count": 31,
+      "+1": 24,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 3,
+      "confused": 1,
+      "heart": 4,
+      "rocket": 6,
+      "eyes": 3
+    }
+  },
+  {
+    "number": 29901,
+    "title": "Fix: act() warning in tests with async state updates (#29901)",
+    "body": "When using React with concurrent features enabled, I noticed that the new use() hook throws an error when used with Promise.race() in a server component. Steps to reproduce: 1) Create a new React app, 2) Add the component described above, 3) Interact with the UI. Expected behavior: Component should render correctly. Actual behavior: See description above. React version: 19.0.0. Browser: Chrome 124",
+    "state": "closed",
+    "labels": [
+      {
+        "name": "wontfix",
+        "color": "fc2929"
+      }
+    ],
+    "user": {
+      "login": "kassens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1009"
+    },
+    "assignees": [
+      {
+        "login": "gaearon"
+      }
+    ],
+    "comments": 28,
+    "created_at": "2025-07-15T20:00:00.000Z",
+    "updated_at": "2025-07-18T00:53:31.619Z",
+    "html_url": "https://github.com/facebook/react/issues/29901",
+    "milestone": null,
+    "reactions": {
+      "total_count": 30,
+      "+1": 22,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 4,
+      "confused": 2,
+      "heart": 5,
+      "rocket": 6,
+      "eyes": 2
+    }
+  }
+]

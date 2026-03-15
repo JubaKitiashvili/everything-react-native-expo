@@ -1,0 +1,89 @@
+ RUN  v2.3.1 /Users/developer/projects/webapp
+
+ PASS  src/components/__tests__/Button.test.tsx (0.234s)
+ PASS  src/components/__tests__/Input.test.tsx (0.187s)
+ PASS  src/components/__tests__/Modal.test.tsx (0.312s)
+ PASS  src/components/__tests__/Card.test.tsx (0.145s)
+ PASS  src/components/__tests__/Avatar.test.tsx (0.098s)
+ PASS  src/components/__tests__/Dropdown.test.tsx (0.267s)
+ PASS  src/components/__tests__/Tooltip.test.tsx (0.123s)
+ PASS  src/components/__tests__/Badge.test.tsx (0.089s)
+ PASS  src/hooks/__tests__/useAuth.test.ts (0.445s)
+ PASS  src/hooks/__tests__/useDebounce.test.ts (0.156s)
+ PASS  src/hooks/__tests__/useLocalStorage.test.ts (0.178s)
+ PASS  src/hooks/__tests__/usePagination.test.ts (0.201s)
+ FAIL  src/hooks/__tests__/useDataFetcher.test.ts (0.534s)
+  ● useDataFetcher › should abort pending requests on unmount
+
+    expect(received).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 0
+
+      42 |     unmount();
+      43 |     await waitFor(() => {
+    > 44 |       expect(abortSpy).toHaveBeenCalledTimes(1);
+         |                        ^
+      45 |     });
+      46 |   });
+      47 |
+
+      at Object.<anonymous> (src/hooks/__tests__/useDataFetcher.test.ts:44:24)
+
+  ● useDataFetcher › should retry failed requests with backoff
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 1
+
+      68 |     await waitFor(() => {
+    > 69 |       expect(fetchMock).toHaveBeenCalledTimes(3);
+         |                         ^
+      70 |     }, { timeout: 5000 });
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (src/hooks/__tests__/useDataFetcher.test.ts:69:25)
+
+ PASS  src/services/__tests__/api.test.ts (0.389s)
+ PASS  src/services/__tests__/auth.test.ts (0.423s)
+ PASS  src/services/__tests__/storage.test.ts (0.167s)
+ PASS  src/services/__tests__/websocket.test.ts (0.345s)
+ PASS  src/utils/__tests__/format.test.ts (0.078s)
+ PASS  src/utils/__tests__/validate.test.ts (0.112s)
+ PASS  src/utils/__tests__/transform.test.ts (0.095s)
+ PASS  src/utils/__tests__/date.test.ts (0.134s)
+ PASS  src/utils/__tests__/crypto.test.ts (0.201s)
+ PASS  src/pages/__tests__/Home.test.tsx (0.567s)
+ PASS  src/pages/__tests__/Dashboard.test.tsx (0.634s)
+ PASS  src/pages/__tests__/Settings.test.tsx (0.445s)
+ PASS  src/pages/__tests__/Profile.test.tsx (0.389s)
+ FAIL  src/pages/__tests__/Checkout.test.tsx (0.712s)
+  ● Checkout › should display order summary with correct totals
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"discount": 5.00, "subtotal": 49.99, "tax": 4.50, "total": 49.49}
+    Received: {"discount": 0, "subtotal": 49.99, "tax": 4.50, "total": 54.49}
+
+      31 |     fireEvent.press(getByText('Apply Code'));
+      32 |     await waitFor(() => {
+    > 33 |       expect(getOrderSummary()).toEqual({
+         |                                 ^
+      34 |         subtotal: 49.99,
+      35 |         discount: 5.00,
+      36 |         tax: 4.50,
+
+      at Object.<anonymous> (src/pages/__tests__/Checkout.test.tsx:33:33)
+
+ PASS  src/pages/__tests__/Login.test.tsx (0.298s)
+ PASS  src/pages/__tests__/Register.test.tsx (0.356s)
+ PASS  src/stores/__tests__/userStore.test.ts (0.145s)
+ PASS  src/stores/__tests__/cartStore.test.ts (0.167s)
+
+Test Suites:  2 failed, 28 passed, 30 total
+Tests:        3 failed, 142 passed, 145 total
+Snapshots:    12 passed, 12 total
+Time:         4.328s
+Ran all test suites.
