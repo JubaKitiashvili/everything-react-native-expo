@@ -579,9 +579,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler) return ecosystemHandler(req, res, urlPath, body);
-  if (urlPath.startsWith('/api/upgrades/') && upgradesHandler) return upgradesHandler(req, res, urlPath, body);
-  if (urlPath.startsWith('/api/insights/') && insightsHandler) return insightsHandler(req, res, urlPath, body);
+  // Tab API routes — collect body for POST requests
+  if (urlPath.startsWith('/api/ecosystem/') || urlPath.startsWith('/api/upgrades/') || urlPath.startsWith('/api/insights/')) {
+    var tabBody = '';
+    req.on('data', function (chunk) { tabBody += chunk; });
+    req.on('end', function () {
+      if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler) return ecosystemHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/upgrades/') && upgradesHandler) return upgradesHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/insights/') && insightsHandler) return insightsHandler(req, res, urlPath, tabBody);
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end('{"error":"handler not available"}');
+    });
+    return;
+  }
 
   serveStatic(req, res);
 });
@@ -652,7 +662,13 @@ server.listen(PORT, () => {
 
   // Wire tab handlers
   if (ecosystemHandler) { ecosystemHandler.broadcast = broadcast; }
-  if (upgradesHandler) { upgradesHandler.broadcast = broadcast; }
+  if (upgradesHandler) {
+    upgradesHandler.broadcast = broadcast;
+    upgradesHandler.getAgentStatus = function (name) {
+      return agentState[name] ? agentState[name].status : 'idle';
+    };
+    upgradesHandler.postEvent = handleEvent;
+  }
 
   // Auto-refresh ecosystem data every 12 hours
   if (ecosystemHandler && ecosystemHandler.autoRefresh) {
