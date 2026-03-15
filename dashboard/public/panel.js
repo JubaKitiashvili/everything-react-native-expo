@@ -71,6 +71,8 @@
   };
 
   let lastAgentState = {};
+  let stripEl = null;
+  let isCollapsed = false;
 
   const update = (agents) => {
     lastAgentState = agents || {};
@@ -116,6 +118,7 @@
       }
     }
     updateDurations();
+    updateStrip();
   };
 
   const updateDurations = () => {
@@ -143,9 +146,69 @@
     }
   };
 
+  const updateStrip = () => {
+    if (!stripEl) return;
+    var agents = lastAgentState;
+    var working = 0, planning = 0, idle = 0;
+    var tickerText = '';
+    var names = Object.keys(agents);
+    for (var i = 0; i < names.length; i++) {
+      var a = agents[names[i]];
+      if (!a) continue;
+      if (a.status === 'working') { working++; if (!tickerText && a.task) tickerText = names[i] + ': ' + a.task; }
+      else if (a.status === 'planning') { planning++; if (!tickerText && a.task) tickerText = names[i] + ': ' + a.task; }
+      else { idle++; }
+    }
+    stripEl.innerHTML =
+      '<span class="strip-dot green"></span><span class="strip-count">' + working + ' working</span>' +
+      '<span class="strip-dot orange"></span><span class="strip-count">' + planning + ' planning</span>' +
+      '<span class="strip-dot grey"></span><span class="strip-count">' + idle + ' idle</span>' +
+      (tickerText ? '<span class="strip-divider">│</span><span class="strip-ticker">' + tickerText + '</span>' : '');
+  };
+
+  const collapse = () => {
+    if (isCollapsed) return;
+    isCollapsed = true;
+    if (panelEl) panelEl.style.display = 'none';
+    if (!stripEl) {
+      stripEl = document.createElement('div');
+      stripEl.className = 'agent-strip';
+      stripEl.addEventListener('click', function () {
+        if (!panelEl) return;
+        panelEl.classList.add('panel-overlay');
+        panelEl.style.display = '';
+        var dismiss = function (e) {
+          if (!panelEl.contains(e.target)) {
+            panelEl.style.display = 'none';
+            panelEl.classList.remove('panel-overlay');
+            document.removeEventListener('click', dismiss);
+          }
+        };
+        setTimeout(function () { document.addEventListener('click', dismiss); }, 0);
+      });
+      if (panelEl && panelEl.parentNode) {
+        panelEl.parentNode.insertBefore(stripEl, panelEl.nextSibling);
+      }
+    }
+    stripEl.style.display = 'flex';
+    updateStrip();
+  };
+
+  const expand = () => {
+    if (!isCollapsed) return;
+    isCollapsed = false;
+    if (panelEl) {
+      panelEl.classList.remove('panel-overlay');
+      panelEl.style.display = '';
+    }
+    if (stripEl) stripEl.style.display = 'none';
+  };
+
   window.Panel = {
     init,
     update,
     setConnected,
+    collapse,
+    expand,
   };
 })();
