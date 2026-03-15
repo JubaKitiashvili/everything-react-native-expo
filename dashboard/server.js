@@ -12,6 +12,13 @@ const { SessionTracker } = require('./lib/context/session-tracker');
 const { buildSnapshot, saveSnapshot, loadLatestSnapshot, restorePrompt } = require('./lib/context/session-continuity');
 const { BudgetManager } = require('./lib/context/budget-manager');
 const { AgentPreloader } = require('./lib/context/preloader');
+const { AGENT_DEFINITIONS: SHARED_AGENT_DEFS } = require('./lib/agents-config');
+
+// Tab feature modules (loaded lazily to avoid errors if dirs don't exist yet)
+let ecosystemHandler, upgradesHandler, insightsHandler;
+try { ecosystemHandler = require('./lib/ecosystem/handler'); } catch (e) { ecosystemHandler = null; }
+try { upgradesHandler = require('./lib/upgrades/handler'); } catch (e) { upgradesHandler = null; }
+try { insightsHandler = require('./lib/insights/handler'); } catch (e) { insightsHandler = null; }
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -33,18 +40,7 @@ const MIME_TYPES = {
   '.json': 'application/json',
 };
 
-const AGENT_DEFINITIONS = [
-  { name: 'architect', room: 'development' },
-  { name: 'native-bridge-builder', room: 'development' },
-  { name: 'expo-config-resolver', room: 'development' },
-  { name: 'ui-designer', room: 'development' },
-  { name: 'code-reviewer', room: 'review' },
-  { name: 'upgrade-assistant', room: 'review' },
-  { name: 'tdd-guide', room: 'testing' },
-  { name: 'performance-profiler', room: 'testing' },
-  { name: 'senior-developer', room: 'development' },
-  { name: 'feature-builder', room: 'development' },
-];
+const AGENT_DEFINITIONS = SHARED_AGENT_DEFS;
 
 // Rate limiting — 60 requests per minute per IP
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
@@ -583,10 +579,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler) return ecosystemHandler(req, res, urlPath, body);
+  if (urlPath.startsWith('/api/upgrades/') && upgradesHandler) return upgradesHandler(req, res, urlPath, body);
+  if (urlPath.startsWith('/api/insights/') && insightsHandler) return insightsHandler(req, res, urlPath, body);
+
   serveStatic(req, res);
 });
 
 wss = new WebSocketServer({ server, maxPayload: 65536 });
+
+function broadcast(msg) {
+  if (!wss) return;
+  var payload = JSON.stringify(msg);
+  wss.clients.forEach(function (client) {
+    if (client.readyState === 1) client.send(payload);
+  });
+}
 
 wss.on('connection', (ws) => {
   ws.isAlive = true;
@@ -623,9 +631,11 @@ setInterval(() => {
   }
 }, 30000);
 
+// Project dir — used by context init and tab handlers
+const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+
 // Init context if --context flag or env var
 if (process.argv.includes('--context') || process.env.ERNE_CONTEXT === 'true') {
-  const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
   initContext(projectDir);
 }
 
@@ -639,4 +649,23 @@ setInterval(() => {
 
 server.listen(PORT, () => {
   console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
+
+  // Wire tab handlers
+  if (ecosystemHandler) { ecosystemHandler.broadcast = broadcast; }
+  if (upgradesHandler) { upgradesHandler.broadcast = broadcast; }
+
+  // Auto-refresh ecosystem data every 12 hours
+  if (ecosystemHandler && ecosystemHandler.autoRefresh) {
+    setInterval(function () { ecosystemHandler.autoRefresh(projectDir, broadcast); }, 12 * 3600 * 1000);
+  }
+  // Insights snapshot check every hour
+  if (insightsHandler && insightsHandler.autoSnapshot) {
+    setInterval(function () { insightsHandler.autoSnapshot(projectDir); }, 3600 * 1000);
+  }
+
+  // Initial data fetch (non-blocking, 5s delay for server to stabilize)
+  setTimeout(function () {
+    if (ecosystemHandler && ecosystemHandler.autoRefresh) ecosystemHandler.autoRefresh(projectDir, broadcast);
+    if (insightsHandler && insightsHandler.autoSnapshot) insightsHandler.autoSnapshot(projectDir);
+  }, 5000);
 });
