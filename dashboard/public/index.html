@@ -11,6 +11,7 @@
     <div class="canvas-container" id="canvasContainer">
       <canvas id="dashboard"></canvas>
     </div>
+    <div class="tab-content" id="tabContent" style="display:none"></div>
     <!-- Panel, stats bar, toasts, and overlay are created by JS modules -->
   </div>
 
@@ -42,6 +43,11 @@
   <script src="knowledge-browser.js"></script>
   <script src="budget-panel.js"></script>
   <script src="audit-panel.js"></script>
+  <script src="tabs.js"></script>
+  <script src="sparkline.js"></script>
+  <script src="ecosystem-tab.js"></script>
+  <script src="upgrades-tab.js"></script>
+  <script src="insights-tab.js"></script>
 
   <script>
     (function () {
@@ -93,6 +99,7 @@
       Overlay.init(document.body);
       Toasts.init();
       StatsBar.init(layout);
+      Tabs.init(layout);
 
       // Re-size canvas after panel is added
       resizeCanvas();
@@ -208,7 +215,8 @@
         },
         function onHistoryUpdate(history) {
           History.setHistory(history);
-        }
+        },
+        function onBadgeUpdate(tabName, count) { Tabs.setBadge(tabName, count); }
       );
 
       // Main render loop
