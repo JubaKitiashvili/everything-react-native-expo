@@ -22,7 +22,9 @@ function classifyBump(current, latest) {
   var l = parseSemver(latest);
   if (!c || !l) return 'unknown';
   if (l.major > c.major) return 'major';
+  if (l.major < c.major) return 'none';
   if (l.minor > c.minor) return 'minor';
+  if (l.minor < c.minor) return 'none';
   if (l.patch > c.patch) return 'patch';
   return 'none';
 }
@@ -45,13 +47,19 @@ function calculateRisk(opts) {
 function fetchNpmInfo(pkgName) {
   return new Promise(function (resolve, reject) {
     var url = 'https://registry.npmjs.org/' + encodeURIComponent(pkgName) + '/latest';
-    https.get(url, { headers: { 'User-Agent': 'ERNE-Dashboard/0.7' } }, function (res) {
+    var req = https.get(url, { headers: { 'User-Agent': 'ERNE-Dashboard/0.7' }, timeout: 8000 }, function (res) {
       var body = '';
       res.on('data', function (d) { body += d; });
       res.on('end', function () {
+        if (res.statusCode !== 200) {
+          reject(new Error('npm registry returned ' + res.statusCode + ' for ' + pkgName));
+          return;
+        }
         try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
       });
-    }).on('error', reject);
+    });
+    req.on('timeout', function () { req.destroy(new Error('timeout: ' + pkgName)); });
+    req.on('error', reject);
   });
 }
 
@@ -81,7 +89,7 @@ async function scanDependencies(projectDir) {
 
       packages.push({
         name: name,
-        current: currentVersion.replace(/^[\^~]/, ''),
+        current: currentVersion.replace(/^[\^~>=<]+/, ''),
         latest: latest,
         bump: bump,
         risk: riskResult.risk,

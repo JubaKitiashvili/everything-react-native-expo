@@ -34,6 +34,14 @@ describe('upgrades scanner', () => {
     it('detects patch bump', () => {
       assert.strictEqual(classifyBump('1.0.0', '1.0.1'), 'patch');
     });
+
+    it('returns none when already up to date', () => {
+      assert.strictEqual(classifyBump('1.2.3', '1.2.3'), 'none');
+    });
+
+    it('returns none when current is ahead of latest', () => {
+      assert.strictEqual(classifyBump('2.0.0', '1.9.9'), 'none');
+    });
   });
 
   describe('calculateRisk', () => {
