@@ -46,7 +46,7 @@ const openSessionDb = (dbPath) => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       timestamp TEXT DEFAULT (datetime('now')),
       event_type TEXT NOT NULL,
-      priority TEXT,
+      priority INTEGER,
       agent TEXT,
       data TEXT DEFAULT '{}',
       context_bytes INTEGER DEFAULT 0
