@@ -174,6 +174,8 @@ const persistHistory = () => {
   }, 5000);
 };
 
+let lastActiveAgent = null;
+
 const handleEvent = (event) => {
   const { type, agent, agents: agentList, task } = event;
 
@@ -214,6 +216,12 @@ const handleEvent = (event) => {
   state.lastEvent = now;
 
   if (type === 'agent:start') {
+    // Record agent transition for preloader predictions
+    if (preloader && lastActiveAgent && lastActiveAgent !== agent) {
+      try { preloader.recordTransition(lastActiveAgent, agent); } catch {}
+    }
+    lastActiveAgent = agent;
+
     state.status = 'working';
     state.task = task ? String(task).slice(0, 500) : null;
     state.startedAt = now;
@@ -447,6 +455,15 @@ function handleContextApi(req, res, urlPath, body) {
       const all = projectDb.prepare('SELECT id, category, title, relevance_score, access_count, created_at FROM knowledge ORDER BY relevance_score DESC LIMIT 50').all();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(all));
+      return;
+    }
+
+    // GET /api/context/predict?agent=<name> — predict next agent
+    if (urlPath.startsWith('/api/context/predict') && req.method === 'GET') {
+      const agentParam = new URL(urlPath, 'http://localhost').searchParams.get('agent') || lastActiveAgent;
+      const predicted = preloader && agentParam ? preloader.predictNext(agentParam) : null;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ from: agentParam, predicted }));
       return;
     }
 

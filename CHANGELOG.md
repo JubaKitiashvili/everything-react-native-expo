@@ -2,6 +2,21 @@
 
 All notable changes to ERNE are documented here.
 
+## [0.8.0] - 2026-03-16
+
+### Added
+- **Content summarizer** — auto-detects 14 content types (markdown, HTML, JSON, test output, TypeScript errors, build output, logs, git history, CSV, network requests) and compresses to statistical summaries with 97–100% savings
+- **Content store (Index+Search)** — FTS5 BM25-ranked retrieval with Porter stemming, markdown chunked by headings, code blocks never split or truncated — 80% savings with exact code preservation
+- **Benchmark suite** — 21 real-world scenarios across Context7, Playwright, GitHub, vitest, tsc, next build, nginx, git, and analytics data. Full debugging session: 537 KB → 2.6 KB (99% savings)
+- **Agent Preloader wiring** — `recordTransition()` now fires on agent:start events, `/api/context/predict` endpoint for querying next-agent predictions
+- **Hook execution metrics** — `run-with-flags.js` reports hook name, profile, duration, and exit code to dashboard via `hook_execution` events
+- **PostToolUse context tracking** — `event-tracker.js` now reports `context_bytes` for tool output savings measurement
+
+### Changed
+- README: Context Optimization section updated with benchmark-verified numbers (97–100% summarizer, 80% index+search, 99% full session)
+- README: Token Efficiency runtime table updated with verified savings
+- Smart truncation upgraded from 30–60% to 85–100% with 4-tier cascade (Structured → Pattern → Head/Tail → Hash)
+
 ## [0.7.0] - 2026-03-15
 
 ### Added

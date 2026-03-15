@@ -61,5 +61,8 @@ function classifyAgent(inp, out) {
 
 const event = classifyEvent(toolName, toolInput, toolOutput);
 if (event) {
-  sendAsync('event', { event_type: event.type, data: event.data });
+  // Track context bytes from tool output for savings measurement
+  const outputStr = toolOutput.stdout || toolOutput.content || toolOutput.output || '';
+  const contextBytes = Buffer.byteLength(typeof outputStr === 'string' ? outputStr : JSON.stringify(outputStr), 'utf8');
+  sendAsync('event', { event_type: event.type, data: event.data, context_bytes: contextBytes });
 }

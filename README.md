@@ -174,16 +174,28 @@ Each agent has a distinct personality, quantified success metrics, and memory in
 
 ## 🧠 Context Optimization
 
-ERNE includes a built-in context intelligence system that auto-enables with the dashboard. It reduces token waste, remembers what matters, and manages your context budget — all without configuration.
+ERNE includes a built-in context intelligence system that reduces tool output bloat by **97–100%**, preserves exact code examples via FTS5 search, and manages your context budget — all auto-enabled with the dashboard.
 
 ```
 erne dashboard   # Context system starts automatically
 ```
 
+### Benchmark-verified savings
+
+| Layer | What it does | Savings |
+|-------|-------------|---------|
+| **Summarizer** | Auto-detects 14 content types (docs, JSON, logs, test output, build output, CSV, git history, etc.) and compresses to statistical summaries | **97–100%** |
+| **Index + Search** | Chunks content by headings, indexes in FTS5 with BM25 ranking. Returns only relevant chunks — code examples preserved exactly | **80%** |
+| **Full session** | Combined summarizer + search across a real debugging session (docs, snapshots, issues, tests, builds) | **99%** |
+
+> **Real numbers:** 537 KB of tool outputs → 2.6 KB of context. That's **0.4%** of a 200K context window instead of 44.5%. See [BENCHMARK.md](BENCHMARK.md) for the full 21-scenario breakdown.
+
 ### How it works
 
 ```
-Tool Output ──▶ 4-Tier Truncation ──▶ 30-60% smaller responses
+Tool Output ──▶ Smart Summarizer ──▶ 97-100% compression (14 content types)
+                     │
+Raw Docs ──▶ FTS5 Index+Search ──▶ 80% savings, exact code preserved
                      │
 Session Events ──▶ Session Tracker ──▶ Error→Fix correlation
                      │
@@ -194,7 +206,9 @@ Session End ──▶ Snapshot (<2KB) ──▶ Next session restores context
 
 | Feature | What it does |
 |---------|-------------|
-| **Smart truncation** | 4-tier strategy (JSON summarization → pattern recognition → head/tail) keeps tool outputs under 2KB |
+| **Content summarizer** | 14 auto-detected content types: markdown, HTML, JSON, test output, TypeScript errors, build output, logs, git history, CSV, and more. Each type gets a specialized summary format |
+| **Content store** | FTS5-powered index with Porter stemming. Markdown chunked by headings, code blocks never split or truncated. BM25 relevance ranking with byte budget management |
+| **Smart truncation** | 4-tier fallback cascade: Structured → Pattern → Head/Tail → Hash. Handles anything the summarizer doesn't cover |
 | **Knowledge base** | SQLite-backed with FTS5 full-text search, trigram fuzzy matching, and Levenshtein fallback. Entries scored by recency + access frequency |
 | **Session continuity** | Snapshots capture active tasks, decisions, errors, and commits at session end. Next session restores context in <2KB |
 | **Budget manager** | Set per-session and per-agent token limits. Throttles at 80%, supports aggressive truncation / warn / hard stop overflow strategies |
@@ -208,7 +222,7 @@ The context sidebar (toggle with the chevron button) shows 6 live panels:
 - **System Info** — project metadata, environment health, git branch
 - **Project Audit** — 22-point audit with score, one-click FIX buttons, and strengths
 - **Agent Activity** — real-time task history with timestamps
-- **Context Savings** — live token savings percentage with event timeline
+- **Context Savings** — live savings percentage, KB saved, and event timeline
 - **Knowledge Base** — searchable entries with category filters (pattern, decision, error, api, component)
 - **Context Budget** — configure session limits and overflow strategy directly from the UI
 
@@ -231,16 +245,17 @@ ERNE minimizes token usage through two complementary systems: **architecture-lev
 | **Task-specific commands** | 19 focused prompts instead of one monolithic instruction set | ~13% |
 | **Context-based behavior** | Modes change behavior dynamically without loading new rulesets | ~3% |
 
-### Runtime context optimization
+### Runtime context optimization (benchmark-verified)
 
 | Mechanism | How it works | Savings |
 |-----------|-------------|---------|
-| **Smart truncation** | 4-tier output compression: JSON → test/diff/npm patterns → head/tail | 30–60% per output |
-| **Knowledge base** | Relevance-scored search returns only what matters, capped at 2KB | ~40% vs raw context |
-| **Session snapshots** | Aggressive trimming captures full session state in <2KB | ~50% vs log replay |
+| **Content summarizer** | Auto-detects 14 content types, produces statistical summaries | **97–100%** per output |
+| **Index + Search** | FTS5 BM25 retrieval returns only relevant chunks, code preserved exactly | **80%** per search |
+| **Smart truncation** | 4-tier fallback: Structured → Pattern → Head/Tail → Hash | 85–100% per output |
+| **Session snapshots** | Captures full session state in <2KB | ~50% vs log replay |
 | **Budget enforcement** | Throttling at 80% prevents runaway token usage | Prevents overflow |
 
-**Result:** Architecture saves **60–67%** on what enters context. Runtime optimization saves an additional **35–55%** on tool outputs and session state. Combined, sessions use significantly fewer tokens than any comparable harness.
+**Result:** Architecture saves **60–67%** on what enters context. Runtime optimization achieves **97–100%** compression on tool outputs (verified across 21 benchmark scenarios with 537 KB of real data). In a full debugging session, **99% of tool output tokens are eliminated** — leaving 99.6% of your context window free for actual problem solving. See [BENCHMARK.md](BENCHMARK.md) for complete results.
 
 ---
 
