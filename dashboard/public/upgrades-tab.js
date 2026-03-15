@@ -91,8 +91,8 @@
         row.innerHTML =
           '<div class="upg-name">' + escapeHtml(pkg.name) + '</div>' +
           '<div class="upg-version">' + escapeHtml(pkg.current) + ' → ' + escapeHtml(pkg.latest) + '</div>' +
-          '<div class="upg-bump ' + BUMP_COLORS[pkg.bump] + '">' + pkg.bump + '</div>' +
-          '<div class="upg-risk">' + renderRiskDots(pkg.risk) + '</div>' +
+          '<div class="upg-bump ' + (BUMP_COLORS[pkg.bump] || '') + '">' + escapeHtml(pkg.bump) + '</div>' +
+          '<div class="upg-risk">' + renderRiskDots(parseInt(pkg.risk, 10) || 0) + '</div>' +
           '<div class="upg-action">' + renderActionButton(pkg) + '</div>';
 
         var actionBtn = row.querySelector('.upg-action button');

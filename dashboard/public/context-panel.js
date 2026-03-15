@@ -20,6 +20,7 @@
     renderStats: function () {
       var el = document.getElementById('context-stats');
       if (!el) return;
+      el.style.display = '';
       var pct = Math.round(this.stats.context_saved_pct || this.stats.saved_pct || 0);
       var saved = this.stats.context_saved_bytes || this.stats.saved_bytes || 0;
       var events = this.stats.events_total || this.stats.events || 0;
@@ -38,6 +39,8 @@
     renderTimeline: function () {
       var el = document.getElementById('context-timeline');
       if (!el) return;
+      if (this.timeline.length === 0) return;
+      el.style.display = '';
       var html = '<h3>Session Timeline</h3>';
       for (var i = 0; i < this.timeline.length; i++) {
         var e = this.timeline[i];

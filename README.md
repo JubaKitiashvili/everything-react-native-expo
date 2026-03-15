@@ -49,7 +49,7 @@ This will:
 
 ## 🎮 Agent Dashboard
 
-ERNE includes a real-time pixel-art dashboard that visualizes all 11 agents working in an animated office environment.
+ERNE includes a real-time pixel-art dashboard with 4 tabs, a context sidebar, and animated office visualization.
 
 ```bash
 erne dashboard              # Start on port 3333, open browser
@@ -58,7 +58,12 @@ erne dashboard --no-open    # Don't open browser
 erne start                  # Init project + dashboard in background
 ```
 
-**Features:**
+### HQ — Pixel-Art Office
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-hq.png" alt="ERNE HQ — 4 office rooms with 11 animated agents" width="800" />
+</p>
+
 - 🏢 4 office rooms — Development, Code Review, Testing, and Conference
 - 🎨 11 animated agent sprites with walking, typing, and done animations
 - 💬 Thought bubbles showing the current task above working agents
@@ -68,6 +73,52 @@ erne start                  # Init project + dashboard in background
 - 👤 Agent detail overlay with full activity history (click any agent)
 - 🎯 Pipeline orchestrator coordination view in conference room
 - 🔄 Real-time WebSocket updates with auto-reconnect
+
+### My App — Project Intelligence
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-myapp.png" alt="My App tab — project overview, MCP integrations, audit, environment" width="800" />
+</p>
+
+- 📋 App overview with framework detection, health grade, and stack chips
+- 🔌 10 MCP integration statuses with requirements
+- 🔍 Project audit with score, findings (with FIX buttons), and strengths
+- ⚡ Quick actions — run tests, lint, start dev, build iOS/Android, pod install
+- 💡 Smart recommendations based on audit findings
+- 🛠️ Environment checks for all dev tools (Node, Xcode, CocoaPods, etc.)
+
+### Ecosystem — Release Radar
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-ecosystem.png" alt="Ecosystem tab — release feed for React Native packages" width="800" />
+</p>
+
+- 📰 Live release feed for React Native ecosystem packages
+- 🏷️ Tags: NEW, BREAK, security patches
+- 🔍 Filter by category: Updates, Trending, Tips, Security
+- 📊 Quick stats sidebar
+
+### Insights — Project Analytics
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-insights.png" alt="Insights tab — audit score, outdated deps, agent utilization" width="800" />
+</p>
+
+- 📈 KPI cards: Audit Score, Outdated Deps, Agent Tasks (with deltas)
+- 📊 Agent utilization breakdown with horizontal bar chart
+
+### Context Sidebar
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-sidebar.png" alt="Context sidebar — system info, audit, activity, knowledge base" width="800" />
+</p>
+
+- 🖥️ System Info — project metadata, environment checks, git branch
+- 🔍 Project Audit — score, findings with one-click FIX, strengths
+- 📋 Agent Activity — task history with timestamps
+- 💾 Context Savings — token optimization tracking
+- 📚 Knowledge Base — searchable with category filters
+- 💰 Context Budget — configurable token budget management
 
 ---
 

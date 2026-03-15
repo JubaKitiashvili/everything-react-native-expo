@@ -7,8 +7,12 @@
 
     load: function () {
       fetch('/api/context/knowledge')
-        .then(function (res) { return res.json(); })
+        .then(function (res) {
+          if (!res.ok) throw new Error('not available');
+          return res.json();
+        })
         .then(function (data) {
+          if (data.error || !Array.isArray(data)) return;
           KnowledgeBrowser.entries = data;
           KnowledgeBrowser.render();
         })
@@ -32,6 +36,8 @@
     render: function () {
       var el = document.getElementById('knowledge-browser');
       if (!el) return;
+      if (this.entries.length === 0) return;
+      el.style.display = '';
       var filtered = this.filter === 'all' ? this.entries : this.entries.filter(function (e) { return e.category === KnowledgeBrowser.filter; });
       var cats = ['all', 'pattern', 'decision', 'error', 'api', 'component'];
       var catHtml = cats.map(function (c) {

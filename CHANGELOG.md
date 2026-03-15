@@ -2,6 +2,26 @@
 
 All notable changes to ERNE are documented here.
 
+## [0.7.0] - 2026-03-15
+
+### Added
+- **Multi-tab dashboard** — 4 tabs: HQ (pixel art), My App, Ecosystem, Insights
+- **My App tab** — project overview, MCP integrations, project audit with FIX buttons, quick actions, recommendations, environment checks
+- **Ecosystem tab** — live release feed for React Native packages with filters and stats
+- **Insights tab** — KPI cards (audit score, outdated deps, agent tasks) with agent utilization chart
+- **Context sidebar** — collapsible panels: System Info, Project Audit, Agent Activity, Context Savings, Knowledge Base, Context Budget
+- **Nav bar** — ERNE branding, tab icons, real-time connection status, working/total agents, session timer
+- **Context auto-enable** — context system starts automatically with dashboard (no `--context` flag needed)
+- **Enable context from UI** — "Enable Context" button in sidebar when context is disabled
+- **`senior-developer` and `feature-builder` agents** — for parallel implementation workflows
+
+### Fixed
+- Sidebar scroll not working when all panels expanded (removed flex layout causing panel compression)
+- Collapsible panels firing multiple times (MutationObserver disconnect)
+- Audit panel destroying collapsible wrapper on re-render
+- Context API returning 503 errors when context disabled (now returns 200 with error message)
+- Empty sidebar panels taking space when context disabled
+
 ## [0.6.0] - 2026-03-12
 
 ### Added

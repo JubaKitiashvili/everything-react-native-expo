@@ -46,7 +46,7 @@
       row.className = 'agent-row';
       row.dataset.agent = name;
       var emoji = (window.AgentSprites && window.AgentSprites.AGENT_DEFS[name] && window.AgentSprites.AGENT_DEFS[name].emoji) || '';
-      var emojiSpan = emoji ? '<span class="agent-emoji">' + emoji + '</span>' : '';
+      var emojiSpan = emoji ? '<span class="agent-emoji">' + escapeHtml(emoji) + '</span>' : '';
       row.innerHTML =
         '<div class="agent-dot idle" id="dot-' + name + '"></div>' +
         '<div class="agent-info">' +
@@ -155,8 +155,8 @@
     for (var i = 0; i < names.length; i++) {
       var a = agents[names[i]];
       if (!a) continue;
-      if (a.status === 'working') { working++; if (!tickerText && a.task) tickerText = names[i] + ': ' + a.task; }
-      else if (a.status === 'planning') { planning++; if (!tickerText && a.task) tickerText = names[i] + ': ' + a.task; }
+      if (a.status === 'working') { working++; if (!tickerText && a.task) tickerText = escapeHtml(names[i]) + ': ' + escapeHtml(a.task); }
+      else if (a.status === 'planning') { planning++; if (!tickerText && a.task) tickerText = escapeHtml(names[i]) + ': ' + escapeHtml(a.task); }
       else { idle++; }
     }
     stripEl.innerHTML =
@@ -203,6 +203,10 @@
     }
     if (stripEl) stripEl.style.display = 'none';
   };
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
   window.Panel = {
     init,

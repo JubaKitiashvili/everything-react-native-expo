@@ -15,10 +15,11 @@ const { AgentPreloader } = require('./lib/context/preloader');
 const { AGENT_DEFINITIONS: SHARED_AGENT_DEFS } = require('./lib/agents-config');
 
 // Tab feature modules (loaded lazily to avoid errors if dirs don't exist yet)
-let ecosystemHandler, upgradesHandler, insightsHandler;
+let ecosystemHandler, upgradesHandler, insightsHandler, myappHandler;
 try { ecosystemHandler = require('./lib/ecosystem/handler'); } catch (e) { ecosystemHandler = null; }
 try { upgradesHandler = require('./lib/upgrades/handler'); } catch (e) { upgradesHandler = null; }
 try { insightsHandler = require('./lib/insights/handler'); } catch (e) { insightsHandler = null; }
+try { myappHandler = require('./lib/myapp/handler'); } catch (e) { myappHandler = null; }
 
 const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -157,10 +158,14 @@ const addHistoryEntry = (agentName, entry) => {
 };
 
 let persistTimer = null;
+let persistDirty = false;
 const persistHistory = () => {
+  persistDirty = true;
   if (persistTimer) return;
   persistTimer = setTimeout(async () => {
     persistTimer = null;
+    if (!persistDirty) return;
+    persistDirty = false;
     try {
       await fs.promises.writeFile(HISTORY_FILE, JSON.stringify(activityHistory, null, 2));
     } catch {
@@ -179,7 +184,7 @@ const handleEvent = (event) => {
     for (const name of targets) {
       if (!agentState[name]) continue;
       agentState[name].status = 'planning';
-      agentState[name].task = task || 'Team planning session';
+      agentState[name].task = task ? String(task).slice(0, 500) : 'Team planning session';
       agentState[name].lastEvent = now;
       addHistoryEntry(name, { type: 'planning', task: task || 'Team planning session', timestamp: now });
     }
@@ -210,7 +215,7 @@ const handleEvent = (event) => {
 
   if (type === 'agent:start') {
     state.status = 'working';
-    state.task = task || null;
+    state.task = task ? String(task).slice(0, 500) : null;
     state.startedAt = now;
     addHistoryEntry(agent, {
       type: 'start',
@@ -229,7 +234,7 @@ const handleEvent = (event) => {
       durationMs: duration,
     });
     state.status = 'done';
-    state.task = task || state.task;
+    state.task = task ? String(task).slice(0, 500) : state.task;
     state.startedAt = null;
     persistHistory();
     setTimeout(() => {
@@ -338,8 +343,34 @@ const serveStatic = (req, res) => {
 };
 
 function handleContextApi(req, res, urlPath, body) {
+  // Status check — always available
+  if (urlPath === '/api/context/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ enabled: contextEnabled }));
+    return;
+  }
+
+  // Enable context at runtime from dashboard
+  if (urlPath === '/api/context/enable' && req.method === 'POST') {
+    if (contextEnabled) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true,"message":"already enabled"}');
+      return;
+    }
+    const dir = process.env.ERNE_PROJECT_DIR || process.cwd();
+    const sessionId = initContext(dir);
+    if (sessionId) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, sessionId: sessionId.slice(0, 8) }));
+    } else {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end('{"error":"failed to initialize context"}');
+    }
+    return;
+  }
+
   if (!contextEnabled) {
-    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"error":"context not enabled"}');
     return;
   }
@@ -580,10 +611,16 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Tab API routes — collect body for POST requests
-  if (urlPath.startsWith('/api/ecosystem/') || urlPath.startsWith('/api/upgrades/') || urlPath.startsWith('/api/insights/')) {
+  if (urlPath.startsWith('/api/myapp/') || urlPath.startsWith('/api/ecosystem/') || urlPath.startsWith('/api/upgrades/') || urlPath.startsWith('/api/insights/')) {
     var tabBody = '';
-    req.on('data', function (chunk) { tabBody += chunk; });
+    var tabBytes = 0;
+    req.on('data', function (chunk) {
+      tabBytes += chunk.length;
+      if (tabBytes > MAX_PAYLOAD_BYTES) { req.destroy(); return; }
+      tabBody += chunk;
+    });
     req.on('end', function () {
+      if (urlPath.startsWith('/api/myapp/') && myappHandler) return myappHandler(req, res, urlPath, tabBody);
       if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler) return ecosystemHandler(req, res, urlPath, tabBody);
       if (urlPath.startsWith('/api/upgrades/') && upgradesHandler) return upgradesHandler(req, res, urlPath, tabBody);
       if (urlPath.startsWith('/api/insights/') && insightsHandler) return insightsHandler(req, res, urlPath, tabBody);
@@ -625,6 +662,11 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    // Validate event shape before processing
+    if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
+    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end'];
+    if (!VALID_TYPES.includes(data.type)) return;
+
     const result = handleEvent(data);
     if (!result.error) {
       broadcastState();
@@ -644,10 +686,8 @@ setInterval(() => {
 // Project dir — used by context init and tab handlers
 const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
 
-// Init context if --context flag or env var
-if (process.argv.includes('--context') || process.env.ERNE_CONTEXT === 'true') {
-  initContext(projectDir);
-}
+// Always init context with dashboard (flag/env still supported for backwards compat)
+initContext(projectDir);
 
 // Broadcast context stats every 5 seconds
 setInterval(() => {

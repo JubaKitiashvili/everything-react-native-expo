@@ -6,12 +6,24 @@
 
     load: function () {
       fetch('/api/context/budget')
-        .then(function (res) { return res.json(); })
+        .then(function (res) {
+          if (!res.ok) throw new Error('not available');
+          return res.json();
+        })
         .then(function (data) {
+          if (data.error || data.session_limit === undefined) {
+            BudgetPanel.hide();
+            return;
+          }
           BudgetPanel.settings = data;
           BudgetPanel.render();
         })
-        .catch(function () {});
+        .catch(function () { BudgetPanel.hide(); });
+    },
+
+    hide: function () {
+      var el = document.getElementById('budget-panel');
+      if (el) el.style.display = 'none';
     },
 
     save: function () {
@@ -25,6 +37,7 @@
     render: function () {
       var el = document.getElementById('budget-panel');
       if (!el || !this.settings) return;
+      el.style.display = '';
       var s = this.settings;
       el.innerHTML = '<h3>Context Budget</h3>' +
         '<label class="ctx-toggle">' +

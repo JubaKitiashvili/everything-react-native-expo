@@ -49,10 +49,11 @@
       agents.forEach(function (agent) {
         var bar = document.createElement('div');
         bar.className = 'ins-bar-row';
+        var safePct = Math.max(0, Math.min(100, parseInt(agent.pct, 10) || 0));
         bar.innerHTML =
           '<span class="ins-bar-name">' + escapeHtml(agent.name) + '</span>' +
-          '<div class="ins-bar-track"><div class="ins-bar-fill" style="width:' + agent.pct + '%"></div></div>' +
-          '<span class="ins-bar-pct">' + agent.pct + '%</span>';
+          '<div class="ins-bar-track"><div class="ins-bar-fill" style="width:' + safePct + '%"></div></div>' +
+          '<span class="ins-bar-pct">' + safePct + '%</span>';
         utilSection.appendChild(bar);
       });
 

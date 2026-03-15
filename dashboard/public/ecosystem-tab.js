@@ -106,13 +106,13 @@
       var displayTitle = item.package ? escapeHtml(item.package) + '  ' + escapeHtml(item.title) : escapeHtml(item.title);
       el.innerHTML =
         '<div class="eco-item-header">' +
-          '<span class="eco-tag ' + (TAG_COLORS[item.tag] || '') + '">' + item.tag + '</span>' +
+          '<span class="eco-tag ' + (TAG_COLORS[item.tag] || '') + '">' + escapeHtml(item.tag) + '</span>' +
           '<span class="eco-item-pkg">' + escapeHtml(item.package || '') + '</span>' +
           '<span class="eco-item-ver">' + escapeHtml(item.title) + '</span>' +
           '<span class="eco-item-time">' + formatTimeAgo(item.timestamp) + '</span>' +
         '</div>' +
         '<div class="eco-item-summary">' + escapeHtml(item.summary) + '</div>';
-      if (item.url) { el.style.cursor = 'pointer'; el.addEventListener('click', function () { window.open(item.url, '_blank'); }); }
+      if (item.url && /^https?:\/\//.test(item.url)) { el.style.cursor = 'pointer'; el.addEventListener('click', function () { window.open(item.url, '_blank', 'noopener'); }); }
       feedEl.appendChild(el);
     });
   }

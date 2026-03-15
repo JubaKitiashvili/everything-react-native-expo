@@ -24,11 +24,14 @@
 
   <!-- Context sidebar (hidden by default) -->
   <div id="context-sidebar" class="ctx-sidebar">
+    <div id="system-info-panel" class="ctx-panel"></div>
     <div id="audit-panel" class="ctx-panel"></div>
-    <div id="context-stats" class="ctx-panel"></div>
-    <div id="context-timeline" class="ctx-panel"></div>
-    <div id="knowledge-browser" class="ctx-panel"></div>
-    <div id="budget-panel" class="ctx-panel"></div>
+    <div id="agent-activity-panel" class="ctx-panel"></div>
+    <div id="context-toggle-panel" class="ctx-panel" style="display:none"></div>
+    <div id="context-stats" class="ctx-panel" style="display:none"></div>
+    <div id="context-timeline" class="ctx-panel" style="display:none"></div>
+    <div id="knowledge-browser" class="ctx-panel" style="display:none"></div>
+    <div id="budget-panel" class="ctx-panel" style="display:none"></div>
   </div>
 
   <script src="canvas.js"></script>
@@ -43,10 +46,12 @@
   <script src="knowledge-browser.js"></script>
   <script src="budget-panel.js"></script>
   <script src="audit-panel.js"></script>
+  <script src="context-toggle.js"></script>
+  <script src="sidebar-panels.js"></script>
   <script src="tabs.js"></script>
   <script src="sparkline.js"></script>
   <script src="ecosystem-tab.js"></script>
-  <script src="upgrades-tab.js"></script>
+  <script src="myapp-tab.js"></script>
   <script src="insights-tab.js"></script>
 
   <script>
@@ -108,25 +113,26 @@
       function initCollapsiblePanels() {
         var panels = document.querySelectorAll('.ctx-panel');
         panels.forEach(function (panel) {
-          // Observe for when h3 appears (panels render async)
+          var wrapped = false;
           var observer = new MutationObserver(function () {
+            if (wrapped) return;
             var h3 = panel.querySelector('h3');
-            if (!h3 || h3.dataset.collapsible) return;
-            h3.dataset.collapsible = '1';
+            if (!h3) return;
 
-            // Wrap h3 in a clickable header
+            // Only wrap once
+            wrapped = true;
+            observer.disconnect();
+
             var header = document.createElement('div');
             header.className = 'ctx-panel-header';
             var chevron = document.createElement('span');
             chevron.className = 'ctx-panel-chevron';
             chevron.innerHTML = '&#9660;';
 
-            // Move h3 into header
             h3.parentNode.insertBefore(header, h3);
             header.appendChild(h3);
             header.appendChild(chevron);
 
-            // Wrap remaining content in body div
             var body = document.createElement('div');
             body.className = 'ctx-panel-body';
             while (header.nextSibling) {
@@ -209,9 +215,11 @@
           Panel.update(agents);
           Overlay.updateState(agents);
           StatsBar.update(agents);
+          Tabs.updateNavStats(agents);
         },
         function onConnectionChange(connected) {
           Panel.setConnected(connected);
+          Tabs.setNavConnected(connected);
         },
         function onHistoryUpdate(history) {
           History.setHistory(history);
