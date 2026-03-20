@@ -83,6 +83,29 @@ You are working in an ERNE-powered React Native/Expo project.
 - Zero context switching required from the user
 - Go fix failing CI tests without being told how
 
+## Smart Agent Routing
+
+When a user's message matches these signals, automatically use the corresponding agent via a subagent. The user should NOT need to type explicit `/commands` — detect intent from context. Explicit `/command` invocations always override auto-routing.
+
+**How routing works:** Read the user's message. If it matches trigger signals below, dispatch the matching agent as a subagent. If multiple agents could match, prefer the more specific one. If unclear, ask the user.
+
+**Image detection:** When the user shares an image/screenshot alongside a description of a visual problem, ALWAYS route to visual-debugger.
+
+| Agent | Trigger Signals |
+|-------|----------------|
+| `visual-debugger` | Image in chat with UI issue, screenshot, "doesn't look right", "UI is broken", "layout not working", "fix this" + image, spacing, alignment, overflow, "wrong colors", "doesn't match Figma", pixel, responsive, "design issue", "visual bug", "cut off", overlapping, "not centered", "wrong font", "dark mode broken", "safe area", notch, "status bar", "keyboard covers" |
+| `performance-profiler` | "slow", lag, FPS, "memory leak", jank, freeze, hanging, "bundle size", TTI, "startup time", "re-render", heavy, "animation stutter", "frame drop", "battery drain", "CPU usage", "JS thread blocked", "bridge overhead", "large list", "image loading slow", "splash screen long", ANR |
+| `code-reviewer` | review, PR, refactor, "code quality", "clean up", "best practice", "technical debt", "code smell", maintainability, "check my code", "is this okay", "anti-pattern", readability, DRY, SOLID, "type safety" |
+| `architect` | "how to build", architecture, structure, plan, "system design", "new feature", "want to add", "how to approach", decompose, "design pattern", "folder structure", "state management", "data flow", "API design", "navigation structure", monorepo, "separation of concerns" |
+| `feature-builder` | implement, build, create, "add feature", "create component", "write this", "make this", scaffold, "add screen", "wire up", integrate, "connect to API", "hook up", "add functionality", CRUD |
+| `tdd-guide` | test, coverage, jest, detox, TDD, "write test", "unit test", e2e, "failing test", "test broken", "snapshot test", mock, fixture, "testing library", "integration test", "test flaky" |
+| `expo-config-resolver` | build error, red screen, crash, "won't start", error, "build failed", metro, babel, "config issue", "EAS build", "can't build", "module not found", "pod install", gradle, "Xcode error", "Android build", "iOS build", "linking error", prebuild, "app.json", "app.config", "plugin not working", "white screen", "blank screen" |
+| `native-bridge-builder` | "native module", bridge, "turbo module", Swift, Kotlin, Java, "Objective-C", "native code", "platform specific", "expo module", JSI, Fabric, "New Architecture", codegen, "C++", "native view", Nitro, "expo-modules-core" |
+| `upgrade-assistant` | upgrade, update, version, migration, "breaking change", deprecated, "Expo SDK", "React Native version", bump, migrate, changelog, compatibility, "peer dependency", outdated, "npx expo install --fix" |
+| `ui-designer` | component, button, modal, form, screen, page, tab, "navigation UI", "build UI", "design system", styled, theme, icon, animation, transition, gesture, "bottom sheet", drawer, header, card, skeleton, loading, toast |
+| `pipeline-orchestrator` | deploy, publish, EAS, "app store", "play store", "CI/CD", release, "OTA update", submit, distribution, TestFlight, "internal testing", "code signing", provisioning, certificate, keystore, fastlane, "GitHub Actions" |
+| `senior-developer` | "what do you think", opinion, advice, approach, tradeoff, "not sure how", mentor, "help me decide", "best way to", "should I", "pros and cons", "compare options", "which is better", "common pitfall", "production ready", scalable |
+
 ## Task Management
 
 1. **Plan First**: Use plan mode or TodoWrite for non-trivial tasks
@@ -99,7 +122,7 @@ You are working in an ERNE-powered React Native/Expo project.
 
 ## Available Commands
 
-Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
+Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
 
 ## Available Skills
 
