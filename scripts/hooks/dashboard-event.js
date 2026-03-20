@@ -24,7 +24,7 @@ const DASHBOARD_PORT = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
 const AGENT_KEYWORDS = [
   'architect', 'code-reviewer', 'tdd-guide', 'performance-profiler',
   'native-bridge-builder', 'expo-config-resolver', 'ui-designer', 'upgrade-assistant',
-  'senior-developer', 'feature-builder',
+  'senior-developer', 'feature-builder', 'pipeline-orchestrator', 'visual-debugger',
 ];
 
 function detectAgent(text) {

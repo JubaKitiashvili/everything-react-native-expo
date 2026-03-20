@@ -105,6 +105,13 @@
       "profiles": ["minimal", "standard", "strict"]
     },
     {
+      "event": "PostToolUse",
+      "pattern": "Agent",
+      "script": "visual-debug-event.js",
+      "command": "node scripts/hooks/run-with-flags.js visual-debug-event.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
       "event": "Stop",
       "script": "continuous-learning-observer.js",
       "command": "node scripts/hooks/run-with-flags.js continuous-learning-observer.js",
