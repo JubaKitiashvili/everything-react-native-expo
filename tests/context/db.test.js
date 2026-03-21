@@ -62,10 +62,10 @@ describe('openProjectDb', () => {
     assert.equal(journal_mode, 'wal');
   });
 
-  it('has schema version 1', () => {
+  it('has schema version 2', () => {
     const dir = makeTmpDir();
     db = openProjectDb(path.join(dir, 'project.sqlite'));
-    assert.equal(getSchemaVersion(db), 1);
+    assert.equal(getSchemaVersion(db), 2);
   });
 
   it('syncs FTS5 on insert', () => {
