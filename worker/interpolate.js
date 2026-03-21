@@ -27,11 +27,13 @@ function sanitizeTitle(title) {
  * Build standard template variables from a ticket and agent name.
  */
 function buildTaskVars(ticket, agent) {
-  const id = ticket && ticket.id ? String(ticket.id) : '';
+  const rawId = ticket && ticket.id ? String(ticket.id) : '';
+  const id = rawId.replace(/[`'$\\]/g, '').replace(/[\r\n]+/g, ' ').trim();
   const rawTitle = ticket && ticket.title ? String(ticket.title) : '';
   const title = sanitizeTitle(rawTitle);
   const provider = ticket && ticket.provider ? String(ticket.provider) : '';
-  const url = ticket && ticket.url ? String(ticket.url) : '';
+  const rawUrl = ticket && ticket.url ? String(ticket.url) : '';
+  const url = rawUrl.replace(/[`'$\\]/g, '').replace(/[\r\n]+/g, ' ').trim();
 
   const branchId = id.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
   const branch = `${agent || 'worker'}/task-${branchId}`;
