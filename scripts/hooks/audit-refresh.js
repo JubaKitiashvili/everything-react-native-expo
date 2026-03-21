@@ -23,7 +23,10 @@ try {
   if (age < TWENTY_FOUR_HOURS) process.exit(0);
 
   // Refresh scan (JSON only, skip dep health for speed)
-  const { runScan } = require('../../lib/audit-scanner');
+  let runScan;
+  try { runScan = require('erne-universal/lib/audit-scanner').runScan; } catch {
+    try { runScan = require('../../lib/audit-scanner').runScan; } catch { process.exit(0); }
+  }
   const auditData = runScan(cwd, { skipDepHealth: true, maxFiles: 500 });
 
   const docsDir = path.join(cwd, 'erne-docs');

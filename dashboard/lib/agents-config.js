@@ -17,6 +17,8 @@ const AGENT_DEFINITIONS = [
   { name: 'senior-developer', room: 'development' },
   { name: 'feature-builder', room: 'development' },
   { name: 'pipeline-orchestrator', room: 'conference' },
+  { name: 'visual-debugger', room: 'testing' },
+  { name: 'documentation-generator', room: 'review' },
 ];
 
 const AGENT_ORDER = [
@@ -25,6 +27,7 @@ const AGENT_ORDER = [
   'code-reviewer', 'upgrade-assistant',
   'tdd-guide', 'performance-profiler',
   'pipeline-orchestrator',
+  'visual-debugger', 'documentation-generator',
 ];
 
 module.exports = { AGENT_ORDER, AGENT_DEFINITIONS };

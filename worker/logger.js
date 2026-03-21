@@ -40,7 +40,7 @@ function timestamp() {
 
 function createLogger(opts) {
   const file = opts && opts.file ? opts.file : null;
-  const minLevel = opts && opts.level != null ? opts.level : LEVELS.info;
+  const minLevel = opts && opts.level != null ? (typeof opts.level === 'string' ? LEVELS[opts.level] ?? LEVELS.info : opts.level) : LEVELS.info;
   const isTTY = process.stdout.isTTY;
 
   let fileStream = null;

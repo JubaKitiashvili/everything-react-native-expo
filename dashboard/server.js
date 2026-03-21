@@ -214,6 +214,17 @@ const handleEvent = (event) => {
     return { ok: true };
   }
 
+  // Visual debug events — log and store
+  if (type && type.startsWith('visual-debug:')) {
+    const now = new Date().toISOString();
+    if (agent && agentState[agent]) {
+      agentState[agent].lastEvent = now;
+      addHistoryEntry(agent, { type, task: task || null, timestamp: now });
+      persistHistory();
+    }
+    return { ok: true };
+  }
+
   // Worker events — update worker state and broadcast
   if (type && type.startsWith('worker:')) {
     const now = new Date().toISOString();
@@ -739,7 +750,8 @@ wss.on('connection', (ws) => {
     // Validate event shape before processing
     if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
     const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end', 'audit:complete',
-      'worker:start', 'worker:poll', 'worker:task-start', 'worker:task-complete', 'worker:idle'];
+      'worker:start', 'worker:poll', 'worker:task-start', 'worker:task-complete', 'worker:idle',
+      'visual-debug:screenshot', 'visual-debug:fix', 'visual-debug:compare'];
     if (!VALID_TYPES.includes(data.type)) return;
 
     const result = handleEvent(data);
