@@ -1,76 +1,35 @@
 'use strict';
 
 const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
 
 /**
- * Run test verification in a worktree.
- * @param {string} worktreePath
- * @param {object} logger
- * @returns {{ passed: boolean, testsPassed: number, testsFailed: number, output: string, skipped: boolean }}
+ * Run tests in a worktree and return results.
+ *
+ * @param {string} worktreePath - Absolute path to the worktree
+ * @param {object} [config] - May contain test_command override
+ * @param {object} [logger]
+ * @returns {{ passed: boolean, output: string, error: string|null }}
  */
-function runTestVerification(worktreePath, logger) {
-  const result = { passed: false, testsPassed: 0, testsFailed: 0, output: '', skipped: false };
+function runTests(worktreePath, config, logger) {
+  const testCommand = (config && config.test_command) || 'npm test -- --ci --passWithNoTests 2>&1';
 
-  // Check if test script exists
-  let pkg;
+  if (logger) logger.info(`Running tests: ${testCommand}`);
+
   try {
-    const pkgPath = path.join(worktreePath, 'package.json');
-    const raw = fs.readFileSync(pkgPath, 'utf8');
-    pkg = JSON.parse(raw);
-  } catch (err) {
-    if (logger) logger.warn(`Could not read package.json: ${err.message}`);
-    result.skipped = true;
-    result.passed = true;
-    return result;
-  }
-
-  if (!pkg.scripts || !pkg.scripts.test) {
-    if (logger) logger.info('No test script found in package.json, skipping');
-    result.skipped = true;
-    result.passed = true;
-    return result;
-  }
-
-  // Run tests
-  try {
-    const output = execSync('npm test -- --forceExit --no-coverage', {
+    const output = execSync(testCommand, {
       cwd: worktreePath,
-      encoding: 'utf8',
+      stdio: 'pipe',
       timeout: 120000,
-      maxBuffer: 5 * 1024 * 1024,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      encoding: 'utf8',
     });
-    result.output = output;
-    result.passed = true;
+
+    if (logger) logger.info('Tests passed');
+    return { passed: true, output: output.slice(-2000), error: null };
   } catch (err) {
-    // Tests failed but we still want to parse the output
-    result.output = (err.stdout || '') + (err.stderr || '');
-    result.passed = false;
+    const output = (err.stdout || '') + (err.stderr || '');
+    if (logger) logger.warn(`Tests failed: ${output.slice(-500)}`);
+    return { passed: false, output: output.slice(-2000), error: output.slice(-1000) };
   }
-
-  // Parse jest output
-  const passedMatch = result.output.match(/Tests:\s+(\d+)\s+passed/);
-  const failedMatch = result.output.match(/Tests:\s+(?:\d+\s+\w+,\s+)*?(\d+)\s+failed/);
-
-  if (passedMatch) {
-    result.testsPassed = parseInt(passedMatch[1], 10);
-  }
-  if (failedMatch) {
-    result.testsFailed = parseInt(failedMatch[1], 10);
-  }
-
-  // If we couldn't parse but exit was 0, assume passed
-  if (result.passed && result.testsPassed === 0 && result.testsFailed === 0) {
-    result.testsPassed = -1; // Unknown count, but passed
-  }
-
-  if (logger) {
-    logger.info(`Tests: ${result.testsPassed} passed, ${result.testsFailed} failed`);
-  }
-
-  return result;
 }
 
-module.exports = { runTestVerification };
+module.exports = { runTests };
