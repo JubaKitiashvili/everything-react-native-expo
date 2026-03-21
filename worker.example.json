@@ -1,0 +1,28 @@
+{
+  "_comment": "ERNE Worker configuration — copy to worker.json and customize",
+
+  "provider": {
+    "_comment": "Task provider: linear | jira | github | clickup | gitlab",
+    "type": "linear",
+    "poll_interval_seconds": 60,
+    "filter": {
+      "_comment": "Provider-specific filters (label, project, team, etc.)",
+      "label": "erne-worker"
+    }
+  },
+
+  "repo": {
+    "_comment": "Absolute path to the git repository",
+    "path": "/Users/you/projects/your-app"
+  },
+
+  "executor": {
+    "_comment": "Claude Code execution settings",
+    "timeout_seconds": 600
+  },
+
+  "erne": {
+    "_comment": "ERNE hook profile to use",
+    "hook_profile": "standard"
+  }
+}
