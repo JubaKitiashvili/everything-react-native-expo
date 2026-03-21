@@ -38,6 +38,8 @@
     "scripts/",
     "examples/",
     "schemas/",
+    "worker/",
+    "worker.example.json",
     "docs/getting-started.md",
     "docs/agents.md",
     "docs/commands.md",

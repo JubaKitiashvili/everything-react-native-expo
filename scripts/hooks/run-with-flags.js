@@ -109,7 +109,7 @@ if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
     });
     const req = http.request({
       hostname: '127.0.0.1', port,
-      path: '/api/context/event',
+      path: '/api/events',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
       timeout: 300
