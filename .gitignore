@@ -16,6 +16,8 @@ dashboard/activity-history.json
 
 # ERNE runtime data
 .erne/
+.context-mem/
+erne-docs/
 
 # Superpowers brainstorm artifacts
 .superpowers/
