@@ -5,10 +5,6 @@
     "session-start.js",
     "post-edit-format.js",
     "continuous-learning-observer.js",
-    "dashboard-event.js",
-    "context/sandbox-router.js",
-    "context/event-tracker.js",
-    "context/snapshot-builder.js",
-    "context/session-restore.js"
+    "dashboard-event.js"
   ]
 }

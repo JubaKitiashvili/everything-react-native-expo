@@ -18,12 +18,6 @@
     "continuous-learning-observer.js",
     "evaluate-session.js",
     "dashboard-event.js",
-    "visual-debug-event.js",
-    "context/sandbox-router.js",
-    "context/event-tracker.js",
-    "context/knowledge-indexer.js",
-    "context/snapshot-builder.js",
-    "context/session-restore.js",
-    "context/session-graduate.js"
+    "visual-debug-event.js"
   ]
 }

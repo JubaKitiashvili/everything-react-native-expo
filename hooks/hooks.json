@@ -122,49 +122,6 @@
       "script": "evaluate-session.js",
       "command": "node scripts/hooks/run-with-flags.js evaluate-session.js",
       "profiles": ["standard", "strict"]
-    },
-    {
-      "event": "PreToolUse",
-      "pattern": "Read|Bash|Grep|Glob",
-      "script": "context/sandbox-router.js",
-      "command": "node scripts/hooks/run-with-flags.js context/sandbox-router.js",
-      "profiles": ["minimal", "standard", "strict"],
-      "context": true
-    },
-    {
-      "event": "PostToolUse",
-      "script": "context/event-tracker.js",
-      "command": "node scripts/hooks/run-with-flags.js context/event-tracker.js",
-      "profiles": ["minimal", "standard", "strict"],
-      "context": true
-    },
-    {
-      "event": "PostToolUse",
-      "script": "context/knowledge-indexer.js",
-      "command": "node scripts/hooks/run-with-flags.js context/knowledge-indexer.js",
-      "profiles": ["standard", "strict"],
-      "context": true
-    },
-    {
-      "event": "PreCompact",
-      "script": "context/snapshot-builder.js",
-      "command": "node scripts/hooks/run-with-flags.js context/snapshot-builder.js",
-      "profiles": ["minimal", "standard", "strict"],
-      "context": true
-    },
-    {
-      "event": "SessionStart",
-      "script": "context/session-restore.js",
-      "command": "node scripts/hooks/run-with-flags.js context/session-restore.js",
-      "profiles": ["minimal", "standard", "strict"],
-      "context": true
-    },
-    {
-      "event": "Stop",
-      "script": "context/session-graduate.js",
-      "command": "node scripts/hooks/run-with-flags.js context/session-graduate.js",
-      "profiles": ["standard", "strict"],
-      "context": true
     }
   ]
 }
