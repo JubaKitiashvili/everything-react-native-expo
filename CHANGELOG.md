@@ -2,6 +2,34 @@
 
 All notable changes to ERNE are documented here.
 
+## [0.9.0] - 2026-03-21
+
+### Added
+- **Visual Debugger agent** — 12th agent: screenshot-based UI analysis, interactive fixing, before/after verification via agent-device MCP (iOS + Android)
+- **Documentation Generator agent** — 13th agent: reads audit scan data and generates 13 comprehensive markdown doc files with Mermaid diagrams
+- **Smart Agent Routing** — CLAUDE.md routing table auto-dispatches 13 agents based on context signals without explicit commands
+- **`/debug-visual` command** — explicit trigger for visual debugging with simulator screenshot capture
+- **`erne audit` rewrite** — project documentation scanner with 14 sub-modules: structure, dependencies, config, git history, routes, components, hooks, API layer, state, screens, dead code, tech debt, type safety, dependency health
+- **`erne audit --diff`** — shows changes since last audit scan
+- **`erne doctor` enhancement** — merged audit checks + 12 new deep checks: New Architecture compatibility, bundle size breakdown, SDK upgrade readiness, circular dependency detection, permissions audit, deep link validation, Expo config conflicts, native module audit, startup time analysis, platform parity, linting & static analysis, enhanced testing
+- **`erne doctor --fix`** — auto-fixes safe issues (.gitignore, TypeScript strict mode)
+- **Onboarding Score** — 10-point project readiness assessment
+- **Screen Blueprints** — per-screen X-ray (components, state, API, hooks, navigation, params)
+- **Dead Code Detection** — finds unused exports across codebase
+- **TODO/FIXME/HACK Tracker** — tech debt visibility
+- **Type Safety Report** — `any` usage analysis with coverage percentage
+- **Dependency Health Check** — npm publish recency, abandoned package detection
+- **Dashboard audit widget** — audit:complete event handler + /api/audit endpoint
+- **Audit auto-refresh hook** — refreshes scan data on session stop if older than 24h
+
+### Changed
+- `erne audit` is now a documentation scanner (was alias for doctor)
+- Dashboard event hook recognizes all 13 agents including visual-debugger and pipeline-orchestrator
+- Hook profiles updated: minimal (4), standard (14), strict (18)
+
+### Removed
+- Context-mem hooks and tests — moved to standalone project (context-mem)
+
 ## [0.8.0] - 2026-03-16
 
 ### Added
