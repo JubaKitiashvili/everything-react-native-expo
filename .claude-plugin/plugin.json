@@ -1,7 +1,7 @@
 {
   "name": "erne-universal",
-  "version": "0.1.0",
-  "description": "Complete AI coding agent harness for React Native and Expo development — 8 agents, 16 commands, 8 skills, 10 MCP integrations",
+  "version": "0.10.6",
+  "description": "Complete AI coding agent harness for React Native and Expo development — 13 agents, 21 commands, 7 skills, 10 MCP integrations, autonomous worker mode",
   "author": "JubaKitiashvili",
   "license": "MIT",
   "repository": "https://github.com/JubaKitiashvili/everything-react-native-expo",
@@ -16,7 +16,9 @@
     "tdd",
     "performance",
     "security",
-    "native-modules"
+    "native-modules",
+    "autonomous-worker",
+    "visual-debugging"
   ],
   "categories": [
     "mobile-development",
@@ -28,12 +30,17 @@
     "agents": [
       "architect",
       "code-reviewer",
+      "documentation-generator",
       "expo-config-resolver",
+      "feature-builder",
       "native-bridge-builder",
       "performance-profiler",
+      "pipeline-orchestrator",
+      "senior-developer",
       "tdd-guide",
       "ui-designer",
-      "upgrade-assistant"
+      "upgrade-assistant",
+      "visual-debugger"
     ],
     "commands": [
       "plan",
@@ -48,10 +55,15 @@
       "deploy",
       "component",
       "debug",
+      "debug-visual",
       "quality-gate",
+      "code",
+      "feature",
       "learn",
       "retrospective",
-      "setup-device"
+      "setup-device",
+      "orchestrate",
+      "worker"
     ],
     "skills": [
       "coding-standards",
