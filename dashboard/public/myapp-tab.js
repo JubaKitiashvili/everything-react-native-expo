@@ -361,5 +361,5 @@
     return Math.floor(hrs / 24) + 'd ago';
   }
 
-  Tabs.registerTab('myapp', { init: init, activate: activate, deactivate: deactivate });
+  Tabs.registerTab('project', { init: init, activate: activate, deactivate: deactivate });
 })();
