@@ -1,6 +1,6 @@
 'use strict';
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 
@@ -13,7 +13,7 @@ function createWorktree(repoPath, branch, logger) {
 
   try {
     // Try creating a new branch from main
-    execSync(`git worktree add -b ${branch} ${worktreePath} main`, {
+    execFileSync('git', ['worktree', 'add', '-b', branch, worktreePath, 'main'], {
       cwd: repoPath,
       stdio: 'pipe',
     });
@@ -21,7 +21,7 @@ function createWorktree(repoPath, branch, logger) {
   } catch {
     // Branch may already exist — try attaching to existing branch
     try {
-      execSync(`git worktree add ${worktreePath} ${branch}`, {
+      execFileSync('git', ['worktree', 'add', worktreePath, branch], {
         cwd: repoPath,
         stdio: 'pipe',
       });
@@ -40,7 +40,7 @@ function createWorktree(repoPath, branch, logger) {
  */
 function removeWorktree(repoPath, worktreePath, logger) {
   try {
-    execSync(`git worktree remove --force ${worktreePath}`, {
+    execFileSync('git', ['worktree', 'remove', '--force', worktreePath], {
       cwd: repoPath,
       stdio: 'pipe',
     });

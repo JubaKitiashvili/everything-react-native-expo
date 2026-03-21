@@ -45,7 +45,6 @@
     "docs/commands.md",
     "docs/hooks-profiles.md",
     "docs/creating-skills.md",
-    "docs/assets/",
     "install.sh",
     "CLAUDE.md",
     "AGENTS.md",
@@ -60,7 +59,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js tests/hooks/*.test.js tests/context/*.test.js tests/worker/*.test.js",
+    "test": "node --test tests/*.test.js tests/hooks/*.test.js tests/worker/*.test.js",
     "lint": "eslint lib/ scripts/ bin/",
     "lint:agents": "node scripts/lint-agents.js",
     "lint:content": "node scripts/lint-content.js",

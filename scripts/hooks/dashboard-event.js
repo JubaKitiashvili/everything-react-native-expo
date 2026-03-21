@@ -25,6 +25,7 @@ const AGENT_KEYWORDS = [
   'architect', 'code-reviewer', 'tdd-guide', 'performance-profiler',
   'native-bridge-builder', 'expo-config-resolver', 'ui-designer', 'upgrade-assistant',
   'senior-developer', 'feature-builder', 'pipeline-orchestrator', 'visual-debugger',
+  'documentation-generator',
 ];
 
 function detectAgent(text) {

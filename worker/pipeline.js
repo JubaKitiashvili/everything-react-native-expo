@@ -11,6 +11,7 @@ const { selfReview } = require('./self-reviewer');
 const { runTests } = require('./test-verifier');
 const { calculateHealthDelta } = require('./health-delta');
 const { publishDashboardEvent } = require('./dashboard-events');
+const { calculateConfidence } = require('./confidence-scorer');
 
 /**
  * Execute the full per-ticket pipeline.
@@ -89,6 +90,7 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
       passed: testResults.passed,
     });
 
+    let testsFailing = false;
     if (!testResults.passed) {
       // Auto-fix attempt: feed test errors back to Claude and retry once
       logger.info('Tests failed — attempting auto-fix');
@@ -108,10 +110,13 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
           autoFixAttempt: true,
         });
       }
+      if (!testResults.passed) {
+        testsFailing = true;
+        logger.warn('Tests still failing after auto-fix attempt');
+      }
     }
 
     // 5g. Health delta
-    const { calculateConfidence } = require('./confidence-scorer');
     const confidenceResult = calculateConfidence(ticket, auditData, context);
     const healthDelta = calculateHealthDelta({
       testResults,
@@ -137,13 +142,14 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
       }
     }
 
-    // 5i. Return success
+    // 5i. Return success (PR is still created even if tests fail per spec)
     return {
       success: true,
-      output: execResult.output,
+      output: testsFailing ? `[TESTS FAILING] ${execResult.output}` : execResult.output,
       agent,
       confidence: confidenceResult,
       testResults,
+      testsFailing,
       healthDelta,
       selfReview: reviewResult,
     };

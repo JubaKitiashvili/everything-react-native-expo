@@ -431,8 +431,13 @@ function handleContextApi(req, res, urlPath, body) {
   }
 
   try {
-    // POST /api/context/execute — sandbox execution
+    // POST /api/context/execute — sandbox execution (env-gated)
     if (urlPath === '/api/context/execute' && req.method === 'POST') {
+      if (process.env.ERNE_ALLOW_EXECUTE !== 'true') {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Execute endpoint disabled. Set ERNE_ALLOW_EXECUTE=true to enable.' }));
+        return;
+      }
       const { command, original_tool, timeout = 30000 } = JSON.parse(body);
       const cwd = process.env.ERNE_PROJECT_DIR || process.cwd();
       execFile('sh', ['-c', command], { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
@@ -601,8 +606,23 @@ const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0];
   if (urlPath.startsWith('/api/context/')) {
     let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => handleContextApi(req, res, urlPath, body));
+    let bodyBytes = 0;
+    req.on('data', chunk => {
+      bodyBytes += chunk.length;
+      if (bodyBytes > MAX_PAYLOAD_BYTES) {
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
+    req.on('end', () => {
+      if (bodyBytes > MAX_PAYLOAD_BYTES) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large' }));
+        return;
+      }
+      handleContextApi(req, res, urlPath, body);
+    });
     return;
   }
 
