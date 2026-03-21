@@ -18,6 +18,7 @@ const COMMANDS = {
   doctor: () => require('../lib/doctor'),
   status: () => require('../lib/status'),
   audit: () => require('../lib/audit-cli'),
+  worker: () => require('../lib/worker'),
   'sync-configs': () => require('../lib/sync-configs'),
   sync: () => require('../lib/sync-configs'),
   version: () => {
@@ -41,9 +42,15 @@ const COMMANDS = {
     start       Init project and start dashboard
     doctor      Check project health and ERNE setup
     status      Show current ERNE configuration
+    worker      Run autonomous ticket execution agent
     sync-configs Sync IDE config files from CLAUDE.md (alias: sync)
     version     Show installed version
     help        Show this help message
+
+  Worker options:
+    --config <path>        Path to worker config JSON (required)
+    --dry-run              Fetch tickets without executing
+    --once                 Process one ticket and exit
 
   Add-agent options:
     --room <name>   Agent room: development, code-review, testing, conference (default: development)
@@ -63,6 +70,8 @@ const COMMANDS = {
     npx erne-universal init -p minimal --no-mcp -y
     npx erne-universal add-agent api-specialist
     npx erne-universal add-agent database-expert --room testing
+    npx erne-universal worker --config worker.json
+    npx erne-universal worker --config worker.json --dry-run
 
   Website: https://erne.dev
     `);
