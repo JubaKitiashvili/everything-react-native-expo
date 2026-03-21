@@ -607,20 +607,18 @@ const server = http.createServer(async (req, res) => {
   if (urlPath.startsWith('/api/context/')) {
     let body = '';
     let bodyBytes = 0;
+    let destroyed = false;
     req.on('data', chunk => {
       bodyBytes += chunk.length;
       if (bodyBytes > MAX_PAYLOAD_BYTES) {
+        destroyed = true;
         req.destroy();
         return;
       }
       body += chunk;
     });
     req.on('end', () => {
-      if (bodyBytes > MAX_PAYLOAD_BYTES) {
-        res.writeHead(413, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Payload too large' }));
-        return;
-      }
+      if (destroyed) return;
       handleContextApi(req, res, urlPath, body);
     });
     return;
