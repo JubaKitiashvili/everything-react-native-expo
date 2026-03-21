@@ -9,7 +9,6 @@ All notable changes to ERNE are documented here.
 - **5 Quality Gates** — ticket validation (rejects vague tickets), confidence scoring (0-100%), self-review (code-reviewer agent), test verification (runs project tests), health delta (before/after metrics in PR)
 - **5 Ticket Providers** — GitHub Issues (label-based), Linear (GraphQL), ClickUp (REST v2), Jira Cloud (REST v3), GitLab (REST v4). All zero-dependency via Node 18+ fetch
 - **`erne audit` Documentation Generator** — 14 sub-scanners producing audit-data.json: structure, dependencies, config, git history, routes, components, hooks, API layer, state management, screens, dead code, tech debt, type safety, dependency health
-- **Documentation Generator agent** — 13th agent reads audit-data and writes 13 markdown doc files with Mermaid diagrams, onboarding score, staleness tracking
 - **Audit diff mode** — `erne audit --diff` shows changes since last scan
 - **Audit auto-refresh hook** — refreshes scan data on session stop if older than 24h
 - **Dashboard audit widget** — `audit:complete` event + `/api/audit` endpoint

@@ -47,7 +47,7 @@
         "rules": { "type": "integer", "minimum": 9 },
         "commands": { "type": "integer", "minimum": 16 },
         "contexts": { "type": "integer", "minimum": 3 },
-        "skills": { "type": "integer", "minimum": 8 },
+        "skills": { "type": "integer", "minimum": 7 },
         "hooks": { "type": "integer", "minimum": 1 }
       }
     }

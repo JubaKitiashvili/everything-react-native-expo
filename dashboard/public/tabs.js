@@ -1,8 +1,8 @@
 (function () {
   'use strict';
 
-  var TAB_NAMES = ['hq', 'myapp', 'ecosystem', 'insights'];
-  var TAB_LABELS = { hq: 'HQ', myapp: 'My App', ecosystem: 'Ecosystem', insights: 'Insights' };
+  var TAB_NAMES = ['hq', 'myapp', 'ecosystem', 'insights', 'upgrades'];
+  var TAB_LABELS = { hq: 'HQ', myapp: 'My App', ecosystem: 'Ecosystem', insights: 'Insights', upgrades: 'Upgrades' };
 
   var active = 'hq';
   var tabs = {};
@@ -16,7 +16,8 @@
     hq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
     myapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>',
     ecosystem: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
-    insights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+    insights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+    upgrades: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>'
   };
 
   var navStatsEl = null;
@@ -38,7 +39,7 @@
     leftGroup.appendChild(logo);
     var ver = document.createElement('span');
     ver.className = 'tab-version';
-    ver.textContent = 'v0.7.0';
+    ver.textContent = 'v0.10.5';
     leftGroup.appendChild(ver);
     headerEl.appendChild(leftGroup);
 
@@ -83,7 +84,7 @@
     document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       var idx = parseInt(e.key, 10);
-      if (idx >= 1 && idx <= 4) switchTo(TAB_NAMES[idx - 1]);
+      if (idx >= 1 && idx <= TAB_NAMES.length) switchTo(TAB_NAMES[idx - 1]);
     });
   }
 
