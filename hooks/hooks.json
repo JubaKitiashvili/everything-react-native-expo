@@ -122,6 +122,12 @@
       "script": "evaluate-session.js",
       "command": "node scripts/hooks/run-with-flags.js evaluate-session.js",
       "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "Stop",
+      "script": "audit-refresh.js",
+      "command": "node scripts/hooks/run-with-flags.js audit-refresh.js",
+      "profiles": ["standard", "strict"]
     }
   ]
 }

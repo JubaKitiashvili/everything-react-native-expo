@@ -18,6 +18,7 @@
     "continuous-learning-observer.js",
     "evaluate-session.js",
     "dashboard-event.js",
-    "visual-debug-event.js"
+    "visual-debug-event.js",
+    "audit-refresh.js"
   ]
 }

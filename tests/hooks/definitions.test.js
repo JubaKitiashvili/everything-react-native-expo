@@ -36,8 +36,8 @@ describe('hooks.json definitions', () => {
     }
   });
 
-  it('has exactly 18 hooks', () => {
-    assert.strictEqual(config.hooks.length, 18);
+  it('has exactly 19 hooks', () => {
+    assert.strictEqual(config.hooks.length, 19);
   });
 
   it('each command routes through run-with-flags.js', () => {
@@ -83,18 +83,18 @@ describe('profile definitions', () => {
     assert.strictEqual(minimal.hooks.length, 4);
   });
 
-  it('standard has exactly 13 hooks', () => {
+  it('standard has exactly 14 hooks', () => {
     const standard = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'standard.json'), 'utf8')
     );
-    assert.strictEqual(standard.hooks.length, 13);
+    assert.strictEqual(standard.hooks.length, 14);
   });
 
-  it('strict has exactly 17 hooks', () => {
+  it('strict has exactly 18 hooks', () => {
     const strict = JSON.parse(
       fs.readFileSync(path.join(PROFILES_DIR, 'strict.json'), 'utf8')
     );
-    assert.strictEqual(strict.hooks.length, 17);
+    assert.strictEqual(strict.hooks.length, 18);
   });
 
   it('profile files match hooks.json profiles', () => {
