@@ -96,7 +96,8 @@ if (result.stderr) process.stderr.write(result.stderr);
 if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
   try {
     const http = require('http');
-    const port = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+    const { resolveDashboardPort } = require('./lib/port-registry');
+    const port = resolveDashboardPort();
     const payload = JSON.stringify({
       event_type: 'hook_execution',
       data: {

@@ -18,7 +18,8 @@ try {
   process.exit(0);
 }
 
-const DASHBOARD_PORT = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+const { resolveDashboardPort } = require('./lib/port-registry');
+const DASHBOARD_PORT = resolveDashboardPort();
 
 const toolName = hookContext.tool_name || hookContext.toolName || '';
 const toolInput = hookContext.tool_input || hookContext.toolInput || {};

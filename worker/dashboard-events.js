@@ -2,7 +2,13 @@
 
 const http = require('http');
 
-const DASHBOARD_PORT = parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+let resolveDashboardPort;
+try {
+  resolveDashboardPort = require('../scripts/hooks/lib/port-registry').resolveDashboardPort;
+} catch {
+  resolveDashboardPort = () => parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+}
+const DASHBOARD_PORT = resolveDashboardPort();
 
 /**
  * Fire-and-forget POST to the ERNE dashboard events endpoint.

@@ -21,7 +21,11 @@ try { upgradesHandler = require('./lib/upgrades/handler'); } catch (e) { upgrade
 try { insightsHandler = require('./lib/insights/handler'); } catch (e) { insightsHandler = null; }
 try { myappHandler = require('./lib/myapp/handler'); } catch (e) { myappHandler = null; }
 
-const PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
+const { registerPort, unregisterPort, findFreePort, getRegisteredPort } = require('../scripts/hooks/lib/port-registry');
+
+// Port resolution: --port flag > ERNE_DASHBOARD_PORT env > registry > find free port
+// Actual port is resolved asynchronously at startup; this is the initial value
+let PORT = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const AGENT_TIMEOUT_MS = 5 * 60 * 1000;
 const TIMEOUT_CHECK_INTERVAL_MS = 30 * 1000;
@@ -802,31 +806,65 @@ setInterval(() => {
   wss?.clients?.forEach(c => { if (c.readyState === 1) c.send(msg); });
 }, 5000);
 
-server.listen(PORT, () => {
-  console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
-
-  // Wire tab handlers
-  if (ecosystemHandler) { ecosystemHandler.broadcast = broadcast; }
-  if (upgradesHandler) {
-    upgradesHandler.broadcast = broadcast;
-    upgradesHandler.getAgentStatus = function (name) {
-      return agentState[name] ? agentState[name].status : 'idle';
-    };
-    upgradesHandler.postEvent = handleEvent;
+// Resolve port dynamically: CLI flag (via env) > ERNE_DASHBOARD_PORT > registry > find free
+async function resolvePort() {
+  // If ERNE_DASHBOARD_PORT is set (from --port flag or env), use it directly
+  if (process.env.ERNE_DASHBOARD_PORT) {
+    return parseInt(process.env.ERNE_DASHBOARD_PORT, 10);
   }
 
-  // Auto-refresh ecosystem data every 12 hours
-  if (ecosystemHandler && ecosystemHandler.autoRefresh) {
-    setInterval(function () { ecosystemHandler.autoRefresh(projectDir, broadcast); }, 12 * 3600 * 1000);
-  }
-  // Insights snapshot check every hour
-  if (insightsHandler && insightsHandler.autoSnapshot) {
-    setInterval(function () { insightsHandler.autoSnapshot(projectDir); }, 3600 * 1000);
-  }
+  // Check registry for this project
+  const registered = getRegisteredPort(projectDir);
+  if (registered) return registered;
 
-  // Initial data fetch (non-blocking, 5s delay for server to stabilize)
-  setTimeout(function () {
-    if (ecosystemHandler && ecosystemHandler.autoRefresh) ecosystemHandler.autoRefresh(projectDir, broadcast);
-    if (insightsHandler && insightsHandler.autoSnapshot) insightsHandler.autoSnapshot(projectDir);
-  }, 5000);
+  // Find a free port
+  try {
+    return await findFreePort();
+  } catch {
+    return 3333; // ultimate fallback
+  }
+}
+
+resolvePort().then((resolvedPort) => {
+  PORT = resolvedPort;
+
+  // Register port in ~/.erne/ports.json
+  registerPort(projectDir, PORT, process.pid);
+
+  // Cleanup on exit
+  const cleanupRegistry = () => {
+    unregisterPort(projectDir);
+  };
+  process.on('exit', cleanupRegistry);
+  process.on('SIGINT', () => { cleanupRegistry(); process.exit(0); });
+  process.on('SIGTERM', () => { cleanupRegistry(); process.exit(0); });
+
+  server.listen(PORT, () => {
+    console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
+
+    // Wire tab handlers
+    if (ecosystemHandler) { ecosystemHandler.broadcast = broadcast; }
+    if (upgradesHandler) {
+      upgradesHandler.broadcast = broadcast;
+      upgradesHandler.getAgentStatus = function (name) {
+        return agentState[name] ? agentState[name].status : 'idle';
+      };
+      upgradesHandler.postEvent = handleEvent;
+    }
+
+    // Auto-refresh ecosystem data every 12 hours
+    if (ecosystemHandler && ecosystemHandler.autoRefresh) {
+      setInterval(function () { ecosystemHandler.autoRefresh(projectDir, broadcast); }, 12 * 3600 * 1000);
+    }
+    // Insights snapshot check every hour
+    if (insightsHandler && insightsHandler.autoSnapshot) {
+      setInterval(function () { insightsHandler.autoSnapshot(projectDir); }, 3600 * 1000);
+    }
+
+    // Initial data fetch (non-blocking, 5s delay for server to stabilize)
+    setTimeout(function () {
+      if (ecosystemHandler && ecosystemHandler.autoRefresh) ecosystemHandler.autoRefresh(projectDir, broadcast);
+      if (insightsHandler && insightsHandler.autoSnapshot) insightsHandler.autoSnapshot(projectDir);
+    }, 5000);
+  });
 });

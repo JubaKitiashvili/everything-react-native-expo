@@ -41,6 +41,21 @@ function hasExtension(filePath, exts) {
   return exts.some(ext => filePath.endsWith(ext));
 }
 
+/**
+ * Resolve the dashboard port for the current project.
+ * Priority: ERNE_DASHBOARD_PORT env > registry lookup > fallback 3333
+ * @returns {number}
+ */
+function getDashboardPort() {
+  try {
+    const { resolveDashboardPort } = require('./port-registry');
+    return resolveDashboardPort();
+  } catch {
+    // Fallback if port-registry can't be loaded
+    return parseInt(process.env.ERNE_DASHBOARD_PORT || '3333', 10);
+  }
+}
+
 module.exports = {
   readStdin,
   getEditedFilePath,
@@ -49,4 +64,5 @@ module.exports = {
   warn,
   isTestFile,
   hasExtension,
+  getDashboardPort,
 };
