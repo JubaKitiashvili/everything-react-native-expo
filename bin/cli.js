@@ -17,7 +17,10 @@ const COMMANDS = {
   'add-agent': () => require('../lib/add-agent'),
   doctor: () => require('../lib/doctor'),
   status: () => require('../lib/status'),
-  audit: () => require('../lib/audit-cli'),
+  audit: () => {
+    console.log('  Running erne doctor...\n');
+    return require('../lib/doctor');
+  },
   'sync-configs': () => require('../lib/sync-configs'),
   sync: () => require('../lib/sync-configs'),
   version: () => {
