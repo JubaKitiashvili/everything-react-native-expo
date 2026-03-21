@@ -105,6 +105,7 @@ When a user's message matches these signals, automatically use the corresponding
 | `ui-designer` | component, button, modal, form, screen, page, tab, "navigation UI", "build UI", "design system", styled, theme, icon, animation, transition, gesture, "bottom sheet", drawer, header, card, skeleton, loading, toast |
 | `pipeline-orchestrator` | deploy, publish, EAS, "app store", "play store", "CI/CD", release, "OTA update", submit, distribution, TestFlight, "internal testing", "code signing", provisioning, certificate, keystore, fastlane, "GitHub Actions" |
 | `senior-developer` | "what do you think", opinion, advice, approach, tradeoff, "not sure how", mentor, "help me decide", "best way to", "should I", "pros and cons", "compare options", "which is better", "common pitfall", "production ready", scalable |
+| `documentation-generator` | "generate docs", "document this", "write documentation", "project overview", "architecture docs", "what does this project do", "onboard me", "explain codebase", "project structure", "how does this work" |
 
 ## Task Management
 
@@ -122,7 +123,7 @@ When a user's message matches these signals, automatically use the corresponding
 
 ## Available Commands
 
-Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
+Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/audit`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
 
 ## Available Skills
 

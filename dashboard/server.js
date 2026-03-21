@@ -175,6 +175,7 @@ const persistHistory = () => {
 };
 
 let lastActiveAgent = null;
+let lastAudit = null;
 
 const handleEvent = (event) => {
   const { type, agent, agents: agentList, task } = event;
@@ -204,6 +205,11 @@ const handleEvent = (event) => {
       }
     }
     persistHistory();
+    return { ok: true };
+  }
+
+  if (type === 'audit:complete') {
+    lastAudit = { ...event, receivedAt: new Date().toISOString() };
     return { ok: true };
   }
 
@@ -574,6 +580,12 @@ const server = http.createServer(async (req, res) => {
   // Audit API
   if (req.method === 'GET' && req.url === '/api/audit') {
     try {
+      // Prefer in-memory audit from audit:complete events
+      if (lastAudit) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(lastAudit));
+        return;
+      }
       const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
       const auditJsonPath = path.join(projectDir, '.erne', 'audit.json');
       if (fs.existsSync(auditJsonPath)) {
@@ -581,7 +593,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(data);
       } else {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end('{"score":null,"message":"Run erne audit first"}');
       }
     } catch (err) {
@@ -690,7 +702,7 @@ wss.on('connection', (ws) => {
 
     // Validate event shape before processing
     if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
-    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end'];
+    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end', 'audit:complete'];
     if (!VALID_TYPES.includes(data.type)) return;
 
     const result = handleEvent(data);
