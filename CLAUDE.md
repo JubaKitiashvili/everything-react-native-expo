@@ -125,6 +125,54 @@ When a user's message matches these signals, automatically use the corresponding
 
 Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/audit`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
 
+## Worker Mode (Autonomous Ticket Execution)
+
+ERNE can run as an autonomous worker that polls a ticket provider, picks up ready tasks, and executes the full pipeline without human intervention.
+
+### Quick Start
+
+```bash
+erne worker --config worker.json
+```
+
+### How It Works
+
+1. Polls a configured provider (ClickUp, GitHub Issues, Linear, Jira, or local JSON) for tickets marked as ready
+2. Validates each ticket has sufficient detail (title, description, acceptance criteria)
+3. Scores confidence (0-100) — skips tickets below the configured threshold
+4. Generates an implementation plan from ticket context + project audit data
+5. Executes in an isolated git worktree to avoid disrupting the main branch
+6. Runs the test suite and verifies no regressions
+7. Performs automated self-review against ERNE coding standards
+8. Compares audit health score before and after changes
+9. Creates a pull request with summary, test results, and ticket link
+
+### Quality Gates
+
+Each ticket must pass these gates before a PR is created:
+- Confidence score above threshold (default: 70)
+- All existing tests pass
+- No audit score regression
+- Self-review finds no critical issues
+
+### Configuration
+
+See `worker.example.json` for a full template. Key options:
+- `provider.type` — clickup, github, linear, jira, local
+- `provider.poll_interval_seconds` — How often to check for new tickets (default: 60)
+- `erne.min_confidence` — Minimum confidence score to attempt a ticket (default: 70)
+- `erne.hook_profile` — ERNE hook profile to use (minimal, standard, strict)
+- `repo.path` — Absolute path to the local repository
+- `repo.base_branch` — Branch to create worktrees from (default: main)
+
+### CLI Options
+
+| Flag | Description |
+|------|-------------|
+| `--config <path>` | Path to worker config JSON (required) |
+| `--dry-run` | Fetch and display tickets without executing |
+| `--once` | Process one ticket then exit |
+
 ## Available Skills
 
 Skills in `skills/` activate automatically:

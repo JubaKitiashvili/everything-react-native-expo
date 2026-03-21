@@ -176,6 +176,7 @@ const persistHistory = () => {
 
 let lastActiveAgent = null;
 let lastAudit = null;
+let lastWorkerState = null;
 
 const handleEvent = (event) => {
   const { type, agent, agents: agentList, task } = event;
@@ -210,6 +211,35 @@ const handleEvent = (event) => {
 
   if (type === 'audit:complete') {
     lastAudit = { ...event, receivedAt: new Date().toISOString() };
+    return { ok: true };
+  }
+
+  // Worker events — update worker state and broadcast
+  if (type && type.startsWith('worker:')) {
+    const now = new Date().toISOString();
+    if (type === 'worker:start') {
+      lastWorkerState = { status: 'polling', provider: event.provider, repo: event.repo, interval: event.interval, startedAt: now, lastEvent: now, currentTicket: null };
+    } else if (type === 'worker:task-start') {
+      if (lastWorkerState) {
+        lastWorkerState.status = 'working';
+        lastWorkerState.currentTicket = { identifier: event.identifier, title: event.title, startedAt: now };
+        lastWorkerState.lastEvent = now;
+      }
+    } else if (type === 'worker:task-complete') {
+      if (lastWorkerState) {
+        lastWorkerState.status = 'polling';
+        lastWorkerState.currentTicket = null;
+        lastWorkerState.lastEvent = now;
+        lastWorkerState.lastCompleted = { identifier: event.identifier, title: event.title, result: event.result, completedAt: now };
+      }
+    } else if (type === 'worker:idle') {
+      if (lastWorkerState) {
+        lastWorkerState.status = 'polling';
+        lastWorkerState.lastEvent = now;
+      }
+    } else if (lastWorkerState) {
+      lastWorkerState.lastEvent = now;
+    }
     return { ok: true };
   }
 
@@ -603,6 +633,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && req.url === '/api/worker') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(lastWorkerState || { status: 'offline' }));
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/audit/run') {
     try {
       const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
@@ -702,7 +738,8 @@ wss.on('connection', (ws) => {
 
     // Validate event shape before processing
     if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
-    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end', 'audit:complete'];
+    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end', 'audit:complete',
+      'worker:start', 'worker:poll', 'worker:task-start', 'worker:task-complete', 'worker:idle'];
     if (!VALID_TYPES.includes(data.type)) return;
 
     const result = handleEvent(data);
