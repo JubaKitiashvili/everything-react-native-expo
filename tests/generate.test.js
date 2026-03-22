@@ -210,10 +210,13 @@ describe('generateConfig — variant file copying', () => {
     generateConfig(erneRoot, tmpDir, detection, 'standard', ['agent-device']);
 
     assert.ok(fs.existsSync(path.join(tmpDir, 'agents')), 'agents/ should exist');
-    assert.ok(fs.existsSync(path.join(tmpDir, 'commands')), 'commands/ should exist');
     assert.ok(fs.existsSync(path.join(tmpDir, 'rules', 'common')), 'rules/common/ should exist');
     assert.ok(fs.existsSync(path.join(tmpDir, 'rules', 'expo')), 'rules/expo/ should exist');
     assert.ok(fs.existsSync(path.join(tmpDir, 'contexts')), 'contexts/ should exist');
     assert.ok(fs.existsSync(path.join(tmpDir, 'skills')), 'skills/ should exist');
+    // Commands are installed as skills: skills/{name}/SKILL.md
+    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'perf', 'SKILL.md')), 'skills/perf/SKILL.md should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'plan', 'SKILL.md')), 'skills/plan/SKILL.md should exist');
+    assert.ok(!fs.existsSync(path.join(tmpDir, 'commands')), 'commands/ should NOT exist');
   });
 });
