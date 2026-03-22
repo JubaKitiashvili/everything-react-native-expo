@@ -5,23 +5,62 @@ const os = require('os');
 const { WebSocketServer } = require('ws');
 const { execFile } = require('node:child_process');
 const crypto = require('node:crypto');
-const { openProjectDb, openSessionDb, closeDb } = require('./lib/context/db');
-const { truncate } = require('./lib/context/truncation');
-const { KnowledgeBase } = require('./lib/context/knowledge-base');
-const { SessionTracker } = require('./lib/context/session-tracker');
-const { buildSnapshot, saveSnapshot, loadLatestSnapshot, restorePrompt } = require('./lib/context/session-continuity');
-const { BudgetManager } = require('./lib/context/budget-manager');
-const { AgentPreloader } = require('./lib/context/preloader');
+// Optional context features (require better-sqlite3 — a native C++ addon)
+let contextAvailable = false;
+let openProjectDb, openSessionDb, closeDb, truncate, KnowledgeBase, SessionTracker;
+let buildSnapshot, saveSnapshot, loadLatestSnapshot, restorePrompt, BudgetManager, AgentPreloader;
+
+try {
+  const db = require('./lib/context/db');
+  openProjectDb = db.openProjectDb;
+  openSessionDb = db.openSessionDb;
+  closeDb = db.closeDb;
+  truncate = require('./lib/context/truncation').truncate;
+  KnowledgeBase = require('./lib/context/knowledge-base').KnowledgeBase;
+  SessionTracker = require('./lib/context/session-tracker').SessionTracker;
+  const sc = require('./lib/context/session-continuity');
+  buildSnapshot = sc.buildSnapshot;
+  saveSnapshot = sc.saveSnapshot;
+  loadLatestSnapshot = sc.loadLatestSnapshot;
+  restorePrompt = sc.restorePrompt;
+  BudgetManager = require('./lib/context/budget-manager').BudgetManager;
+  AgentPreloader = require('./lib/context/preloader').AgentPreloader;
+  contextAvailable = true;
+} catch {
+  // better-sqlite3 not installed — context features disabled
+  console.warn('  Context features disabled (better-sqlite3 not installed)');
+}
 const { AGENT_DEFINITIONS: SHARED_AGENT_DEFS } = require('./lib/agents-config');
 
 // Tab feature modules (loaded lazily to avoid errors if dirs don't exist yet)
 let ecosystemHandler, upgradesHandler, insightsHandler, myappHandler;
-try { ecosystemHandler = require('./lib/ecosystem/handler'); } catch (e) { ecosystemHandler = null; }
-try { upgradesHandler = require('./lib/upgrades/handler'); } catch (e) { upgradesHandler = null; }
-try { insightsHandler = require('./lib/insights/handler'); } catch (e) { insightsHandler = null; }
-try { myappHandler = require('./lib/myapp/handler'); } catch (e) { myappHandler = null; }
+try {
+  ecosystemHandler = require('./lib/ecosystem/handler');
+} catch (e) {
+  ecosystemHandler = null;
+}
+try {
+  upgradesHandler = require('./lib/upgrades/handler');
+} catch (e) {
+  upgradesHandler = null;
+}
+try {
+  insightsHandler = require('./lib/insights/handler');
+} catch (e) {
+  insightsHandler = null;
+}
+try {
+  myappHandler = require('./lib/myapp/handler');
+} catch (e) {
+  myappHandler = null;
+}
 
-const { registerPort, unregisterPort, findFreePort, getRegisteredPort } = require('../scripts/hooks/lib/port-registry');
+const {
+  registerPort,
+  unregisterPort,
+  findFreePort,
+  getRegisteredPort,
+} = require('../scripts/hooks/lib/port-registry');
 
 // Port resolution: --port flag > ERNE_DASHBOARD_PORT env > registry > find free port
 // Actual port is resolved asynchronously at startup; this is the initial value
@@ -35,7 +74,11 @@ const ERNE_DIR = path.join(os.homedir(), '.erne');
 const HISTORY_FILE = path.join(ERNE_DIR, 'activity-history.json');
 
 // Ensure ~/.erne/ directory exists
-try { fs.mkdirSync(ERNE_DIR, { recursive: true }); } catch { /* ignore */ }
+try {
+  fs.mkdirSync(ERNE_DIR, { recursive: true });
+} catch {
+  /* ignore */
+}
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -105,6 +148,10 @@ let preloader = null;
 let contextEnabled = false;
 
 function initContext(projectDir) {
+  if (!contextAvailable) {
+    // better-sqlite3 not installed — skip context initialization
+    return null;
+  }
   try {
     const erneDir = path.join(projectDir, '.erne');
     const sessionsDir = path.join(erneDir, 'sessions');
@@ -124,7 +171,6 @@ function initContext(projectDir) {
     // Write session ID for hooks
     fs.writeFileSync(path.join(erneDir, 'current-session-id'), sessionId);
 
-    console.log(`[ERNE] Context optimization enabled (session: ${sessionId.slice(0, 8)})`);
     return sessionId;
   } catch (err) {
     console.error('[ERNE] Context init failed:', err.message);
@@ -194,7 +240,11 @@ const handleEvent = (event) => {
       agentState[name].status = 'planning';
       agentState[name].task = task ? String(task).slice(0, 500) : 'Team planning session';
       agentState[name].lastEvent = now;
-      addHistoryEntry(name, { type: 'planning', task: task || 'Team planning session', timestamp: now });
+      addHistoryEntry(name, {
+        type: 'planning',
+        task: task || 'Team planning session',
+        timestamp: now,
+      });
     }
     persistHistory();
     return { ok: true };
@@ -233,11 +283,23 @@ const handleEvent = (event) => {
   if (type && type.startsWith('worker:')) {
     const now = new Date().toISOString();
     if (type === 'worker:start') {
-      lastWorkerState = { status: 'polling', provider: event.provider, repo: event.repo, interval: event.interval, startedAt: now, lastEvent: now, currentTicket: null };
+      lastWorkerState = {
+        status: 'polling',
+        provider: event.provider,
+        repo: event.repo,
+        interval: event.interval,
+        startedAt: now,
+        lastEvent: now,
+        currentTicket: null,
+      };
     } else if (type === 'worker:task-start') {
       if (lastWorkerState) {
         lastWorkerState.status = 'working';
-        lastWorkerState.currentTicket = { identifier: event.identifier, title: event.title, startedAt: now };
+        lastWorkerState.currentTicket = {
+          identifier: event.identifier,
+          title: event.title,
+          startedAt: now,
+        };
         lastWorkerState.lastEvent = now;
       }
     } else if (type === 'worker:task-complete') {
@@ -245,7 +307,12 @@ const handleEvent = (event) => {
         lastWorkerState.status = 'polling';
         lastWorkerState.currentTicket = null;
         lastWorkerState.lastEvent = now;
-        lastWorkerState.lastCompleted = { identifier: event.identifier, title: event.title, result: event.result, completedAt: now };
+        lastWorkerState.lastCompleted = {
+          identifier: event.identifier,
+          title: event.title,
+          result: event.result,
+          completedAt: now,
+        };
       }
     } else if (type === 'worker:idle') {
       if (lastWorkerState) {
@@ -269,7 +336,9 @@ const handleEvent = (event) => {
   if (type === 'agent:start') {
     // Record agent transition for preloader predictions
     if (preloader && lastActiveAgent && lastActiveAgent !== agent) {
-      try { preloader.recordTransition(lastActiveAgent, agent); } catch {}
+      try {
+        preloader.recordTransition(lastActiveAgent, agent);
+      } catch {}
     }
     lastActiveAgent = agent;
 
@@ -283,9 +352,7 @@ const handleEvent = (event) => {
     });
     persistHistory();
   } else if (type === 'agent:complete') {
-    const duration = state.startedAt
-      ? Date.now() - new Date(state.startedAt).getTime()
-      : null;
+    const duration = state.startedAt ? Date.now() - new Date(state.startedAt).getTime() : null;
     addHistoryEntry(agent, {
       type: 'complete',
       task: task || state.task,
@@ -439,32 +506,48 @@ function handleContextApi(req, res, urlPath, body) {
     if (urlPath === '/api/context/execute' && req.method === 'POST') {
       if (process.env.ERNE_ALLOW_EXECUTE !== 'true') {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Execute endpoint disabled. Set ERNE_ALLOW_EXECUTE=true to enable.' }));
+        res.end(
+          JSON.stringify({
+            error: 'Execute endpoint disabled. Set ERNE_ALLOW_EXECUTE=true to enable.',
+          }),
+        );
         return;
       }
       const { command, original_tool, timeout = 30000 } = JSON.parse(body);
       const cwd = process.env.ERNE_PROJECT_DIR || process.cwd();
-      execFile('sh', ['-c', command], { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
-        const raw = stdout || '';
-        const aggressive = budgetManager && budgetManager.shouldThrottle(original_tool || 'Bash');
-        const tr = truncate(raw, original_tool || 'Bash', { aggressive });
-        if (sessionTracker) {
-          sessionTracker.track('file_read', { tool: original_tool || 'Bash', tier: tr.tier }, {
-            context_bytes: tr.truncatedBytes,
-            original_bytes: tr.originalBytes
-          });
-        }
-        if (budgetManager) budgetManager.trackUsage(original_tool || 'Bash', tr.truncatedBytes);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          output: tr.output, stderr: (stderr || '').slice(0, 500),
-          exit_code: err ? err.code || 1 : 0,
-          original_bytes: tr.originalBytes,
-          truncated_bytes: tr.truncatedBytes,
-          tier: tr.tier,
-          savings_pct: tr.savingsPct
-        }));
-      });
+      execFile(
+        'sh',
+        ['-c', command],
+        { cwd, timeout, maxBuffer: 1024 * 1024 },
+        (err, stdout, stderr) => {
+          const raw = stdout || '';
+          const aggressive = budgetManager && budgetManager.shouldThrottle(original_tool || 'Bash');
+          const tr = truncate(raw, original_tool || 'Bash', { aggressive });
+          if (sessionTracker) {
+            sessionTracker.track(
+              'file_read',
+              { tool: original_tool || 'Bash', tier: tr.tier },
+              {
+                context_bytes: tr.truncatedBytes,
+                original_bytes: tr.originalBytes,
+              },
+            );
+          }
+          if (budgetManager) budgetManager.trackUsage(original_tool || 'Bash', tr.truncatedBytes);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              output: tr.output,
+              stderr: (stderr || '').slice(0, 500),
+              exit_code: err ? err.code || 1 : 0,
+              original_bytes: tr.originalBytes,
+              truncated_bytes: tr.truncatedBytes,
+              tier: tr.tier,
+              savings_pct: tr.savingsPct,
+            }),
+          );
+        },
+      );
       return;
     }
 
@@ -497,8 +580,14 @@ function handleContextApi(req, res, urlPath, body) {
 
     // POST /api/context/snapshot — save snapshot (PreCompact)
     if (urlPath === '/api/context/snapshot' && req.method === 'POST') {
-      const sessionIdFile = path.join(process.env.ERNE_PROJECT_DIR || process.cwd(), '.erne', 'current-session-id');
-      const sessionId = fs.existsSync(sessionIdFile) ? fs.readFileSync(sessionIdFile, 'utf8').trim() : 'unknown';
+      const sessionIdFile = path.join(
+        process.env.ERNE_PROJECT_DIR || process.cwd(),
+        '.erne',
+        'current-session-id',
+      );
+      const sessionId = fs.existsSync(sessionIdFile)
+        ? fs.readFileSync(sessionIdFile, 'utf8').trim()
+        : 'unknown';
       const snap = buildSnapshot(sessionDb, sessionId);
       saveSnapshot(projectDb, snap);
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -508,7 +597,11 @@ function handleContextApi(req, res, urlPath, body) {
 
     // GET /api/context/knowledge — browse knowledge base
     if (urlPath === '/api/context/knowledge' && req.method === 'GET') {
-      const all = projectDb.prepare('SELECT id, category, title, relevance_score, access_count, created_at FROM knowledge ORDER BY relevance_score DESC LIMIT 50').all();
+      const all = projectDb
+        .prepare(
+          'SELECT id, category, title, relevance_score, access_count, created_at FROM knowledge ORDER BY relevance_score DESC LIMIT 50',
+        )
+        .all();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(all));
       return;
@@ -516,7 +609,8 @@ function handleContextApi(req, res, urlPath, body) {
 
     // GET /api/context/predict?agent=<name> — predict next agent
     if (urlPath.startsWith('/api/context/predict') && req.method === 'GET') {
-      const agentParam = new URL(urlPath, 'http://localhost').searchParams.get('agent') || lastActiveAgent;
+      const agentParam =
+        new URL(urlPath, 'http://localhost').searchParams.get('agent') || lastActiveAgent;
       const predicted = preloader && agentParam ? preloader.predictNext(agentParam) : null;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ from: agentParam, predicted }));
@@ -560,7 +654,11 @@ function handleContextApi(req, res, urlPath, body) {
     // POST /api/context/graduate — promote session knowledge to project DB
     if (urlPath === '/api/context/graduate' && req.method === 'POST') {
       if (sessionTracker && knowledgeBase && sessionDb) {
-        const p1Events = sessionDb.prepare('SELECT * FROM events WHERE priority <= 2 AND event_type IN (\'error_fix\', \'decision\') ORDER BY timestamp').all();
+        const p1Events = sessionDb
+          .prepare(
+            "SELECT * FROM events WHERE priority <= 2 AND event_type IN ('error_fix', 'decision') ORDER BY timestamp",
+          )
+          .all();
         for (const evt of p1Events) {
           try {
             const data = JSON.parse(evt.data);
@@ -569,9 +667,11 @@ function handleContextApi(req, res, urlPath, body) {
               title: data.choice || data.error_summary || evt.event_type,
               content: JSON.stringify(data),
               source: 'session-graduate',
-              tags: 'auto-graduated'
+              tags: 'auto-graduated',
             });
-          } catch { /* skip malformed */ }
+          } catch {
+            /* skip malformed */
+          }
         }
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -588,21 +688,46 @@ function handleContextApi(req, res, urlPath, body) {
 }
 
 function broadcastContextEvent(eventType, data) {
-  const PRIORITY_EVENTS = ['task_start', 'task_complete', 'file_create', 'error', 'error_fix',
-    'file_modify', 'decision', 'git_commit', 'test_run'];
+  const PRIORITY_EVENTS = [
+    'task_start',
+    'task_complete',
+    'file_create',
+    'error',
+    'error_fix',
+    'file_modify',
+    'decision',
+    'git_commit',
+    'test_run',
+  ];
   if (!PRIORITY_EVENTS.includes(eventType)) return;
 
-  const icons = { task_start: '🏗️', task_complete: '✅', file_create: '📝', error: '❌',
-    error_fix: '✅', file_modify: '📝', decision: '💡', git_commit: '📦', test_run: '🧪' };
+  const icons = {
+    task_start: '🏗️',
+    task_complete: '✅',
+    file_create: '📝',
+    error: '❌',
+    error_fix: '✅',
+    file_modify: '📝',
+    decision: '💡',
+    git_commit: '📦',
+    test_run: '🧪',
+  };
 
   const msg = JSON.stringify({
     type: 'session_event',
-    data: { time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    data: {
+      time: new Date().toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       icon: icons[eventType] || '📌',
-      text: `${eventType}: ${data.task || data.path || data.command || data.agent || ''}`
-    }
+      text: `${eventType}: ${data.task || data.path || data.command || data.agent || ''}`,
+    },
   });
-  wss?.clients?.forEach(c => { if (c.readyState === 1) c.send(msg); });
+  wss?.clients?.forEach((c) => {
+    if (c.readyState === 1) c.send(msg);
+  });
 }
 
 const server = http.createServer(async (req, res) => {
@@ -612,7 +737,7 @@ const server = http.createServer(async (req, res) => {
     let body = '';
     let bodyBytes = 0;
     let destroyed = false;
-    req.on('data', chunk => {
+    req.on('data', (chunk) => {
       bodyBytes += chunk.length;
       if (bodyBytes > MAX_PAYLOAD_BYTES) {
         destroyed = true;
@@ -668,7 +793,17 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && req.url === '/api/worker') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(lastWorkerState || { status: 'stopped', provider: 'none', history: [], log: [], ticketsToday: 0 }));
+    res.end(
+      JSON.stringify(
+        lastWorkerState || {
+          status: 'stopped',
+          provider: 'none',
+          history: [],
+          log: [],
+          ticketsToday: 0,
+        },
+      ),
+    );
     return;
   }
 
@@ -718,19 +853,31 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Tab API routes — collect body for POST requests
-  if (urlPath.startsWith('/api/myapp/') || urlPath.startsWith('/api/ecosystem/') || urlPath.startsWith('/api/upgrades/') || urlPath.startsWith('/api/insights/')) {
+  if (
+    urlPath.startsWith('/api/myapp/') ||
+    urlPath.startsWith('/api/ecosystem/') ||
+    urlPath.startsWith('/api/upgrades/') ||
+    urlPath.startsWith('/api/insights/')
+  ) {
     var tabBody = '';
     var tabBytes = 0;
     req.on('data', function (chunk) {
       tabBytes += chunk.length;
-      if (tabBytes > MAX_PAYLOAD_BYTES) { req.destroy(); return; }
+      if (tabBytes > MAX_PAYLOAD_BYTES) {
+        req.destroy();
+        return;
+      }
       tabBody += chunk;
     });
     req.on('end', function () {
-      if (urlPath.startsWith('/api/myapp/') && myappHandler) return myappHandler(req, res, urlPath, tabBody);
-      if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler) return ecosystemHandler(req, res, urlPath, tabBody);
-      if (urlPath.startsWith('/api/upgrades/') && upgradesHandler) return upgradesHandler(req, res, urlPath, tabBody);
-      if (urlPath.startsWith('/api/insights/') && insightsHandler) return insightsHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/myapp/') && myappHandler)
+        return myappHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/ecosystem/') && ecosystemHandler)
+        return ecosystemHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/upgrades/') && upgradesHandler)
+        return upgradesHandler(req, res, urlPath, tabBody);
+      if (urlPath.startsWith('/api/insights/') && insightsHandler)
+        return insightsHandler(req, res, urlPath, tabBody);
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end('{"error":"handler not available"}');
     });
@@ -752,13 +899,17 @@ function broadcast(msg) {
 
 wss.on('connection', (ws) => {
   ws.isAlive = true;
-  ws.on('pong', () => { ws.isAlive = true; });
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
 
-  ws.send(JSON.stringify({
-    type: 'init',
-    agents: agentState,
-    history: activityHistory,
-  }));
+  ws.send(
+    JSON.stringify({
+      type: 'init',
+      agents: agentState,
+      history: activityHistory,
+    }),
+  );
 
   ws.on('message', (message) => {
     let data;
@@ -771,9 +922,21 @@ wss.on('connection', (ws) => {
 
     // Validate event shape before processing
     if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
-    const VALID_TYPES = ['agent:start', 'agent:complete', 'planning:start', 'planning:end', 'audit:complete',
-      'worker:start', 'worker:poll', 'worker:task-start', 'worker:task-complete', 'worker:idle',
-      'visual-debug:screenshot', 'visual-debug:fix', 'visual-debug:compare'];
+    const VALID_TYPES = [
+      'agent:start',
+      'agent:complete',
+      'planning:start',
+      'planning:end',
+      'audit:complete',
+      'worker:start',
+      'worker:poll',
+      'worker:task-start',
+      'worker:task-complete',
+      'worker:idle',
+      'visual-debug:screenshot',
+      'visual-debug:fix',
+      'visual-debug:compare',
+    ];
     if (!VALID_TYPES.includes(data.type)) return;
 
     const result = handleEvent(data);
@@ -786,7 +949,10 @@ wss.on('connection', (ws) => {
 // Heartbeat: ping every 30s, terminate dead connections
 setInterval(() => {
   for (const ws of wss.clients) {
-    if (!ws.isAlive) { ws.terminate(); continue; }
+    if (!ws.isAlive) {
+      ws.terminate();
+      continue;
+    }
     ws.isAlive = false;
     ws.ping();
   }
@@ -803,7 +969,9 @@ setInterval(() => {
   if (!contextEnabled || !sessionTracker) return;
   const stats = sessionTracker.getStats();
   const msg = JSON.stringify({ type: 'context_stats', data: stats });
-  wss?.clients?.forEach(c => { if (c.readyState === 1) c.send(msg); });
+  wss?.clients?.forEach((c) => {
+    if (c.readyState === 1) c.send(msg);
+  });
 }, 5000);
 
 // Resolve port dynamically: CLI flag (via env) > ERNE_DASHBOARD_PORT > registry > find free
@@ -836,14 +1004,22 @@ resolvePort().then((resolvedPort) => {
     unregisterPort(projectDir);
   };
   process.on('exit', cleanupRegistry);
-  process.on('SIGINT', () => { cleanupRegistry(); process.exit(0); });
-  process.on('SIGTERM', () => { cleanupRegistry(); process.exit(0); });
+  process.on('SIGINT', () => {
+    cleanupRegistry();
+    process.exit(0);
+  });
+  process.on('SIGTERM', () => {
+    cleanupRegistry();
+    process.exit(0);
+  });
 
   server.listen(PORT, () => {
     console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
 
     // Wire tab handlers
-    if (ecosystemHandler) { ecosystemHandler.broadcast = broadcast; }
+    if (ecosystemHandler) {
+      ecosystemHandler.broadcast = broadcast;
+    }
     if (upgradesHandler) {
       upgradesHandler.broadcast = broadcast;
       upgradesHandler.getAgentStatus = function (name) {
@@ -854,16 +1030,24 @@ resolvePort().then((resolvedPort) => {
 
     // Auto-refresh ecosystem data every 12 hours
     if (ecosystemHandler && ecosystemHandler.autoRefresh) {
-      setInterval(function () { ecosystemHandler.autoRefresh(projectDir, broadcast); }, 12 * 3600 * 1000);
+      setInterval(
+        function () {
+          ecosystemHandler.autoRefresh(projectDir, broadcast);
+        },
+        12 * 3600 * 1000,
+      );
     }
     // Insights snapshot check every hour
     if (insightsHandler && insightsHandler.autoSnapshot) {
-      setInterval(function () { insightsHandler.autoSnapshot(projectDir); }, 3600 * 1000);
+      setInterval(function () {
+        insightsHandler.autoSnapshot(projectDir);
+      }, 3600 * 1000);
     }
 
     // Initial data fetch (non-blocking, 5s delay for server to stabilize)
     setTimeout(function () {
-      if (ecosystemHandler && ecosystemHandler.autoRefresh) ecosystemHandler.autoRefresh(projectDir, broadcast);
+      if (ecosystemHandler && ecosystemHandler.autoRefresh)
+        ecosystemHandler.autoRefresh(projectDir, broadcast);
       if (insightsHandler && insightsHandler.autoSnapshot) insightsHandler.autoSnapshot(projectDir);
     }, 5000);
   });

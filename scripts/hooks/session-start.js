@@ -97,7 +97,7 @@ try {
   /* skip */
 }
 
-// ─── Dashboard detection (no auto-start — use `npx erne-universal dashboard`) ─
+// ─── Dashboard detection + auto-start ─────────────────────────────────────
 
 let dashboardUrl = '';
 
@@ -107,6 +107,21 @@ if (hasSettings) {
     const existingPort = getRegisteredPort(projectDir);
     if (existingPort) {
       dashboardUrl = `http://localhost:${existingPort}`;
+    } else if (!process.env.ERNE_SKIP_DASHBOARD) {
+      // Auto-start dashboard in background
+      try {
+        const { spawn } = require('child_process');
+        const child = spawn('npx', ['-y', 'erne-universal', 'dashboard', '--no-open'], {
+          cwd: projectDir,
+          detached: true,
+          stdio: 'ignore',
+          env: { ...process.env, ERNE_PROJECT_DIR: projectDir },
+        });
+        child.unref();
+        dashboardUrl = 'http://localhost:3333 (starting...)';
+      } catch {
+        /* auto-start failed — skip */
+      }
     }
   } catch {
     /* port-registry not available — skip */
