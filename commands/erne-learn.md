@@ -1,11 +1,11 @@
 ---
-name: learn
-description: Manual skill generation — runs continuous-learning-v2 scripts to extract patterns from session
+name: erne-learn
+description: ERNE — Manual skill generation — runs continuous-learning-v2 scripts to extract patterns from session
 ---
 
-# /learn — Generate Skills from Session
+# /erne-learn — Generate Skills from Session
 
-You are executing the `/learn` command. This is **script-driven** — it runs the continuous-learning-v2 pipeline directly.
+You are executing the `/erne-learn` command. This is **script-driven** — it runs the continuous-learning-v2 pipeline directly.
 
 ## What This Does
 
@@ -53,4 +53,4 @@ Ensures new rules/skills have valid frontmatter and don't conflict with existing
 - Periodically to capture accumulated project knowledge
 
 ## Note
-The automatic `PostToolUse` hook (`continuous-learning-v2.cjs`) does lightweight extraction after every tool call. This `/learn` command runs a comprehensive analysis that catches patterns the real-time hook might miss.
+The automatic `PostToolUse` hook (`continuous-learning-v2.cjs`) does lightweight extraction after every tool call. This `/erne-learn` command runs a comprehensive analysis that catches patterns the real-time hook might miss.

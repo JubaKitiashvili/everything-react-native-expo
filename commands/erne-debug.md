@@ -1,11 +1,11 @@
 ---
-name: debug
-description: Systematic diagnosis of bugs using the performance-profiler agent
+name: erne-debug
+description: ERNE — Systematic diagnosis of bugs using the performance-profiler agent
 ---
 
-# /debug — Systematic Diagnosis
+# /erne-debug — Systematic Diagnosis
 
-You are executing the `/debug` command. Use the **performance-profiler** agent for systematic bug diagnosis.
+You are executing the `/erne-debug` command. Use the **performance-profiler** agent for systematic bug diagnosis.
 
 ## Process
 

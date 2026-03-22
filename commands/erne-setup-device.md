@@ -1,15 +1,15 @@
 ---
-name: setup-device
-description: Install and configure agent-device MCP server for simulator/emulator control
+name: erne-setup-device
+description: ERNE — Install and configure agent-device MCP server for simulator/emulator control
 ---
 
-# /setup-device — Setup Device Control
+# /erne-setup-device — Setup Device Control
 
-You are executing the `/setup-device` command. This is **script-driven** — it sets up the agent-device MCP server.
+You are executing the `/erne-setup-device` command. This is **script-driven** — it sets up the agent-device MCP server.
 
 ## What This Does
 
-Installs and configures the agent-device MCP server so commands like `/debug`, `/perf`, `/component`, and `/deploy` gain visual device interaction capabilities.
+Installs and configures the agent-device MCP server so commands like `/erne-debug`, `/erne-perf`, `/erne-component`, and `/erne-deploy` gain visual device interaction capabilities.
 
 ## Process
 
@@ -62,11 +62,11 @@ After setup, these commands gain enhanced capabilities:
 
 | Command | Enhancement |
 |---------|-------------|
-| `/debug` | Screenshot reproduction steps, tap through UI |
-| `/perf` | Measure real FPS, capture actual jank frames |
-| `/component` | Render on device, visual verification screenshot |
-| `/deploy` | Launch preview build, verify UI before submit |
-| `/build-fix` | Build, install, and launch to verify fix |
+| `/erne-debug` | Screenshot reproduction steps, tap through UI |
+| `/erne-perf` | Measure real FPS, capture actual jank frames |
+| `/erne-component` | Render on device, visual verification screenshot |
+| `/erne-deploy` | Launch preview build, verify UI before submit |
+| `/erne-build-fix` | Build, install, and launch to verify fix |
 
 ### Output
 

@@ -1,11 +1,11 @@
 ---
-name: quality-gate
-description: Pre-merge quality checks using parallel code-reviewer and performance-profiler agents
+name: erne-quality-gate
+description: ERNE — Pre-merge quality checks using parallel code-reviewer and performance-profiler agents
 ---
 
-# /quality-gate — Pre-Merge Checks
+# /erne-quality-gate — Pre-Merge Checks
 
-You are executing the `/quality-gate` command. Run **code-reviewer** and **performance-profiler** in parallel for comprehensive pre-merge validation.
+You are executing the `/erne-quality-gate` command. Run **code-reviewer** and **performance-profiler** in parallel for comprehensive pre-merge validation.
 
 ## Parallel Execution
 

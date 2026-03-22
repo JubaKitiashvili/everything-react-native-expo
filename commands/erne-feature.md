@@ -1,11 +1,11 @@
 ---
-name: feature
-description: Build a focused feature unit using the feature-builder agent
+name: erne-feature
+description: ERNE — Build a focused feature unit using the feature-builder agent
 ---
 
-# /feature — Focused Feature Unit
+# /erne-feature — Focused Feature Unit
 
-You are executing the `/feature` command. Use the **feature-builder** agent to implement a discrete, scoped feature unit.
+You are executing the `/erne-feature` command. Use the **feature-builder** agent to implement a discrete, scoped feature unit.
 
 ## Process
 
@@ -25,13 +25,13 @@ You are executing the `/feature` command. Use the **feature-builder** agent to i
 
 ## Parallel Work
 
-When used alongside `/code` (senior-developer):
-- `/code` handles: data layer, stores, navigation skeleton, complex multi-screen flows
-- `/feature` handles: individual screens, isolated components, utility hooks, API wrappers
+When used alongside `/erne-code` (senior-developer):
+- `/erne-code` handles: data layer, stores, navigation skeleton, complex multi-screen flows
+- `/erne-feature` handles: individual screens, isolated components, utility hooks, API wrappers
 - Coordinate via shared type definitions and agreed interfaces
 
 ## Notes
 
 - Reference the active platform rules layer for conventions
-- Keep scope tight — if the task touches more than 3 files, use `/code` instead
+- Keep scope tight — if the task touches more than 3 files, use `/erne-code` instead
 - Every delivered unit must include its integration point documentation

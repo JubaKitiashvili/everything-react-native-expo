@@ -1,11 +1,11 @@
 ---
-name: deploy
-description: Validate and submit app builds using parallel expo-config-resolver and code-reviewer agents
+name: erne-deploy
+description: ERNE — Validate and submit app builds using parallel expo-config-resolver and code-reviewer agents
 ---
 
-# /deploy — Validate & Submit
+# /erne-deploy — Validate & Submit
 
-You are executing the `/deploy` command. Run **expo-config-resolver** and **code-reviewer** in parallel. One validates build/deploy config, the other reviews code quality.
+You are executing the `/erne-deploy` command. Run **expo-config-resolver** and **code-reviewer** in parallel. One validates build/deploy config, the other reviews code quality.
 
 ## Parallel Execution
 

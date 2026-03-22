@@ -1,11 +1,11 @@
 ---
-name: perf
-description: Performance profiling and optimization using the performance-profiler agent
+name: erne-perf
+description: ERNE — Performance profiling and optimization using the performance-profiler agent
 ---
 
-# /perf — Performance Profiling
+# /erne-perf — Performance Profiling
 
-You are executing the `/perf` command. Use the **performance-profiler** agent to diagnose and fix performance issues.
+You are executing the `/erne-perf` command. Use the **performance-profiler** agent to diagnose and fix performance issues.
 
 ## Diagnostic Areas
 

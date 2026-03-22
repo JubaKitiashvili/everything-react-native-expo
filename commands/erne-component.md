@@ -1,11 +1,11 @@
 ---
-name: component
-description: Design and test UI components using parallel ui-designer and tdd-guide agents
+name: erne-component
+description: ERNE — Design and test UI components using parallel ui-designer and tdd-guide agents
 ---
 
-# /component — Design + Test Component
+# /erne-component — Design + Test Component
 
-You are executing the `/component` command. Run **ui-designer** and **tdd-guide** in parallel. One designs the component, the other writes tests.
+You are executing the `/erne-component` command. Run **ui-designer** and **tdd-guide** in parallel. One designs the component, the other writes tests.
 
 ## Parallel Execution
 

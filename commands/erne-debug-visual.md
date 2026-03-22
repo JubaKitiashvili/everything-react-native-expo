@@ -1,11 +1,11 @@
 ---
-name: debug-visual
-description: Screenshot-based visual debugging using the visual-debugger agent
+name: erne-debug-visual
+description: ERNE — Screenshot-based visual debugging using the visual-debugger agent
 ---
 
-# /debug-visual — Visual Debugging
+# /erne-debug-visual — Visual Debugging
 
-You are executing the `/debug-visual` command. Use the **visual-debugger** agent for screenshot-based UI analysis and fixing.
+You are executing the `/erne-debug-visual` command. Use the **visual-debugger** agent for screenshot-based UI analysis and fixing.
 
 ## Arguments
 

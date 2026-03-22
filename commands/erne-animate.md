@@ -1,11 +1,11 @@
 ---
-name: animate
-description: Implement animations using the ui-designer agent with Reanimated and Gesture Handler
+name: erne-animate
+description: ERNE — Implement animations using the ui-designer agent with Reanimated and Gesture Handler
 ---
 
-# /animate — Implement Animations
+# /erne-animate — Implement Animations
 
-You are executing the `/animate` command. Use the **ui-designer** agent to implement animations.
+You are executing the `/erne-animate` command. Use the **ui-designer** agent to implement animations.
 
 ## Process
 

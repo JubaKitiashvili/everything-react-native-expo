@@ -1,11 +1,11 @@
 ---
-name: retrospective
-description: Session analysis — runs the session evaluator to review work quality and suggest improvements
+name: erne-retrospective
+description: ERNE — Session analysis — runs the session evaluator to review work quality and suggest improvements
 ---
 
-# /retrospective — Session Analysis
+# /erne-retrospective — Session Analysis
 
-You are executing the `/retrospective` command. This is **script-driven** — it runs the session evaluation pipeline.
+You are executing the `/erne-retrospective` command. This is **script-driven** — it runs the session evaluation pipeline.
 
 ## What This Does
 

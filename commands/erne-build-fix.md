@@ -1,11 +1,11 @@
 ---
-name: build-fix
-description: Diagnose and fix build failures using the expo-config-resolver agent
+name: erne-build-fix
+description: ERNE — Diagnose and fix build failures using the expo-config-resolver agent
 ---
 
-# /build-fix — Fix Build Failures
+# /erne-build-fix — Fix Build Failures
 
-You are executing the `/build-fix` command. Use the **expo-config-resolver** agent to diagnose and fix build errors.
+You are executing the `/erne-build-fix` command. Use the **expo-config-resolver** agent to diagnose and fix build errors.
 
 ## Diagnostic Process
 

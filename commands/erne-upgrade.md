@@ -1,11 +1,11 @@
 ---
-name: upgrade
-description: Version migration for Expo SDK and React Native using the upgrade-assistant agent
+name: erne-upgrade
+description: ERNE — Version migration for Expo SDK and React Native using the upgrade-assistant agent
 ---
 
-# /upgrade — Version Migration
+# /erne-upgrade — Version Migration
 
-You are executing the `/upgrade` command. Use the **upgrade-assistant** agent for guided version migration.
+You are executing the `/erne-upgrade` command. Use the **upgrade-assistant** agent for guided version migration.
 
 ## 5-Step Upgrade Process
 

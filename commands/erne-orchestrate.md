@@ -1,11 +1,11 @@
 ---
-name: orchestrate
-description: Run a full multi-agent pipeline from plan to validation using the pipeline-orchestrator agent
+name: erne-orchestrate
+description: ERNE — Run a full multi-agent pipeline from plan to validation using the pipeline-orchestrator agent
 ---
 
-# /orchestrate — Multi-Agent Pipeline Execution
+# /erne-orchestrate — Multi-Agent Pipeline Execution
 
-You are executing the `/orchestrate` command. Use the **pipeline-orchestrator** agent to coordinate a full pipeline across multiple ERNE agents.
+You are executing the `/erne-orchestrate` command. Use the **pipeline-orchestrator** agent to coordinate a full pipeline across multiple ERNE agents.
 
 ## Usage
 
@@ -112,4 +112,4 @@ The pipeline-orchestrator provides a live progress table and a final summary:
 - The pipeline-orchestrator does not write code — it coordinates agents
 - Handoffs between agents follow the templates in `docs/handoff-templates.md`
 - Full pipeline documentation is in `docs/pipeline.md`
-- If the task is too small for a full pipeline (e.g., a one-file fix), consider using `/code` or `/tdd` instead
+- If the task is too small for a full pipeline (e.g., a one-file fix), consider using `/erne-code` or `/erne-tdd` instead

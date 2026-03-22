@@ -1,9 +1,9 @@
 ---
-name: worker
-description: Autonomous ticket execution — polls a provider, picks up ready tickets, and runs the full ERNE pipeline (validate, plan, code, test, review, PR).
+name: erne-worker
+description: ERNE — Autonomous ticket execution — polls a provider, picks up ready tickets, and runs the full ERNE pipeline (validate, plan, code, test, review, PR).
 ---
 
-# /worker — Autonomous Ticket Execution
+# /erne-worker — Autonomous Ticket Execution
 
 ## Usage
 

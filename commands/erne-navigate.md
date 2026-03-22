@@ -1,11 +1,11 @@
 ---
-name: navigate
-description: Design navigation architecture using the architect agent
+name: erne-navigate
+description: ERNE — Design navigation architecture using the architect agent
 ---
 
-# /navigate — Navigation Design
+# /erne-navigate — Navigation Design
 
-You are executing the `/navigate` command. Use the **architect** agent to design navigation structure.
+You are executing the `/erne-navigate` command. Use the **architect** agent to design navigation structure.
 
 ## Process
 

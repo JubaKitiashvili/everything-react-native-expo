@@ -1,11 +1,11 @@
 ---
-name: plan
-description: Design feature architecture using the architect agent
+name: erne-plan
+description: ERNE — Design feature architecture using the architect agent
 ---
 
-# /plan — Feature Architecture Design
+# /erne-plan — Feature Architecture Design
 
-You are executing the `/plan` command. Use the **architect** agent to design a feature architecture.
+You are executing the `/erne-plan` command. Use the **architect** agent to design a feature architecture.
 
 ## Process
 

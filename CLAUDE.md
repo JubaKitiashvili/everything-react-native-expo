@@ -123,7 +123,7 @@ When a user's message matches these signals, automatically use the corresponding
 
 ## Available Commands
 
-Use `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/audit`, `/quality-gate`, `/code`, `/feature`, `/learn`, `/retrospective`, `/setup-device` for guided workflows.
+Use `/erne-plan`, `/erne-code-review`, `/erne-tdd`, `/erne-build-fix`, `/erne-perf`, `/erne-upgrade`, `/erne-native-module`, `/erne-navigate`, `/erne-animate`, `/erne-deploy`, `/erne-component`, `/erne-debug`, `/erne-debug-visual`, `/erne-audit`, `/erne-quality-gate`, `/erne-code`, `/erne-feature`, `/erne-learn`, `/erne-retrospective`, `/erne-setup-device` for guided workflows.
 
 ## Worker Mode (Autonomous Ticket Execution)
 

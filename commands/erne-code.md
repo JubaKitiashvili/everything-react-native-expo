@@ -1,11 +1,11 @@
 ---
-name: code
-description: Implement features using the senior-developer agent
+name: erne-code
+description: ERNE — Implement features using the senior-developer agent
 ---
 
-# /code — Feature Implementation
+# /erne-code — Feature Implementation
 
-You are executing the `/code` command. Use the **senior-developer** agent to implement production-grade feature code.
+You are executing the `/erne-code` command. Use the **senior-developer** agent to implement production-grade feature code.
 
 ## Process
 
@@ -30,4 +30,4 @@ You are executing the `/code` command. Use the **senior-developer** agent to imp
 
 - Reference the active platform rules layer for conventions
 - Follow the project's import ordering: react -> react-native -> expo -> external -> internal -> types
-- If the task is a single isolated unit (one screen, one hook), consider `/feature` instead
+- If the task is a single isolated unit (one screen, one hook), consider `/erne-feature` instead

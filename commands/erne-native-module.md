@@ -1,11 +1,11 @@
 ---
-name: native-module
-description: Create native modules with sequential native-bridge-builder then code-reviewer agents
+name: erne-native-module
+description: ERNE — Create native modules with sequential native-bridge-builder then code-reviewer agents
 ---
 
-# /native-module — Create Native Module
+# /erne-native-module — Create Native Module
 
-You are executing the `/native-module` command. Run **native-bridge-builder** first (create the module), then **code-reviewer** (review it). This is sequential, not parallel.
+You are executing the `/erne-native-module` command. Run **native-bridge-builder** first (create the module), then **code-reviewer** (review it). This is sequential, not parallel.
 
 ## Phase 1: native-bridge-builder — Scaffold & Implement
 

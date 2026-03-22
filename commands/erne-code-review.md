@@ -1,11 +1,11 @@
 ---
-name: code-review
-description: Comprehensive code review combining code quality and performance analysis
+name: erne-code-review
+description: ERNE — Comprehensive code review combining code quality and performance analysis
 ---
 
-# /code-review — Full Code Review
+# /erne-code-review — Full Code Review
 
-You are executing the `/code-review` command. Run **code-reviewer** and **performance-profiler** agents in parallel for comprehensive review.
+You are executing the `/erne-code-review` command. Run **code-reviewer** and **performance-profiler** agents in parallel for comprehensive review.
 
 ## Parallel Execution
 

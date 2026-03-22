@@ -1,11 +1,11 @@
 ---
-name: tdd
-description: Test-driven development workflow with Jest and React Native Testing Library
+name: erne-tdd
+description: ERNE — Test-driven development workflow with Jest and React Native Testing Library
 ---
 
-# /tdd — Test-Driven Development
+# /erne-tdd — Test-Driven Development
 
-You are executing the `/tdd` command. Use the **tdd-guide** agent to implement features test-first.
+You are executing the `/erne-tdd` command. Use the **tdd-guide** agent to implement features test-first.
 
 ## Red-Green-Refactor Cycle
 
