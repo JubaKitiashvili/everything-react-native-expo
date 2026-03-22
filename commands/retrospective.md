@@ -1,6 +1,6 @@
 ---
 name: retrospective
-description: Session analysis — runs evaluate-session.js to review work quality and suggest improvements
+description: Session analysis — runs the session evaluator to review work quality and suggest improvements
 ---
 
 # /retrospective — Session Analysis

@@ -11,17 +11,17 @@ This skill manages the continuous learning pipeline — observing patterns durin
 
 ```
 PostToolUse hook (real-time)
-  → continuous-learning-observer.cjs (lightweight pattern capture)
+  → `continuous-learning-observer.cjs` (lightweight pattern capture)
   → patterns stored in .claude/memory/observations/
 
 /learn command (manual, comprehensive)
-  → extract-session-patterns.js (full session analysis)
-  → analyze-patterns.js (pattern clustering + dedup)
+  → `extract-session-patterns.js` (full session analysis)
+  → `analyze-patterns.js` (pattern clustering + dedup)
   → skill-generator prompt (create new content)
-  → validate-content.js (verify new content is valid)
+  → `validate-content.js` (verify new content is valid)
 
 /retrospective command (session end)
-  → evaluate-session.js (quality metrics + suggestions)
+  → `evaluate-session.js` (quality metrics + suggestions)
 ```
 
 ## How It Works
