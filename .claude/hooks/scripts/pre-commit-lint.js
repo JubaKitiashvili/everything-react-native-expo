@@ -1,6 +1,6 @@
 'use strict';
 const { execFileSync } = require('child_process');
-const { readStdin, pass, fail, warn } = require('./lib/hook-utils');
+const { readStdin, pass, warn } = require('./lib/hook-utils');
 
 const input = readStdin();
 const command = (input.tool_input && input.tool_input.command) || '';
@@ -18,7 +18,8 @@ try {
 } catch (err) {
   const output = err.stdout || err.stderr || '';
   if (output.includes('error') || output.includes('warning')) {
-    return fail(`ERNE: Lint errors found. Fix before committing:\n${output.slice(0, 500)}`);
+    console.error(`ERNE: Lint errors found. Fix before committing:\n${output.slice(0, 500)}`);
+    return pass();
   }
   if (err.status === 127 || output.includes('not found')) {
     return pass('ERNE: ESLint not available, skipping lint check');

@@ -26,9 +26,7 @@ function findFilesWithExt(dir, ext) {
       withFileTypes: true,
       recursive: true,
     });
-    return entries.some(
-      e => e.isFile() && e.name.endsWith(ext)
-    );
+    return entries.some((e) => e.isFile() && e.name.endsWith(ext));
   } catch {
     return false;
   }
@@ -85,15 +83,19 @@ try {
   hasSettings = true;
   profile = settings.profile || 'standard';
   version = settings.erneVersion || '';
-} catch { /* no settings */ }
+} catch {
+  /* no settings */
+}
 
 // Count agents
 try {
   const agentDir = path.join(projectDir, '.claude', 'agents');
   if (fs.existsSync(agentDir)) {
-    agentCount = fs.readdirSync(agentDir).filter(f => f.endsWith('.md')).length;
+    agentCount = fs.readdirSync(agentDir).filter((f) => f.endsWith('.md')).length;
   }
-} catch { /* skip */ }
+} catch {
+  /* skip */
+}
 
 // ─── Dashboard detection (no auto-start — use `npx erne-universal dashboard`) ─
 
@@ -106,7 +108,9 @@ if (hasSettings) {
     if (existingPort) {
       dashboardUrl = `http://localhost:${existingPort}`;
     }
-  } catch { /* port-registry not available — skip */ }
+  } catch {
+    /* port-registry not available — skip */
+  }
 }
 
 // ─── Print banner ────────────────────────────────────────────────────────────
@@ -118,7 +122,7 @@ if (hasSettings) {
   parts.push(profile);
   if (agentCount > 0) parts.push(`${agentCount} agents`);
   if (dashboardUrl) parts.push(`Dashboard: ${dashboardUrl}`);
-  console.log(`ERNE ${parts.join(' | ')}`);
+  console.error(`ERNE ${parts.join(' | ')}`);
 } else {
   // Fallback: layer-based output for projects without full ERNE init
   const parts = [];
@@ -126,8 +130,8 @@ if (hasSettings) {
   parts.push(`${profile} profile`);
   if (agentCount > 0) parts.push(`${agentCount} agents`);
   parts.push(`layers: ${layers.join(', ')}`);
-  console.log(`ERNE ${parts.join(' | ')}`);
-  console.log(`Use /erne- commands (e.g. /erne-plan, /erne-perf, /erne-doctor)`);
+  console.error(`ERNE ${parts.join(' | ')}`);
+  console.error(`Use /erne- commands (e.g. /erne-plan, /erne-perf, /erne-doctor)`);
 }
 
 if (!hasSignals) {

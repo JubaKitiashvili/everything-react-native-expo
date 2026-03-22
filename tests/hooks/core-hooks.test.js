@@ -20,8 +20,8 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('expo'));
-      assert.ok(result.stdout.includes('common'));
+      assert.ok(result.stderr.includes('expo'));
+      assert.ok(result.stderr.includes('common'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -38,7 +38,7 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('expo'));
+      assert.ok(result.stderr.includes('expo'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -57,9 +57,9 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('bare-rn'));
-      assert.ok(result.stdout.includes('common'));
-      assert.ok(!result.stdout.includes('expo'));
+      assert.ok(result.stderr.includes('bare-rn'));
+      assert.ok(result.stderr.includes('common'));
+      assert.ok(!result.stderr.includes('expo'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -78,7 +78,7 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('native-ios'));
+      assert.ok(result.stderr.includes('native-ios'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -97,7 +97,7 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('native-android'));
+      assert.ok(result.stderr.includes('native-android'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -116,10 +116,10 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 0);
-      assert.ok(result.stdout.includes('expo'));
-      assert.ok(!result.stdout.includes('bare-rn'));
-      assert.ok(result.stdout.includes('native-ios'));
-      assert.ok(result.stdout.includes('native-android'));
+      assert.ok(result.stderr.includes('expo'));
+      assert.ok(!result.stderr.includes('bare-rn'));
+      assert.ok(result.stderr.includes('native-ios'));
+      assert.ok(result.stderr.includes('native-android'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -132,7 +132,7 @@ describe('session-start.js', () => {
         ERNE_PROJECT_DIR: dir,
       });
       assert.strictEqual(result.exitCode, 2);
-      assert.ok(result.stdout.includes('common'));
+      assert.ok(result.stderr.includes('common'));
     } finally {
       cleanupTempProject(dir);
     }

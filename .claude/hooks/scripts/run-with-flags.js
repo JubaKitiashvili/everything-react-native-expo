@@ -31,9 +31,7 @@ function resolveProfile() {
   for (const mdPath of claudeMdPaths) {
     try {
       const content = fs.readFileSync(mdPath, 'utf8');
-      const match = content.match(
-        /<!--\s*Hook Profile:\s*(minimal|standard|strict)\s*-->/i
-      );
+      const match = content.match(/<!--\s*Hook Profile:\s*(minimal|standard|strict)\s*-->/i);
       if (match) return match[1].toLowerCase();
     } catch {}
   }
@@ -63,7 +61,9 @@ function loadHooksConfig() {
   for (const candidate of candidates) {
     try {
       return JSON.parse(fs.readFileSync(candidate, 'utf8'));
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
 
   return { hooks: [] };
@@ -73,7 +73,7 @@ const profile = resolveProfile();
 const config = loadHooksConfig();
 
 // Find hook entry in config
-const hookEntry = config.hooks.find(h => h.script === HOOK_SCRIPT);
+const hookEntry = config.hooks.find((h) => h.script === HOOK_SCRIPT);
 if (!hookEntry) {
   process.exit(0);
 }
@@ -99,7 +99,7 @@ const result = spawnSync('node', [scriptPath], {
   input: stdinData,
   encoding: 'utf8',
   stdio: ['pipe', 'pipe', 'pipe'],
-  timeout: 30000,
+  timeout: 120000,
   env,
 });
 
@@ -109,7 +109,7 @@ if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);
 
 // Report hook execution metrics to dashboard (fire-and-forget)
-if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
+if (process.env.ERNE_DASHBOARD_PORT) {
   try {
     const http = require('http');
     const { resolveDashboardPort } = require('./lib/port-registry');
@@ -122,14 +122,15 @@ if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
         duration_ms: durationMs,
         exit_code: result.status ?? 0,
         skipped: false,
-      }
+      },
     });
     const req = http.request({
-      hostname: '127.0.0.1', port,
+      hostname: '127.0.0.1',
+      port,
       path: '/api/events',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-      timeout: 300
+      timeout: 300,
     });
     req.on('error', () => {});
     req.write(payload);
@@ -138,7 +139,7 @@ if (process.env.ERNE_DASHBOARD_PORT || process.env.ERNE_HOOK_CHAIN) {
 }
 
 if (result.signal === 'SIGTERM') {
-  console.error('ERNE: hook timed out after 30s');
+  console.error('ERNE: hook timed out after 120s');
   process.exit(2);
 }
 

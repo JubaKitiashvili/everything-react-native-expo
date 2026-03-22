@@ -10,22 +10,20 @@ const DISPATCHER = path.join(HOOKS_DIR, 'run-with-flags.js');
 
 function runHook(scriptName, stdin = {}, env = {}) {
   const scriptPath = path.join(HOOKS_DIR, scriptName);
-  try {
-    const stdout = execFileSync('node', [scriptPath], {
-      input: JSON.stringify(stdin),
-      encoding: 'utf8',
-      env: { ...process.env, ...env },
-      stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 10000,
-    });
-    return { exitCode: 0, stdout, stderr: '' };
-  } catch (err) {
-    return {
-      exitCode: err.status ?? 1,
-      stdout: err.stdout || '',
-      stderr: err.stderr || '',
-    };
-  }
+  const { spawnSync } = require('child_process');
+  const result = spawnSync('node', [scriptPath], {
+    input: JSON.stringify(stdin),
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+    stdio: ['pipe', 'pipe', 'pipe'],
+    timeout: 10000,
+  });
+  return {
+    exitCode: result.status ?? 1,
+    stdout: result.stdout || '',
+    stderr: result.stderr || '',
+    output: (result.stdout || '') + (result.stderr || ''),
+  };
 }
 
 function runDispatcher(hookScript, stdin = {}, env = {}) {
