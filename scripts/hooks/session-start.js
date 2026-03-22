@@ -95,7 +95,7 @@ try {
   }
 } catch { /* skip */ }
 
-// ─── Dashboard auto-start ────────────────────────────────────────────────────
+// ─── Dashboard detection (no auto-start — use `npx erne-universal dashboard`) ─
 
 let dashboardUrl = '';
 
@@ -103,28 +103,8 @@ if (hasSettings) {
   try {
     const { getRegisteredPort } = require('./lib/port-registry');
     const existingPort = getRegisteredPort(projectDir);
-
     if (existingPort) {
       dashboardUrl = `http://localhost:${existingPort}`;
-    } else if (!process.env.ERNE_SKIP_DASHBOARD) {
-      // Try to start dashboard in background
-      try {
-        const dashboardDir = path.resolve(__dirname, '..', '..', 'dashboard');
-        const serverScript = path.join(dashboardDir, 'server.js');
-        const depsExist = fs.existsSync(path.join(dashboardDir, 'node_modules', 'better-sqlite3'));
-
-        if (fs.existsSync(serverScript) && depsExist) {
-          const { fork } = require('child_process');
-          const child = fork(serverScript, [], {
-            cwd: projectDir,
-            detached: true,
-            stdio: 'ignore',
-            env: { ...process.env, ERNE_PROJECT_DIR: projectDir },
-          });
-          child.unref();
-          dashboardUrl = 'http://localhost:3333 (starting...)';
-        }
-      } catch { /* dashboard not available — skip */ }
     }
   } catch { /* port-registry not available — skip */ }
 }
