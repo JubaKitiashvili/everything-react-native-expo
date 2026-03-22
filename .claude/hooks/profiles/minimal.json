@@ -1,0 +1,10 @@
+{
+  "name": "minimal",
+  "description": "Fast iteration, minimal checks. For vibe coders and rapid prototyping.",
+  "hooks": [
+    "session-start.js",
+    "post-edit-format.js",
+    "continuous-learning-observer.js",
+    "dashboard-event.js"
+  ]
+}

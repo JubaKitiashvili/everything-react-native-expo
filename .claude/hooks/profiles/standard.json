@@ -1,0 +1,20 @@
+{
+  "name": "standard",
+  "description": "Balanced quality and speed. Recommended for most projects.",
+  "hooks": [
+    "session-start.js",
+    "post-edit-format.js",
+    "post-edit-typecheck.js",
+    "check-console-log.js",
+    "check-platform-specific.js",
+    "check-reanimated-worklet.js",
+    "check-expo-config.js",
+    "bundle-size-check.js",
+    "pre-commit-lint.js",
+    "continuous-learning-observer.js",
+    "evaluate-session.js",
+    "dashboard-event.js",
+    "visual-debug-event.js",
+    "audit-refresh.js"
+  ]
+}

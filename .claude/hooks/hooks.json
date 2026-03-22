@@ -1,0 +1,133 @@
+{
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "script": "session-start.js",
+      "command": "node scripts/hooks/run-with-flags.js session-start.js",
+      "profiles": ["minimal", "standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "post-edit-format.js",
+      "command": "node scripts/hooks/run-with-flags.js post-edit-format.js",
+      "profiles": ["minimal", "standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "post-edit-typecheck.js",
+      "command": "node scripts/hooks/run-with-flags.js post-edit-typecheck.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "check-console-log.js",
+      "command": "node scripts/hooks/run-with-flags.js check-console-log.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "check-platform-specific.js",
+      "command": "node scripts/hooks/run-with-flags.js check-platform-specific.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "check-reanimated-worklet.js",
+      "command": "node scripts/hooks/run-with-flags.js check-reanimated-worklet.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "check-expo-config.js",
+      "command": "node scripts/hooks/run-with-flags.js check-expo-config.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "bundle-size-check.js",
+      "command": "node scripts/hooks/run-with-flags.js bundle-size-check.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PreToolUse",
+      "pattern": "Bash",
+      "script": "pre-commit-lint.js",
+      "command": "node scripts/hooks/run-with-flags.js pre-commit-lint.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "PreToolUse",
+      "pattern": "Edit|Write",
+      "script": "pre-edit-test-gate.js",
+      "command": "node scripts/hooks/run-with-flags.js pre-edit-test-gate.js",
+      "profiles": ["strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "security-scan.js",
+      "command": "node scripts/hooks/run-with-flags.js security-scan.js",
+      "profiles": ["strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "native-compat-check.js",
+      "command": "node scripts/hooks/run-with-flags.js native-compat-check.js",
+      "profiles": ["strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Edit|Write",
+      "script": "accessibility-check.js",
+      "command": "node scripts/hooks/run-with-flags.js accessibility-check.js",
+      "profiles": ["strict"]
+    },
+    {
+      "event": "PreToolUse",
+      "pattern": "Agent",
+      "script": "dashboard-event.js",
+      "command": "node scripts/hooks/run-with-flags.js dashboard-event.js",
+      "profiles": ["minimal", "standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Agent",
+      "script": "dashboard-event.js",
+      "command": "node scripts/hooks/run-with-flags.js dashboard-event.js",
+      "profiles": ["minimal", "standard", "strict"]
+    },
+    {
+      "event": "PostToolUse",
+      "pattern": "Agent",
+      "script": "visual-debug-event.js",
+      "command": "node scripts/hooks/run-with-flags.js visual-debug-event.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "Stop",
+      "script": "continuous-learning-observer.js",
+      "command": "node scripts/hooks/run-with-flags.js continuous-learning-observer.js",
+      "profiles": ["minimal", "standard", "strict"]
+    },
+    {
+      "event": "Stop",
+      "script": "evaluate-session.js",
+      "command": "node scripts/hooks/run-with-flags.js evaluate-session.js",
+      "profiles": ["standard", "strict"]
+    },
+    {
+      "event": "Stop",
+      "script": "audit-refresh.js",
+      "command": "node scripts/hooks/run-with-flags.js audit-refresh.js",
+      "profiles": ["standard", "strict"]
+    }
+  ]
+}

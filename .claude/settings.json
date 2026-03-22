@@ -1,0 +1,31 @@
+{
+  "erneVersion": "0.10.11",
+  "detection": {
+    "isRNProject": false,
+    "framework": "unknown",
+    "stack": {
+      "state": "none",
+      "serverState": "none",
+      "navigation": "none",
+      "styling": "stylesheet",
+      "lists": "flatlist",
+      "images": "rn-image",
+      "forms": "none",
+      "storage": "async-storage",
+      "testing": "none",
+      "build": "manual"
+    },
+    "hasMonorepo": false,
+    "monorepo": null,
+    "hasNewArch": false,
+    "hasTypescript": false,
+    "existingClaudeMd": false,
+    "componentStyle": "functional"
+  },
+  "profile": "standard",
+  "ruleLayers": [
+    "common"
+  ],
+  "mcpSelections": [],
+  "generatedAt": "2026-03-22T17:07:46.853Z"
+}

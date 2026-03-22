@@ -1,0 +1,69 @@
+// Template for evaluate-session.cjs hook
+// This runs on session end to generate a retrospective
+
+const fs = require('fs');
+const path = require('path');
+
+const CONFIG = {
+  observationDir: '{{observationDir}}',
+  generatedDir: '{{generatedDir}}',
+};
+
+module.exports = async () => {
+  // Read all session observations
+  const obsDir = CONFIG.observationDir;
+  if (!fs.existsSync(obsDir)) {
+    return { message: 'No observations found for this session.' };
+  }
+
+  const sessionFiles = fs.readdirSync(obsDir)
+    .filter(f => f.startsWith('session-'))
+    .sort();
+
+  if (sessionFiles.length === 0) {
+    return { message: 'No observations found for this session.' };
+  }
+
+  // Aggregate observations
+  let allObservations = [];
+  for (const file of sessionFiles) {
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(obsDir, file), 'utf8'));
+      allObservations = allObservations.concat(data);
+    } catch { /* skip corrupt files */ }
+  }
+
+  // Generate metrics
+  const metrics = {
+    totalObservations: allObservations.length,
+    toolUsage: {},
+    filesModified: new Set(),
+    timespan: {
+      start: allObservations[0]?.timestamp,
+      end: allObservations[allObservations.length - 1]?.timestamp,
+    },
+  };
+
+  for (const obs of allObservations) {
+    metrics.toolUsage[obs.tool] = (metrics.toolUsage[obs.tool] || 0) + 1;
+    (obs.files || []).forEach(f => metrics.filesModified.add(f));
+  }
+
+  metrics.filesModified = [...metrics.filesModified];
+
+  // Write retrospective
+  const retro = {
+    timestamp: new Date().toISOString(),
+    metrics,
+    observations: allObservations,
+  };
+
+  fs.mkdirSync(CONFIG.generatedDir, { recursive: true });
+  const retroFile = path.join(CONFIG.generatedDir, `retro-${Date.now()}.json`);
+  fs.writeFileSync(retroFile, JSON.stringify(retro, null, 2));
+
+  return {
+    message: `Retrospective saved to ${retroFile}`,
+    metrics,
+  };
+};
