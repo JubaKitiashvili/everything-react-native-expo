@@ -183,3 +183,21 @@ Skills in `skills/` activate automatically:
 - `native-module-scaffold` — Create Turbo/Expo modules
 - `upgrade-workflow` — Version migration guide
 - `continuous-learning-v2` — Pattern extraction and learning
+
+---
+
+<!-- erne-profile: standard -->
+# ERNE Configuration (auto-generated)
+
+## Rules
+@import .claude/rules/common/
+
+## Skills
+@import .claude/skills/
+
+## Available Commands
+/erne-plan, /erne-code-review, /erne-tdd, /erne-build-fix, /erne-perf, /erne-upgrade, /erne-native-module, /erne-debug, /erne-debug-visual, /erne-deploy,
+/erne-component, /erne-navigate, /erne-animate, /erne-orchestrate, /erne-quality-gate, /erne-code, /erne-feature, /erne-worker, /erne-audit, /erne-learn, /erne-retrospective, /erne-setup-device
+
+## Dashboard
+ERNE includes a visual dashboard. Launch: `npx erne-universal dashboard`

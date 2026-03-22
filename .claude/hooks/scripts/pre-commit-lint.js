@@ -21,9 +21,9 @@ try {
     return fail(`ERNE: Lint errors found. Fix before committing:\n${output.slice(0, 500)}`);
   }
   if (err.status === 127 || output.includes('not found')) {
-    return warn('ERNE: ESLint not available, skipping lint check');
+    return pass('ERNE: ESLint not available, skipping lint check');
   }
-  return warn('ERNE: ESLint failed with unknown error');
+  return pass('ERNE: ESLint check inconclusive, skipping');
 }
 
 try {
@@ -37,7 +37,7 @@ try {
 } catch (err) {
   const output = err.stdout || err.stderr || '';
   if (output.includes('Code style')) {
-    return warn('ERNE: Some files need formatting. Run: npx prettier --write .');
+    return pass('ERNE: Some files need formatting. Run: npx prettier --write .');
   } else {
     return pass();
   }

@@ -1,5 +1,5 @@
 {
-  "erneVersion": "0.10.11",
+  "erneVersion": "0.10.23",
   "detection": {
     "isRNProject": false,
     "framework": "unknown",
@@ -27,5 +27,5 @@
     "common"
   ],
   "mcpSelections": [],
-  "generatedAt": "2026-03-22T17:07:46.853Z"
+  "generatedAt": "2026-03-22T21:29:29.643Z"
 }
