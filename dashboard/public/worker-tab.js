@@ -24,12 +24,29 @@
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
+  var DEFAULT_STATE = {
+    status: 'stopped',
+    provider: 'none',
+    pollInterval: null,
+    repo: null,
+    currentTicket: null,
+    pipelineStep: -1,
+    history: [],
+    log: [],
+    ticketsToday: 0
+  };
+
   function fetchData() {
     fetch('/api/worker')
-      .then(function (r) { return r.json(); })
-      .then(function (data) { render(data); })
+      .then(function (r) {
+        if (!r.ok) return DEFAULT_STATE;
+        return r.json();
+      })
+      .then(function (data) {
+        render(data || DEFAULT_STATE);
+      })
       .catch(function () {
-        container.innerHTML = '<div class="eco-error">Could not load worker data.</div>';
+        render(DEFAULT_STATE);
       });
   }
 

@@ -668,7 +668,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && req.url === '/api/worker') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(lastWorkerState || { status: 'offline' }));
+    res.end(JSON.stringify(lastWorkerState || { status: 'stopped', provider: 'none', history: [], log: [], ticketsToday: 0 }));
     return;
   }
 
