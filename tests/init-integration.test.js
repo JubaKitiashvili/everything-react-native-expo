@@ -39,6 +39,7 @@ function runInit(cwd) {
     encoding: 'utf8',
     cwd,
     timeout: 30000,
+    env: { ...process.env, ERNE_SKIP_DASHBOARD: '1' },
   });
 }
 
