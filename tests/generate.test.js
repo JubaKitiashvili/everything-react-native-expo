@@ -215,8 +215,8 @@ describe('generateConfig — variant file copying', () => {
     assert.ok(fs.existsSync(path.join(tmpDir, 'contexts')), 'contexts/ should exist');
     assert.ok(fs.existsSync(path.join(tmpDir, 'skills')), 'skills/ should exist');
     // Commands are installed as skills: skills/{name}/SKILL.md
-    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'perf', 'SKILL.md')), 'skills/perf/SKILL.md should exist');
-    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'plan', 'SKILL.md')), 'skills/plan/SKILL.md should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'erne-perf', 'SKILL.md')), 'skills/erne-perf/SKILL.md should exist');
+    assert.ok(fs.existsSync(path.join(tmpDir, 'skills', 'erne-plan', 'SKILL.md')), 'skills/erne-plan/SKILL.md should exist');
     assert.ok(!fs.existsSync(path.join(tmpDir, 'commands')), 'commands/ should NOT exist');
   });
 });

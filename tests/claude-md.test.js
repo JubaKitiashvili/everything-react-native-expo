@@ -118,9 +118,9 @@ describe('Scenario A — No existing CLAUDE.md', () => {
     handleClaudeMd(dir, mockDetection, 'standard', mockRuleLayers);
 
     const content = fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8');
-    assert.ok(content.includes('/plan'), 'Should include /plan command');
-    assert.ok(content.includes('/code-review'), 'Should include /code-review command');
-    assert.ok(content.includes('/tdd'), 'Should include /tdd command');
+    assert.ok(content.includes('/erne-plan'), 'Should include /erne-plan command');
+    assert.ok(content.includes('/erne-code-review'), 'Should include /erne-code-review command');
+    assert.ok(content.includes('/erne-tdd'), 'Should include /erne-tdd command');
   });
 
   it('includes key rules based on detection', () => {
