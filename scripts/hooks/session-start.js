@@ -68,7 +68,41 @@ if (hasAndroidDir && findFilesWithExt('android', '.kt')) {
 
 const hasSignals = layers.length > 1;
 
-console.log(`ERNE: Project layers: ${layers.join(', ')}`);
+// Read ERNE settings for richer session info
+let profile = 'unknown';
+let agentCount = 0;
+let version = '';
+try {
+  const settings = JSON.parse(fs.readFileSync(path.join(projectDir, '.claude', 'settings.json'), 'utf8'));
+  profile = settings.profile || 'standard';
+  version = settings.erneVersion || '';
+} catch { /* no settings */ }
+
+// Count agents
+try {
+  const agentDir = path.join(projectDir, '.claude', 'agents');
+  if (fs.existsSync(agentDir)) {
+    agentCount = fs.readdirSync(agentDir).filter(f => f.endsWith('.md')).length;
+  }
+} catch { /* skip */ }
+
+// Find dashboard port
+let dashboardInfo = '';
+try {
+  const { resolveDashboardPort } = require('./lib/port-registry');
+  const port = resolveDashboardPort(projectDir);
+  if (port) dashboardInfo = ` | Dashboard: http://localhost:${port}`;
+} catch { /* no registry */ }
+
+// Build status line
+const parts = [];
+if (version) parts.push(`v${version}`);
+parts.push(`${profile} profile`);
+if (agentCount > 0) parts.push(`${agentCount} agents`);
+parts.push(`layers: ${layers.join(', ')}`);
+
+console.log(`ERNE ${parts.join(' | ')}${dashboardInfo}`);
+console.log(`Use /erne- commands (e.g. /erne-plan, /erne-perf, /erne-doctor)`);
 
 if (!hasSignals) {
   process.exit(2); // warn
