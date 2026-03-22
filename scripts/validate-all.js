@@ -68,7 +68,7 @@ for (const f of agentFiles) {
 
 // Commands
 console.log('  Commands:');
-validateCount('commands', '.md', 21, 'commands/');
+validateCount('commands', '.md', 22, 'commands/');
 const cmdFiles = fs.readdirSync('commands').filter(f => f.endsWith('.md'));
 for (const f of cmdFiles) {
   validateFrontmatter(path.join('commands', f), ['name', 'description']);
