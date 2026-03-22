@@ -1,14 +1,18 @@
 {
   "name": "erne-universal",
   "version": "0.10.25",
-  "description": "Complete AI coding agent harness for React Native and Expo development",
+  "description": "Complete AI coding agent harness for React Native and Expo — 13 specialized agents, autonomous worker mode, visual debugging, smart routing",
   "keywords": [
     "react-native",
     "expo",
     "claude-code",
     "ai-agents",
     "mobile-development",
-    "coding-assistant"
+    "coding-assistant",
+    "autonomous-worker",
+    "visual-debugging",
+    "documentation-generator",
+    "smart-routing"
   ],
   "license": "MIT",
   "author": "Juba Kitiashvili",

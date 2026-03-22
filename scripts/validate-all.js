@@ -11,9 +11,17 @@ let errors = 0;
 let warnings = 0;
 let checked = 0;
 
-function error(msg) { errors++; console.error(`  ✗ ${msg}`); }
-function warn(msg) { warnings++; console.warn(`  ⚠ ${msg}`); }
-function ok(msg) { console.log(`  ✓ ${msg}`); }
+function error(msg) {
+  errors++;
+  console.error(`  ✗ ${msg}`);
+}
+function warn(msg) {
+  warnings++;
+  console.warn(`  ⚠ ${msg}`);
+}
+function ok(msg) {
+  console.log(`  ✓ ${msg}`);
+}
 
 // ─── Validate frontmatter in .md files ───
 function validateFrontmatter(filePath, requiredFields) {
@@ -47,7 +55,7 @@ function validateJson(filePath) {
 
 // ─── Validate directory file counts ───
 function validateCount(dir, ext, expected, label) {
-  const files = fs.readdirSync(dir).filter(f => f.endsWith(ext));
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith(ext));
   if (files.length !== expected) {
     error(`${label}: Expected ${expected} files, found ${files.length}`);
   } else {
@@ -61,15 +69,15 @@ console.log('\n  ERNE Content Validation\n');
 // Agents
 console.log('  Agents:');
 validateCount('agents', '.md', 13, 'agents/');
-const agentFiles = fs.readdirSync('agents').filter(f => f.endsWith('.md'));
+const agentFiles = fs.readdirSync('agents').filter((f) => f.endsWith('.md'));
 for (const f of agentFiles) {
   validateFrontmatter(path.join('agents', f), ['name', 'description']);
 }
 
 // Commands
 console.log('  Commands:');
-validateCount('commands', '.md', 22, 'commands/');
-const cmdFiles = fs.readdirSync('commands').filter(f => f.endsWith('.md'));
+validateCount('commands', '.md', 22, 'commands/'); // 22 command files
+const cmdFiles = fs.readdirSync('commands').filter((f) => f.endsWith('.md'));
 for (const f of cmdFiles) {
   validateFrontmatter(path.join('commands', f), ['name', 'description']);
 }
@@ -83,7 +91,7 @@ for (const layer of ruleLayers) {
     error(`rules/${layer}/: Missing directory`);
     continue;
   }
-  const ruleFiles = fs.readdirSync(layerDir).filter(f => f.endsWith('.md'));
+  const ruleFiles = fs.readdirSync(layerDir).filter((f) => f.endsWith('.md'));
   ok(`rules/${layer}/: ${ruleFiles.length} files`);
   for (const f of ruleFiles) {
     validateFrontmatter(path.join(layerDir, f), ['description']);
@@ -99,7 +107,7 @@ for (const profile of ['minimal', 'standard', 'strict']) {
 
 // MCP configs
 console.log('  MCP Configs:');
-const mcpFiles = fs.readdirSync('mcp-configs').filter(f => f.endsWith('.json'));
+const mcpFiles = fs.readdirSync('mcp-configs').filter((f) => f.endsWith('.json'));
 ok(`mcp-configs/: ${mcpFiles.length} files`);
 for (const f of mcpFiles) {
   validateJson(path.join('mcp-configs', f));
@@ -111,9 +119,10 @@ validateCount('contexts', '.md', 3, 'contexts/');
 
 // Skills
 console.log('  Skills:');
-const skillDirs = fs.readdirSync('skills', { withFileTypes: true })
-  .filter(d => d.isDirectory())
-  .map(d => d.name);
+const skillDirs = fs
+  .readdirSync('skills', { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .map((d) => d.name);
 ok(`skills/: ${skillDirs.length} skill directories`);
 for (const dir of skillDirs) {
   const skillMd = path.join('skills', dir, 'SKILL.md');

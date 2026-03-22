@@ -1,7 +1,7 @@
 {
   "name": "erne-universal",
-  "version": "0.10.6",
-  "description": "Complete AI coding agent harness for React Native and Expo development — 13 agents, 21 commands, 7 skills, 10 MCP integrations, autonomous worker mode",
+  "version": "0.10.25",
+  "description": "Complete AI coding agent harness for React Native and Expo — 13 agents, 22 commands, 7 skills, 10 MCP integrations, autonomous worker mode, visual debugging, smart routing",
   "author": "JubaKitiashvili",
   "license": "MIT",
   "repository": "https://github.com/JubaKitiashvili/everything-react-native-expo",
@@ -20,12 +20,7 @@
     "autonomous-worker",
     "visual-debugging"
   ],
-  "categories": [
-    "mobile-development",
-    "react-native",
-    "ai-agents",
-    "developer-tools"
-  ],
+  "categories": ["mobile-development", "react-native", "ai-agents", "developer-tools"],
   "components": {
     "agents": [
       "architect",
@@ -43,6 +38,7 @@
       "visual-debugger"
     ],
     "commands": [
+      "erne-init",
       "erne-plan",
       "erne-code-review",
       "erne-tdd",
@@ -74,11 +70,7 @@
       "tdd-workflow",
       "upgrade-workflow"
     ],
-    "hooks": [
-      "minimal",
-      "standard",
-      "strict"
-    ],
+    "hooks": ["minimal", "standard", "strict"],
     "mcp-configs": [
       "agent-device",
       "appstore-connect",
@@ -91,11 +83,7 @@
       "sentry",
       "supabase"
     ],
-    "contexts": [
-      "dev",
-      "review",
-      "vibe"
-    ]
+    "contexts": ["dev", "review", "vibe"]
   },
   "install": "npx erne-universal init",
   "engines": {

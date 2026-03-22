@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-ERNE_VERSION="0.10.5"
+ERNE_VERSION="0.10.25"
 REPO_URL="https://github.com/JubaKitiashvili/everything-react-native-expo"
 
 echo ""

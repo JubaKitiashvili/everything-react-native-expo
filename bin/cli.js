@@ -19,6 +19,7 @@ const COMMANDS = {
   status: () => require('../lib/status'),
   audit: () => require('../lib/audit-cli'),
   worker: () => require('../lib/worker'),
+  uninstall: () => require('../lib/uninstall'),
   'sync-configs': () => require('../lib/sync-configs'),
   sync: () => require('../lib/sync-configs'),
   version: () => {
@@ -43,6 +44,7 @@ const COMMANDS = {
     doctor      Check project health and ERNE setup
     status      Show current ERNE configuration
     worker      Run autonomous ticket execution agent
+    uninstall   Remove all ERNE files from your project
     sync-configs Sync IDE config files from CLAUDE.md (alias: sync)
     version     Show installed version
     help        Show this help message
@@ -76,7 +78,7 @@ const COMMANDS = {
   Website: https://erne.dev
     `);
     process.exit(0);
-  }
+  },
 };
 
 let command = process.argv[2] || 'help';
@@ -95,7 +97,7 @@ if (!COMMANDS[command]) {
 // Execute command module
 const run = COMMANDS[command]();
 if (typeof run === 'function') {
-  run().catch(err => {
+  run().catch((err) => {
     console.error('Error:', err.message);
     process.exit(1);
   });
