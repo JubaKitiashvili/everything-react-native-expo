@@ -43,14 +43,30 @@ function resolveProfile() {
 }
 
 function loadHooksConfig() {
-  const configPath =
-    process.env.ERNE_HOOKS_CONFIG ||
-    path.resolve(__dirname, '../../hooks/hooks.json');
-  try {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch {
-    return { hooks: [] };
+  if (process.env.ERNE_HOOKS_CONFIG) {
+    try {
+      return JSON.parse(fs.readFileSync(process.env.ERNE_HOOKS_CONFIG, 'utf8'));
+    } catch {
+      return { hooks: [] };
+    }
   }
+
+  // Try multiple locations:
+  // 1. .claude/hooks/hooks.json (copied master config — has profiles array for filtering)
+  // 2. ../../hooks/hooks.json (dev: running from scripts/hooks/ in ERNE repo)
+  const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+  const candidates = [
+    path.join(projectDir, '.claude', 'hooks', 'hooks.json'),
+    path.resolve(__dirname, '../../hooks/hooks.json'),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(fs.readFileSync(candidate, 'utf8'));
+    } catch { /* try next */ }
+  }
+
+  return { hooks: [] };
 }
 
 const profile = resolveProfile();

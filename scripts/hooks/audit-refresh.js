@@ -25,7 +25,10 @@ try {
   // Refresh scan (JSON only, skip dep health for speed)
   let runScan;
   try { runScan = require('erne-universal/lib/audit-scanner').runScan; } catch {
-    try { runScan = require('../../lib/audit-scanner').runScan; } catch { process.exit(0); }
+    try { runScan = require('../../lib/audit-scanner').runScan; } catch {
+      // When running from .claude/hooks/scripts/, try resolving from project root node_modules
+      try { runScan = require(path.join(cwd, 'node_modules', 'erne-universal', 'lib', 'audit-scanner')).runScan; } catch { process.exit(0); }
+    }
   }
   const auditData = runScan(cwd, { skipDepHealth: true, maxFiles: 500 });
 
