@@ -70,6 +70,7 @@
     "format": "prettier --write 'lib/**/*.js' 'scripts/**/*.js' 'bin/**/*.js'",
     "format:check": "prettier --check 'lib/**/*.js' 'scripts/**/*.js' 'bin/**/*.js'",
     "validate": "node scripts/validate-all.js",
+    "build:dashboard": "cd dashboard-next && npm run build",
     "prepublishOnly": "npm run validate"
   },
   "devDependencies": {

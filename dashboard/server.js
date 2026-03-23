@@ -31,6 +31,10 @@ try {
   console.warn('  Context features disabled (better-sqlite3 not installed)');
 }
 const { AGENT_DEFINITIONS: SHARED_AGENT_DEFS } = require('./lib/agents-config');
+const { handleTasks, handleUpload } = require('./lib/api/tasks');
+const { handleAgents, registerCustomAgents } = require('./lib/api/agents');
+const { handleIssueFix } = require('./lib/api/issues-fix');
+const { handleMcp } = require('./lib/api/mcp');
 
 // Tab feature modules (loaded lazily to avoid errors if dirs don't exist yet)
 let ecosystemHandler, upgradesHandler, insightsHandler, myappHandler;
@@ -85,7 +89,17 @@ const MIME_TYPES = {
   '.js': 'application/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
   '.json': 'application/json',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.map': 'application/json',
 };
 
 const AGENT_DEFINITIONS = SHARED_AGENT_DEFS;
@@ -198,6 +212,7 @@ const initHistory = () => {
 };
 
 initHistory();
+registerCustomAgents(agentState, activityHistory);
 
 const addHistoryEntry = (agentName, entry) => {
   if (!activityHistory[agentName]) return;
@@ -227,6 +242,7 @@ const persistHistory = () => {
 let lastActiveAgent = null;
 let lastAudit = null;
 let lastWorkerState = null;
+const workerTasks = new Map(); // Multi-task tracking: ticketId -> task state
 
 const handleEvent = (event) => {
   const { type, agent, agents: agentList, task } = event;
@@ -279,40 +295,59 @@ const handleEvent = (event) => {
     return { ok: true };
   }
 
-  // Worker events — update worker state and broadcast
+  // Worker events — update worker state, cache tasks, broadcast
   if (type && type.startsWith('worker:')) {
     const now = new Date().toISOString();
     if (type === 'worker:start') {
       lastWorkerState = {
         status: 'polling',
-        provider: event.provider,
+        provider: event.provider || event.providerType,
         repo: event.repo,
-        interval: event.interval,
+        interval: event.intervalMs || event.interval,
         startedAt: now,
         lastEvent: now,
         currentTicket: null,
       };
     } else if (type === 'worker:task-start') {
+      const ticketId = event.ticketId || event.identifier;
+      const taskState = {
+        ticketId,
+        title: event.title || ticketId,
+        source: event.source || (lastWorkerState && lastWorkerState.provider) || 'worker',
+        status: 'in_progress',
+        confidence: event.confidence,
+        agent: event.agent,
+        startedAt: now,
+      };
+      workerTasks.set(ticketId, taskState);
       if (lastWorkerState) {
         lastWorkerState.status = 'working';
-        lastWorkerState.currentTicket = {
-          identifier: event.identifier,
-          title: event.title,
-          startedAt: now,
-        };
+        lastWorkerState.currentTicket = taskState;
+        lastWorkerState.lastEvent = now;
+      }
+    } else if (type === 'worker:step') {
+      const ticketId = event.taskId || event.ticketId;
+      if (ticketId && workerTasks.has(ticketId)) {
+        workerTasks.get(ticketId).step = event.step;
+      }
+      if (lastWorkerState && lastWorkerState.currentTicket) {
+        lastWorkerState.currentTicket.step = event.step;
         lastWorkerState.lastEvent = now;
       }
     } else if (type === 'worker:task-complete') {
+      const ticketId = event.ticketId || event.identifier;
+      if (ticketId && workerTasks.has(ticketId)) {
+        const task = workerTasks.get(ticketId);
+        task.status = event.prUrl ? 'in_review' : 'done';
+        task.prUrl = event.prUrl;
+        task.completedAt = now;
+        task.success = event.success;
+        task.agent = event.agent || task.agent;
+      }
       if (lastWorkerState) {
         lastWorkerState.status = 'polling';
         lastWorkerState.currentTicket = null;
         lastWorkerState.lastEvent = now;
-        lastWorkerState.lastCompleted = {
-          identifier: event.identifier,
-          title: event.title,
-          result: event.result,
-          completedAt: now,
-        };
       }
     } else if (type === 'worker:idle') {
       if (lastWorkerState) {
@@ -322,6 +357,12 @@ const handleEvent = (event) => {
     } else if (lastWorkerState) {
       lastWorkerState.lastEvent = now;
     }
+    // Broadcast worker state to all WebSocket clients
+    broadcast({
+      type: 'worker_update',
+      state: lastWorkerState,
+      tasks: Array.from(workerTasks.values()),
+    });
     return { ok: true };
   }
 
@@ -459,8 +500,17 @@ const serveStatic = (req, res) => {
 
   fs.readFile(resolved, (err, data) => {
     if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+      // SPA fallback: serve index.html for non-file, non-API routes
+      const indexPath = path.join(PUBLIC_DIR, 'index.html');
+      fs.readFile(indexPath, (err2, indexData) => {
+        if (err2) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not Found');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(indexData);
+      });
       return;
     }
     res.writeHead(200, { 'Content-Type': contentType });
@@ -770,8 +820,20 @@ const server = http.createServer(async (req, res) => {
     try {
       // Prefer in-memory audit from audit:complete events
       if (lastAudit) {
+        // Normalize in-memory audit to always include { score, findings, project, date }
+        const normalized = {
+          score: lastAudit.score ?? null,
+          findings: Array.isArray(lastAudit.findings) ? lastAudit.findings : [],
+          project: lastAudit.project || null,
+          date: lastAudit.date || lastAudit.receivedAt || null,
+          // Pass through any extra fields from the event
+          ...(lastAudit.version != null && { version: lastAudit.version }),
+          ...(lastAudit.strengths && { strengths: lastAudit.strengths }),
+          ...(lastAudit.stack && { stack: lastAudit.stack }),
+          ...(lastAudit.meta && { meta: lastAudit.meta }),
+        };
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(lastAudit));
+        res.end(JSON.stringify(normalized));
         return;
       }
       const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
@@ -792,18 +854,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/api/worker') {
+    const state = lastWorkerState || {
+      status: 'stopped',
+      provider: 'none',
+      history: [],
+      log: [],
+      ticketsToday: 0,
+    };
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(
-      JSON.stringify(
-        lastWorkerState || {
-          status: 'stopped',
-          provider: 'none',
-          history: [],
-          log: [],
-          ticketsToday: 0,
-        },
-      ),
-    );
+    res.end(JSON.stringify({ ...state, tasks: Array.from(workerTasks.values()) }));
     return;
   }
 
@@ -850,6 +909,51 @@ const server = http.createServer(async (req, res) => {
       }
     }
     return;
+  }
+
+  // Photo upload — handle before parseBody (multipart, 5MB limit)
+  if (req.method === 'POST' && urlPath === '/api/tasks/upload') {
+    handleUpload(req, res);
+    return;
+  }
+
+  // New dashboard API routes — tasks, agents, issues fix, MCP
+  if (
+    urlPath.startsWith('/api/tasks') ||
+    urlPath.startsWith('/api/agents') ||
+    urlPath === '/api/issues/fix' ||
+    urlPath.startsWith('/api/mcp')
+  ) {
+    // GET requests don't need body parsing
+    if (req.method === 'GET') {
+      if (handleTasks(req, res, urlPath, '', workerTasks)) return;
+      if (handleAgents(req, res, urlPath, '', AGENT_DEFINITIONS, agentState, activityHistory))
+        return;
+      if (handleMcp(req, res, urlPath, '')) return;
+    } else {
+      // POST/PUT/DELETE — parse body first
+      try {
+        const body = await parseBody(req);
+        const bodyStr = JSON.stringify(body);
+        if (handleTasks(req, res, urlPath, bodyStr, workerTasks)) return;
+        if (
+          handleAgents(req, res, urlPath, bodyStr, AGENT_DEFINITIONS, agentState, activityHistory)
+        )
+          return;
+        if (handleIssueFix(req, res, urlPath, bodyStr, broadcast)) return;
+        if (handleMcp(req, res, urlPath, bodyStr)) return;
+      } catch (e) {
+        if (e instanceof RangeError) {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Payload too large' }));
+        } else {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid request' }));
+        }
+        return;
+      }
+    }
+    // If no handler matched, fall through to 404 or static
   }
 
   // Tab API routes — collect body for POST requests

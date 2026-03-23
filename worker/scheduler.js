@@ -78,6 +78,7 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
   const startTime = Date.now();
 
   // 1. Validate ticket
+  publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'validate' });
   const validation = validateTicket(ticket);
   if (!validation.valid) {
     const issueList = validation.issues.map((i) => `- ${i}`).join('\n');
@@ -92,13 +93,13 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
   }
 
   // 2. Calculate confidence
+  publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'score' });
   const context = resolveContext(ticket, auditData, stackInfo);
   const confidence = calculateConfidence(ticket, auditData, context);
 
   if (confidence.score < 30) {
     const factorList = confidence.factors.map((f) => `- ${f.factor} (${f.impact})`).join('\n');
-    const comment = TOO_COMPLEX_TEMPLATE
-      .replace('{score}', String(confidence.score))
+    const comment = TOO_COMPLEX_TEMPLATE.replace('{score}', String(confidence.score))
       .replace('{level}', confidence.level)
       .replace('{factors}', factorList);
     await provider.postComment(ticket.id, comment);
@@ -122,6 +123,8 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
   await provider.transitionStatus(ticket.id, 'in_progress');
   publishDashboardEvent('worker:task-start', {
     ticketId: ticket.id,
+    title: ticket.title || ticket.id,
+    source: (config.provider && config.provider.type) || 'worker',
     confidence: confidence.score,
   });
   logger.info(`Claimed ticket ${ticket.id} (confidence: ${confidence.score})`);
@@ -139,6 +142,7 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
   const duration = formatDuration(Date.now() - startTime);
 
   // 5. Report
+  publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'pr' });
   if (result.success) {
     await provider.transitionStatus(ticket.id, 'done');
 
@@ -147,8 +151,7 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
       ? (result.testResults.output || '').slice(0, 200)
       : 'No tests run';
 
-    const comment = SUCCESS_TEMPLATE
-      .replace('{agent}', result.agent || 'unknown')
+    const comment = SUCCESS_TEMPLATE.replace('{agent}', result.agent || 'unknown')
       .replace('{duration}', duration)
       .replace('{confidence_score}', String(result.confidence ? result.confidence.score : '?'))
       .replace('{confidence_level}', result.confidence ? result.confidence.level : '?')
@@ -163,8 +166,7 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
     await provider.transitionStatus(ticket.id, 'failed');
 
     const errorOutput = (result.error || 'Unknown error').slice(0, 1000);
-    const comment = FAILURE_TEMPLATE
-      .replace('{stage}', result.stage || 'unknown')
+    const comment = FAILURE_TEMPLATE.replace('{stage}', result.stage || 'unknown')
       .replace('{retries}', String(result.retriesAttempted || 0))
       .replace('{error}', errorOutput);
 

@@ -12,7 +12,7 @@ const { publishDashboardEvent } = require('./dashboard-events');
  * @param {function} options.onTicket - Async callback invoked with the first ready ticket
  * @returns {{ start: () => Promise<void>, stop: () => void }}
  */
-function createPoller({ provider, intervalMs, logger, onTicket }) {
+function createPoller({ provider, intervalMs, logger, onTicket, providerType, repoPath }) {
   let isRunning = false;
   let wakeSleep = null;
 
@@ -31,7 +31,11 @@ function createPoller({ provider, intervalMs, logger, onTicket }) {
 
   async function start() {
     isRunning = true;
-    publishDashboardEvent('worker:start', { intervalMs });
+    publishDashboardEvent('worker:start', {
+      intervalMs,
+      provider: providerType || 'unknown',
+      repo: repoPath || '',
+    });
 
     while (isRunning) {
       let tickets = [];

@@ -27,6 +27,7 @@ const { calculateConfidence } = require('./confidence-scorer');
  */
 async function executePipeline({ ticket, config, provider, auditData, stackInfo, logger }) {
   // 1. Route to agent
+  publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'route' });
   const agent = routeTicketToAgent(ticket, auditData, config);
   logger.info(`Routed ticket ${ticket.id} to agent: ${agent}`);
 
@@ -59,6 +60,7 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
     }
 
     // 5b. Build prompt
+    publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'build' });
     const prompt = buildPrompt({ ticket, agent, taskVars, context, config });
 
     // 5c. Execute Claude Code with retries
@@ -81,9 +83,11 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
     }
 
     // 5e. Self-review
+    publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'review' });
     const reviewResult = selfReview(execResult.output, logger);
 
     // 5f. Test verification
+    publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'test' });
     let testResults = runTests(worktree.path, config, logger);
     publishDashboardEvent('worker:tests-run', {
       ticketId: ticket.id,
@@ -117,6 +121,7 @@ async function executePipeline({ ticket, config, provider, auditData, stackInfo,
     }
 
     // 5g. Health delta
+    publishDashboardEvent('worker:step', { taskId: ticket.id, step: 'health' });
     const confidenceResult = calculateConfidence(ticket, auditData, context);
     const healthDelta = calculateHealthDelta({
       testResults,

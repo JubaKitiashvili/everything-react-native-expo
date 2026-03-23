@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Apple HIG-inspired dark theme — higher contrast, semantic colors */
+  --color-bg-primary: #000000;
+  --color-bg-surface: #1c1c1e;
+  --color-bg-hover: #2c2c2e;
+  --color-border: #38383a;
+  --color-border-light: #48484a;
+  --color-text-primary: #f5f5f7;
+  --color-text-secondary: #a1a1a6;
+  --color-text-muted: #6e6e73;
+  --color-accent-green: #30d158;
+  --color-accent-red: #ff453a;
+  --color-accent-amber: #ffd60a;
+  --color-accent-blue: #0a84ff;
+  --color-accent-purple: #bf5af2;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-light);
+}
+
+/* Selection */
+::selection {
+  background: rgba(10, 132, 255, 0.3);
+  color: var(--color-text-primary);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-accent-blue);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
