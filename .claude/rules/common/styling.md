@@ -1,6 +1,6 @@
 ---
-description: StyleSheet.create styling conventions with theme tokens and dark mode
-globs: "**/*.{ts,tsx}"
+description: StyleSheet.create styling conventions with theme tokens, dark mode, and new CSS properties (RN 0.84+)
+globs: '**/*.{ts,tsx}'
 alwaysApply: false
 ---
 
@@ -122,13 +122,9 @@ import { useMemo } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 import { colors } from '@/theme/tokens';
 
-type StyleFactory<T extends StyleSheet.NamedStyles<T>> = (
-  theme: typeof colors.light,
-) => T;
+type StyleFactory<T extends StyleSheet.NamedStyles<T>> = (theme: typeof colors.light) => T;
 
-export function useThemedStyles<T extends StyleSheet.NamedStyles<T>>(
-  factory: StyleFactory<T>,
-): T {
+export function useThemedStyles<T extends StyleSheet.NamedStyles<T>>(factory: StyleFactory<T>): T {
   const colorScheme = useColorScheme();
   const theme = colors[colorScheme ?? 'light'];
   return useMemo(() => StyleSheet.create(factory(theme)), [theme]);
@@ -156,7 +152,20 @@ function ProfileScreen() {
 }
 ```
 
+## New CSS Properties (New Architecture, RN 0.77+)
+
+- `display: 'contents'` — wrapper elements that don't affect layout
+- `boxSizing: 'border-box' | 'content-box'` — box model control
+- `mixBlendMode` — blend modes (multiply, screen, overlay, etc.)
+- `outlineWidth`, `outlineStyle`, `outlineSpread`, `outlineColor` — outlines without layout impact
+- **Note:** `box-shadow` and `filter` now require CSS units (e.g., `'1px'` not `1`) since RN 0.79
+
+## Dark Mode Note
+
+- `Appearance.setColorScheme(null)` no longer works — use `'unspecified'` instead (RN 0.82+)
+
 ## Rules
+
 - Always use `StyleSheet.create` — never inline style objects
 - Use theme tokens for colors, spacing, and typography — no magic numbers
 - Support dark mode via `useColorScheme` and themed token sets

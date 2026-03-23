@@ -1,0 +1,22 @@
+{
+  "expo_sdk": "55",
+  "react_native": "0.84",
+  "react": "19.2",
+  "last_updated": "2026-03-23",
+  "rules_updated": [
+    "performance.md",
+    "navigation.md",
+    "patterns.md",
+    "development-workflow.md",
+    "styling.md",
+    "coding-style.md",
+    "accessibility.md",
+    "security.md",
+    "state-management.md",
+    "testing.md",
+    "expo-media.md",
+    "expo-data.md",
+    "expo-platform-new.md",
+    "expo-device-services.md"
+  ]
+}
