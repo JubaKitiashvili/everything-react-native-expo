@@ -7,6 +7,9 @@ interface WsMessage {
   history?: HistoryMap;
   data?: unknown;
   state?: unknown;
+  agent?: string;
+  status?: string;
+  task?: string | null;
 }
 
 type MessageHandler = (msg: WsMessage) => void;
@@ -59,6 +62,17 @@ export function useWebSocket() {
           } else if (msg.type === 'session_event' && msg.data) {
             const ev = msg.data as { time: string; icon: string; text: string };
             setEvents((prev) => [ev, ...prev].slice(0, 50));
+          } else if (msg.type === 'agent_update' && msg.agent) {
+            const name = msg.agent;
+            setAgents((prev) => ({
+              ...prev,
+              [name]: {
+                ...prev[name],
+                status: (msg.status || 'idle') as 'idle' | 'working' | 'planning' | 'done',
+                task: msg.task || null,
+                lastEvent: new Date().toISOString(),
+              },
+            }));
           } else if (msg.type === 'worker_update' && msg.state) {
             const tasks = (msg as unknown as Record<string, unknown>).tasks;
             setWorkerState({ ...(msg.state as object), tasks } as never);
