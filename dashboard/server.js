@@ -33,7 +33,7 @@ try {
 const { AGENT_DEFINITIONS: SHARED_AGENT_DEFS } = require('./lib/agents-config');
 const { handleTasks, handleUpload } = require('./lib/api/tasks');
 const { handleAgents, registerCustomAgents } = require('./lib/api/agents');
-const { handleIssueFix } = require('./lib/api/issues-fix');
+const { handleIssueFix, handleFixCapabilities } = require('./lib/api/issues-fix');
 const { handleMcp } = require('./lib/api/mcp');
 
 // Tab feature modules (loaded lazily to avoid errors if dirs don't exist yet)
@@ -1110,6 +1110,7 @@ const server = http.createServer(async (req, res) => {
           handleAgents(req, res, urlPath, bodyStr, AGENT_DEFINITIONS, agentState, activityHistory)
         )
           return;
+        if (handleFixCapabilities(req, res, urlPath)) return;
         if (handleIssueFix(req, res, urlPath, bodyStr, broadcast)) return;
         if (handleMcp(req, res, urlPath, bodyStr)) return;
       } catch (e) {

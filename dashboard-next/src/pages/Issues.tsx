@@ -28,6 +28,15 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [fixOutput, setFixOutput] = useState<Record<string, string[]>>({});
   const [fixingIds, setFixingIds] = useState<Set<string>>(new Set());
+  const [fixMode, setFixMode] = useState<'agent' | 'direct'>('direct');
+
+  // Check fix capabilities on mount
+  useEffect(() => {
+    fetch('/api/issues/fix-capabilities')
+      .then((r) => r.json())
+      .then((d) => setFixMode(d.agentFix ? 'agent' : 'direct'))
+      .catch(() => {});
+  }, []);
 
   // Listen for fix output/complete via WebSocket
   useEffect(() => {
@@ -52,29 +61,47 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
     return unsubscribe;
   }, [onWsMessage, refetchAudit]);
 
-  const handleFix = useCallback(async (issue: Issue) => {
-    setFixingIds((prev) => new Set(prev).add(issue.id));
-    setFixOutput((prev) => ({ ...prev, [issue.id]: [] }));
-    setExpandedId(issue.id);
-    try {
-      const res = await fetch('/api/issues/fix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ findingId: issue.id, fix: issue.fix }),
-      });
-      if (!res.ok) throw new Error('Fix request failed');
-    } catch {
-      setFixingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(issue.id);
-        return next;
-      });
-      setFixOutput((prev) => ({
-        ...prev,
-        [issue.id]: [...(prev[issue.id] ?? []), 'Error: Fix request failed\n'],
-      }));
-    }
-  }, []);
+  const handleFix = useCallback(
+    async (issue: Issue) => {
+      setFixingIds((prev) => new Set(prev).add(issue.id));
+      setFixOutput((prev) => ({ ...prev, [issue.id]: [] }));
+      setExpandedId(issue.id);
+      try {
+        const body =
+          fixMode === 'agent'
+            ? {
+                findingId: issue.id,
+                fix: issue.fix,
+                issue: {
+                  title: issue.title,
+                  detail: issue.detail,
+                  category: issue.category,
+                  severity: issue.severity,
+                  fix: issue.fix,
+                },
+                mode: 'agent',
+              }
+            : { findingId: issue.id, fix: issue.fix };
+        const res = await fetch('/api/issues/fix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('Fix request failed');
+      } catch {
+        setFixingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(issue.id);
+          return next;
+        });
+        setFixOutput((prev) => ({
+          ...prev,
+          [issue.id]: [...(prev[issue.id] ?? []), 'Error: Fix request failed\n'],
+        }));
+      }
+    },
+    [fixMode],
+  );
 
   const allIssues = useMemo(() => {
     const auditIssues = audit?.findings ? findingsToIssues(audit.findings) : [];
@@ -205,6 +232,7 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
               onFix={() => handleFix(issue)}
               fixing={fixingIds.has(issue.id)}
               output={fixOutput[issue.id]}
+              fixMode={fixMode}
             />
           ))
         )}
@@ -245,6 +273,7 @@ function IssueRow({
   onFix,
   fixing,
   output,
+  fixMode,
 }: {
   issue: Issue;
   expanded: boolean;
@@ -252,6 +281,7 @@ function IssueRow({
   onFix: () => void;
   fixing: boolean;
   output?: string[];
+  fixMode: 'agent' | 'direct';
 }) {
   return (
     <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
@@ -288,10 +318,28 @@ function IssueRow({
                 : 'bg-accent-green/15 text-accent-green border-accent-green/30 hover:bg-accent-green/25'
             }`}
           >
-            {fixing ? 'Fixing...' : 'Fix'}
+            {fixing
+              ? fixMode === 'agent'
+                ? 'Agent fixing...'
+                : 'Fixing...'
+              : fixMode === 'agent'
+                ? 'Agent Fix'
+                : 'Fix'}
+          </span>
+        ) : fixMode === 'agent' ? (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onFix();
+            }}
+            className="px-2 py-0.5 rounded text-[10px] border bg-accent-purple/15 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/25 transition-colors whitespace-nowrap"
+          >
+            Agent Fix
           </span>
         ) : (
-          <span className="text-text-muted text-[10px]">Manual</span>
+          <span className="text-text-muted text-[10px]">Copy to AI</span>
         )}
       </button>
       {expanded && (
