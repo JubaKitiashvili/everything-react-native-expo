@@ -23,8 +23,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 /* Scrollbar */
@@ -47,6 +47,24 @@ body {
 ::selection {
   background: rgba(10, 132, 255, 0.3);
   color: var(--color-text-primary);
+}
+
+/* Bump small text sizes — dashboard readability */
+/* 8px → 10px, 9px → 11px, 10px → 12px, 11px → 13px, 12px → 13px */
+[class*='text-\[8px\]'] {
+  font-size: 10px !important;
+}
+[class*='text-\[9px\]'] {
+  font-size: 11px !important;
+}
+[class*='text-\[10px\]'] {
+  font-size: 12px !important;
+}
+[class*='text-\[11px\]'] {
+  font-size: 13px !important;
+}
+[class*='text-\[12px\]'] {
+  font-size: 13px !important;
 }
 
 /* Focus styles */
