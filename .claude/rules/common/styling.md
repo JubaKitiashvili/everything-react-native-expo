@@ -164,12 +164,46 @@ function ProfileScreen() {
 
 - `Appearance.setColorScheme(null)` no longer works — use `'unspecified'` instead (RN 0.82+)
 
+## Apple HIG Styling Patterns
+
+- Use `borderCurve: 'continuous'` for Apple-style smooth rounded corners (not default circular)
+- Prefer `gap` (flex gap) over margins/padding for spacing between siblings
+- Use `fontVariant: ['tabular-nums']` for numeric counters and timers (uniform digit width)
+- Add `selectable` prop to `<Text>` displaying critical data (IDs, codes, URLs)
+- Use CSS `boxShadow` for shadows (supports `inset` keyword)
+- Use `experimental_backgroundImage` for CSS gradients (New Architecture only)
+- Use `useWindowDimensions()` over `Dimensions.get()` — reactive to changes
+- Prefer `process.env.EXPO_OS` over `Platform.OS` for platform checks
+
+```tsx
+// Apple-style continuous corners
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    borderCurve: 'continuous', // smoother than default
+  },
+  counter: {
+    fontVariant: ['tabular-nums'], // aligned digits: 1,234 → 1,235
+  },
+  shadow: {
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', // CSS syntax
+  },
+});
+
+// Platform check — prefer EXPO_OS
+if (process.env.EXPO_OS === 'ios') {
+  // iOS-specific code
+}
+```
+
 ## Rules
 
 - Always use `StyleSheet.create` — never inline style objects
 - Use theme tokens for colors, spacing, and typography — no magic numbers
 - Support dark mode via `useColorScheme` and themed token sets
 - Keep styles at the bottom of the file, colocated with the component
-- Use `Platform.select` for platform-specific styles
+- Prefer `process.env.EXPO_OS` over `Platform.select` for platform-specific logic
 - Compose styles with array syntax: `style={[styles.base, styles.variant]}`
 - Conditional styles: `style={[styles.base, isActive && styles.active]}`
+- Never use `Dimensions.get()` — use `useWindowDimensions()` hook
+- Never use intrinsic elements (`<div>`, `<img>`, `<span>`) outside WebViews

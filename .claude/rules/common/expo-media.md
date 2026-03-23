@@ -214,10 +214,32 @@ Image.generateBlurhashAsync(url, [4, 3]); // generate blurhash
 Image.getCachePathAsync(url); // get cached file path
 ```
 
+### SF Symbols via expo-image (iOS)
+
+```tsx
+import { Image } from 'expo-image';
+
+// Render any SF Symbol as an image
+<Image
+  source={{ uri: 'sf:house.fill' }}
+  style={{ width: 24, height: 24 }}
+  tintColor="#007AFF"
+/>
+
+// With weight and rendering mode
+<Image
+  source={{ uri: 'sf:star.fill', weight: 'bold' }}
+  style={{ width: 32, height: 32 }}
+  tintColor="#FFD700"
+/>
+```
+
+**Prefer `expo-image` with SF Symbols over `expo-symbols`** — same result, one less package.
+
 ### SDK 55 Additions
 
 - HDR image support (iOS)
-- SF Symbols rendering
+- SF Symbols rendering via `source={{ uri: 'sf:symbolName' }}`
 - Cookie support for authenticated image URLs
 - `defaultSource` prop for fallback images
 - `responsivePolicy: 'live'` for real-time responsive source selection (web)

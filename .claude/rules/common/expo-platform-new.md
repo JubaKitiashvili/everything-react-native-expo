@@ -158,6 +158,65 @@ export function MyWidget({ data }) {
 
 ---
 
+## WebGPU + Three.js (Experimental)
+
+3D graphics on React Native using WebGPU and Three.js via `expo-gl`.
+
+```tsx
+import { GLView } from 'expo-gl';
+import { Renderer } from 'expo-three';
+import * as THREE from 'three';
+
+function Scene() {
+  const onContextCreate = async (gl) => {
+    const renderer = new Renderer({ gl });
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, gl.drawingBufferWidth / gl.drawingBufferHeight);
+    camera.position.z = 5;
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+      gl.endFrameEXP();
+    };
+    animate();
+  };
+
+  return <GLView style={{ flex: 1 }} onContextCreate={onContextCreate} />;
+}
+```
+
+**Status:** Experimental. WebGPU is the future replacement for expo-gl's OpenGL backend.
+
+---
+
+## CSS Gradients (Experimental — New Architecture only)
+
+```tsx
+// experimental_backgroundImage for CSS gradients
+const styles = StyleSheet.create({
+  gradient: {
+    experimental_backgroundImage: 'linear-gradient(to bottom, #667eea 0%, #764ba2 100%)',
+    padding: 20,
+    borderRadius: 16,
+  },
+  radial: {
+    experimental_backgroundImage: 'radial-gradient(circle, #667eea, #764ba2)',
+  },
+});
+```
+
+**Requires:** New Architecture enabled (mandatory since RN 0.82).
+
+---
+
 ## expo-brownfield (Stable — SDK 55+)
 
 Integrate Expo into existing native iOS/Android apps.

@@ -30,7 +30,7 @@ const useAuthStore = create<AuthState>((set) => ({
 
 ## React 19 Patterns
 
-- **`use()` hook**: Read promises and context directly — replaces many `useEffect` + `useState` patterns
+- **`use()` hook**: Read promises and context directly — replaces `useContext()` and many `useEffect` + `useState` patterns. **Prefer `React.use(MyContext)` over `React.useContext(MyContext)`**
 - **Actions**: `useActionState` for form submissions with pending/error states
 - **`useOptimistic`**: Built-in optimistic UI without TanStack Query boilerplate
 - **ref as prop**: Pass refs directly as props — `forwardRef` is no longer needed
@@ -46,6 +46,12 @@ function TextInput({ ref, ...props }: { ref?: React.Ref<TextInput> }) {
 function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
   const user = use(userPromise);
   return <Text>{user.name}</Text>;
+}
+
+// React 19: use() replaces useContext
+function ThemedButton() {
+  const theme = use(ThemeContext); // prefer over useContext(ThemeContext)
+  return <Pressable style={{ backgroundColor: theme.primary }} />;
 }
 
 // React 19: useActionState for forms

@@ -37,11 +37,13 @@ export default class UserCard extends Component { ... }
 ## File Naming
 
 - Components: `PascalCase.tsx` (e.g., `UserCard.tsx`)
+- **Route files in `app/`**: `kebab-case.tsx` (e.g., `comment-card.tsx`) — Expo Router convention
 - Hooks: `camelCase.ts` prefixed with `use` (e.g., `useAuth.ts`)
 - Utils/helpers: `camelCase.ts` (e.g., `formatDate.ts`)
 - Types: `camelCase.ts` or colocated in component file
 - Tests: `[name].test.ts(x)` adjacent to source
 - Platform-specific: `[name].ios.tsx` / `[name].android.tsx`
+- **Never** co-locate components, types, or utilities inside `app/` directory — keep only route files there
 
 ## Imports
 
