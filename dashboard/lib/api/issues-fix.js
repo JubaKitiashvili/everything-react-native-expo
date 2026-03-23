@@ -162,10 +162,20 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
         }
 
         if (broadcast) {
+          const verifyStatus = verifyPassed ? 'Tests passed' : 'Tests failed';
+          const verifyDetail =
+            !verifyPassed && verifyOutput
+              ? '\n' +
+                verifyOutput
+                  .split('\n')
+                  .filter((l) => /FAIL|Error|✕|×|failed/i.test(l))
+                  .slice(0, 10)
+                  .join('\n')
+              : '';
           broadcast({
             type: 'fix_output',
             findingId,
-            line: `\n[VERIFY] ${verifyPassed ? 'Tests passed' : 'Tests failed'}\n`,
+            line: `\n[VERIFY] ${verifyStatus}${verifyDetail}\n`,
           });
           broadcast({
             type: 'fix_complete',

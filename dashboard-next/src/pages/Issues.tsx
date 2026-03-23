@@ -263,6 +263,16 @@ function IssueRow({
   output?: string[];
   fixMode: 'agent' | 'direct';
 }) {
+  // Detect issues too complex for automated fix (need human planning)
+  const isComplexIssue = (i: Issue) => {
+    // Multiple files mentioned in detail
+    const fileCount = (i.detail || '').match(/\S+\.tsx?\b/g)?.length ?? 0;
+    if (fileCount >= 5) return true;
+    // Performance/refactoring category with "exceed" or "component" in title
+    if (i.category === 'performance' && /exceed|refactor|split|extract/i.test(i.title)) return true;
+    return false;
+  };
+
   return (
     <div className="bg-bg-surface border border-border rounded-lg overflow-hidden">
       <button
@@ -306,6 +316,8 @@ function IssueRow({
                 ? 'Agent Fix'
                 : 'Fix'}
           </span>
+        ) : isComplexIssue(issue) ? (
+          <span className="text-accent-amber text-[10px]">Needs planning</span>
         ) : fixMode === 'agent' ? (
           <span
             role="button"

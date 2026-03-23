@@ -13,7 +13,7 @@ declare global {
     };
     AgentSprites?: {
       initAgentSprites: () => void;
-      updateAgentState: (agents: Record<string, { status: string }>) => void;
+      updateAgentState: (name: string, status: string) => void;
       updateAgentSprites: (dt: number) => void;
       drawAgentSprites: (ctx: CanvasRenderingContext2D) => void;
       setAgentTasks: (tasks: Record<string, { task: string | null }>) => void;
@@ -76,7 +76,10 @@ export function PixelArtOffice({ agents, onAgentClick, className = '' }: PixelAr
   // Update agent states when they change
   useEffect(() => {
     if (!window.AgentSprites) return;
-    window.AgentSprites.updateAgentState(agents);
+    // canvas.js updateAgentState takes (name, status) — call per agent
+    for (const [name, state] of Object.entries(agents)) {
+      window.AgentSprites.updateAgentState(name, state.status);
+    }
     const tasks: Record<string, { task: string | null }> = {};
     for (const [name, state] of Object.entries(agents)) {
       tasks[name] = { task: state.task };
