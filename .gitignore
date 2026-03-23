@@ -33,3 +33,13 @@ validate-skills
 # Local assets
 buildwithclaude/
 /screenshots/
+*.png
+
+# Firecrawl scrape cache
+.firecrawl/
+
+# ERNE init workspace
+erne-init-workspace/
+
+# Dashboard next runtime
+dashboard-next/.claude/
