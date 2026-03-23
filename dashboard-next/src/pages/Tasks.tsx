@@ -351,41 +351,152 @@ const TASK_PROVIDERS = [
     name: 'ClickUp',
     icon: '📋',
     description: 'Project management with tasks, docs, goals',
+    envVar: 'CLICKUP_API_KEY',
+    configExample: `{
+  "provider": {
+    "type": "clickup",
+    "list_id": "YOUR_LIST_ID",
+    "filter": { "status": "ready for dev" }
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 70 }
+}`,
+    setupSteps: [
+      'Go to ClickUp Settings → Apps → Generate API Token',
+      'Export: export CLICKUP_API_KEY=pk_YOUR_TOKEN',
+      'Find your List ID from the URL: app.clickup.com/list/LIST_ID',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --dry-run',
+    ],
   },
   {
     id: 'github',
     name: 'GitHub Issues',
     icon: '🐙',
     description: 'Issues and pull requests from GitHub repos',
+    envVar: 'GITHUB_TOKEN',
+    configExample: `{
+  "provider": {
+    "type": "github",
+    "owner": "your-org",
+    "repo": "your-repo",
+    "filter": { "labels": "erne-ready" }
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 70 }
+}`,
+    setupSteps: [
+      'Create a GitHub Personal Access Token (Settings → Developer → Tokens)',
+      'Export: export GITHUB_TOKEN=ghp_YOUR_TOKEN',
+      'Label issues with "erne-ready" when they\'re ready for worker',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --dry-run',
+    ],
   },
   {
     id: 'linear',
     name: 'Linear',
     icon: '🔷',
     description: 'Issue tracking built for modern teams',
+    envVar: 'LINEAR_API_KEY',
+    configExample: `{
+  "provider": {
+    "type": "linear",
+    "team_id": "YOUR_TEAM_ID",
+    "filter": { "state": "Ready for Dev" }
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 70 }
+}`,
+    setupSteps: [
+      'Go to Linear Settings → API → Personal API Keys → Create Key',
+      'Export: export LINEAR_API_KEY=lin_api_YOUR_KEY',
+      'Find your Team ID from Linear settings',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --dry-run',
+    ],
   },
   {
     id: 'jira',
     name: 'Jira',
     icon: '🔵',
     description: 'Enterprise project management by Atlassian',
+    envVar: 'JIRA_API_TOKEN',
+    configExample: `{
+  "provider": {
+    "type": "jira",
+    "host": "your-org.atlassian.net",
+    "project": "PROJ",
+    "filter": { "status": "Ready for Dev" }
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 70 }
+}`,
+    setupSteps: [
+      'Go to Atlassian Account → Security → API Tokens → Create',
+      'Export: export JIRA_EMAIL=you@company.com',
+      'Export: export JIRA_API_TOKEN=YOUR_TOKEN',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --dry-run',
+    ],
   },
   {
     id: 'gitlab',
     name: 'GitLab',
     icon: '🦊',
     description: 'Issues and merge requests from GitLab repos',
+    envVar: 'GITLAB_TOKEN',
+    configExample: `{
+  "provider": {
+    "type": "gitlab",
+    "project_id": "12345",
+    "filter": { "labels": "erne-ready" }
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 70 }
+}`,
+    setupSteps: [
+      'Go to GitLab → User Settings → Access Tokens → Create',
+      'Export: export GITLAB_TOKEN=glpat_YOUR_TOKEN',
+      'Find Project ID from Settings → General',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --dry-run',
+    ],
   },
   {
     id: 'local',
     name: 'Local JSON',
     icon: '📁',
-    description: 'Local file-based task queue (worker.json)',
+    description: 'Local file-based task queue for testing',
+    envVar: null,
+    configExample: `{
+  "provider": {
+    "type": "local",
+    "file": "./worker-tasks.json"
+  },
+  "repo": { "path": "." },
+  "erne": { "min_confidence": 50 }
+}`,
+    setupSteps: [
+      'Create worker-tasks.json with tickets (see format below)',
+      'Create worker.json with the config below',
+      'Run: npx erne-universal worker --config worker.json --once',
+      'Ticket format: { "tickets": [{ "id": "1", "title": "...", "description": "...", "type": "bug", "status": "ready" }] }',
+    ],
   },
 ];
 
 function TaskProviders({ workerStatus, provider }: { workerStatus?: string; provider?: string }) {
   const isWorkerRunning = workerStatus === 'polling' || workerStatus === 'working';
+  const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
+  const [copiedConfig, setCopiedConfig] = useState(false);
+
+  const copyConfig = (config: string) => {
+    navigator.clipboard.writeText(config).then(() => {
+      setCopiedConfig(true);
+      setTimeout(() => setCopiedConfig(false), 2000);
+    });
+  };
 
   return (
     <Card className="mb-4">
@@ -397,34 +508,101 @@ function TaskProviders({ workerStatus, provider }: { workerStatus?: string; prov
           </span>
         ) : (
           <span className="text-[10px] bg-border text-text-muted px-2 py-0.5 rounded">
-            Worker not running
+            Worker not running — click a provider for setup guide
           </span>
         )}
       </div>
       <div className="grid grid-cols-6 gap-2">
         {TASK_PROVIDERS.map((p) => {
           const isActive = provider === p.id;
+          const isExpanded = expandedProvider === p.id;
           return (
-            <div
+            <button
               key={p.id}
-              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-colors ${
+              onClick={() => setExpandedProvider(isExpanded ? null : p.id)}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all text-center ${
                 isActive
                   ? 'border-accent-green/40 bg-accent-green/5'
-                  : 'border-border hover:border-border-light'
+                  : isExpanded
+                    ? 'border-accent-blue/40 bg-accent-blue/5'
+                    : 'border-border hover:border-border-light'
               }`}
             >
               <span className="text-xl">{p.icon}</span>
               <span className="text-[11px] text-text-primary font-medium">{p.name}</span>
-              <span className="text-[9px] text-text-muted text-center leading-tight">
-                {p.description}
-              </span>
+              <span className="text-[9px] text-text-muted leading-tight">{p.description}</span>
               {isActive && (
                 <span className="text-[8px] text-accent-green uppercase tracking-wide">Active</span>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
+
+      {/* Expanded Setup Guide */}
+      {expandedProvider &&
+        (() => {
+          const p = TASK_PROVIDERS.find((t) => t.id === expandedProvider);
+          if (!p) return null;
+          return (
+            <div className="mt-3 p-4 bg-bg-surface border border-border rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-text-primary">
+                  {p.icon} {p.name} Setup Guide
+                </h3>
+                <button
+                  onClick={() => setExpandedProvider(null)}
+                  className="text-text-muted hover:text-text-primary text-xs"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Steps */}
+              <div className="space-y-2 mb-4">
+                {p.setupSteps.map((step, i) => (
+                  <div key={i} className="flex gap-2 text-[12px]">
+                    <span className="text-accent-blue font-mono shrink-0">{i + 1}.</span>
+                    <span className="text-text-secondary">
+                      {step.includes('export') || step.includes('npx') ? (
+                        <code className="bg-bg-hover px-1 py-0.5 rounded text-accent-blue text-[11px]">
+                          {step}
+                        </code>
+                      ) : (
+                        step
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Config Example */}
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-text-muted uppercase tracking-wide">
+                    worker.json
+                  </span>
+                  <button
+                    onClick={() => copyConfig(p.configExample)}
+                    className="text-[10px] text-accent-blue hover:text-accent-blue/80"
+                  >
+                    {copiedConfig ? 'Copied!' : 'Copy config'}
+                  </button>
+                </div>
+                <pre className="bg-bg-primary border border-border rounded p-3 text-[11px] text-text-secondary font-mono overflow-x-auto">
+                  {p.configExample}
+                </pre>
+              </div>
+
+              {p.envVar && (
+                <div className="mt-3 p-2 bg-accent-amber/5 border border-accent-amber/20 rounded text-[11px] text-accent-amber">
+                  Required env var: <code className="font-mono">{p.envVar}</code>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
       <div className="mt-3 flex items-center gap-3 flex-wrap text-[11px] text-text-muted">
         {!isWorkerRunning ? (
           <>
@@ -433,14 +611,14 @@ function TaskProviders({ workerStatus, provider }: { workerStatus?: string; prov
               npx erne-universal worker --config worker.json
             </code>
             <span className="text-border-light">|</span>
-            <span>Preview tickets:</span>
+            <span>Preview:</span>
             <code className="bg-bg-hover px-1.5 py-0.5 rounded text-accent-amber text-[10px]">
-              npx erne-universal worker --config worker.json --dry-run
+              --dry-run
             </code>
             <span className="text-border-light">|</span>
-            <span>Single ticket:</span>
+            <span>Single:</span>
             <code className="bg-bg-hover px-1.5 py-0.5 rounded text-accent-purple text-[10px]">
-              npx erne-universal worker --config worker.json --once
+              --once
             </code>
           </>
         ) : (
