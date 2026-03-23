@@ -184,7 +184,6 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
           });
         }
       });
-      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, findingId, mode: 'agent', agent }));
