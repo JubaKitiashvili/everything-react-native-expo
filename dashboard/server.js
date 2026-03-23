@@ -956,6 +956,92 @@ const server = http.createServer(async (req, res) => {
       const erneRoot = path.resolve(__dirname, '..');
       const { runAudit } = require(path.join(erneRoot, 'lib', 'audit'));
       const result = runAudit(projectDir);
+
+      // Auto-generate markdown docs from audit data
+      try {
+        const docsDir = path.join(projectDir, 'erne-docs');
+        fs.mkdirSync(docsDir, { recursive: true });
+        const data = JSON.parse(fs.readFileSync(path.join(docsDir, 'audit-data.json'), 'utf-8'));
+        const now = new Date().toISOString();
+        const write = (name, lines) => fs.writeFileSync(path.join(docsDir, name), lines.join('\n'));
+
+        // audit-report
+        const ar = [`# Audit Report\nGenerated: ${now}\n`];
+        if (data.meta)
+          ar.push(
+            `Score: ${data.meta.score ?? 'N/A'}`,
+            `Components: ${data.components?.length ?? 0}`,
+            `Hooks: ${data.hooks?.length ?? 0}`,
+          );
+        write('audit-report.md', ar);
+
+        // stack-detection
+        if (data.config) {
+          const sd = [`# Stack Detection\nGenerated: ${now}\n`];
+          for (const [k, v] of Object.entries(data.config))
+            sd.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+          write('stack-detection.md', sd);
+        }
+
+        // dependency-report
+        if (data.dependencies) {
+          const dr = [`# Dependency Report\nGenerated: ${now}\n`];
+          const d = data.dependencies;
+          dr.push(`Total: ${d.production?.length ?? 0} production, ${d.dev?.length ?? 0} dev\n`);
+          if (d.outdated?.length) {
+            dr.push(`## Outdated (${d.outdated.length})\n`);
+            for (const o of d.outdated.slice(0, 30))
+              dr.push(`- ${o.name}: ${o.current} → ${o.latest}`);
+          }
+          write('dependency-report.md', dr);
+        }
+
+        // dead-code
+        if (data.deadCode?.length) {
+          const dc = [`# Dead Code\nGenerated: ${now}\nFound: ${data.deadCode.length}\n`];
+          for (const d of data.deadCode.slice(0, 50))
+            dc.push(`- \`${d.name}\` in ${d.file} (${d.type})`);
+          write('dead-code.md', dc);
+        }
+
+        // todos
+        if (data.techDebt?.length) {
+          const td = [`# TODOs & Tech Debt\nGenerated: ${now}\n`];
+          for (const t of data.techDebt.slice(0, 50))
+            td.push(`- **${t.type || 'TODO'}** ${t.file}:${t.line || '?'} — ${t.text || ''}`);
+          write('todos.md', td);
+        }
+
+        // changelog
+        if (data.gitHistory?.length) {
+          const cl = [`# Changelog\nGenerated: ${now}\n`];
+          for (const c of data.gitHistory.slice(0, 30))
+            cl.push(`- ${(c.hash || '').slice(0, 7)} ${c.message || ''} (${c.date || ''})`);
+          write('changelog.md', cl);
+        }
+
+        // type-coverage
+        if (data.typeSafety) {
+          const tc = [`# Type Coverage\nGenerated: ${now}\n`];
+          for (const [k, v] of Object.entries(data.typeSafety))
+            tc.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+          write('type-coverage.md', tc);
+        }
+
+        // architecture
+        if (data.structure) {
+          const arch = [`# Architecture\nGenerated: ${now}\n`];
+          if (data.structure.dirs) arch.push(`Directories: ${data.structure.dirs.length}\n`);
+          if (data.routes?.length) {
+            arch.push(`## Routes (${data.routes.length})\n`);
+            for (const r of data.routes.slice(0, 30)) arch.push(`- ${r.path || r.file || r}`);
+          }
+          write('architecture.md', arch);
+        }
+      } catch {
+        /* best-effort */
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.jsonReport));
     } catch (err) {
