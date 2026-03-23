@@ -866,6 +866,55 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/docs/status — check which erne-docs files exist
+  if (req.method === 'GET' && req.url === '/api/docs/status') {
+    const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+    const docsDir = path.join(projectDir, 'erne-docs');
+    const docTypes = [
+      'audit-report',
+      'stack-detection',
+      'dependency-report',
+      'dead-code',
+      'todos',
+      'type-coverage',
+      'test-coverage',
+      'security-report',
+      'performance-report',
+      'architecture',
+      'api-surface',
+      'changelog',
+    ];
+    const results = {};
+    for (const doc of docTypes) {
+      const filePath = path.join(docsDir, `${doc}.md`);
+      const jsonPath = path.join(docsDir, `${doc}.json`);
+      let exists = false;
+      let timestamp = null;
+      try {
+        const stat = fs.statSync(filePath);
+        exists = true;
+        timestamp = stat.mtime.toISOString();
+      } catch {
+        try {
+          const stat = fs.statSync(jsonPath);
+          exists = true;
+          timestamp = stat.mtime.toISOString();
+        } catch {
+          /* not found */
+        }
+      }
+      results[doc] = { exists, timestamp };
+    }
+    // Also check audit-data.json
+    let auditDataExists = false;
+    try {
+      auditDataExists = fs.existsSync(path.join(docsDir, 'audit-data.json'));
+    } catch {}
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ docs: results, auditDataExists }));
+    return;
+  }
+
   // PUT /api/settings/profile — persist hook profile selection
   if (req.method === 'PUT' && req.url === '/api/settings/profile') {
     let body = '';

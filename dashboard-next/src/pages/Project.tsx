@@ -274,11 +274,28 @@ const DOC_TYPES = [
   'changelog',
 ];
 
-function DocsGrid({ audit }: { audit: AuditReport | null }) {
-  const auditAny = audit as Record<string, unknown> | null;
-  const generated = new Set((auditAny?.generatedDocs as string[]) ?? []);
-  const timestamps = (auditAny?.docTimestamps as Record<string, string>) ?? {};
+function DocsGrid({ audit: _audit }: { audit: AuditReport | null }) {
+  const [docsStatus, setDocsStatus] = useState<
+    Record<string, { exists: boolean; timestamp: string | null }>
+  >({});
   const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/docs/status')
+      .then((r) => r.json())
+      .then((d) => setDocsStatus(d?.docs ?? {}))
+      .catch(() => {});
+  }, [generating]);
+
+  const generated = new Set(
+    Object.entries(docsStatus)
+      .filter(([, v]) => v.exists)
+      .map(([k]) => k),
+  );
+  const timestamps: Record<string, string> = {};
+  for (const [k, v] of Object.entries(docsStatus)) {
+    if (v.timestamp) timestamps[k] = v.timestamp;
+  }
 
   const handleGenerateAll = async () => {
     setGenerating(true);
