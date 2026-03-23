@@ -19,7 +19,7 @@ const PROVIDER_ENV_KEYS = {
   linear: 'LINEAR_API_KEY',
   jira: 'JIRA_API_TOKEN',
   github: 'GITHUB_TOKEN',
-  clickup: 'CLICKUP_API_TOKEN',
+  clickup: 'CLICKUP_API_KEY',
   gitlab: 'GITLAB_TOKEN',
 };
 
@@ -71,16 +71,18 @@ function validateConfig(config) {
 
   // Required: provider.type
   if (!config.provider || !config.provider.type) {
-    errors.push('provider.type is required (linear|jira|github|clickup|gitlab)');
+    errors.push('provider.type is required (linear|jira|github|clickup|gitlab|local)');
   } else {
-    const validTypes = ['linear', 'jira', 'github', 'clickup', 'gitlab'];
+    const validTypes = ['linear', 'jira', 'github', 'clickup', 'gitlab', 'local'];
     if (!validTypes.includes(config.provider.type)) {
       errors.push(`provider.type must be one of: ${validTypes.join(', ')}`);
     } else {
       // Check env var for provider
       const envKey = PROVIDER_ENV_KEYS[config.provider.type];
       if (envKey && !process.env[envKey]) {
-        errors.push(`Environment variable ${envKey} is required for provider "${config.provider.type}"`);
+        errors.push(
+          `Environment variable ${envKey} is required for provider "${config.provider.type}"`,
+        );
       }
     }
   }

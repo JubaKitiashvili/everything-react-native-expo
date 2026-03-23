@@ -5,6 +5,7 @@ const { createLinearProvider } = require('./linear');
 const { createClickUpProvider } = require('./clickup');
 const { createJiraProvider } = require('./jira');
 const { createGitlabProvider } = require('./gitlab');
+const { createLocalProvider } = require('./local');
 
 /**
  * Create a ticket provider based on configuration.
@@ -26,8 +27,12 @@ function createProvider(config, logger) {
       return createJiraProvider(config.provider, logger);
     case 'gitlab':
       return createGitlabProvider(config.provider, logger);
+    case 'local':
+      return createLocalProvider(config.provider, logger);
     default:
-      throw new Error(`Unknown provider type: "${type}". Supported: github, linear, clickup, jira, gitlab`);
+      throw new Error(
+        `Unknown provider type: "${type}". Supported: github, linear, clickup, jira, gitlab, local`,
+      );
   }
 }
 

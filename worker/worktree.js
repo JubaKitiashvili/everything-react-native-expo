@@ -7,13 +7,14 @@ const os = require('os');
 /**
  * Create a git worktree for a branch.
  */
-function createWorktree(repoPath, branch, logger) {
+function createWorktree(repoPath, branch, logger, baseBranch) {
   const sanitized = branch.replace(/[^a-zA-Z0-9._-]/g, '-');
   const worktreePath = path.join(os.tmpdir(), 'erne-worker-' + sanitized);
+  const base = baseBranch || 'main';
 
   try {
-    // Try creating a new branch from main
-    execFileSync('git', ['worktree', 'add', '-b', branch, worktreePath, 'main'], {
+    // Try creating a new branch from base
+    execFileSync('git', ['worktree', 'add', '-b', branch, worktreePath, base], {
       cwd: repoPath,
       stdio: 'pipe',
     });

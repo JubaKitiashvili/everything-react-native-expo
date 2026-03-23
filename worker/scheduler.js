@@ -97,7 +97,8 @@ async function processTicket({ ticket, provider, config, auditData, stackInfo, l
   const context = resolveContext(ticket, auditData, stackInfo);
   const confidence = calculateConfidence(ticket, auditData, context);
 
-  if (confidence.score < 30) {
+  const minConfidence = (config.erne && config.erne.min_confidence) || 70;
+  if (confidence.score < minConfidence) {
     const factorList = confidence.factors.map((f) => `- ${f.factor} (${f.impact})`).join('\n');
     const comment = TOO_COMPLEX_TEMPLATE.replace('{score}', String(confidence.score))
       .replace('{level}', confidence.level)
