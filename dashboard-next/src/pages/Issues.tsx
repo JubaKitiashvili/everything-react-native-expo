@@ -337,7 +337,12 @@ function IssueRow({
       {expanded && (
         <div className="px-4 py-3 border-t border-border bg-bg-primary space-y-3">
           <div className="text-sm text-text-secondary">{issue.detail}</div>
-          <CopyCommand title={issue.title} detail={issue.detail} fix={issue.fix} />
+          <CopyCommand
+            title={issue.title}
+            detail={issue.detail}
+            fix={isComplexIssue(issue) ? undefined : issue.fix}
+            planMode={isComplexIssue(issue)}
+          />
           {output && output.length > 0 && (
             <div className="bg-bg-surface border border-border rounded p-2 max-h-[150px] overflow-y-auto">
               <div className="text-[10px] text-text-muted uppercase tracking-wide mb-1">Output</div>

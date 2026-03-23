@@ -4,11 +4,14 @@ interface CopyCommandProps {
   title: string;
   detail?: string;
   fix?: string;
+  planMode?: boolean;
 }
 
-export function CopyCommand({ title, detail, fix }: CopyCommandProps) {
+export function CopyCommand({ title, detail, fix, planMode }: CopyCommandProps) {
   const [copied, setCopied] = useState(false);
-  const command = generateErneCommand(title, detail, fix);
+  const command = planMode
+    ? `/erne-plan "Refactor: ${title}"`
+    : generateErneCommand(title, detail, fix);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(command).then(() => {
