@@ -88,6 +88,12 @@ const CMDS = [
     icon: '🔌',
     ex: '/erne-native-module "Bluetooth"',
   },
+  {
+    cmd: '/erne-debug-video',
+    desc: 'Video bug analysis',
+    icon: '🎬',
+    ex: '/erne-debug-video recording.mp4',
+  },
   { cmd: '/erne-orchestrate', desc: 'Multi-agent pipeline', icon: '🎯', ex: '/erne-orchestrate' },
   { cmd: '/erne-learn', desc: 'Pattern extraction', icon: '🧠', ex: '/erne-learn' },
   { cmd: '/erne-retrospective', desc: 'Session review', icon: '📊', ex: '/erne-retrospective' },
