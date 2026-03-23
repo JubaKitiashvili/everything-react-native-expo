@@ -1,6 +1,6 @@
 # 🏗️ ERNE — Everything React Native & Expo
 
-> **AI agent harness with 13 specialized agents, autonomous worker mode, visual debugging, and smart routing.** Adaptive stack detection, multi-agent orchestration, and a pixel-art dashboard. Every config is generated to match _your_ exact project setup.
+> **AI agent harness with 13 specialized agents, autonomous worker, video debugging, adaptive fix, and 29 auto-updating knowledge rules.** Adaptive stack detection, multi-agent orchestration, and a pixel-art dashboard. Every config is generated to match _your_ exact project setup.
 
 [![npm version](https://img.shields.io/npm/v/erne-universal?color=cc3534&label=npm)](https://www.npmjs.com/package/erne-universal)
 [![GitHub stars](https://img.shields.io/github/stars/JubaKitiashvili/everything-react-native-expo?style=social)](https://github.com/JubaKitiashvili/everything-react-native-expo)
@@ -36,13 +36,16 @@ This will:
 | -------------------- | ----- | -------------------------------------------------------------------------------------------- |
 | 🤖 Agents            | 13    | Specialized AI agents incl. visual debugger, doc generator, smart routing                    |
 | 🔀 Agent variants    | 9     | Stack-adaptive agent configurations (StyleSheet vs NativeWind, Zustand vs Redux, etc.)       |
-| ⚡ Commands          | 22    | Slash commands for every React Native workflow                                               |
+| ⚡ Commands          | 23    | Slash commands for every React Native workflow (incl. /erne-debug-video)                     |
 | 📏 Rule layers       | 5     | Conditional rules: common, expo, bare-rn, native-ios, native-android                         |
 | 🎯 Rule variants     | 15    | Stack-specific rules selected by deep detection (state, navigation, styling, security, etc.) |
+| 📚 Knowledge rules   | 29    | Expo SDK 55, RN 0.84, React 19.2, Reanimated, Skia, Gesture Handler, SVG, ExecuTorch, more   |
 | 🛡️ Hook profiles     | 3     | Minimal, standard, strict — quality enforcement your way                                     |
 | 📚 Skills            | 7     | Reusable knowledge modules loaded on-demand                                                  |
 | 🎭 Contexts          | 3     | Behavior modes: dev, review, vibe                                                            |
 | 🔌 MCP configs       | 10    | Pre-configured server integrations                                                           |
+| 🎬 Video debugging   | 1     | Analyze screen recordings for temporal UI bugs                                               |
+| 🔧 Adaptive Fix      | —     | Agent-based or direct fix from dashboard                                                     |
 | 📋 Workflow examples | 4     | End-to-end multi-agent workflow guides                                                       |
 | 🤝 Handoff templates | 4     | Structured agent-to-agent context passing                                                    |
 
@@ -50,7 +53,7 @@ This will:
 
 ## 🎮 Agent Dashboard
 
-ERNE includes a real-time pixel-art dashboard with 4 tabs, a context sidebar, and animated office visualization.
+ERNE includes a real-time dashboard with 6 pages, pixel-art agent HQ, and adaptive fix integration.
 
 ```bash
 erne dashboard              # Start on port 3333, open browser
@@ -59,71 +62,85 @@ erne dashboard --no-open    # Don't open browser
 erne start                  # Init project + dashboard in background
 ```
 
-### HQ — Pixel-Art Office
+### Command Center
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-hq.png" alt="ERNE HQ — 4 office rooms with 11 animated agents" width="800" />
+  <img src="docs/screenshots/command-center.png" alt="Command Center" width="800" />
 </p>
 
-- 🏢 4 office rooms — Development, Code Review, Testing, and Conference
-- 🎨 11 animated agent sprites with walking, typing, and done animations
-- 💬 Thought bubbles showing the current task above working agents
-- 🖥️ Animated monitor screens (green code when working, screensaver when idle)
-- 🔔 Toast notifications for agent start/complete events
-- 📊 Bottom stats bar with session duration, tasks completed, working/planning counts
-- 👤 Agent detail overlay with full activity history (click any agent)
-- 🎯 Pipeline orchestrator coordination view in conference room
-- 🔄 Real-time WebSocket updates with auto-reconnect
+Health score, issues summary, agent status, system health checks.
 
-### My App — Project Intelligence
+### Issues — Agent Fix
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-myapp.png" alt="My App tab — project overview, MCP integrations, audit, environment" width="800" />
+  <img src="docs/screenshots/issues.png" alt="Issues with Agent Fix" width="800" />
 </p>
 
-- 📋 App overview with framework detection, health grade, and stack chips
-- 🔌 10 MCP integration statuses with requirements
-- 🔍 Project audit with score, findings (with FIX buttons), and strengths
-- ⚡ Quick actions — run tests, lint, start dev, build iOS/Android, pod install
-- 💡 Smart recommendations based on audit findings
-- 🛠️ Environment checks for all dev tools (Node, Xcode, CocoaPods, etc.)
+Severity filtering, Agent Fix buttons (auto-detects Claude Code), "Needs planning" for complex issues, real-time fix output.
 
-### Ecosystem — Release Radar
+### Tasks — Worker & Providers
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-ecosystem.png" alt="Ecosystem tab — release feed for React Native packages" width="800" />
+  <img src="docs/screenshots/tasks.png" alt="Tasks with Worker Providers" width="800" />
 </p>
 
-- 📰 Live release feed for React Native ecosystem packages
-- 🏷️ Tags: NEW, BREAK, security patches
-- 🔍 Filter by category: Updates, Trending, Tips, Security
-- 📊 Quick stats sidebar
+6 provider integrations (ClickUp, GitHub, Linear, Jira, GitLab, Local), Kanban board, interactive setup guides.
 
-### Insights — Project Analytics
+### Agents — Pixel Art HQ
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-insights.png" alt="Insights tab — audit score, outdated deps, agent utilization" width="800" />
+  <img src="docs/screenshots/agents.png" alt="Agents Pixel Art HQ" width="800" />
 </p>
 
-- 📈 KPI cards: Audit Score, Outdated Deps, Agent Tasks (with deltas)
-- 📊 Agent utilization breakdown with horizontal bar chart
+13 animated agents in 4 rooms, real-time status, custom naming, activity history.
 
-### Context Sidebar
+### Project — Stack & Docs
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-sidebar.png" alt="Context sidebar — system info, audit, activity, knowledge base" width="800" />
+  <img src="docs/screenshots/project.png" alt="Project page" width="800" />
 </p>
 
-The sidebar auto-enables with the dashboard and provides 6 collapsible panels:
+Stack detection, MCP servers, generated documentation (12 doc types), recommendations.
 
-- 🖥️ **System Info** — project metadata, environment checks, git branch
-- 🔍 **Project Audit** — 22-point score with one-click FIX buttons and strength checks
-- 📋 **Agent Activity** — real-time task history with timestamps
-- 💾 **Context Savings** — live savings percentage, KB saved, and event timeline
-- 📚 **Knowledge Base** — FTS5-powered search across 5 categories (pattern, decision, error, api, component)
-- 💰 **Context Budget** — set session/agent token limits, choose overflow strategy (truncate / warn / stop)
+### Commands
 
-Context optimization runs automatically — no flags or configuration needed. See [Context Optimization](#-context-optimization) for details.
+<p align="center">
+  <img src="docs/screenshots/commands.png" alt="Commands reference" width="800" />
+</p>
+
+23 commands including /erne-debug-video, click to copy.
+
+---
+
+## 🎬 Video Debugging
+
+Analyze screen recordings to find temporal UI bugs that screenshots cannot capture.
+
+```bash
+/erne-debug-video recording.mp4
+```
+
+Catches: animation glitches, race conditions, gesture issues, scroll jank, keyboard overlap, navigation transitions.
+
+- Extracts key frames via ffmpeg scene detection (any format: mp4, mov, webm, avi, mkv, gif)
+- Claude analyzes frames as a timeline with frame references
+- No additional API keys needed — uses Claude you already have
+
+---
+
+## 📚 29 Knowledge Rules (Auto-Updating)
+
+ERNE ships with 29 comprehensive rule files covering the entire React Native ecosystem:
+
+| Category         | Rules | Coverage                                                                           |
+| ---------------- | ----- | ---------------------------------------------------------------------------------- |
+| Core             | 10    | Expo SDK 55, RN 0.84, React 19.2, navigation, patterns, styling, testing, security |
+| Expo Packages    | 4     | 40+ packages: audio, video, camera, file-system, sqlite, notifications, location   |
+| Software Mansion | 5     | Reanimated v4, Gesture Handler, Skia, SVG, Screens                                 |
+| Callstack        | 5     | Native bottom tabs, RNTL, on-device AI, Reassure, Voltra                           |
+| Cutting-edge     | 5     | ExecuTorch (on-device LLM), Audio API, Enriched (rich text), Freeze, Screens       |
+
+Rules auto-update weekly via GitHub Action — checks npm for new SDK/RN versions, analyzes changelogs with Claude API, and opens a PR.
 
 ---
 
@@ -177,59 +194,7 @@ Each agent has a distinct personality, quantified success metrics, and memory in
 
 ## 🧠 Context Optimization
 
-ERNE includes a built-in context intelligence system that reduces tool output bloat by **97–100%**, preserves exact code examples via FTS5 search, and manages your context budget — all auto-enabled with the dashboard.
-
-```
-erne dashboard   # Context system starts automatically
-```
-
-### Benchmark-verified savings
-
-| Layer              | What it does                                                                                                                                | Savings     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| **Summarizer**     | Auto-detects 14 content types (docs, JSON, logs, test output, build output, CSV, git history, etc.) and compresses to statistical summaries | **97–100%** |
-| **Index + Search** | Chunks content by headings, indexes in FTS5 with BM25 ranking. Returns only relevant chunks — code examples preserved exactly               | **80%**     |
-| **Full session**   | Combined summarizer + search across a real debugging session (docs, snapshots, issues, tests, builds)                                       | **99%**     |
-
-> **Real numbers:** 537 KB of tool outputs → 2.6 KB of context. That's **0.4%** of a 200K context window instead of 44.5%. See [BENCHMARK.md](BENCHMARK.md) for the full 21-scenario breakdown.
-
-### How it works
-
-```
-Tool Output ──▶ Smart Summarizer ──▶ 97-100% compression (14 content types)
-                     │
-Raw Docs ──▶ FTS5 Index+Search ──▶ 80% savings, exact code preserved
-                     │
-Session Events ──▶ Session Tracker ──▶ Error→Fix correlation
-                     │
-Knowledge ──▶ 3-Layer Search (FTS5 → Trigram → Levenshtein)
-                     │
-Session End ──▶ Snapshot (<2KB) ──▶ Next session restores context
-```
-
-| Feature                | What it does                                                                                                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Content summarizer** | 14 auto-detected content types: markdown, HTML, JSON, test output, TypeScript errors, build output, logs, git history, CSV, and more. Each type gets a specialized summary format |
-| **Content store**      | FTS5-powered index with Porter stemming. Markdown chunked by headings, code blocks never split or truncated. BM25 relevance ranking with byte budget management                   |
-| **Smart truncation**   | 4-tier fallback cascade: Structured → Pattern → Head/Tail → Hash. Handles anything the summarizer doesn't cover                                                                   |
-| **Knowledge base**     | SQLite-backed with FTS5 full-text search, trigram fuzzy matching, and Levenshtein fallback. Entries scored by recency + access frequency                                          |
-| **Session continuity** | Snapshots capture active tasks, decisions, errors, and commits at session end. Next session restores context in <2KB                                                              |
-| **Budget manager**     | Set per-session and per-agent token limits. Throttles at 80%, supports aggressive truncation / warn / hard stop overflow strategies                                               |
-| **Agent preloader**    | Tracks agent-to-agent transitions and predicts the next agent for parallel context warmup                                                                                         |
-| **Error→Fix tracking** | Correlates errors with subsequent file modifications to build fix patterns over time                                                                                              |
-
-### Dashboard sidebar panels
-
-The context sidebar (toggle with the chevron button) shows 6 live panels:
-
-- **System Info** — project metadata, environment health, git branch
-- **Project Audit** — 22-point audit with score, one-click FIX buttons, and strengths
-- **Agent Activity** — real-time task history with timestamps
-- **Context Savings** — live savings percentage, KB saved, and event timeline
-- **Knowledge Base** — searchable entries with category filters (pattern, decision, error, api, component)
-- **Context Budget** — configure session limits and overflow strategy directly from the UI
-
-If the context system is disabled, the sidebar shows an **Enable Context** button to activate it at runtime.
+ERNE includes a built-in context intelligence system (auto-enabled with dashboard) that compresses tool outputs by **97-100%**, indexes content with FTS5 search, and manages your context budget. See [BENCHMARK.md](BENCHMARK.md) for the full 21-scenario breakdown.
 
 ---
 
@@ -245,7 +210,7 @@ ERNE minimizes token usage through two complementary systems: **architecture-lev
 | **Conditional rules**      | Only loads rules matching your project type (Expo, bare RN, native)   | ~26%    |
 | **On-demand skills**       | Skills load only when their command is invoked, not always in context | ~12%    |
 | **Subagent isolation**     | Fresh agent per task with only its own definition + relevant rules    | ~12%    |
-| **Task-specific commands** | 22 focused prompts instead of one monolithic instruction set          | ~13%    |
+| **Task-specific commands** | 23 focused prompts instead of one monolithic instruction set          | ~13%    |
 | **Context-based behavior** | Modes change behavior dynamically without loading new rulesets        | ~3%     |
 
 ### Runtime context optimization (benchmark-verified)
@@ -279,7 +244,7 @@ Change profile: set `ERNE_PROFILE` env var, add `<!-- Hook Profile: standard -->
 | Category          | Commands                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Core**          | `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/code`, `/feature` |
-| **Extended**      | `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/quality-gate`                                        |
+| **Extended**      | `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/debug-video`, `/quality-gate`                        |
 | **Orchestration** | `/orchestrate`, `/worker`                                                                                              |
 | **Learning**      | `/learn`, `/retrospective`, `/setup-device`                                                                            |
 
@@ -293,7 +258,7 @@ ERNE generates adaptive config files for multiple IDEs, but the **full agent exp
 | ------------------------------- | :---------: | :---------------------------------: |
 | Adaptive rules & config         |     ✅      |                 ✅                  |
 | Stack detection (15 dimensions) |     ✅      |                 ✅                  |
-| 22 slash commands               |     ✅      |                 ❌                  |
+| 23 slash commands               |     ✅      |                 ❌                  |
 | 13 specialized agents           |     ✅      |                 ❌                  |
 | Pipeline orchestration          |     ✅      |                 ❌                  |
 | Hook profiles                   |     ✅      |                 ❌                  |
@@ -387,7 +352,7 @@ If you maintain a React Native library, Expo tool, or developer service — [let
 | ------------------------------------------------ | ------------------------------------ |
 | [Getting Started](docs/getting-started.md)       | Installation and first run           |
 | [Agents Guide](docs/agents.md)                   | All 13 agents with domains and usage |
-| [Commands Reference](docs/commands.md)           | All 22 slash commands                |
+| [Commands Reference](docs/commands.md)           | All 23 slash commands                |
 | [Hooks & Profiles](docs/hooks-profiles.md)       | Hook system and 3 profiles           |
 | [Creating Skills](docs/creating-skills.md)       | Author your own skills               |
 | [Pipeline & Orchestration](docs/pipeline.md)     | Multi-agent workflow coordination    |
