@@ -345,7 +345,17 @@ function deriveTasksFromWorker(state: WorkerState | null): KanbanTask[] {
   return tasks;
 }
 
-const TASK_PROVIDERS = [
+interface TaskProvider {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  envVar: string | null;
+  configExample: string;
+  setupSteps: string[];
+}
+
+const TASK_PROVIDERS: TaskProvider[] = [
   {
     id: 'clickup',
     name: 'ClickUp',
