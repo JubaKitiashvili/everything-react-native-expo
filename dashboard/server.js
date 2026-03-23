@@ -1091,11 +1091,12 @@ const server = http.createServer(async (req, res) => {
   if (
     urlPath.startsWith('/api/tasks') ||
     urlPath.startsWith('/api/agents') ||
-    urlPath === '/api/issues/fix' ||
+    urlPath.startsWith('/api/issues/') ||
     urlPath.startsWith('/api/mcp')
   ) {
     // GET requests don't need body parsing
     if (req.method === 'GET') {
+      if (handleFixCapabilities(req, res, urlPath)) return;
       if (handleTasks(req, res, urlPath, '', workerTasks)) return;
       if (handleAgents(req, res, urlPath, '', AGENT_DEFINITIONS, agentState, activityHistory))
         return;
