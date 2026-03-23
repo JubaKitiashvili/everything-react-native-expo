@@ -1,5 +1,6 @@
 'use strict';
-const { execFile, execFileSync } = require('child_process');
+const { execFile, execFileSync, spawn } = require('child_process');
+const fs = require('fs');
 
 // Only allow these command prefixes for direct execution
 const ALLOWED_CMDS = ['npm', 'npx', 'node'];
@@ -65,7 +66,9 @@ function buildAgentPrompt(issue) {
     `2. Verify the fix works (run tests or type check)`,
     `3. If the fix breaks anything, revert and try a different approach`,
     `4. Report what you changed and verification results`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 // GET /api/issues/fix-capabilities — check what fix modes are available
@@ -74,12 +77,14 @@ function handleFixCapabilities(req, res, urlPath) {
 
   const claudeAvailable = isClaudeAvailable();
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    agentFix: claudeAvailable,
-    directFix: true,
-    copyPrompt: true,
-    mode: claudeAvailable ? 'agent' : 'direct',
-  }));
+  res.end(
+    JSON.stringify({
+      agentFix: claudeAvailable,
+      directFix: true,
+      copyPrompt: true,
+      mode: claudeAvailable ? 'agent' : 'direct',
+    }),
+  );
   return true;
 }
 
@@ -95,7 +100,13 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
 
     // Mode: agent — use Claude Code
     if (mode === 'agent' && isClaudeAvailable()) {
-      const issueData = issue || { title: fix, detail: '', category: 'general', severity: 'medium', fix };
+      const issueData = issue || {
+        title: fix,
+        detail: '',
+        category: 'general',
+        severity: 'medium',
+        fix,
+      };
       const prompt = buildAgentPrompt(issueData);
       const agent = CATEGORY_AGENT_MAP[issueData.category] || 'senior-developer';
 
@@ -107,62 +118,72 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
           status: 'working',
           task: issueData.title,
         });
-        broadcast({ type: 'fix_output', findingId, line: `[ERNE] Using ${agent} agent to fix...\n` });
-      }
-
-      const child = execFile(
-        'claude',
-        ['--print', '--dangerously-skip-permissions', prompt],
-        { cwd: projectDir, timeout: 120000, maxBuffer: 1024 * 1024 },
-        (err, stdout, stderr) => {
-          const output = (stdout || '') + (stderr || '');
-          const success = !err;
-
-          // Post-verify: run tests
-          let verifyOutput = '';
-          let verifyPassed = true;
-          try {
-            verifyOutput = execFileSync('npm', ['test', '--', '--ci', '--passWithNoTests'], {
-              cwd: projectDir, stdio: 'pipe', timeout: 60000, encoding: 'utf-8',
-            });
-          } catch (verifyErr) {
-            verifyPassed = false;
-            verifyOutput = (verifyErr.stdout || '') + (verifyErr.stderr || '');
-          }
-
-          if (broadcast) {
-            if (verifyOutput) {
-              broadcast({ type: 'fix_output', findingId, line: `\n[VERIFY] ${verifyPassed ? 'Tests passed' : 'Tests failed'}\n` });
-            }
-            broadcast({
-              type: 'fix_complete',
-              findingId,
-              success: success && verifyPassed,
-              output: output + '\n\n--- Verification ---\n' + verifyOutput,
-              agent,
-              verifyPassed,
-            });
-            // Reset agent status
-            broadcast({
-              type: 'agent_update',
-              agent,
-              status: 'idle',
-              task: null,
-            });
-          }
-        },
-      );
-
-      // Stream output
-      if (child.stdout && broadcast) {
-        child.stdout.on('data', (data) => {
-          broadcast({ type: 'fix_output', findingId, line: data.toString() });
+        broadcast({
+          type: 'fix_output',
+          findingId,
+          line: `[ERNE] Using ${agent} agent to fix...\n`,
         });
       }
-      if (child.stderr && broadcast) {
-        child.stderr.on('data', (data) => {
-          broadcast({ type: 'fix_output', findingId, line: data.toString() });
-        });
+
+      const child = spawn('claude', ['--print', '--dangerously-skip-permissions', prompt], {
+        cwd: projectDir,
+        stdio: ['ignore', 'pipe', 'pipe'], // stdin from /dev/null
+        timeout: 120000,
+      });
+
+      let outputBuf = '';
+      child.stdout.on('data', (data) => {
+        const text = data.toString();
+        outputBuf += text;
+        if (broadcast) broadcast({ type: 'fix_output', findingId, line: text });
+      });
+      child.stderr.on('data', (data) => {
+        const text = data.toString();
+        outputBuf += text;
+        if (broadcast) broadcast({ type: 'fix_output', findingId, line: text });
+      });
+
+      child.on('close', (code) => {
+        const success = code === 0;
+
+        // Post-verify: run tests
+        let verifyOutput = '';
+        let verifyPassed = true;
+        try {
+          verifyOutput = execFileSync('npm', ['test', '--', '--ci', '--passWithNoTests'], {
+            cwd: projectDir,
+            stdio: 'pipe',
+            timeout: 60000,
+            encoding: 'utf-8',
+          });
+        } catch (verifyErr) {
+          verifyPassed = false;
+          verifyOutput = (verifyErr.stdout || '') + (verifyErr.stderr || '');
+        }
+
+        if (broadcast) {
+          broadcast({
+            type: 'fix_output',
+            findingId,
+            line: `\n[VERIFY] ${verifyPassed ? 'Tests passed' : 'Tests failed'}\n`,
+          });
+          broadcast({
+            type: 'fix_complete',
+            findingId,
+            success: success && verifyPassed,
+            output: outputBuf + '\n\n--- Verification ---\n' + verifyOutput,
+            agent,
+            verifyPassed,
+          });
+          // Reset agent status
+          broadcast({
+            type: 'agent_update',
+            agent,
+            status: 'idle',
+            task: null,
+          });
+        }
+      });
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -179,7 +200,9 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
 
     if (!isCommandSafe(fix)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Command not allowed. Only npm/npx/node commands are permitted.' }));
+      res.end(
+        JSON.stringify({ error: 'Command not allowed. Only npm/npx/node commands are permitted.' }),
+      );
       return true;
     }
 
@@ -188,7 +211,8 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
     const args = parts.slice(1);
 
     const child = execFile(
-      cmd, args,
+      cmd,
+      args,
       { cwd: projectDir, timeout: 60000 },
       (err, stdout, stderr) => {
         const fixOutput = (stdout || '') + (stderr || '');
@@ -199,7 +223,9 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
         if (fixSuccess && isSimpleFix(fix)) {
           try {
             execFileSync('npx', ['tsc', '--noEmit'], {
-              cwd: projectDir, stdio: 'pipe', timeout: 30000,
+              cwd: projectDir,
+              stdio: 'pipe',
+              timeout: 30000,
             });
           } catch {
             verifyPassed = false;
@@ -208,7 +234,11 @@ function handleIssueFix(req, res, urlPath, body, broadcast) {
 
         if (broadcast) {
           if (!verifyPassed) {
-            broadcast({ type: 'fix_output', findingId, line: '\n[VERIFY] TypeScript check failed after fix — review manually\n' });
+            broadcast({
+              type: 'fix_output',
+              findingId,
+              line: '\n[VERIFY] TypeScript check failed after fix — review manually\n',
+            });
           }
           broadcast({
             type: 'fix_complete',

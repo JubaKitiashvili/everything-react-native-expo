@@ -1167,6 +1167,12 @@ wss = new WebSocketServer({ server, maxPayload: 65536 });
 
 function broadcast(msg) {
   if (!wss) return;
+  // Update agentState when agent_update messages are broadcast
+  if (msg.type === 'agent_update' && msg.agent && agentState[msg.agent]) {
+    agentState[msg.agent].status = msg.status || 'idle';
+    agentState[msg.agent].task = msg.task || null;
+    agentState[msg.agent].lastEvent = new Date().toISOString();
+  }
   var payload = JSON.stringify(msg);
   wss.clients.forEach(function (client) {
     if (client.readyState === 1) client.send(payload);
