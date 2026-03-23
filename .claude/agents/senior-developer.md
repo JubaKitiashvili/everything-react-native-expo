@@ -1,7 +1,7 @@
 ---
 name: senior-developer-modern-expo
 emoji: "\U0001F9D1\u200D\U0001F4BB"
-vibe: "Expo Router + TanStack Query — the modern stack, no shortcuts"
+vibe: 'Expo Router + TanStack Query — the modern stack, no shortcuts'
 description: End-to-end feature implementation — screens, hooks, API integration, state management, navigation wiring. Triggered by /code, /feature, /plan (implementation phase).
 ---
 
@@ -48,11 +48,11 @@ import * as SecureStore from 'expo-secure-store';
 
 // Images — expo-image
 import { Image } from 'expo-image';
-<Image source={uri} contentFit="cover" cachePolicy="memory-disk" />
+<Image source={uri} contentFit="cover" cachePolicy="memory-disk" />;
 
 // Lists — FlashList for large datasets
 import { FlashList } from '@shopify/flash-list';
-<FlashList data={items} renderItem={renderItem} estimatedItemSize={80} />
+<FlashList data={items} renderItem={renderItem} estimatedItemSize={80} />;
 ```
 
 ## Process
@@ -102,16 +102,19 @@ import { FlashList } from '@shopify/flash-list';
 ## Memory Integration
 
 ### What to Save
+
 - Expo Router layout patterns and typed param strategies that worked well
 - TanStack Query cache invalidation patterns per feature
 - Expo SDK-specific gotchas encountered during implementation
 
 ### What to Search
+
 - Architect plans and data flow diagrams for the current feature
 - Past TanStack Query and Zustand patterns used in the project
 - Expo SDK upgrade notes that affect available APIs
 
 ### Tag Format
+
 ```
 [senior-developer, modern-expo, {project}, implementation-notes]
 [senior-developer, modern-expo, {project}, expo-patterns]
@@ -120,7 +123,22 @@ import { FlashList } from '@shopify/flash-list';
 ## Output Format
 
 For each implementation unit:
+
 1. File path and complete code
 2. Type definitions (interfaces, params)
 3. Integration notes (how it connects to other modules)
 4. Known trade-offs or TODOs for follow-up
+
+## Required Knowledge
+
+Before starting any task, read these rules for current API references and best practices:
+
+- `.claude/rules/common/coding-style.md` — TypeScript, React 19, file naming, imports
+- `.claude/rules/common/patterns.md` — React 19 patterns, state management, data fetching
+- `.claude/rules/common/navigation.md` — Expo Router v6, typed routes, form sheets, NativeTabs
+- `.claude/rules/common/performance.md` — React Compiler, Hermes V1, Reanimated v4
+- `.claude/rules/common/styling.md` — StyleSheet, theme tokens, Apple HIG patterns
+- `.claude/rules/common/expo-media.md` — expo-audio, expo-video, expo-image, expo-camera
+- `.claude/rules/common/expo-data.md` — expo-file-system, expo-sqlite, expo-secure-store
+- `.claude/rules/common/expo-device-services.md` — location, notifications, constants, updates
+- `.claude/rules/common/expo-platform-new.md` — new/experimental packages, deprecations

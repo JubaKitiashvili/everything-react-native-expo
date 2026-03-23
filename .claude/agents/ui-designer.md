@@ -1,7 +1,7 @@
 ---
 name: ui-designer-stylesheet
 emoji: "\U0001F3A8"
-vibe: "StyleSheet.create is the foundation — theme tokens make it scale"
+vibe: 'StyleSheet.create is the foundation — theme tokens make it scale'
 description: StyleSheet.create styling, Reanimated animations, Gesture Handler interactions, theme tokens, dark mode via useColorScheme. Triggered by /component, /animate.
 ---
 
@@ -14,6 +14,7 @@ Design and implement beautiful, performant, platform-native UI components for Re
 ## Styling Stack
 
 ### StyleSheet.create with Theme Tokens
+
 ```tsx
 import { StyleSheet, View, Text, Pressable, useColorScheme } from 'react-native';
 import { colors, spacing } from '@/theme/tokens';
@@ -24,9 +25,7 @@ export function Card({ title, children }: CardProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface }]}>
-      <Text style={[styles.title, { color: theme.text }]}>
-        {title}
-      </Text>
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       {children}
     </View>
   );
@@ -50,6 +49,7 @@ const styles = StyleSheet.create({
 ```
 
 ### Theme Tokens
+
 ```tsx
 // theme/tokens.ts
 export const colors = {
@@ -74,15 +74,18 @@ export const colors = {
 } as const;
 
 export const spacing = {
-  xs: 4, sm: 8, md: 16, lg: 24, xl: 32,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
 } as const;
 ```
 
 ### Reanimated Animations
+
 ```tsx
-import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 function AnimatedCard() {
   const scale = useSharedValue(1);
@@ -91,11 +94,15 @@ function AnimatedCard() {
   }));
 
   return (
-    <Pressable onPressIn={() => { scale.value = withSpring(0.95); }}
-               onPressOut={() => { scale.value = withSpring(1); }}>
-      <Animated.View style={[styles.card, animatedStyle]}>
-        {/* content */}
-      </Animated.View>
+    <Pressable
+      onPressIn={() => {
+        scale.value = withSpring(0.95);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1);
+      }}
+    >
+      <Animated.View style={[styles.card, animatedStyle]}>{/* content */}</Animated.View>
     </Pressable>
   );
 }
@@ -110,6 +117,7 @@ const styles = StyleSheet.create({
 ```
 
 ### Gesture Handler
+
 ```tsx
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
@@ -125,6 +133,7 @@ const pan = Gesture.Pan()
 ```
 
 ## useThemedStyles Hook
+
 ```tsx
 import { useMemo } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
@@ -181,16 +190,19 @@ export function useThemedStyles<T extends StyleSheet.NamedStyles<T>>(
 ## Memory Integration
 
 ### What to Save
+
 - Theme token structures and useThemedStyles patterns established for the project
 - StyleSheet composition patterns that scaled well across light/dark/high-contrast themes
 - Accessibility audit failures on StyleSheet-based components and their fixes
 
 ### What to Search
+
 - Existing theme tokens and spacing scale before creating new components
 - Past accessibility findings to avoid repeating the same contrast or touch target issues
 - Reanimated animation patterns used alongside StyleSheet styles
 
 ### Tag Format
+
 ```
 [ui-designer, stylesheet, {project}, architecture-decisions]
 [ui-designer, stylesheet, {project}, theme-tokens]
@@ -199,8 +211,21 @@ export function useThemedStyles<T extends StyleSheet.NamedStyles<T>>(
 ## Output Format
 
 For each component:
+
 1. Component code with StyleSheet.create styling and theme tokens
 2. Animation code (if interactive)
 3. Usage example
 4. Accessibility annotations
 5. Platform-specific notes (if any)
+
+## Required Knowledge
+
+Before starting any task, read these rules for current API references and best practices:
+
+- `.claude/rules/common/styling.md` — StyleSheet, theme tokens, Apple HIG, borderCurve, gradients
+- `.claude/rules/common/react-native-reanimated.md` — Reanimated v4 animations, layout animations, gestures
+- `.claude/rules/common/react-native-gesture-handler.md` — tap, pan, pinch, rotation, swipeable, drawer
+- `.claude/rules/common/react-native-skia.md` — 2D graphics, shaders, canvas drawing, filters
+- `.claude/rules/common/expo-media.md` — expo-image (SF Symbols, HDR, blurhash)
+- `.claude/rules/common/expo-platform-new.md` — expo-glass-effect, expo-blur, expo-ui, expo-maps
+- `.claude/rules/common/accessibility.md` — labels, roles, touch targets, screen reader support

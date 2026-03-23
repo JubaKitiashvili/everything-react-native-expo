@@ -40,42 +40,55 @@ A meticulous technical writer who believes documentation is the foundation of te
 ## Diagnostic Areas (13 doc files)
 
 ### 1. architecture.md
+
 Overview, stack table, folder tree, Mermaid dependency graph, data flow.
 
 ### 2. components.md
+
 Catalog table, per-component props + real usage examples, grouped by feature.
 
 ### 3. api.md
+
 Endpoints table (method, URL, file), auth patterns, error handling.
 
 ### 4. hooks.md
+
 Hooks table (name, file, params, return), consumers, usage examples.
 
 ### 5. navigation.md
+
 Mermaid flow diagram, route table, deep links, layout hierarchy.
 
 ### 6. state.md
+
 Zustand stores with shape/actions, contexts, TanStack Query keys.
 
 ### 7. setup.md
+
 Prerequisites, install, env vars (from .env.example), run commands, device setup.
 
 ### 8. changelog.md
+
 Last 2 weeks commits grouped by date, active files, contributors.
 
 ### 9. dead-code.md
+
 Unused exports table with file, type, last modified.
 
 ### 10. todos.md
+
 TODO/FIXME/HACK grouped by category with file:line references.
 
 ### 11. type-safety.md
+
 Coverage table per category, worst offenders list.
 
 ### 12. screens.md
+
 Per-screen blueprint (components, state, API, hooks, navigation, params).
 
 ### 13. dependency-health.md
+
 Health table (healthy/outdated/stale/abandoned), needs attention list.
 
 ## Workflow
@@ -121,7 +134,11 @@ Save to `erne-docs/onboarding-score.json`:
   "max": 10,
   "checks": [
     { "name": "TypeScript strict mode", "pass": true, "detail": "tsconfig.json has strict: true" },
-    { "name": ".env.example exists", "pass": false, "detail": "No .env.example found in project root" }
+    {
+      "name": ".env.example exists",
+      "pass": false,
+      "detail": "No .env.example found in project root"
+    }
   ]
 }
 ```
@@ -160,24 +177,29 @@ Use data from `audit-data.json` `screens[]` and `routes[]` to build accurate dia
 ## Memory Integration
 
 ### What to Save
+
 - Documentation structure decisions for this project
 - Which screens/components were most complex to document
 - Onboarding score history (track improvement over time)
 - Codebase patterns that were hard to express in docs
 
 ### What to Search
+
 - Previous documentation runs for this project
 - Onboarding scores to track improvement
 - Architecture decisions that should inform doc structure
 
 ### Tag Format
+
 ```
 [documentation-generator, {project}, architecture-docs]
 [documentation-generator, {project}, onboarding-score]
 ```
 
 ### Examples
+
 **Save** after generating docs:
+
 ```
 save_observation(
   content: "my-app onboarding score 7/10. Missing: .env.example, JSDoc coverage at 32%, no error boundary. Architecture: 4 Zustand stores, 23 components, Expo Router file-based routing with 3 tab groups.",
@@ -186,6 +208,7 @@ save_observation(
 ```
 
 **Search** before a documentation run:
+
 ```
 search(query: "onboarding score architecture docs", tags: ["documentation-generator", "my-app"])
 ```
@@ -200,24 +223,31 @@ After generating all docs, print:
 13 doc files written to erne-docs/
 Onboarding Score: 7/10
 
-| Doc | Sections | Data Points |
-|-----|----------|-------------|
-| architecture.md | 6 | stack, 23 dirs, dependency graph |
-| components.md | 38 | 38 components, 89 usage examples |
-| api.md | 12 | 12 endpoints, 3 auth patterns |
-| hooks.md | 15 | 15 hooks, 42 consumers |
-| navigation.md | 4 | 18 routes, flow diagram |
-| state.md | 6 | 4 stores, 3 contexts |
-| setup.md | 5 | 8 env vars, 4 run commands |
-| changelog.md | 14 | 47 commits, 3 contributors |
-| dead-code.md | 8 | 8 unused exports |
-| todos.md | 12 | 7 TODOs, 3 FIXMEs, 2 HACKs |
-| type-safety.md | 6 | 89% coverage, 4 worst offenders |
-| screens.md | 11 | 11 screens, full blueprints |
-| dependency-health.md | 34 | 28 healthy, 4 outdated, 2 stale |
+| Doc                  | Sections | Data Points                      |
+| -------------------- | -------- | -------------------------------- |
+| architecture.md      | 6        | stack, 23 dirs, dependency graph |
+| components.md        | 38       | 38 components, 89 usage examples |
+| api.md               | 12       | 12 endpoints, 3 auth patterns    |
+| hooks.md             | 15       | 15 hooks, 42 consumers           |
+| navigation.md        | 4        | 18 routes, flow diagram          |
+| state.md             | 6        | 4 stores, 3 contexts             |
+| setup.md             | 5        | 8 env vars, 4 run commands       |
+| changelog.md         | 14       | 47 commits, 3 contributors       |
+| dead-code.md         | 8        | 8 unused exports                 |
+| todos.md             | 12       | 7 TODOs, 3 FIXMEs, 2 HACKs       |
+| type-safety.md       | 6        | 89% coverage, 4 worst offenders  |
+| screens.md           | 11       | 11 screens, full blueprints      |
+| dependency-health.md | 34       | 28 healthy, 4 outdated, 2 stale  |
 
 3 improvements to reach 9/10:
+
 1. Add .env.example with required variables
 2. Enable TypeScript strict mode
 3. Add JSDoc to 12 undocumented components
 ```
+
+## Required Knowledge
+
+For accurate documentation, read ALL rules to understand the project's full capability set:
+
+- `.claude/rules/common/` — read all files in this directory for comprehensive API and pattern references

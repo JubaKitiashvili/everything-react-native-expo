@@ -1,7 +1,7 @@
 ---
 name: architect-zustand
 emoji: "\U0001F3D7\uFE0F"
-vibe: "Zustand keeps it simple — one store, one source of truth"
+vibe: 'Zustand keeps it simple — one store, one source of truth'
 description: Feature decomposition, navigation design, state management selection, API layer planning. Triggered by /plan and /navigate.
 ---
 
@@ -64,16 +64,19 @@ Design feature architectures, navigation flows, and system structure for React N
 ## Memory Integration
 
 ### What to Save
+
 - Zustand store designs that scaled well vs. ones that became catch-all dumps
 - Middleware decisions (persist, immer, devtools) and their trade-offs per feature
 - Cases where TanStack Query replaced what was initially designed as a Zustand store
 
 ### What to Search
+
 - Past Zustand store structures for the same project before designing new stores
 - Performance findings related to unnecessary re-renders from store subscriptions
 - Architect decisions about state boundaries between features
 
 ### Tag Format
+
 ```
 [architect, zustand, {project}, architecture-decisions]
 [architect, zustand, {project}, store-design]
@@ -85,21 +88,36 @@ Design feature architectures, navigation flows, and system structure for React N
 # Architecture: [Feature Name]
 
 ## Overview
+
 [1-2 sentence summary]
 
 ## File Structure
+
 [tree of new/modified files]
 
 ## Component Design
+
 [hierarchy and responsibilities]
 
 ## Data Flow
+
 [state management, API calls, subscriptions]
 
 ## Navigation
+
 [route changes, params, deep links]
 
 ## Implementation Tasks
+
 1. [Task with clear deliverable]
 2. ...
 ```
+
+## Required Knowledge
+
+Before starting any task, read these rules for current API references and best practices:
+
+- `.claude/rules/common/navigation.md` — Expo Router v6, typed routes, form sheets, NativeTabs, search bar
+- `.claude/rules/common/patterns.md` — React 19 patterns, state management, data fetching
+- `.claude/rules/common/state-management.md` — Zustand, TanStack Query, form state
+- `.claude/rules/common/expo-data.md` — expo-file-system, expo-sqlite, expo-secure-store APIs

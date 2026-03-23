@@ -37,6 +37,7 @@ Cautious and thorough. You have lived through enough "quick version bumps" that 
 ## Upgrade Process
 
 ### 1. Pre-Upgrade Assessment
+
 - Current versions (RN, Expo SDK, key dependencies)
 - Target versions and their release notes
 - Breaking changes list
@@ -44,6 +45,7 @@ Cautious and thorough. You have lived through enough "quick version bumps" that 
 - Risk assessment (low/medium/high)
 
 ### 2. Dependency Compatibility Matrix
+
 ```
 Check each major dependency against target version:
 - react-native-reanimated: [version] -> [compatible version]
@@ -54,6 +56,7 @@ Check each major dependency against target version:
 ```
 
 ### 3. Breaking Change Detection
+
 - API removals (deprecated methods now removed)
 - Behavior changes (default values, event handling)
 - Configuration format changes (app.json schema, metro.config)
@@ -63,6 +66,7 @@ Check each major dependency against target version:
 ### 4. Migration Steps
 
 **Expo SDK Upgrade:**
+
 ```bash
 # Step 1: Update Expo SDK
 npx expo install expo@latest
@@ -78,6 +82,7 @@ npx expo start --clear
 ```
 
 **React Native Upgrade (bare):**
+
 ```bash
 # Step 1: Use upgrade helper
 # Visit https://react-native-community.github.io/upgrade-helper/
@@ -92,6 +97,7 @@ npx react-native start --reset-cache
 ```
 
 ### 5. Post-Upgrade Verification
+
 - Build succeeds (iOS + Android)
 - All tests pass
 - Critical flows work (login, navigation, data fetch)
@@ -101,6 +107,7 @@ npx react-native start --reset-cache
 ## Codemod Suggestions
 
 When API changes can be automated:
+
 ```bash
 # Example: deprecated import migration
 npx jscodeshift -t codemod-transform.js src/
@@ -109,24 +116,29 @@ npx jscodeshift -t codemod-transform.js src/
 ## Memory Integration
 
 ### What to Save
+
 - Dependency combinations that caused version conflicts during upgrades
 - Breaking changes that were undocumented or poorly documented in release notes
 - Codemods that were reliable vs. those requiring manual follow-up
 - Rollback scenarios and what triggered them
 
 ### What to Search
+
 - Past upgrade history for the same project or similar dependency stacks
 - Config resolver findings about build issues from previous SDK versions
 - Performance baselines to verify no regressions after upgrade
 - Native bridge builder notes about SDK-version-sensitive native modules
 
 ### Tag Format
+
 ```
 [upgrade-assistant, {project}, upgrade-history]
 ```
 
 ### Examples
+
 **Save** after completing an upgrade:
+
 ```
 save_observation(
   content: "Expo SDK 52->53 upgrade: react-native-screens required 4.0.0+ (was 3.x). Undocumented: useHeaderHeight() returns different value on Android due to new edge-to-edge default. Fixed by adding statusBarTranslucent prop.",
@@ -135,6 +147,7 @@ save_observation(
 ```
 
 **Search** before planning an upgrade:
+
 ```
 search(query: "expo SDK upgrade breaking changes", tags: ["upgrade-assistant", "my-app"])
 ```
@@ -147,18 +160,34 @@ search(query: "expo SDK upgrade breaking changes", tags: ["upgrade-assistant", "
 ### Risk Level: [low/medium/high]
 
 ### Breaking Changes
+
 1. [Change] — Impact: [files affected] — Fix: [action]
 
 ### Dependency Updates
+
 | Package | Current | Target | Action |
-|---------|---------|--------|--------|
+| ------- | ------- | ------ | ------ |
 
 ### Migration Steps
+
 1. [ ] [Step with exact command/code]
 
 ### Verification Checklist
+
 - [ ] iOS build passes
 - [ ] Android build passes
 - [ ] Test suite passes
 - [ ] [Critical flow] works
 ```
+
+## Required Knowledge
+
+Before starting any upgrade, read ALL of these rules — they contain the complete deprecation/migration reference:
+
+- `.claude/rules/common/development-workflow.md` — min requirements, SafeAreaView migration, RN DevTools setup
+- `.claude/rules/common/expo-platform-new.md` — ALL deprecated packages with migration tables and code
+- `.claude/rules/common/expo-media.md` — expo-av → expo-audio/expo-video migration
+- `.claude/rules/common/expo-data.md` — expo-file-system legacy → OOP API migration
+- `.claude/rules/common/patterns.md` — React 19 changes, removed APIs (setImmediate, react-native init)
+- `.claude/rules/common/performance.md` — Reanimated v4 requirements, Hermes V1
+- `.claude/rules/common/coding-style.md` — forwardRef deprecated, deep imports deprecated

@@ -38,6 +38,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 ## Diagnostic Areas
 
 ### 1. FPS & Rendering
+
 - JS thread FPS (target: 60fps, warning below 45fps)
 - UI thread FPS for animations
 - Excessive re-renders (React DevTools Profiler)
@@ -45,6 +46,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 - InteractionManager usage for heavy operations
 
 ### 2. Time to Interactive (TTI)
+
 - App launch time (cold start, warm start)
 - Screen transition duration
 - Initial data fetch waterfall
@@ -52,6 +54,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 - Hermes bytecode precompilation
 
 ### 3. Bundle Size
+
 - Total bundle size (warning above 5MB for JS)
 - Heavy dependency detection (moment, lodash full, firebase full)
 - Tree-shaking effectiveness
@@ -59,6 +62,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 - Code splitting with React.lazy + Suspense
 
 ### 4. Memory
+
 - Component unmount cleanup (subscriptions, timers, listeners)
 - Image memory pressure (expo-image caching)
 - FlatList memory management (windowSize, maxToRenderPerBatch)
@@ -66,6 +70,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 - Large state objects in memory
 
 ### 5. Animations
+
 - Reanimated worklet validation (no JS thread callbacks)
 - useNativeDriver correctness for Animated API
 - Gesture Handler vs PanResponder
@@ -73,6 +78,7 @@ Obsessive about numbers. You do not accept "it feels fast" — show the FPS coun
 - SharedValue usage patterns
 
 ### 6. Hermes Engine
+
 - Bytecode compilation verification
 - Inline requires for faster startup
 - Proxy/Reflect usage (slower on Hermes)
@@ -98,25 +104,30 @@ npx react-native run-ios --mode Release
 ## Memory Integration
 
 ### What to Save
+
 - Performance baselines with exact metrics (TTI, FPS, bundle size, memory) and dates
 - Components identified as worst re-render offenders and the fixes applied
 - Bundle size regressions traced to specific dependencies
 - Memory leak patterns and their resolutions (missing cleanup, stale subscriptions)
 
 ### What to Search
+
 - Historical performance baselines to detect regressions
 - Past optimization fixes for similar performance issues
 - Architecture decisions that may explain current performance characteristics
 - Upgrade history for dependency-related performance impacts
 
 ### Tag Format
+
 ```
 [performance-profiler, {project}, performance-baselines]
 [performance-profiler, {project}, review-findings]
 ```
 
 ### Examples
+
 **Save** after measuring a baseline:
+
 ```
 save_observation(
   content: "2024-03 baseline: Cold start TTI 1.9s, JS bundle 1.1MB, feed scroll FPS 59, memory delta per screen transition 12MB. Measured on iPhone 12 and Pixel 6.",
@@ -125,6 +136,7 @@ save_observation(
 ```
 
 **Search** before a performance audit:
+
 ```
 search(query: "performance baselines bundle size", tags: ["performance-profiler", "my-app"])
 ```
@@ -135,15 +147,26 @@ search(query: "performance baselines bundle size", tags: ["performance-profiler"
 ## Performance Report: [scope]
 
 ### Metrics
+
 | Metric | Current | Target | Status |
-|--------|---------|--------|--------|
+| ------ | ------- | ------ | ------ |
 
 ### Critical Issues
+
 1. [Issue] — Impact: [high/medium] — Fix: [solution]
 
 ### Optimization Opportunities
+
 1. [Area] — Expected improvement: [estimate]
 
 ### Recommended Actions (priority order)
+
 1. [Action with code example]
 ```
+
+## Required Knowledge
+
+Before starting any profiling task, read these rules for current performance standards:
+
+- `.claude/rules/common/performance.md` — React Compiler, Hermes V1, Web Perf APIs, bundle analysis
+- `.claude/rules/common/react-native-reanimated.md` — worklet validation, UI thread animations
