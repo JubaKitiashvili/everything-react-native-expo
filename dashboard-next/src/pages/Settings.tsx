@@ -58,6 +58,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function HookProfiles() {
   const [current, setCurrent] = useState('standard');
+  const [saved, setSaved] = useState(false);
   useEffect(() => {
     fetch('/api/myapp/overview')
       .then((r) => r.json())
@@ -68,6 +69,20 @@ function HookProfiles() {
       .catch(() => {});
   }, []);
 
+  const switchProfile = (profileId: string) => {
+    setCurrent(profileId);
+    fetch('/api/settings/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: profileId }),
+    })
+      .then(() => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       <div className="grid grid-cols-3 gap-3 mb-2">
@@ -76,7 +91,7 @@ function HookProfiles() {
           return (
             <button
               key={p.id}
-              onClick={() => setCurrent(p.id)}
+              onClick={() => switchProfile(p.id)}
               className={`text-left p-4 rounded-lg border transition-all ${active ? 'border-accent-blue bg-accent-blue/5 shadow-[0_0_12px_rgba(59,130,246,0.15)]' : 'border-border bg-bg-surface hover:border-border-light'}`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -108,11 +123,14 @@ function HookProfiles() {
           );
         })}
       </div>
-      <div className="mb-6 text-[11px] text-text-muted">
-        Switch:{' '}
-        <code className="bg-bg-hover px-1.5 py-0.5 rounded text-accent-blue text-[10px]">
-          ERNE_PROFILE={current} claude
-        </code>
+      <div className="mb-6 text-[11px] text-text-muted flex items-center gap-2">
+        <span>
+          Switch:{' '}
+          <code className="bg-bg-hover px-1.5 py-0.5 rounded text-accent-blue text-[10px]">
+            ERNE_PROFILE={current} claude
+          </code>
+        </span>
+        {saved && <span className="text-accent-green text-[10px] animate-pulse">Saved</span>}
       </div>
     </>
   );

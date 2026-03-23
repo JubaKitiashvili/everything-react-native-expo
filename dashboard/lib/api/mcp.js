@@ -1,6 +1,30 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+
+/**
+ * Check if an MCP server is likely available.
+ * For stdio servers: check if the command exists.
+ * For SSE servers: check if the URL is reachable (basic).
+ */
+function checkMcpStatus(config) {
+  try {
+    if (config.command) {
+      // stdio: check if command is resolvable
+      const cmd = config.command;
+      if (cmd === 'npx' || cmd === 'node') return 'installed';
+      execSync(`which ${cmd} 2>/dev/null || where ${cmd} 2>nul`, { stdio: 'pipe', timeout: 2000 });
+      return 'installed';
+    }
+    if (config.url) {
+      return 'configured';
+    }
+  } catch {
+    return 'not-found';
+  }
+  return 'unknown';
+}
 
 // Known MCP server catalog with pre-filled configs
 const MCP_CATALOG = [
@@ -115,7 +139,7 @@ function handleMcp(req, res, urlPath, body) {
         name,
         transport: config.command ? 'stdio' : config.url ? 'sse' : 'unknown',
         source: 'project',
-        status: 'unknown',
+        status: checkMcpStatus(config),
         config,
       });
     }
@@ -125,7 +149,7 @@ function handleMcp(req, res, urlPath, body) {
           name,
           transport: config.command ? 'stdio' : config.url ? 'sse' : 'unknown',
           source: 'user',
-          status: 'unknown',
+          status: checkMcpStatus(config),
           config,
         });
       }

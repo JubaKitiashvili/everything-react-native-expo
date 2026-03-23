@@ -866,6 +866,41 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // PUT /api/settings/profile — persist hook profile selection
+  if (req.method === 'PUT' && req.url === '/api/settings/profile') {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      try {
+        const { profile } = JSON.parse(body);
+        if (!['minimal', 'standard', 'strict'].includes(profile)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid profile' }));
+          return;
+        }
+        const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+        const settingsPath = path.join(projectDir, '.claude', 'settings.local.json');
+        let settings = {};
+        try {
+          settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+        } catch {
+          /* new file */
+        }
+        settings.erneProfile = profile;
+        fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, profile }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/audit/run') {
     try {
       const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();

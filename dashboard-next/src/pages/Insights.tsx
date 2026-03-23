@@ -30,20 +30,21 @@ export function Insights() {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [agents, setAgents] = useState<AgentUsage[]>([]);
   const [eco, setEco] = useState<EcoItem[]>([]);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/insights/snapshots')
       .then((r) => r.json())
       .then((d) => setSnapshots(d?.snapshots || []))
-      .catch(() => {});
+      .catch(() => setErrors((e) => ({ ...e, snapshots: true })));
     fetch('/api/insights/agents')
       .then((r) => r.json())
       .then((d) => setAgents(d?.agents || []))
-      .catch(() => {});
+      .catch(() => setErrors((e) => ({ ...e, agents: true })));
     fetch('/api/ecosystem/feed')
       .then((r) => r.json())
       .then((d) => setEco((d?.items || []).slice(0, 15)))
-      .catch(() => {});
+      .catch(() => setErrors((e) => ({ ...e, eco: true })));
   }, []);
 
   const latest = snapshots[snapshots.length - 1];
@@ -82,6 +83,11 @@ export function Insights() {
       </div>
 
       {/* Score over time */}
+      {errors.snapshots && (
+        <Card className="mb-6 p-4 text-center text-text-muted text-sm">
+          Could not load health score data. Run an audit first.
+        </Card>
+      )}
       {snapshots.length > 0 && (
         <>
           <h2 className="text-sm font-semibold text-text-secondary mb-3">
@@ -115,6 +121,11 @@ export function Insights() {
       )}
 
       {/* Agent Work Distribution */}
+      {errors.agents && (
+        <Card className="mb-6 p-4 text-center text-text-muted text-sm">
+          Could not load agent data. Agents become visible after first use.
+        </Card>
+      )}
       {agents.length > 0 && (
         <>
           <h2 className="text-sm font-semibold text-text-secondary mb-3">
@@ -149,6 +160,11 @@ export function Insights() {
       )}
 
       {/* Ecosystem Feed */}
+      {errors.eco && (
+        <Card className="mb-6 p-4 text-center text-text-muted text-sm">
+          Could not load ecosystem feed. Check network connection.
+        </Card>
+      )}
       {eco.length > 0 && (
         <>
           <h2 className="text-sm font-semibold text-text-secondary mb-3">

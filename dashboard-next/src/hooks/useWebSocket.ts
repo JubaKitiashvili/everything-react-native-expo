@@ -38,7 +38,7 @@ export function useWebSocket() {
       // In dev mode (Vite), connect directly to backend; in production, use same host
       const isDev = import.meta.env.DEV;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = isDev ? 'localhost:3333' : window.location.host;
+      const host = isDev ? window.location.host || 'localhost:3333' : window.location.host;
       const url = `${protocol}//${host}`;
       ws = new WebSocket(url);
       wsRef.current = ws;
