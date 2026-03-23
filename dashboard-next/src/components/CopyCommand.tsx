@@ -51,8 +51,9 @@ export function generateErneCommand(title: string, detail?: string, fix?: string
 
   if (lower.includes('exceed') && lower.includes('line')) {
     const files = (detail || '').match(/\S+\.tsx?\b/g) || [];
-    if (files.length > 0) {
-      return `/erne-code "Refactor ${files[0].split('/').pop()} — extract sub-components to reduce file size"`;
+    const firstFile = files[0];
+    if (firstFile) {
+      return `/erne-code "Refactor ${firstFile.split('/').pop() ?? firstFile} — extract sub-components to reduce file size"`;
     }
   }
 

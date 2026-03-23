@@ -22,18 +22,6 @@ interface AgentConfig {
 type SortKey = 'name' | 'status' | 'tasks';
 type SortDir = 'asc' | 'desc';
 
-interface AgentRow {
-  name: string;
-  displayName: string | null;
-  status: string;
-  task: string | null;
-  room: string;
-  tasksToday: number;
-  enabled: boolean;
-  custom: boolean;
-  emoji?: string;
-}
-
 export function Agents({ agents, history }: AgentsProps) {
   const [sortKey, setSortKey] = useState<SortKey>('status');
   const [sortDir, setSortDir] = useState<SortDir>('asc');

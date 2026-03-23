@@ -61,7 +61,7 @@ export function Project({ audit }: ProjectProps) {
           <div className="text-[10px] text-text-muted uppercase tracking-wide mb-2">App Info</div>
           <InfoRow label="Name" value={proj?.name} />
           <InfoRow label="Version" value={proj?.version} />
-          <InfoRow label="Framework" value={detection?.framework} />
+          <InfoRow label="Framework" value={detection?.framework as string} />
           <InfoRow label="TypeScript" value={detection?.hasTypescript ? 'Yes' : 'No'} />
           <InfoRow label="New Architecture" value={detection?.hasNewArch ? 'Yes' : 'No'} />
           {auditData?.score != null && (
@@ -399,62 +399,6 @@ function RecommendationsList({
         );
       })}
     </div>
-  );
-}
-
-// #5 Context Optimization
-function ContextPanel() {
-  const [status, setStatus] = useState<{
-    enabled?: boolean;
-    stats?: Record<string, unknown>;
-  } | null>(null);
-  useEffect(() => {
-    fetch('/api/context/status')
-      .then((r) => r.json())
-      .then(setStatus)
-      .catch(() => {});
-  }, []);
-
-  return (
-    <>
-      <SectionTitle>Context Optimization</SectionTitle>
-      <Card className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🧠</span>
-            <span className="text-sm text-text-primary">Context Engine</span>
-          </div>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded ${status?.enabled ? 'bg-accent-green/15 text-accent-green' : 'bg-border text-text-muted'}`}
-          >
-            {status?.enabled ? 'Enabled' : 'Disabled'}
-          </span>
-        </div>
-        <div className="text-[11px] text-text-secondary mb-2">
-          Smart context management — knowledge base, session continuity, token budget optimization.
-        </div>
-        {!status?.enabled && (
-          <div className="text-[10px] text-text-muted">
-            Enable:{' '}
-            <code className="bg-bg-hover px-1.5 py-0.5 rounded text-accent-blue">
-              npx erne-universal dashboard --context
-            </code>
-          </div>
-        )}
-        {status?.enabled && status?.stats && (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {Object.entries(status.stats)
-              .slice(0, 6)
-              .map(([k, v]) => (
-                <div key={k} className="text-[10px]">
-                  <span className="text-text-muted">{k}: </span>
-                  <span className="text-text-primary">{String(v)}</span>
-                </div>
-              ))}
-          </div>
-        )}
-      </Card>
-    </>
   );
 }
 

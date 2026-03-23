@@ -14,7 +14,7 @@ interface KanbanTask {
   description?: string;
   agent?: string;
   step?: string;
-  prUrl?: string;
+  prUrl?: string | null;
   confidence?: number;
   isLocal?: boolean;
 }

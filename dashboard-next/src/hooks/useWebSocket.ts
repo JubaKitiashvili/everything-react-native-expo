@@ -60,8 +60,8 @@ export function useWebSocket() {
             const ev = msg.data as { time: string; icon: string; text: string };
             setEvents((prev) => [ev, ...prev].slice(0, 50));
           } else if (msg.type === 'worker_update' && msg.state) {
-            const tasks = (msg as Record<string, unknown>).tasks;
-            setWorkerState({ ...(msg.state as object), tasks } as unknown);
+            const tasks = (msg as unknown as Record<string, unknown>).tasks;
+            setWorkerState({ ...(msg.state as object), tasks } as never);
           }
           for (const handler of handlersRef.current) {
             handler(msg);
