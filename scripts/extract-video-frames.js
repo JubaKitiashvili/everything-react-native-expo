@@ -29,9 +29,13 @@ const os = require('node:os');
 
 const args = process.argv.slice(2);
 const videoPath = args.find((a) => !a.startsWith('--'));
-const maxFrames = parseInt(args[args.indexOf('--max-frames') + 1] || '20', 10);
+const maxFramesIdx = args.indexOf('--max-frames');
+const maxFrames = parseInt(maxFramesIdx !== -1 ? args[maxFramesIdx + 1] : '20', 10);
+const outputDirIdx = args.indexOf('--output-dir');
 const outputDir =
-  args[args.indexOf('--output-dir') + 1] || path.join(os.tmpdir(), `erne-frames-${Date.now()}`);
+  outputDirIdx !== -1
+    ? args[outputDirIdx + 1]
+    : path.join(os.tmpdir(), `erne-frames-${Date.now()}`);
 
 if (!videoPath) {
   process.stderr.write(
@@ -143,78 +147,96 @@ mkdirSync(outputDir, { recursive: true });
 
 const duration = getVideoDuration();
 
-// Determine scene change threshold based on expected frame count
-// Lower threshold = more frames, higher = fewer frames
-// Start with 0.3, adjust if we get too many/few frames
-const thresholds = [0.3, 0.2, 0.15, 0.4, 0.5];
+// ---------------------------------------------------------------------------
+// Frame extraction strategy:
+// 1. Try scene change detection with adaptive threshold
+// 2. If too few frames, fall back to interval-based extraction
+// 3. If too many, pick evenly spaced subset
+// Uses setpts filter for ffmpeg 8.x compatibility (vsync/fps_mode deprecated)
+// ---------------------------------------------------------------------------
 
-let extractedFrames = [];
-
-for (const threshold of thresholds) {
-  // Clean previous attempt
+function cleanFrames() {
   for (const f of readdirSync(outputDir)) {
     if (f.startsWith('frame_')) {
       require('node:fs').unlinkSync(path.join(outputDir, f));
     }
   }
+}
 
+function countFrames() {
+  return readdirSync(outputDir)
+    .filter((f) => f.startsWith('frame_') && f.endsWith('.png'))
+    .sort();
+}
+
+function runFfmpeg(filterExpr) {
   try {
     execSync(
-      `"${ffmpeg}" -i "${videoPath}" -vf "select=gt(scene\\,${threshold})" -vsync vfn "${path.join(outputDir, 'frame_%03d.png')}" -y 2>/dev/null`,
-      { stdio: 'pipe', timeout: 30000 },
+      `"${ffmpeg}" -i "${videoPath}" -vf "${filterExpr}" "${path.join(outputDir, 'frame_%03d.png')}" -y 2>/dev/null`,
+      { stdio: 'pipe', timeout: 60000 },
     );
   } catch {
     // ffmpeg may return non-zero but still extract frames
   }
+}
 
-  extractedFrames = readdirSync(outputDir)
-    .filter((f) => f.startsWith('frame_') && f.endsWith('.png'))
-    .sort();
+let extractedFrames = [];
 
-  // Also always extract first and last frame if not captured
-  if (extractedFrames.length === 0) {
-    try {
-      execSync(
-        `"${ffmpeg}" -i "${videoPath}" -vf "select=eq(n\\,0)" -vframes 1 "${path.join(outputDir, 'frame_000.png')}" -y 2>/dev/null`,
-        { stdio: 'pipe', timeout: 10000 },
-      );
-    } catch {
-      // ignore
-    }
-    extractedFrames = readdirSync(outputDir)
-      .filter((f) => f.startsWith('frame_') && f.endsWith('.png'))
-      .sort();
-  }
+// Strategy 1: Scene change detection with adaptive threshold
+const thresholds = [0.3, 0.2, 0.15, 0.1];
 
-  if (extractedFrames.length >= 2 && extractedFrames.length <= maxFrames) {
-    break; // good range
-  }
+for (const threshold of thresholds) {
+  cleanFrames();
+  runFfmpeg(`select=gt(scene\\,${threshold}),setpts=N/FRAME_RATE/TB`);
+  extractedFrames = countFrames();
 
-  if (extractedFrames.length > maxFrames) {
-    // Too many — pick evenly spaced subset
-    const step = Math.ceil(extractedFrames.length / maxFrames);
-    const selected = extractedFrames.filter((_, i) => i % step === 0).slice(0, maxFrames);
-
-    // Remove unselected frames
-    for (const f of extractedFrames) {
-      if (!selected.includes(f)) {
-        try {
-          require('node:fs').unlinkSync(path.join(outputDir, f));
-        } catch {
-          // ignore
-        }
-      }
-    }
-    extractedFrames = selected;
+  if (extractedFrames.length >= 3 && extractedFrames.length <= maxFrames) {
     break;
+  }
+  if (extractedFrames.length > maxFrames) {
+    break; // will trim below
   }
 }
 
-// Ensure we have at least the first frame
+// Strategy 2: If scene detection got < 3 frames, use interval-based extraction
+if (extractedFrames.length < 3 && duration) {
+  cleanFrames();
+  // Extract ~maxFrames evenly spaced frames across the video
+  const targetFrames = Math.min(maxFrames, Math.max(5, Math.ceil(duration * 2)));
+  const interval = duration / targetFrames;
+  runFfmpeg(`fps=1/${interval.toFixed(3)}`);
+  extractedFrames = countFrames();
+}
+
+// Strategy 3: Still nothing? Extract one frame per second
+if (extractedFrames.length < 2) {
+  cleanFrames();
+  runFfmpeg('fps=2');
+  extractedFrames = countFrames();
+}
+
+// Trim to maxFrames if too many
+if (extractedFrames.length > maxFrames) {
+  const step = Math.ceil(extractedFrames.length / maxFrames);
+  const selected = extractedFrames.filter((_, i) => i % step === 0).slice(0, maxFrames);
+
+  for (const f of extractedFrames) {
+    if (!selected.includes(f)) {
+      try {
+        require('node:fs').unlinkSync(path.join(outputDir, f));
+      } catch {
+        // ignore
+      }
+    }
+  }
+  extractedFrames = selected;
+}
+
+// Last resort: extract just the first frame
 if (extractedFrames.length === 0) {
   try {
     execSync(
-      `"${ffmpeg}" -i "${videoPath}" -vframes 1 "${path.join(outputDir, 'frame_001.png')}" -y 2>/dev/null`,
+      `"${ffmpeg}" -i "${videoPath}" -frames:v 1 "${path.join(outputDir, 'frame_001.png')}" -y 2>/dev/null`,
       { stdio: 'pipe', timeout: 10000 },
     );
     extractedFrames = ['frame_001.png'];
