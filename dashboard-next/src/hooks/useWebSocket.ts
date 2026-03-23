@@ -10,6 +10,9 @@ interface WsMessage {
   agent?: string;
   status?: string;
   task?: string | null;
+  findingId?: string;
+  line?: string;
+  success?: boolean;
 }
 
 type MessageHandler = (msg: WsMessage) => void;
@@ -20,6 +23,10 @@ export function useWebSocket() {
   const [history, setHistory] = useState<HistoryMap>({});
   const [events, setEvents] = useState<Array<{ time: string; icon: string; text: string }>>([]);
   const [workerState, setWorkerState] = useState<unknown>(null);
+  const [fixState, setFixState] = useState<{
+    output: Record<string, string[]>;
+    fixing: Set<string>;
+  }>({ output: {}, fixing: new Set() });
   const wsRef = useRef<WebSocket | null>(null);
   const handlersRef = useRef<MessageHandler[]>([]);
   const retryRef = useRef(0);
@@ -77,6 +84,30 @@ export function useWebSocket() {
             const tasks = (msg as unknown as Record<string, unknown>).tasks;
             setWorkerState({ ...(msg.state as object), tasks } as never);
           }
+          // Persist fix output/status at app level (survives page switches)
+          if (msg.type === 'fix_output' && msg.findingId && msg.line) {
+            setFixState((prev) => ({
+              ...prev,
+              output: {
+                ...prev.output,
+                [msg.findingId!]: [...(prev.output[msg.findingId!] ?? []), msg.line!],
+              },
+            }));
+          }
+          if (msg.type === 'fix_complete' && msg.findingId) {
+            setFixState((prev) => {
+              const next = new Set(prev.fixing);
+              next.delete(msg.findingId!);
+              return { ...prev, fixing: next };
+            });
+          }
+          if (msg.type === 'fix_start' && msg.findingId) {
+            setFixState((prev) => {
+              const next = new Set(prev.fixing);
+              next.add(msg.findingId!);
+              return { ...prev, fixing: next };
+            });
+          }
           for (const handler of handlersRef.current) {
             handler(msg);
           }
@@ -114,5 +145,14 @@ export function useWebSocket() {
     [agents],
   );
 
-  return { connected, agents, history, events, workerState, activeAgentCount, addHandler };
+  return {
+    connected,
+    agents,
+    history,
+    events,
+    workerState,
+    activeAgentCount,
+    addHandler,
+    fixState,
+  };
 }

@@ -72,6 +72,7 @@ export function App() {
                     upgrades={upgrades}
                     refetchAudit={refetchAudit}
                     onWsMessage={ws.addHandler}
+                    fixState={ws.fixState}
                   />
                 }
               />

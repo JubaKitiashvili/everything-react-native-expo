@@ -20,15 +20,18 @@ interface IssuesProps {
   upgrades: { packages?: Array<{ name: string; current: string; latest: string; type: string }> };
   refetchAudit: () => void;
   onWsMessage: WsHandler;
+  fixState?: { output: Record<string, string[]>; fixing: Set<string> };
 }
 
-export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesProps) {
+export function Issues({ audit, upgrades, refetchAudit, onWsMessage, fixState }: IssuesProps) {
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [fixOutput, setFixOutput] = useState<Record<string, string[]>>({});
-  const [fixingIds, setFixingIds] = useState<Set<string>>(new Set());
   const [fixMode, setFixMode] = useState<'agent' | 'direct'>('direct');
+
+  // Use app-level fix state (persists across page switches) with local fallback
+  const fixOutput = fixState?.output ?? {};
+  const fixingIds = fixState?.fixing ?? new Set<string>();
 
   // Check fix capabilities on mount
   useEffect(() => {
@@ -38,24 +41,11 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
       .catch(() => {});
   }, []);
 
-  // Listen for fix output/complete via WebSocket
+  // Listen for fix complete to re-run audit
   useEffect(() => {
     const unsubscribe = onWsMessage((msg) => {
-      if (msg.type === 'fix_output' && msg.findingId && msg.line) {
-        setFixOutput((prev) => ({
-          ...prev,
-          [msg.findingId!]: [...(prev[msg.findingId!] ?? []), msg.line!],
-        }));
-      }
       if (msg.type === 'fix_complete' && msg.findingId) {
-        setFixingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(msg.findingId!);
-          return next;
-        });
-        if (msg.success) {
-          setTimeout(refetchAudit, 1000);
-        }
+        setTimeout(refetchAudit, 2000);
       }
     });
     return unsubscribe;
@@ -63,8 +53,6 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
 
   const handleFix = useCallback(
     async (issue: Issue) => {
-      setFixingIds((prev) => new Set(prev).add(issue.id));
-      setFixOutput((prev) => ({ ...prev, [issue.id]: [] }));
       setExpandedId(issue.id);
       try {
         const body =
@@ -89,15 +77,7 @@ export function Issues({ audit, upgrades, refetchAudit, onWsMessage }: IssuesPro
         });
         if (!res.ok) throw new Error('Fix request failed');
       } catch {
-        setFixingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(issue.id);
-          return next;
-        });
-        setFixOutput((prev) => ({
-          ...prev,
-          [issue.id]: [...(prev[issue.id] ?? []), 'Error: Fix request failed\n'],
-        }));
+        // Error handling is done via WebSocket fix_complete
       }
     },
     [fixMode],
