@@ -73,7 +73,7 @@ export function PixelArtOffice({ agents, onAgentClick, className = '' }: PixelAr
     };
   }, []);
 
-  // Update agent states when they change
+  // Update agent states when they change — also runs on mount to catch mid-fix state
   useEffect(() => {
     if (!window.AgentSprites) return;
     // canvas.js updateAgentState takes (name, status) — call per agent
@@ -85,6 +85,17 @@ export function PixelArtOffice({ agents, onAgentClick, className = '' }: PixelAr
       tasks[name] = { task: state.task };
     }
     window.AgentSprites.setAgentTasks(tasks);
+  }, [agents]);
+
+  // Poll agent state every 2s to catch updates that happen while on other pages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!window.AgentSprites) return;
+      for (const [name, state] of Object.entries(agents)) {
+        window.AgentSprites.updateAgentState(name, state.status);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
   }, [agents]);
 
   // Animation loop
