@@ -34,6 +34,7 @@ validate-skills
 buildwithclaude/
 /screenshots/
 *.png
+!docs/screenshots/*.png
 
 # Firecrawl scrape cache
 .firecrawl/
