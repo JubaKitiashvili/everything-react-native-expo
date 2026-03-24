@@ -13,16 +13,38 @@
 
 > **Prerequisite:** [Claude Code](https://claude.ai/claude-code) is required for the full experience (13 agents, pipeline orchestration, dashboard, hooks). Other IDEs receive adaptive rules and configuration — see [IDE Support](#%EF%B8%8F-ide--editor-support).
 
+### Install & Setup
+
 ```bash
+# One-time setup in your React Native / Expo project
 npx erne-universal init
+
+# Launch the dashboard
+npx erne-universal dashboard
+
+# Or do both at once
+npx erne-universal start
 ```
 
-This will:
+### What `init` does:
 
-1. 🔍 **Deep-scan your project** — detects 15 stack dimensions (state management, navigation, styling, lists, images, forms, storage, testing, build system, component style, monorepo, New Architecture, and more)
-2. 🎚️ Let you choose a hook profile (minimal / standard / strict)
+1. 🔍 **Deep-scans your project** — detects 15 stack dimensions (state management, navigation, styling, lists, images, forms, storage, testing, build system, component style, monorepo, New Architecture, and more)
+2. 🎚️ Lets you choose a hook profile (minimal / standard / strict)
 3. 🔌 Select MCP integrations (simulator control, GitHub, etc.)
-4. ⚙️ **Generate adaptive configuration** — selects from 24 variant templates matched to your exact stack (Zustand vs Redux, Expo Router vs React Navigation, NativeWind vs StyleSheet, etc.)
+4. ⚙️ **Generates adaptive configuration** — selects from 24 variant templates matched to your exact stack (Zustand vs Redux, Expo Router vs React Navigation, NativeWind vs StyleSheet, etc.)
+
+### CLI Commands
+
+```bash
+npx erne-universal init                  # Setup ERNE in your project
+npx erne-universal dashboard             # Launch dashboard
+npx erne-universal start                 # Init + dashboard
+npx erne-universal doctor                # Health check (22 checks)
+npx erne-universal audit                 # Generate project documentation
+npx erne-universal worker --config w.json  # Start autonomous worker
+npx erne-universal sync-configs          # Export rules to other IDEs
+npx erne-universal uninstall             # Clean removal
+```
 
 ---
 
@@ -52,10 +74,9 @@ This will:
 ERNE includes a real-time dashboard with 6 pages, pixel-art agent HQ, and adaptive fix integration.
 
 ```bash
-erne dashboard              # Start on port 3333, open browser
-erne dashboard --port 4444  # Custom port
-erne dashboard --no-open    # Don't open browser
-erne start                  # Init project + dashboard in background
+npx erne-universal dashboard              # Start on port 3333, open browser
+npx erne-universal dashboard --port 4444  # Custom port
+npx erne-universal start                  # Init + dashboard in one command
 ```
 
 ### Command Center
