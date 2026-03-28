@@ -70,6 +70,30 @@ function handleAgents(req, res, urlPath, body, staticDefs, agentState, activityH
       });
     }
 
+    // Discover agents from .claude/agents/ that aren't in static or custom lists
+    const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+    const agentsDir = path.join(projectDir, '.claude', 'agents');
+    try {
+      if (fs.existsSync(agentsDir)) {
+        const knownNames = new Set(merged.map((a) => a.name));
+        const files = fs.readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
+        for (const file of files) {
+          const name = path.basename(file, '.md');
+          if (!knownNames.has(name)) {
+            merged.push({
+              name,
+              room: 'development',
+              displayName: config.agents[name]?.displayName || null,
+              enabled: config.agents[name]?.enabled !== false,
+              custom: false,
+            });
+          }
+        }
+      }
+    } catch {
+      // Silent — discovery is best-effort
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ agents: merged }));
     return true;

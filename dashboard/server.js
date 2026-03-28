@@ -148,6 +148,29 @@ const initAgentState = () => {
       lastEvent: null,
     };
   }
+
+  // Discover agents from .claude/agents/ so init-generated agents appear on dashboard
+  const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
+  const agentsDir = path.join(projectDir, '.claude', 'agents');
+  try {
+    if (fs.existsSync(agentsDir)) {
+      const files = fs.readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
+      for (const file of files) {
+        const name = path.basename(file, '.md');
+        if (!agentState[name]) {
+          agentState[name] = {
+            status: 'idle',
+            task: null,
+            room: 'development',
+            startedAt: null,
+            lastEvent: null,
+          };
+        }
+      }
+    }
+  } catch {
+    // Silent — agent discovery is best-effort
+  }
 };
 
 initAgentState();
@@ -366,8 +389,22 @@ const handleEvent = (event) => {
     return { ok: true };
   }
 
-  if (!agent || !agentState[agent]) {
-    return { error: `Unknown agent: ${agent}` };
+  if (!agent) {
+    return { error: 'Missing agent name' };
+  }
+
+  // Auto-register unknown agents so dynamically generated agents show up
+  if (!agentState[agent]) {
+    agentState[agent] = {
+      status: 'idle',
+      task: null,
+      room: 'development',
+      startedAt: null,
+      lastEvent: null,
+    };
+    if (!activityHistory[agent]) {
+      activityHistory[agent] = [];
+    }
   }
 
   const now = new Date().toISOString();
