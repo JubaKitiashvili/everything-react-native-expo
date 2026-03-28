@@ -403,10 +403,69 @@ const base64 = image?.encodeToBase64();
 | Heatmaps         | Vertices with per-vertex colors             |
 | Drawing canvas   | Path built from touch points                |
 
+## Picture API (Immediate Mode)
+
+For dynamic element counts, games, generative art, particle trails — when you can't define the element tree statically:
+
+```tsx
+import { Canvas, Picture, Skia, createPicture } from '@shopify/react-native-skia';
+
+const picture = createPicture((canvas) => {
+  const paint = Skia.Paint();
+  paint.setColor(Skia.Color('cyan'));
+
+  // Draw hundreds of particles imperatively
+  for (const p of particles) {
+    canvas.drawCircle(p.x, p.y, p.radius, paint);
+  }
+});
+
+<Canvas style={{ flex: 1 }}>
+  <Picture picture={picture} />
+</Canvas>
+```
+
+Use Picture for complex static content that doesn't change every frame — it caches the draw commands.
+
+## Atlas (Batched Sprite Rendering)
+
+Render hundreds of elements from a single texture with individual transforms:
+
+```tsx
+import { Canvas, Atlas, useTexture, useRSXformBuffer, rect } from '@shopify/react-native-skia';
+
+const texture = useTexture(require('./sprites.png'));
+const sprites = useRSXformBuffer(100, (val, i) => {
+  'worklet';
+  // RSXform: [scos, ssin, tx, ty]
+  val.set(Math.cos(angle), Math.sin(angle), positions[i].x, positions[i].y);
+});
+
+<Canvas style={{ flex: 1 }}>
+  <Atlas image={texture} sprites={spriteRects} transforms={sprites} />
+</Canvas>
+```
+
+## Canvas onSize
+
+Get canvas dimensions as a shared value:
+
+```tsx
+const size = useSharedValue({ width: 0, height: 0 });
+
+<Canvas style={{ flex: 1 }} onSize={size}>
+  {/* size.value.width / size.value.height available in worklets */}
+</Canvas>
+```
+
 ## Performance Notes
 
+- **Bundle size impact:** ~6MB iOS, ~4MB Android, ~2.9MB Web
+- **Version requirements:** `react-native>=0.79`, `react>=19`. Use `@1.12.4` for older RN
 - Skia renders on its own thread — does not block JS or UI threads
 - Use `useDerivedValue` for computed animations (runs on UI thread)
-- Prefer Skia's `interpolateColors` over Reanimated's `interpolateColor`
+- Prefer Skia's `interpolateColors` over Reanimated's `interpolateColor` — Reanimated's version produces wrong results in Skia context
 - Canvas redraws when any prop changes — memoize expensive computations
 - Use `Picture` component to cache complex static drawings
+- **Transform origin** in Skia Group uses top-left corner, not center (unlike RN)
+- `Skia.RuntimeEffect.Make()` returns `null` on shader compilation failure — always null-check

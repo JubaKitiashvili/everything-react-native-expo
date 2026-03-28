@@ -4,9 +4,44 @@ globs: '**/*.{ts,tsx}'
 alwaysApply: false
 ---
 
-# React Native Gesture Handler (v2.29+)
+# React Native Gesture Handler (v2/v3)
 
 Native-driven gesture management for React Native. All gestures run on the native thread for 60fps interactions.
+
+## Version Detection
+
+Check `package.json` — `"react-native-gesture-handler"` version:
+- **v2** → Builder API (`Gesture.Pan()`, `Gesture.Simultaneous()`, **must wrap in `useMemo`**)
+- **v3** → Hook API (`usePanGesture()`, `useSimultaneousGestures()`, auto-memoized)
+
+### v3 Hook API Quick Reference
+
+```tsx
+import { usePanGesture, useTapGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
+
+const pan = usePanGesture({
+  onBegin: () => { startX.value = offsetX.value; },
+  onUpdate: (e) => { offsetX.value = startX.value + e.translationX; },
+  onDeactivate: (e) => {
+    offsetX.value = withSpring(0);
+    scheduleOnRN(onDragEnd, offsetX.value); // call JS function from UI thread
+  },
+});
+```
+
+| v2 Builder API | v3 Hook API |
+|---|---|
+| `Gesture.Pan().onUpdate(...)` | `usePanGesture({ onUpdate: ... })` |
+| `Gesture.Simultaneous(a, b)` | `useSimultaneousGestures(a, b)` |
+| `Gesture.Race(a, b)` | `useCompetingGestures(a, b)` |
+| `Gesture.Exclusive(a, b)` | `useExclusiveGestures(a, b)` |
+| `.onStart(...)` | `onActivate: ...` |
+| `.onEnd(...)` | `onDeactivate: ...` |
+| `.onChange(...)` | merged into `onUpdate` (use `changeX`, `changeY`) |
+| `.simultaneousWithExternalGesture()` | `.simultaneousWith()` |
+| `.requireExternalGestureToFail()` | `.requireToFail()` |
+| Wrap in `useMemo` (mandatory) | Auto-memoized by hooks |
 
 ## Setup
 
@@ -25,6 +60,15 @@ export default function App() {
 ```
 
 **Note:** Expo Router wraps in `GestureHandlerRootView` automatically.
+
+## Critical Rules
+
+- **`GestureHandlerRootView` is mandatory** — `GestureDetector` crashes without it as an ancestor
+- **v2: `useMemo` every gesture** — without it, gestures recreate on every render, losing state
+- **Never call JS functions directly from gesture callbacks** — use `scheduleOnRN` from `react-native-worklets` (`runOnJS` is removed in Reanimated 4)
+- **Import `ScrollView`/`FlatList` from RNGH**, not `react-native`, when using gestures inside scroll containers
+- **Never mix RN touch handlers with RNGH** in the same component tree
+- **Don't add `'worklet'` to inline callbacks** — auto-workletized by Babel plugin
 
 ## GestureDetector
 
@@ -403,7 +447,7 @@ const pan = Gesture.Pan()
   .onEnd((e) => {
     if (translateY.value > 150 || e.velocityY > 500) {
       translateY.value = withTiming(500);
-      runOnJS(onDismiss)();
+      scheduleOnRN(onDismiss);
     } else {
       translateY.value = withSpring(0);
       opacity.value = withSpring(1);
@@ -422,7 +466,7 @@ const pan = Gesture.Pan()
   })
   .onEnd(() => {
     if (pullDistance.value > 60) {
-      runOnJS(onRefresh)();
+      scheduleOnRN(onRefresh);
     }
     pullDistance.value = withSpring(0);
   });
@@ -444,12 +488,33 @@ const pan = Gesture.Pan()
   });
 ```
 
+## Testing Gestures
+
+```tsx
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { State } from 'react-native-gesture-handler';
+
+// Add testID to gesture
+const tap = useTapGesture({ testID: 'my-tap', disableReanimated: true, onDeactivate: handler });
+
+// In test
+const gesture = getByGestureTestId('my-tap');
+fireGestureHandler(gesture, [
+  { state: State.BEGAN },
+  { state: State.ACTIVE },
+  { state: State.END },
+]);
+```
+
+Set `disableReanimated: true` in tests to run callbacks synchronously on JS thread.
+
 ## Performance Rules
 
 - Gesture callbacks run on the **UI thread** by default — don't access React state or call JS functions directly
-- Use `runOnJS(fn)()` to call JS functions from gesture callbacks
-- Use `.runOnJS(true)` only when you need JS thread access (slower)
+- Use `scheduleOnRN(fn, args)` from `react-native-worklets` to call JS functions from gesture callbacks (`runOnJS` is removed in Reanimated 4)
+- v2: wrap all gesture objects in `useMemo` — v3 hooks handle this automatically
 - Compose gestures with `Simultaneous`/`Exclusive`/`Race` instead of nesting `GestureDetector`s
 - Use `activeOffsetX`/`activeOffsetY` on Pan to prevent accidental activation
 - Pair with Reanimated `useSharedValue` + `useAnimatedStyle` for 60fps animations
 - Prefer `Pressable` from gesture-handler over RN's `Pressable` for consistent native behavior
+- Use `RectButton` (not `Pressable`) inside `ScrollView`/`FlatList` for native-feeling tap delay

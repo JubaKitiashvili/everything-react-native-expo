@@ -235,6 +235,62 @@ const input: TensorPtr = {
 const outputs = await model.forward([input]);
 ```
 
+## Additional Hooks
+
+```tsx
+// Vertical OCR (Japanese/Chinese)
+import { useVerticalOCR } from 'react-native-executorch';
+const ocr = useVerticalOCR({ model: OCR_JAPANESE });
+
+// Text to Image
+import { useTextToImage, BK_SDM_TINY_VPRED_256 } from 'react-native-executorch';
+const model = useTextToImage({ model: BK_SDM_TINY_VPRED_256 });
+
+// Image Embeddings
+import { useImageEmbeddings, CLIP_VIT_BASE_PATCH32_IMAGE } from 'react-native-executorch';
+const model = useImageEmbeddings({ model: CLIP_VIT_BASE_PATCH32_IMAGE });
+
+// Voice Activity Detection
+import { useVAD, FSMN_VAD } from 'react-native-executorch';
+const vad = useVAD({ model: FSMN_VAD });
+
+// Tokenizer (count tokens before processing)
+import { useTokenizer } from 'react-native-executorch';
+const tokenizer = useTokenizer({ model: modelPath });
+const count = tokenizer.encode(text).length;
+```
+
+## ResourceFetcher (Download Management)
+
+```tsx
+import { ResourceFetcher } from 'react-native-executorch';
+
+await ResourceFetcher.fetch(modelUrl, (progress) => console.log(progress));
+ResourceFetcher.pauseFetching(modelUrl);
+ResourceFetcher.resumeFetching(modelUrl);
+ResourceFetcher.cancelFetching(modelUrl);
+const files = await ResourceFetcher.listDownloadedFiles();
+const totalSize = await ResourceFetcher.getFilesTotalSize();
+await ResourceFetcher.deleteResources(modelUrl);
+```
+
+## Metro Config
+
+Add `.pte` and `.bin` to asset extensions:
+
+```javascript
+// metro.config.js
+config.resolver.assetExts.push('pte', 'bin');
+```
+
+## Critical Rules
+
+- **Interrupt before unmounting** — unmounting while `isGenerating` is `true` crashes the app. Always call `interrupt()` in cleanup
+- **STT requires 16kHz mono audio** — other sample rates produce garbage output
+- **TTS requires 24kHz audio** — check sample rate compatibility
+- **GGUF models not supported** — ExecuTorch uses `.pte` format exclusively
+- **`preventLoad` option** — set to `true` to defer model loading until explicitly needed
+
 ## Performance Rules
 
 - Use `*_QUANTIZED` models — significantly smaller and faster with minimal quality loss
@@ -244,3 +300,12 @@ const outputs = await model.forward([input]);
 - Prefer dedicated hooks (`useLLM`, `useClassification`) over raw `useExecutorchModule`
 - Local file URIs avoid redundant network calls for image inputs
 - `SMOLLM2_135M` for speed, `QWEN3_4B` for quality — choose based on device capability
+- Use `outputTokenBatchSize` / `batchTimeInterval` to prevent UI jank during generation
+
+### Device Tiers
+
+| Tier | RAM | Recommended Models |
+|---|---|---|
+| Low-end | <4GB | `SMOLLM2_135M`, `WHISPER_TINY_EN` |
+| Mid-range | 4-6GB | `SMOLLM2_360M`, `QWEN3_0_6B`, `WHISPER_BASE` |
+| High-end | 8GB+ | `QWEN3_4B`, `LLAMA3_2_3B`, `WHISPER_SMALL` |

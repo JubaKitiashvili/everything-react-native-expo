@@ -8,6 +8,20 @@ alwaysApply: false
 
 SVG rendering for React Native. Maps to native platform renderers (CoreGraphics iOS, Android Canvas).
 
+## When to Use
+
+```
+Do you need to animate or interactively control individual parts of the SVG?
+│
+├── YES → react-native-svg + Reanimated
+│
+└── NO
+    ├── Standard icon set? → icon fonts (@expo/vector-icons)
+    ├── Static SVG image? → expo-image (preferred) or react-native-vector-image
+    ├── Animated vector without per-element control? → Lottie or Rive
+    └── Complex 2D graphics (charts, shaders)? → Skia (@shopify/react-native-skia)
+```
+
 ## Setup
 
 ```bash
@@ -262,3 +276,51 @@ const animatedProps = useAnimatedProps(() => ({
 - Use `viewBox` for responsive scaling — avoid recalculating coordinates
 - Flatten unnecessary `<G>` nesting
 - Avoid `ForeignObject` in hot paths — triggers RN layout inside SVG
+- `SvgXml` and `LocalSvg` have the same overhead as inline JSX — no performance benefit
+
+## SVG Filters (FilterImage)
+
+```tsx
+import { FilterImage } from 'react-native-svg/filter-image';
+
+<FilterImage
+  source={require('./photo.jpg')}
+  style={{ width: 200, height: 200, filter: 'blur(5px) grayscale(0.5)' }}
+/>
+```
+
+Supports CSS `filter` syntax: `blur()`, `grayscale()`, `brightness()`, `contrast()`, `saturate()`, `sepia()`, `hue-rotate()`, `invert()`, `opacity()`, `drop-shadow()`.
+
+Native SVG filters also available: `FeGaussianBlur`, `FeColorMatrix`, `FeDropShadow`, `FeBlend`, `FeComposite`, `FeMerge`, `FeOffset`, `FeFlood`.
+
+## SVG Transformer (import .svg as components)
+
+```javascript
+// metro.config.js
+const { getDefaultConfig } = require('expo/metro-config');
+const config = getDefaultConfig(__dirname);
+config.transformer.babelTransformerPath = require.resolve('react-native-svg-transformer');
+config.resolver.assetExts = config.resolver.assetExts.filter((ext) => ext !== 'svg');
+config.resolver.sourceExts.push('svg');
+module.exports = config;
+```
+
+```tsx
+import Logo from './assets/logo.svg';
+<Logo width={100} height={100} />
+```
+
+## CSS Styles in SVGs
+
+```tsx
+import { SvgCss, SvgCssUri } from 'react-native-svg/css';
+
+<SvgCss xml={svgStringWithCssStyles} width={100} height={100} />
+<SvgCssUri uri="https://example.com/styled.svg" width={100} height={100} />
+```
+
+## Known Issues
+
+- `RadialGradient` focus point does not work on Android
+- Many SVG filters are web-only — check platform support
+- No drawing cache — each render fully redraws

@@ -102,7 +102,7 @@ offset.value = withTiming(200, {
 // With completion callback
 offset.value = withTiming(200, { duration: 300 }, (finished) => {
   'worklet';
-  if (finished) runOnJS(onComplete)();
+  if (finished) scheduleOnRN(onComplete);
 });
 ```
 
@@ -334,8 +334,11 @@ scrollTo(scrollRef, 0, 200, true); // x, y, animated
 
 ## Thread Communication
 
+**`runOnJS` is removed in Reanimated 4.** Use `scheduleOnRN` from `react-native-worklets` instead.
+
 ```tsx
-import { runOnJS, runOnUI } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnUI } from 'react-native-worklets';
 
 // Call JS function from UI thread (worklet → JS)
 const showAlert = (message: string) => {
@@ -345,19 +348,23 @@ const showAlert = (message: string) => {
 const handler = useAnimatedScrollHandler({
   onScroll: (event) => {
     if (event.contentOffset.y > 500) {
-      runOnJS(showAlert)('Scrolled past 500!');
+      scheduleOnRN(showAlert, 'Scrolled past 500!');
     }
   },
 });
 
 // Call worklet from JS thread (JS → UI)
-runOnUI(() => {
+scheduleOnUI(() => {
   'worklet';
   offset.value = withSpring(100);
-})();
+});
 ```
 
-## Shared Element Transitions
+**Key difference:** `scheduleOnRN(fn, arg1, arg2)` passes args directly (not curried like the old `runOnJS(fn)(args)`).
+
+## Shared Element Transitions (Experimental)
+
+**Status:** Experimental, not production-ready. API may change.
 
 ```tsx
 import Animated, { SharedTransition } from 'react-native-reanimated';
@@ -418,14 +425,28 @@ function DraggableBox() {
 
 ## Keyboard Animations
 
+**`useAnimatedKeyboard` is deprecated in Reanimated 4.** Use `react-native-keyboard-controller` instead:
+
+```bash
+npx expo install react-native-keyboard-controller
+```
+
 ```tsx
-import { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import { useKeyboardHandler } from 'react-native-keyboard-controller';
+import { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 function KeyboardAware() {
-  const keyboard = useAnimatedKeyboard();
+  const height = useSharedValue(0);
+
+  useKeyboardHandler({
+    onMove: (e) => {
+      'worklet';
+      height.value = e.height;
+    },
+  });
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboard.height.value }],
+    transform: [{ translateY: -height.value }],
   }));
 
   return <Animated.View style={animatedStyle}>{/* input form */}</Animated.View>;
@@ -501,13 +522,108 @@ offset.value = withSpring(
 );
 ```
 
+## CSS Transitions (Reanimated 4)
+
+The simplest animation approach — animate style changes automatically when state changes:
+
+```tsx
+const [expanded, setExpanded] = useState(false);
+
+<Animated.View
+  style={{
+    height: expanded ? 200 : 100,
+    opacity: expanded ? 1 : 0.5,
+    transitionProperty: 'height, opacity',
+    transitionDuration: '300ms',
+    transitionTimingFunction: 'ease-in-out',
+  }}
+/>
+```
+
+Supports `transitionDelay`, `transitionBehavior: 'allow-discrete'` for display/visibility transitions.
+
+## CSS Animations (Reanimated 4)
+
+Keyframe-based animations using CSS syntax:
+
+```tsx
+const pulse = {
+  '0%': { transform: [{ scale: 1 }], opacity: 1 },
+  '50%': { transform: [{ scale: 1.1 }], opacity: 0.7 },
+  '100%': { transform: [{ scale: 1 }], opacity: 1 },
+};
+
+<Animated.View
+  style={{
+    animationName: pulse,
+    animationDuration: '1s',
+    animationIterationCount: 'infinite',
+    animationTimingFunction: 'ease-in-out',
+  }}
+/>
+```
+
+Supports `animationDelay`, `animationFillMode`, `animationPlayState` (pause/resume), `animationDirection`.
+
+## Animation Decision Tree
+
+```
+What are you animating?
+│
+├── Simple state-driven style change (opacity, color, size)?
+│   └── CSS Transitions — simplest, automatic
+│
+├── Repeating/looping animation (pulse, spin, shimmer)?
+│   └── CSS Animations with keyframes
+│
+├── Gesture-driven or interactive animation?
+│   └── Shared Values + useAnimatedStyle
+│
+├── Complex 2D graphics (charts, drawing, particles)?
+│   └── Skia Canvas (@shopify/react-native-skia)
+│
+└── GPU compute (physics sim, boids, fluid, noise)?
+    └── WebGPU (react-native-wgpu + TypeGPU)
+```
+
+## withClamp (Reanimated 4)
+
+Limits animated value range — prevents spring overshoot past bounds:
+
+```tsx
+offset.value = withClamp({ min: 0, max: 300 }, withSpring(200));
+```
+
+## useSharedValue Gotchas
+
+- **Never destructure:** `const { value } = sv` breaks reactivity. Always use `sv.value`
+- **Use `.modify()` for arrays/objects:** `arr.modify((v) => { v.push(item); })` — avoids copying
+- **React Compiler:** Use `.get()` / `.set()` instead of `.value` for compatibility
+- **Never read/modify during render:** Only inside `useAnimatedStyle`, `useDerivedValue`, or worklet callbacks
+- **Don't add `'worklet'` to callbacks passed to Reanimated APIs** — auto-workletized by Babel plugin
+
 ## Performance Rules
 
 - **All animation code runs on the UI thread** — never access React state or JS-only APIs inside `useAnimatedStyle` or worklets
-- Use `runOnJS()` to call JS functions from worklets
+- Use `scheduleOnRN()` from `react-native-worklets` to call JS functions from worklets (`runOnJS` is removed)
 - Use `useDerivedValue` for computed values (reactive, runs on UI thread)
 - Prefer `withSpring` over `withTiming` for natural-feeling animations
 - Use `cancelAnimation(sharedValue)` before starting a new animation on the same value
 - Always use `Animated.View`/`Animated.Text` etc. — regular RN components don't animate
 - Use `useReducedMotion()` to respect accessibility preferences
+- Prefer non-layout properties (`transform`, `opacity`) over layout properties (`top`, `left`, `width`, `height`) — layout forces extra passes
 - **Reanimated v4:** `react-native-worklets` is a separate package — installed automatically
+
+### Performance Flags
+
+Enable in `app.json` under `expo.experiments.reanimated`:
+
+- `USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS` — reduces unnecessary commits
+- `ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS` — sync prop updates (Android)
+- `IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS` — sync prop updates (iOS)
+
+For 120fps ProMotion displays, add to `Info.plist`:
+```xml
+<key>CADisableMinimumFrameDurationOnPhone</key>
+<true/>
+```
