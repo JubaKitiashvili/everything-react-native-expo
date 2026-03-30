@@ -13,18 +13,27 @@
 
 > **Prerequisite:** [Claude Code](https://claude.ai/claude-code) is required for the full experience (13 agents, pipeline orchestration, dashboard, hooks). Other IDEs receive adaptive rules and configuration — see [IDE Support](#%EF%B8%8F-ide--editor-support).
 
-### Install & Setup
+### Install
+
+```bash
+# Install globally (recommended)
+npm i -g erne-universal
+```
+
+### Setup
 
 ```bash
 # One-time setup in your React Native / Expo project
-npx erne-universal init
+erne init
 
 # Launch the dashboard
-npx erne-universal dashboard
+erne dashboard
 
 # Or do both at once
-npx erne-universal start
+erne start
 ```
+
+> **Without global install:** use `npx erne-universal` instead of `erne` (slower — downloads each time).
 
 ### What `init` does:
 
@@ -36,14 +45,15 @@ npx erne-universal start
 ### CLI Commands
 
 ```bash
-npx erne-universal init                  # Setup ERNE in your project
-npx erne-universal dashboard             # Launch dashboard
-npx erne-universal start                 # Init + dashboard
-npx erne-universal doctor                # Health check (22 checks)
-npx erne-universal audit                 # Generate project documentation
-npx erne-universal worker --config w.json  # Start autonomous worker
-npx erne-universal sync-configs          # Export rules to other IDEs
-npx erne-universal uninstall             # Clean removal
+erne init                  # Setup ERNE in your project
+erne dashboard             # Launch dashboard
+erne start                 # Init + dashboard
+erne doctor                # Health check (22 checks)
+erne audit                 # Generate project documentation
+erne worker --config w.json  # Start autonomous worker
+erne sync-configs          # Export rules to other IDEs
+erne update                # Update to latest version
+erne uninstall             # Clean removal
 ```
 
 ---
@@ -54,7 +64,7 @@ npx erne-universal uninstall             # Clean removal
 | -------------------- | ----- | -------------------------------------------------------------------------------------------- |
 | 🤖 Agents            | 13    | Specialized AI agents incl. visual debugger, doc generator, smart routing                    |
 | 🔀 Agent variants    | 9     | Stack-adaptive agent configurations (StyleSheet vs NativeWind, Zustand vs Redux, etc.)       |
-| ⚡ Commands          | 23    | Slash commands for every React Native workflow (incl. /erne-debug-video)                     |
+| ⚡ Commands          | 24    | Slash commands for every React Native workflow (incl. /erne-debug-video, /erne-update)       |
 | 📏 Rule layers       | 5     | Conditional rules: common, expo, bare-rn, native-ios, native-android                         |
 | 🎯 Rule variants     | 15    | Stack-specific rules selected by deep detection (state, navigation, styling, security, etc.) |
 | 📚 Knowledge rules   | 29    | Expo SDK 55, RN 0.84, React 19.2, Reanimated, Skia, Gesture Handler, SVG, ExecuTorch, more   |
@@ -74,9 +84,9 @@ npx erne-universal uninstall             # Clean removal
 ERNE includes a real-time dashboard with 6 pages, pixel-art agent HQ, and adaptive fix integration.
 
 ```bash
-npx erne-universal dashboard              # Start on port 3333, open browser
-npx erne-universal dashboard --port 4444  # Custom port
-npx erne-universal start                  # Init + dashboard in one command
+erne dashboard              # Start on auto-detected port, open browser
+erne dashboard --port 4444  # Custom port
+erne start                  # Init + dashboard in one command
 ```
 
 ### Command Center
