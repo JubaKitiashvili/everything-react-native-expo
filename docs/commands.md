@@ -7,39 +7,42 @@ Commands are slash-prefixed actions that orchestrate agents for specific tasks.
 ### Core Workflow
 | Command | Purpose | Agents |
 |---------|---------|--------|
-| `/plan` | Design feature architecture | architect |
-| `/code` | Implement features | senior-developer |
-| `/feature` | Build focused feature unit | feature-builder |
-| `/code-review` | Full code review | code-reviewer + performance-profiler |
-| `/tdd` | Test-first development | tdd-guide |
-| `/build-fix` | Fix build failures | expo-config-resolver |
-| `/perf` | Performance profiling | performance-profiler |
-| `/upgrade` | Version migration | upgrade-assistant |
-| `/native-module` | Create native modules | native-bridge-builder → code-reviewer |
-| `/navigate` | Navigation design | architect |
+| `/erne-plan` | Design feature architecture | architect |
+| `/erne-code` | Implement features | senior-developer |
+| `/erne-feature` | Build focused feature unit | feature-builder |
+| `/erne-code-review` | Full code review | code-reviewer + performance-profiler |
+| `/erne-tdd` | Test-first development | tdd-guide |
+| `/erne-build-fix` | Fix build failures | expo-config-resolver |
+| `/erne-perf` | Performance profiling | performance-profiler |
+| `/erne-upgrade` | Version migration | upgrade-assistant |
+| `/erne-native-module` | Create native modules | native-bridge-builder → code-reviewer |
+| `/erne-navigate` | Navigation design | architect |
 
 ### Extended
 | Command | Purpose | Agents |
 |---------|---------|--------|
-| `/animate` | Implement animations | ui-designer |
-| `/deploy` | Validate and submit | expo-config-resolver + code-reviewer |
-| `/component` | Design + test component | ui-designer + tdd-guide |
-| `/debug` | Systematic diagnosis | performance-profiler |
-| `/quality-gate` | Pre-merge checks | code-reviewer + performance-profiler |
-| `/orchestrate` | Run multi-agent pipeline | pipeline-orchestrator |
+| `/erne-animate` | Implement animations | ui-designer |
+| `/erne-deploy` | Validate and submit | expo-config-resolver + code-reviewer |
+| `/erne-component` | Design + test component | ui-designer + tdd-guide |
+| `/erne-debug` | Systematic diagnosis | performance-profiler |
+| `/erne-debug-visual` | Screenshot-based visual debugging | visual-debugger |
+| `/erne-debug-video` | Video-based temporal analysis | visual-debugger (frame extraction) |
+| `/erne-quality-gate` | Pre-merge checks | code-reviewer + performance-profiler |
+| `/erne-orchestrate` | Run multi-agent pipeline | pipeline-orchestrator |
+| `/erne-hig` | Apple HIG design intelligence | ui-designer (HIG rules) |
 
 ### Script-Driven
 | Command | Purpose | What It Runs |
 |---------|---------|-------------|
-| `/learn` | Generate skills from patterns | continuous-learning-v2 scripts |
-| `/retrospective` | Session analysis | evaluate-session.js |
-| `/setup-device` | Install agent-device MCP | Setup script |
+| `/erne-learn` | Generate skills from patterns | continuous-learning-v2 scripts |
+| `/erne-retrospective` | Session analysis | evaluate-session.js |
+| `/erne-setup-device` | Install agent-device MCP | Setup script |
 
 ## Using Commands
 
 Type any command in Claude Code:
 ```
-/plan Add user authentication with biometric login
+/erne-plan Add user authentication with biometric login
 ```
 
 Commands that use multiple agents show combined output. Parallel agents run simultaneously for speed.
@@ -50,7 +53,7 @@ When agent-device MCP is installed, several commands gain visual capabilities:
 
 | Command | Without | With agent-device |
 |---------|---------|------------------|
-| `/debug` | Log analysis | + Screenshots, tap through steps |
-| `/perf` | Code analysis | + Actual FPS measurement |
-| `/component` | Generate code | + Render and screenshot |
-| `/deploy` | Config validation | + Preview build verification |
+| `/erne-debug` | Log analysis | + Screenshots, tap through steps |
+| `/erne-perf` | Code analysis | + Actual FPS measurement |
+| `/erne-component` | Generate code | + Render and screenshot |
+| `/erne-deploy` | Config validation | + Preview build verification |

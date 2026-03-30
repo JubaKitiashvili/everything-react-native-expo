@@ -122,7 +122,7 @@ When a user's message matches these signals, automatically use the corresponding
 | `expo-config-resolver`    | build error, red screen, crash, "won't start", error, "build failed", metro, babel, "config issue", "EAS build", "can't build", "module not found", "pod install", gradle, "Xcode error", "Android build", "iOS build", "linking error", prebuild, "app.json", "app.config", "plugin not working", "white screen", "blank screen"                                            |
 | `native-bridge-builder`   | "native module", bridge, "turbo module", Swift, Kotlin, Java, "Objective-C", "native code", "platform specific", "expo module", JSI, Fabric, "New Architecture", codegen, "C++", "native view", Nitro, "expo-modules-core"                                                                                                                                                   |
 | `upgrade-assistant`       | upgrade, update, version, migration, "breaking change", deprecated, "Expo SDK", "React Native version", bump, migrate, changelog, compatibility, "peer dependency", outdated, "npx expo install --fix"                                                                                                                                                                       |
-| `ui-designer`             | component, button, modal, form, screen, page, tab, "navigation UI", "build UI", "design system", styled, theme, icon, animation, transition, gesture, "bottom sheet", drawer, header, card, skeleton, loading, toast                                                                                                                                                         |
+| `ui-designer`             | component, button, modal, form, screen, page, tab, "navigation UI", "build UI", "design system", styled, theme, icon, animation, transition, gesture, "bottom sheet", drawer, header, card, skeleton, loading, toast, "apple style", "HIG", "iOS native feel", "apple design", "human interface"                                                                              |
 | `pipeline-orchestrator`   | deploy, publish, EAS, "app store", "play store", "CI/CD", release, "OTA update", submit, distribution, TestFlight, "internal testing", "code signing", provisioning, certificate, keystore, fastlane, "GitHub Actions"                                                                                                                                                       |
 | `senior-developer`        | "what do you think", opinion, advice, approach, tradeoff, "not sure how", mentor, "help me decide", "best way to", "should I", "pros and cons", "compare options", "which is better", "common pitfall", "production ready", scalable                                                                                                                                         |
 | `documentation-generator` | "generate docs", "document this", "write documentation", "project overview", "architecture docs", "what does this project do", "onboard me", "explain codebase", "project structure", "how does this work"                                                                                                                                                                   |
@@ -143,7 +143,7 @@ When a user's message matches these signals, automatically use the corresponding
 
 ## Available Commands
 
-Use `/erne-plan`, `/erne-code-review`, `/erne-tdd`, `/erne-build-fix`, `/erne-perf`, `/erne-upgrade`, `/erne-native-module`, `/erne-navigate`, `/erne-animate`, `/erne-deploy`, `/erne-component`, `/erne-debug`, `/erne-debug-visual`, `/erne-audit`, `/erne-quality-gate`, `/erne-code`, `/erne-feature`, `/erne-learn`, `/erne-retrospective`, `/erne-setup-device` for guided workflows.
+Use `/erne-plan`, `/erne-code-review`, `/erne-tdd`, `/erne-build-fix`, `/erne-perf`, `/erne-upgrade`, `/erne-native-module`, `/erne-navigate`, `/erne-animate`, `/erne-deploy`, `/erne-component`, `/erne-debug`, `/erne-debug-visual`, `/erne-debug-video`, `/erne-audit`, `/erne-quality-gate`, `/erne-code`, `/erne-feature`, `/erne-learn`, `/erne-retrospective`, `/erne-setup-device`, `/erne-hig` for guided workflows.
 
 ## Worker Mode (Autonomous Ticket Execution)
 
@@ -206,6 +206,7 @@ Skills in `skills/` activate automatically:
 - `native-module-scaffold` — Create Turbo/Expo modules
 - `upgrade-workflow` — Version migration guide
 - `continuous-learning-v2` — Pattern extraction and learning
+- `hig` — Apple HIG design intelligence (build, review, animate, analyze)
 
 ---
 
@@ -223,8 +224,8 @@ Skills in `skills/` activate automatically:
 
 ## Available Commands
 
-/erne-plan, /erne-code-review, /erne-tdd, /erne-build-fix, /erne-perf, /erne-upgrade, /erne-native-module, /erne-debug, /erne-debug-visual, /erne-deploy,
-/erne-component, /erne-navigate, /erne-animate, /erne-orchestrate, /erne-quality-gate, /erne-code, /erne-feature, /erne-worker, /erne-audit, /erne-learn, /erne-retrospective, /erne-setup-device
+/erne-plan, /erne-code-review, /erne-tdd, /erne-build-fix, /erne-perf, /erne-upgrade, /erne-native-module, /erne-debug, /erne-debug-visual, /erne-debug-video, /erne-deploy,
+/erne-component, /erne-navigate, /erne-animate, /erne-orchestrate, /erne-quality-gate, /erne-code, /erne-feature, /erne-worker, /erne-audit, /erne-learn, /erne-retrospective, /erne-setup-device, /erne-hig
 
 ## Dashboard
 
