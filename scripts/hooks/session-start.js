@@ -128,6 +128,32 @@ if (hasSettings) {
   }
 }
 
+// ─── Update check ────────────────────────────────────────────────────────────
+
+let updateNotice = '';
+try {
+  const { execSync } = require('child_process');
+  const updateScript = path.join(__dirname, '..', '..', 'bin', 'update-check.js');
+  if (fs.existsSync(updateScript)) {
+    const updateResult = execSync(`node "${updateScript}" 2>/dev/null`, {
+      timeout: 6000,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+
+    if (updateResult) {
+      for (const line of updateResult.split('\n')) {
+        const parts = line.split(' ');
+        if (parts[0] === 'JUST_UPGRADED') {
+          updateNotice = `✓ Upgraded: ${parts[1]} → ${parts[2]}`;
+        } else if (parts[0] === 'UPGRADE_AVAILABLE') {
+          updateNotice = `Update available: ${parts[1]} → ${parts[2]}  —  npm i -g erne-universal`;
+        }
+      }
+    }
+  }
+} catch { /* update check is non-critical */ }
+
 // ─── Print banner ────────────────────────────────────────────────────────────
 
 if (hasSettings) {
@@ -138,6 +164,7 @@ if (hasSettings) {
   if (agentCount > 0) parts.push(`${agentCount} agents`);
   if (dashboardUrl) parts.push(`Dashboard: ${dashboardUrl}`);
   console.error(`ERNE ${parts.join(' | ')}`);
+  if (updateNotice) console.error(updateNotice);
 } else {
   // Fallback: layer-based output for projects without full ERNE init
   const parts = [];
@@ -147,6 +174,7 @@ if (hasSettings) {
   parts.push(`layers: ${layers.join(', ')}`);
   console.error(`ERNE ${parts.join(' | ')}`);
   console.error(`Use /erne- commands (e.g. /erne-plan, /erne-perf, /erne-doctor)`);
+  if (updateNotice) console.error(updateNotice);
 }
 
 if (!hasSignals) {

@@ -1,6 +1,6 @@
 {
   "name": "erne-universal",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "description": "Complete AI coding agent harness for React Native and Expo \u2014 13 specialized agents, autonomous worker mode, visual debugging, smart routing",
   "keywords": [
     "react-native",
