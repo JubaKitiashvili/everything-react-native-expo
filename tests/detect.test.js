@@ -665,6 +665,69 @@ describe('Monorepo detection', () => {
     assert.equal(result.monorepo.tool, 'turbo');
     assert.equal(result.monorepo.packages.length, 0);
   });
+
+  it('detects RN project from workspace package when root has no RN', () => {
+    const dir = createTempProject({
+      'package.json': { name: 'pharma-app', private: true, workspaces: ['apps/*', 'packages/*'] },
+      'apps/mobile/package.json': {
+        name: '@pharma/mobile',
+        dependencies: {
+          expo: '~51.0.0', 'react-native': '0.74.0',
+          'expo-router': '~3.0.0', zustand: '^4.0.0',
+          '@tanstack/react-query': '^5.0.0', nativewind: '^4.0.0',
+          '@shopify/flash-list': '^1.0.0', 'expo-image': '~1.0.0',
+        },
+        devDependencies: { '@testing-library/react-native': '^12.0.0' },
+      },
+      'apps/mobile/tsconfig.json': { compilerOptions: { strict: true } },
+      'apps/mobile/app.json': { expo: { plugins: [['expo-build-properties', { android: { newArchEnabled: true } }]] } },
+      'packages/shared/package.json': { name: '@pharma/shared', dependencies: {} },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.isRNProject, true, 'should detect RN project from workspace');
+    assert.equal(result.framework, 'expo-managed');
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'npm');
+    assert.equal(result.stack.navigation, 'expo-router');
+    assert.equal(result.stack.state, 'zustand');
+    assert.equal(result.stack.serverState, 'tanstack-query');
+    assert.equal(result.stack.styling, 'nativewind');
+    assert.equal(result.stack.lists, 'flashlist');
+    assert.equal(result.stack.images, 'expo-image');
+    assert.equal(result.stack.testing, 'jest-rntl');
+    assert.equal(result.hasTypescript, true);
+    assert.equal(result.hasNewArch, true);
+  });
+
+  it('detects pnpm monorepo with RN only in workspace', () => {
+    const dir = createTempProject({
+      'package.json': { name: 'my-monorepo', private: true },
+      'pnpm-workspace.yaml': 'packages:\n  - apps/*\n  - packages/*',
+      'apps/mobile/package.json': {
+        name: '@mono/mobile',
+        dependencies: { 'react-native': '0.74.0', '@react-navigation/native': '^6.0.0' },
+      },
+      'packages/api/package.json': { name: '@mono/api', dependencies: { express: '4.0.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.isRNProject, true, 'should detect RN from pnpm workspace');
+    assert.equal(result.framework, 'bare-rn');
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'pnpm');
+    assert.equal(result.stack.navigation, 'react-navigation');
+  });
+
+  it('remains non-RN when monorepo has no RN workspace packages', () => {
+    const dir = createTempProject({
+      'package.json': { name: 'web-monorepo', private: true, workspaces: ['packages/*'] },
+      'packages/web/package.json': { name: '@web/app', dependencies: { next: '14.0.0' } },
+      'packages/api/package.json': { name: '@web/api', dependencies: { express: '4.0.0' } },
+    });
+    const result = detectProject(dir);
+    assert.equal(result.isRNProject, false, 'should not detect RN when no workspace has it');
+    assert.equal(result.hasMonorepo, true);
+    assert.equal(result.monorepo.tool, 'npm');
+  });
 });
 
 // ─── Error Handling ───
