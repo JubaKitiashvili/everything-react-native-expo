@@ -21,12 +21,12 @@ function pass(msg) {
 }
 
 function fail(msg) {
-  if (msg) console.log(msg);
+  if (msg) console.error(msg);
   process.exit(1);
 }
 
 function warn(msg) {
-  if (msg) console.log(msg);
+  if (msg) console.error(msg);
   process.exit(2);
 }
 
