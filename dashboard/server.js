@@ -1315,9 +1315,6 @@ async function resolvePort() {
 resolvePort().then((resolvedPort) => {
   PORT = resolvedPort;
 
-  // Register port in ~/.erne/ports.json
-  registerPort(projectDir, PORT, process.pid);
-
   // Cleanup on exit
   const cleanupRegistry = () => {
     unregisterPort(projectDir);
@@ -1332,7 +1329,13 @@ resolvePort().then((resolvedPort) => {
     process.exit(0);
   });
 
-  server.listen(PORT, () => {
+  // Retry with next free port on EADDRINUSE
+  let retries = 0;
+  const MAX_RETRIES = 10;
+
+  function startServer(port) {
+    PORT = port;
+    server.listen(PORT, () => {
     console.log(`ERNE Dashboard running on http://localhost:${PORT}`);
 
     // Wire tab handlers
@@ -1369,5 +1372,30 @@ resolvePort().then((resolvedPort) => {
         ecosystemHandler.autoRefresh(projectDir, broadcast);
       if (insightsHandler && insightsHandler.autoSnapshot) insightsHandler.autoSnapshot(projectDir);
     }, 5000);
+
+    // Register port after successful listen
+    registerPort(projectDir, PORT, process.pid);
   });
+  }
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && retries < MAX_RETRIES) {
+      retries++;
+      // Find next free port
+      findFreePort().then((nextPort) => {
+        startServer(nextPort);
+      }).catch(() => {
+        console.error(`Error: No free ports available in range 3333-3399.`);
+        process.exit(1);
+      });
+    } else if (err.code === 'EADDRINUSE') {
+      console.error(`Error: All ports in range 3333-3399 are in use.`);
+      process.exit(1);
+    } else {
+      console.error(`Server error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+  startServer(PORT);
 });
