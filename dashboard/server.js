@@ -1308,7 +1308,7 @@ async function resolvePort() {
   try {
     return await findFreePort();
   } catch {
-    return 3333; // ultimate fallback
+    return parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333; // ultimate fallback
   }
 }
 
@@ -1385,11 +1385,11 @@ resolvePort().then((resolvedPort) => {
       findFreePort().then((nextPort) => {
         startServer(nextPort);
       }).catch(() => {
-        console.error(`Error: No free ports available in range 3333-3399.`);
+        console.error(`Error: No free ports available in range ${PORT}-${PORT + 66}.`);
         process.exit(1);
       });
     } else if (err.code === 'EADDRINUSE') {
-      console.error(`Error: All ports in range 3333-3399 are in use.`);
+      console.error(`Error: All ports in range ${PORT}-${PORT + 66} are in use.`);
       process.exit(1);
     } else {
       console.error(`Server error: ${err.message}`);

@@ -118,7 +118,8 @@ if (hasSettings) {
           env: { ...process.env, ERNE_PROJECT_DIR: projectDir },
         });
         child.unref();
-        dashboardUrl = 'http://localhost:3333 (starting...)';
+        const defaultPort = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
+        dashboardUrl = `http://localhost:${defaultPort} (starting...)`;
       } catch {
         /* auto-start failed — skip */
       }

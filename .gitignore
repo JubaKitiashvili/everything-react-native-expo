@@ -8,6 +8,7 @@ docs/assets/
 .DS_Store
 .env
 .env.*
+!.env.example
 .playwright-mcp/
 
 # Dashboard runtime files

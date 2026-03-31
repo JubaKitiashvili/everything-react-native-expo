@@ -10,7 +10,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:3333',
+      '/api': `http://localhost:${process.env.ERNE_DASHBOARD_PORT || '3333'}`,
     },
     // Proxy WebSocket connections to backend in dev mode
     hmr: {

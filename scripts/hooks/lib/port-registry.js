@@ -8,7 +8,7 @@ const net = require('net');
 
 const ERNE_DIR = path.join(os.homedir(), '.erne');
 const REGISTRY_PATH = path.join(ERNE_DIR, 'ports.json');
-const PORT_RANGE_START = 3333;
+const PORT_RANGE_START = parseInt(process.env.ERNE_DASHBOARD_PORT, 10) || 3333;
 const PORT_RANGE_END = 3399;
 
 /**
@@ -185,7 +185,7 @@ function resolveDashboardPort(projectPath) {
   if (registered) return registered;
 
   // 3. Fallback
-  return 3333;
+  return PORT_RANGE_START;
 }
 
 module.exports = {
