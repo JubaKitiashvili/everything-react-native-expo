@@ -268,12 +268,12 @@ Change profile: set `ERNE_PROFILE` env var, add `<!-- Hook Profile: standard -->
 
 ## ⚡ Commands
 
-| Category          | Commands                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Core**          | `/plan`, `/code-review`, `/tdd`, `/build-fix`, `/perf`, `/upgrade`, `/native-module`, `/navigate`, `/code`, `/feature` |
-| **Extended**      | `/animate`, `/deploy`, `/component`, `/debug`, `/debug-visual`, `/debug-video`, `/quality-gate`                        |
-| **Orchestration** | `/orchestrate`, `/worker`                                                                                              |
-| **Learning**      | `/learn`, `/retrospective`, `/setup-device`                                                                            |
+| Category          | Commands                                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core**          | `/erne-plan`, `/erne-code-review`, `/erne-tdd`, `/erne-build-fix`, `/erne-perf`, `/erne-upgrade`, `/erne-native-module`, `/erne-navigate`, `/erne-code`, `/erne-feature` |
+| **Extended**      | `/erne-animate`, `/erne-deploy`, `/erne-component`, `/erne-debug`, `/erne-debug-visual`, `/erne-debug-video`, `/erne-quality-gate`                             |
+| **Orchestration** | `/erne-orchestrate`, `/erne-worker`                                                                                                                            |
+| **Maintenance**   | `/erne-update`, `/erne-learn`, `/erne-retrospective`, `/erne-setup-device`                                                                                     |
 
 ---
 
