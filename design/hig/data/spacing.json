@@ -1,0 +1,26 @@
+{
+  "scale": [
+    { "keyword": "xxs", "value": 2, "usage": "Tight internal gaps" },
+    { "keyword": "xs", "value": 4, "usage": "Icon-to-label gap" },
+    { "keyword": "sm", "value": 8, "usage": "Compact padding" },
+    { "keyword": "md", "value": 12, "usage": "Standard padding" },
+    { "keyword": "base", "value": 16, "usage": "Screen margin" },
+    { "keyword": "lg", "value": 20, "usage": "Section padding" },
+    { "keyword": "xl", "value": 24, "usage": "Card spacing" },
+    { "keyword": "2xl", "value": 32, "usage": "Section separation" },
+    { "keyword": "3xl", "value": 40, "usage": "Hero section gaps" },
+    { "keyword": "4xl", "value": 48, "usage": "Full-bleed separation" }
+  ],
+  "semantic": [
+    { "keyword": "screenMargin", "value": 16, "usage": "iPhone edge margin" },
+    { "keyword": "screenMarginTablet", "value": 20, "usage": "iPad edge margin" },
+    { "keyword": "cardPadding", "value": 16, "usage": "Inside cards" },
+    { "keyword": "sectionSpacing", "value": 32, "usage": "Between sections" },
+    { "keyword": "iconLabelGap", "value": 4, "usage": "Icon to label" },
+    { "keyword": "buttonRowGap", "value": 8, "usage": "Between buttons" },
+    { "keyword": "fieldLabelGap", "value": 10, "usage": "Field to input" },
+    { "keyword": "errorGap", "value": 4, "usage": "Input to error message" }
+  ],
+  "gridUnit": 4,
+  "validValues": [0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96]
+}

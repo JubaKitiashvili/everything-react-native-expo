@@ -1,0 +1,26 @@
+{
+  "styles": [
+    { "keyword": "largeTitle", "name": "Large Title", "size": 34, "weight": "400", "tracking": 0.4, "lineHeight": 41, "font": "System" },
+    { "keyword": "title1", "name": "Title 1", "size": 28, "weight": "400", "tracking": 0.36, "lineHeight": 34, "font": "System" },
+    { "keyword": "title2", "name": "Title 2", "size": 22, "weight": "400", "tracking": 0, "lineHeight": 28, "font": "System" },
+    { "keyword": "title3", "name": "Title 3", "size": 20, "weight": "400", "tracking": 0.45, "lineHeight": 25, "font": "System" },
+    { "keyword": "headline", "name": "Headline", "size": 17, "weight": "600", "tracking": -0.43, "lineHeight": 22, "font": "System" },
+    { "keyword": "body", "name": "Body", "size": 17, "weight": "400", "tracking": -0.43, "lineHeight": 22, "font": "System" },
+    { "keyword": "callout", "name": "Callout", "size": 16, "weight": "400", "tracking": -0.32, "lineHeight": 21, "font": "System" },
+    { "keyword": "subheadline", "name": "Subheadline", "size": 15, "weight": "400", "tracking": -0.24, "lineHeight": 20, "font": "System" },
+    { "keyword": "footnote", "name": "Footnote", "size": 13, "weight": "400", "tracking": -0.08, "lineHeight": 18, "font": "System" },
+    { "keyword": "caption1", "name": "Caption 1", "size": 12, "weight": "400", "tracking": 0, "lineHeight": 16, "font": "System" },
+    { "keyword": "caption2", "name": "Caption 2", "size": 11, "weight": "400", "tracking": 0.07, "lineHeight": 13, "font": "System" }
+  ],
+  "weights": {
+    "ultralight": "100",
+    "thin": "200",
+    "light": "300",
+    "regular": "400",
+    "medium": "500",
+    "semibold": "600",
+    "bold": "700",
+    "heavy": "800",
+    "black": "900"
+  }
+}

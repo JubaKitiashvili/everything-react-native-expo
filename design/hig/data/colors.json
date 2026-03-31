@@ -1,0 +1,41 @@
+{
+  "system": [
+    { "keyword": "systemBlue", "name": "System Blue", "light": "#007AFF", "dark": "#0A84FF", "usage": "Links and interactive elements", "role": "accent" },
+    { "keyword": "systemGreen", "name": "System Green", "light": "#34C759", "dark": "#30D158", "usage": "Success states", "role": "success" },
+    { "keyword": "systemIndigo", "name": "System Indigo", "light": "#5856D6", "dark": "#5E5CE6", "usage": "Secondary accent", "role": "accent-secondary" },
+    { "keyword": "systemOrange", "name": "System Orange", "light": "#FF9500", "dark": "#FF9F0A", "usage": "Warnings", "role": "warning" },
+    { "keyword": "systemPink", "name": "System Pink", "light": "#FF2D55", "dark": "#FF375F", "usage": "Favorites and media", "role": "accent-tertiary" },
+    { "keyword": "systemPurple", "name": "System Purple", "light": "#AF52DE", "dark": "#BF5AF2", "usage": "Creative and premium", "role": "premium" },
+    { "keyword": "systemRed", "name": "System Red", "light": "#FF3B30", "dark": "#FF453A", "usage": "Errors and destructive actions", "role": "destructive" },
+    { "keyword": "systemTeal", "name": "System Teal", "light": "#5AC8FA", "dark": "#64D2FF", "usage": "Communication", "role": "info" },
+    { "keyword": "systemYellow", "name": "System Yellow", "light": "#FFCC00", "dark": "#FFD60A", "usage": "Ratings and caution", "role": "caution" }
+  ],
+  "grays": [
+    { "keyword": "systemGray", "light": "#8E8E93", "dark": "#8E8E93" },
+    { "keyword": "systemGray2", "light": "#AEAEB2", "dark": "#636366" },
+    { "keyword": "systemGray3", "light": "#C7C7CC", "dark": "#48484A" },
+    { "keyword": "systemGray4", "light": "#D1D1D6", "dark": "#3A3A3C" },
+    { "keyword": "systemGray5", "light": "#E5E5EA", "dark": "#2C2C2E" },
+    { "keyword": "systemGray6", "light": "#F2F2F7", "dark": "#1C1C1E" }
+  ],
+  "labels": [
+    { "keyword": "label", "light": "#000000", "dark": "#FFFFFF", "usage": "Primary text" },
+    { "keyword": "secondaryLabel", "light": "#3C3C4399", "dark": "#EBEBF599", "usage": "Secondary text" },
+    { "keyword": "tertiaryLabel", "light": "#3C3C434D", "dark": "#EBEBF54D", "usage": "Tertiary text" },
+    { "keyword": "quaternaryLabel", "light": "#3C3C432E", "dark": "#EBEBF52E", "usage": "Quaternary text" }
+  ],
+  "backgrounds": [
+    { "keyword": "systemBackground", "light": "#FFFFFF", "dark": "#000000", "usage": "Primary background" },
+    { "keyword": "secondarySystemBackground", "light": "#F2F2F7", "dark": "#1C1C1E", "usage": "Grouped secondary" },
+    { "keyword": "tertiarySystemBackground", "light": "#FFFFFF", "dark": "#2C2C2E", "usage": "Grouped tertiary" }
+  ],
+  "fills": [
+    { "keyword": "systemFill", "light": "#78788033", "dark": "#7878805C", "usage": "Thin fill overlay" },
+    { "keyword": "secondarySystemFill", "light": "#78788029", "dark": "#78788052", "usage": "Medium fill" },
+    { "keyword": "tertiarySystemFill", "light": "#7676801F", "dark": "#7676803D", "usage": "Thick fill" }
+  ],
+  "separators": [
+    { "keyword": "separator", "light": "#3C3C434A", "dark": "#54545899", "usage": "Standard separator" },
+    { "keyword": "opaqueSeparator", "light": "#C6C6C8", "dark": "#38383A", "usage": "Opaque separator" }
+  ]
+}

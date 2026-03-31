@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+
+  <!-- ============================================ -->
+  <!-- ERNE Atom Logo                                -->
+  <!-- Neon atom/orbital illustration                -->
+  <!-- ============================================ -->
+
+  <defs>
+    <!-- Background radial gradient -->
+    <radialGradient id="bg-gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="85%" stop-color="#050d1a"/>
+      <stop offset="100%" stop-color="#030810"/>
+    </radialGradient>
+
+    <!-- Vignette gradient for outer ring -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.6"/>
+    </radialGradient>
+
+    <!-- Orbit stroke gradient: green to gold -->
+    <linearGradient id="green-gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#44ff88"/>
+      <stop offset="100%" stop-color="#ffaa22"/>
+    </linearGradient>
+
+    <!-- Core glow gradients -->
+    <radialGradient id="core-outer-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffaa44" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ffaa44" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="core-mid-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa66ff" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#4488ff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#44ffaa" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="core-inner-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#aaeeff"/>
+      <stop offset="100%" stop-color="#44ddff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- ====== GLOW FILTERS ====== -->
+
+    <!-- Blue glow -->
+    <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feFlood flood-color="#00aaff" flood-opacity="0.7"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Purple glow -->
+    <filter id="glow-purple" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feFlood flood-color="#cc44ff" flood-opacity="0.7"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Green glow -->
+    <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feFlood flood-color="#44ff88" flood-opacity="0.6"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Gold glow -->
+    <filter id="glow-gold" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feFlood flood-color="#ffaa22" flood-opacity="0.6"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Orbit blur (glow behind orbit lines) -->
+    <filter id="orbit-blur-blue" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+
+    <filter id="orbit-blur-purple" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+
+    <filter id="orbit-blur-green-gold" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+
+    <!-- Electron glow -->
+    <filter id="electron-glow-blue" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feFlood flood-color="#00aaff" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="electron-glow-purple" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feFlood flood-color="#cc44ff" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="electron-glow-green" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feFlood flood-color="#44ff88" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="electron-glow-gold" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feFlood flood-color="#ffaa22" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- White/core glow -->
+    <filter id="glow-white" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.8"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for core lobes -->
+    <filter id="soft-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+
+    <!-- Core intense glow -->
+    <filter id="core-bloom" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+  </defs>
+
+  <!-- ====== LAYER 1: Background ====== -->
+  <g id="background">
+    <circle cx="200" cy="200" r="200" fill="url(#bg-gradient)"/>
+    <circle cx="200" cy="200" r="200" fill="url(#vignette)"/>
+    <!-- Subtle outer ring -->
+    <circle cx="200" cy="200" r="198" fill="none" stroke="#0a1e3a" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- ====== LAYER 2: Stars ====== -->
+  <g id="stars">
+    <circle cx="55" cy="42" r="1" fill="white" opacity="0.4"/>
+    <circle cx="132" cy="28" r="1.5" fill="white" opacity="0.3"/>
+    <circle cx="310" cy="55" r="1" fill="white" opacity="0.5"/>
+    <circle cx="365" cy="90" r="1.2" fill="white" opacity="0.35"/>
+    <circle cx="42" cy="135" r="1" fill="white" opacity="0.45"/>
+    <circle cx="370" cy="170" r="1.5" fill="white" opacity="0.3"/>
+    <circle cx="25" cy="220" r="1" fill="white" opacity="0.4"/>
+    <circle cx="380" cy="260" r="1.2" fill="white" opacity="0.5"/>
+    <circle cx="60" cy="310" r="1" fill="white" opacity="0.35"/>
+    <circle cx="160" cy="370" r="1.5" fill="white" opacity="0.3"/>
+    <circle cx="280" cy="365" r="1" fill="white" opacity="0.45"/>
+    <circle cx="345" cy="340" r="1.2" fill="white" opacity="0.4"/>
+    <circle cx="95" cy="85" r="0.8" fill="white" opacity="0.55"/>
+    <circle cx="250" cy="38" r="1" fill="white" opacity="0.35"/>
+    <circle cx="330" cy="305" r="0.8" fill="white" opacity="0.5"/>
+    <circle cx="75" cy="265" r="1.2" fill="white" opacity="0.3"/>
+    <circle cx="355" cy="145" r="1" fill="white" opacity="0.4"/>
+    <circle cx="185" cy="22" r="0.8" fill="white" opacity="0.6"/>
+  </g>
+
+  <!-- ====== LAYER 3: Orbit 1 — Blue (horizontal-ish) ====== -->
+  <g id="orbit-blue">
+    <!-- Glow layer (blurred) -->
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="6" opacity="0.4"
+      filter="url(#orbit-blur-blue)"/>
+    <!-- Sharp orbit line -->
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 4: Orbit 2 — Purple/Magenta (diagonal ~60 degrees) ====== -->
+  <g id="orbit-purple">
+    <!-- Glow layer (blurred) -->
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="6" opacity="0.4"
+      filter="url(#orbit-blur-purple)"/>
+    <!-- Sharp orbit line -->
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 5: Orbit 3 — Green/Gold (diagonal ~-50 degrees) ====== -->
+  <g id="orbit-green-gold">
+    <!-- Glow layer (blurred) -->
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="url(#green-gold-gradient)" stroke-width="6" opacity="0.4"
+      filter="url(#orbit-blur-green-gold)"/>
+    <!-- Sharp orbit line -->
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="url(#green-gold-gradient)" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 6: Electrons ====== -->
+  <g id="electrons">
+    <!-- Blue orbit electrons -->
+    <circle cx="48" cy="185" r="6" fill="#00ccff" filter="url(#electron-glow-blue)"/>
+    <circle cx="48" cy="185" r="3" fill="#ffffff" opacity="0.9"/>
+    <circle cx="352" cy="215" r="6" fill="#00ccff" filter="url(#electron-glow-blue)"/>
+    <circle cx="352" cy="215" r="3" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Purple orbit electrons -->
+    <circle cx="118" cy="68" r="5.5" fill="#dd66ff" filter="url(#electron-glow-purple)"/>
+    <circle cx="118" cy="68" r="2.8" fill="#ffffff" opacity="0.9"/>
+    <circle cx="282" cy="332" r="5.5" fill="#dd66ff" filter="url(#electron-glow-purple)"/>
+    <circle cx="282" cy="332" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Green/Gold orbit electrons -->
+    <circle cx="78" cy="312" r="5.5" fill="#66ffaa" filter="url(#electron-glow-green)"/>
+    <circle cx="78" cy="312" r="2.8" fill="#ffffff" opacity="0.9"/>
+    <circle cx="322" cy="88" r="5.5" fill="#ffbb44" filter="url(#electron-glow-gold)"/>
+    <circle cx="322" cy="88" r="2.8" fill="#ffffff" opacity="0.9"/>
+  </g>
+
+  <!-- ====== LAYER 7: Core / Nucleus ====== -->
+  <g id="core">
+    <!-- Outermost: large golden/orange ambient glow -->
+    <circle cx="200" cy="200" r="45" fill="#ffaa44" opacity="0.15" filter="url(#soft-glow)"/>
+    <circle cx="200" cy="200" r="35" fill="#ffaa44" opacity="0.2" filter="url(#soft-glow)"/>
+
+    <!-- Colored lobes (flower-like nucleus petals) -->
+    <circle cx="213" cy="188" r="10" fill="#ff6622" opacity="0.6" filter="url(#soft-glow)"/>
+    <circle cx="187" cy="212" r="10" fill="#44ff88" opacity="0.55" filter="url(#soft-glow)"/>
+    <circle cx="213" cy="213" r="9" fill="#00aaff" opacity="0.55" filter="url(#soft-glow)"/>
+    <circle cx="187" cy="188" r="9" fill="#cc44ff" opacity="0.55" filter="url(#soft-glow)"/>
+    <circle cx="200" cy="184" r="8" fill="#ffcc22" opacity="0.5" filter="url(#soft-glow)"/>
+    <circle cx="200" cy="216" r="8" fill="#22ddff" opacity="0.5" filter="url(#soft-glow)"/>
+
+    <!-- Middle: mixed purple+blue+green glow -->
+    <circle cx="200" cy="200" r="25" fill="url(#core-mid-glow)" opacity="0.6" filter="url(#core-bloom)"/>
+
+    <!-- Inner: bright white-cyan -->
+    <circle cx="200" cy="200" r="14" fill="url(#core-inner-glow)" opacity="0.85" filter="url(#glow-white)"/>
+
+    <!-- Center: pure bright white -->
+    <circle cx="200" cy="200" r="6" fill="#ffffff" opacity="1.0"/>
+    <circle cx="200" cy="200" r="4" fill="#ffffff" opacity="1.0" filter="url(#glow-white)"/>
+  </g>
+
+</svg>

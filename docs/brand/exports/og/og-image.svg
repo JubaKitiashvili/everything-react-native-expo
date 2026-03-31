@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+
+  <!-- ============================================ -->
+  <!-- ERNE OG Image — 1200x630                      -->
+  <!-- Logo centered on dark background + text       -->
+  <!-- ============================================ -->
+
+  <defs>
+    <!-- Dark background gradient -->
+    <radialGradient id="og-bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0d1f3c"/>
+      <stop offset="60%" stop-color="#07111f"/>
+      <stop offset="100%" stop-color="#030810"/>
+    </radialGradient>
+
+    <!-- Atom core gradients -->
+    <radialGradient id="og-core-mid" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa66ff" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#4488ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#44ffaa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-core-inner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#aaeeff"/>
+      <stop offset="100%" stop-color="#44ddff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Orbit gradient green/gold -->
+    <linearGradient id="og-gg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#44ff88"/>
+      <stop offset="100%" stop-color="#ffaa22"/>
+    </linearGradient>
+
+    <!-- Glow filters -->
+    <filter id="og-glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#00aaff" flood-opacity="0.7"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="og-glow-purple" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#cc44ff" flood-opacity="0.7"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="og-glow-green" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#44ff88" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="og-glow-gold" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#ffaa22" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="og-orbit-blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="og-soft-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="og-core-bloom" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="og-glow-white" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.8"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Subtle text glow -->
+    <filter id="text-glow" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Vignette for background -->
+    <radialGradient id="og-vignette" cx="50%" cy="50%" r="60%">
+      <stop offset="50%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+  <rect width="1200" height="630" fill="url(#og-vignette)"/>
+
+  <!-- Subtle horizontal separator line -->
+  <line x1="100" y1="480" x2="1100" y2="480" stroke="#1a2a44" stroke-width="1" opacity="0.6"/>
+
+  <!-- ====== ATOM LOGO — centered at 600, 250, scaled to ~300px ====== -->
+  <!-- Scale factor: 300/400 = 0.75, translate so center stays at 600,250 -->
+  <g transform="translate(600, 250) scale(0.75) translate(-200, -200)">
+
+    <!-- Orbit 1 — Blue glow layer -->
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="6" opacity="0.4"
+      filter="url(#og-orbit-blur)"/>
+    <!-- Orbit 1 — Blue sharp -->
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="2.5" opacity="0.85"/>
+
+    <!-- Orbit 2 — Purple glow layer -->
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="6" opacity="0.4"
+      filter="url(#og-orbit-blur)"/>
+    <!-- Orbit 2 — Purple sharp -->
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="2.5" opacity="0.85"/>
+
+    <!-- Orbit 3 — Green/Gold glow layer -->
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="url(#og-gg)" stroke-width="6" opacity="0.4"
+      filter="url(#og-orbit-blur)"/>
+    <!-- Orbit 3 — Green/Gold sharp -->
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="url(#og-gg)" stroke-width="2.5" opacity="0.85"/>
+
+    <!-- Electrons -->
+    <circle cx="48" cy="185" r="6" fill="#00ccff" filter="url(#og-glow-blue)"/>
+    <circle cx="48" cy="185" r="3" fill="#ffffff" opacity="0.9"/>
+    <circle cx="352" cy="215" r="6" fill="#00ccff" filter="url(#og-glow-blue)"/>
+    <circle cx="352" cy="215" r="3" fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="118" cy="68" r="5.5" fill="#dd66ff" filter="url(#og-glow-purple)"/>
+    <circle cx="118" cy="68" r="2.8" fill="#ffffff" opacity="0.9"/>
+    <circle cx="282" cy="332" r="5.5" fill="#dd66ff" filter="url(#og-glow-purple)"/>
+    <circle cx="282" cy="332" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="78" cy="312" r="5.5" fill="#66ffaa" filter="url(#og-glow-green)"/>
+    <circle cx="78" cy="312" r="2.8" fill="#ffffff" opacity="0.9"/>
+    <circle cx="322" cy="88" r="5.5" fill="#ffbb44" filter="url(#og-glow-gold)"/>
+    <circle cx="322" cy="88" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Core -->
+    <circle cx="200" cy="200" r="45" fill="#ffaa44" opacity="0.15" filter="url(#og-soft-glow)"/>
+    <circle cx="200" cy="200" r="35" fill="#ffaa44" opacity="0.2" filter="url(#og-soft-glow)"/>
+    <circle cx="213" cy="188" r="10" fill="#ff6622" opacity="0.6" filter="url(#og-soft-glow)"/>
+    <circle cx="187" cy="212" r="10" fill="#44ff88" opacity="0.55" filter="url(#og-soft-glow)"/>
+    <circle cx="213" cy="213" r="9" fill="#00aaff" opacity="0.55" filter="url(#og-soft-glow)"/>
+    <circle cx="187" cy="188" r="9" fill="#cc44ff" opacity="0.55" filter="url(#og-soft-glow)"/>
+    <circle cx="200" cy="184" r="8" fill="#ffcc22" opacity="0.5" filter="url(#og-soft-glow)"/>
+    <circle cx="200" cy="216" r="8" fill="#22ddff" opacity="0.5" filter="url(#og-soft-glow)"/>
+    <circle cx="200" cy="200" r="25" fill="url(#og-core-mid)" opacity="0.6" filter="url(#og-core-bloom)"/>
+    <circle cx="200" cy="200" r="14" fill="url(#og-core-inner)" opacity="0.85" filter="url(#og-glow-white)"/>
+    <circle cx="200" cy="200" r="6" fill="#ffffff" opacity="1.0"/>
+    <circle cx="200" cy="200" r="4" fill="#ffffff" opacity="1.0" filter="url(#og-glow-white)"/>
+  </g>
+
+  <!-- ====== Text ====== -->
+  <!-- "ERNE" main title -->
+  <text x="600" y="432"
+    font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif"
+    font-size="72"
+    font-weight="300"
+    letter-spacing="14"
+    text-anchor="middle"
+    fill="#ffffff"
+    filter="url(#text-glow)"
+    opacity="0.95">ERNE</text>
+
+  <!-- Tagline -->
+  <text x="600" y="475"
+    font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    font-size="22"
+    font-weight="400"
+    letter-spacing="2"
+    text-anchor="middle"
+    fill="#667799"
+    opacity="0.85">Everything React Native &amp; Expo</text>
+
+</svg>

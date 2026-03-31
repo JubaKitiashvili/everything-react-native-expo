@@ -1,0 +1,17 @@
+{
+  "components": [
+    { "keyword": "button-filled", "component": "Button", "variant": "filled", "height": 50, "cornerRadius": 12, "fontWeight": "600", "fontSize": 17, "paddingH": 16, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "button-tinted", "component": "Button", "variant": "tinted", "height": 50, "cornerRadius": 12, "fontWeight": "600", "fontSize": 17, "paddingH": 16, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "button-bordered", "component": "Button", "variant": "bordered", "height": 50, "cornerRadius": 12, "fontWeight": "600", "fontSize": 17, "paddingH": 16, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "button-plain", "component": "Button", "variant": "plain", "height": 44, "cornerRadius": 0, "fontWeight": "600", "fontSize": 17, "paddingH": 0, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "button-small", "component": "Button", "variant": "small", "height": 32, "cornerRadius": 8, "fontWeight": "600", "fontSize": 15, "paddingH": 12, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "button-large", "component": "Button", "variant": "large", "height": 56, "cornerRadius": 14, "fontWeight": "600", "fontSize": 17, "paddingH": 20, "states": ["normal", "pressed", "disabled"] },
+    { "keyword": "toggle", "component": "Toggle", "variant": "standard", "height": 31, "cornerRadius": 16, "fontWeight": "400", "fontSize": 17, "paddingH": 0, "states": ["on", "off", "disabled"] },
+    { "keyword": "slider", "component": "Slider", "variant": "continuous", "height": 28, "cornerRadius": 0, "fontWeight": "400", "fontSize": 17, "paddingH": 0, "states": ["normal", "dragging", "disabled"] },
+    { "keyword": "stepper", "component": "Stepper", "variant": "standard", "height": 32, "cornerRadius": 8, "fontWeight": "400", "fontSize": 17, "paddingH": 0, "states": ["normal", "increment", "decrement", "disabled"] },
+    { "keyword": "segmented-control", "component": "SegmentedControl", "variant": "standard", "height": 32, "cornerRadius": 8, "fontWeight": "500", "fontSize": 13, "paddingH": 8, "states": ["selected", "unselected", "disabled"] },
+    { "keyword": "text-field", "component": "TextField", "variant": "standard", "height": 44, "cornerRadius": 10, "fontWeight": "400", "fontSize": 17, "paddingH": 12, "states": ["empty", "editing", "filled", "error", "disabled"] },
+    { "keyword": "search-bar", "component": "SearchBar", "variant": "standard", "height": 36, "cornerRadius": 10, "fontWeight": "400", "fontSize": 17, "paddingH": 8, "states": ["inactive", "active", "filled"] }
+  ],
+  "minTouchTarget": 44
+}

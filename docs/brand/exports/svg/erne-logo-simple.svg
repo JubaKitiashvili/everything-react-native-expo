@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+
+  <!-- ============================================ -->
+  <!-- ERNE Atom Logo — Simplified                   -->
+  <!-- No blur filters, no stars                     -->
+  <!-- For contexts where SVG filters don't render   -->
+  <!-- ============================================ -->
+
+  <defs>
+    <!-- Background radial gradient -->
+    <radialGradient id="bg-gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="85%" stop-color="#050d1a"/>
+      <stop offset="100%" stop-color="#030810"/>
+    </radialGradient>
+
+    <!-- Orbit stroke gradient: green to gold -->
+    <linearGradient id="green-gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#44ff88"/>
+      <stop offset="100%" stop-color="#ffaa22"/>
+    </linearGradient>
+
+    <!-- Core glow gradients -->
+    <radialGradient id="core-mid-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa66ff" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#4488ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#44ffaa" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="core-inner-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#aaeeff"/>
+      <stop offset="100%" stop-color="#44ddff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ====== LAYER 1: Background ====== -->
+  <g id="background">
+    <circle cx="200" cy="200" r="200" fill="url(#bg-gradient)"/>
+    <!-- Subtle outer ring -->
+    <circle cx="200" cy="200" r="198" fill="none" stroke="#0a1e3a" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- ====== LAYER 2: Orbit glow halos (solid color, slight opacity — no blur) ====== -->
+  <g id="orbit-halos" opacity="0.18">
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="14"/>
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="14"/>
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="#44ff88" stroke-width="14"/>
+  </g>
+
+  <!-- ====== LAYER 3: Orbit 1 — Blue (horizontal-ish) ====== -->
+  <g id="orbit-blue">
+    <ellipse cx="200" cy="200" rx="180" ry="60"
+      transform="rotate(-10 200 200)"
+      fill="none" stroke="#00aaff" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 4: Orbit 2 — Purple/Magenta (diagonal ~60 degrees) ====== -->
+  <g id="orbit-purple">
+    <ellipse cx="200" cy="200" rx="180" ry="55"
+      transform="rotate(60 200 200)"
+      fill="none" stroke="#cc44ff" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 5: Orbit 3 — Green/Gold (diagonal ~-50 degrees) ====== -->
+  <g id="orbit-green-gold">
+    <ellipse cx="200" cy="200" rx="175" ry="50"
+      transform="rotate(-50 200 200)"
+      fill="none" stroke="url(#green-gold-gradient)" stroke-width="2.5" opacity="0.85"/>
+  </g>
+
+  <!-- ====== LAYER 6: Electrons (simplified — no glow filter) ====== -->
+  <g id="electrons">
+    <!-- Blue orbit electrons -->
+    <circle cx="48" cy="185" r="7" fill="#00aaff" opacity="0.5"/>
+    <circle cx="48" cy="185" r="5" fill="#00ccff" opacity="0.8"/>
+    <circle cx="48" cy="185" r="3" fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="352" cy="215" r="7" fill="#00aaff" opacity="0.5"/>
+    <circle cx="352" cy="215" r="5" fill="#00ccff" opacity="0.8"/>
+    <circle cx="352" cy="215" r="3" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Purple orbit electrons -->
+    <circle cx="118" cy="68" r="7" fill="#cc44ff" opacity="0.5"/>
+    <circle cx="118" cy="68" r="5" fill="#dd66ff" opacity="0.8"/>
+    <circle cx="118" cy="68" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="282" cy="332" r="7" fill="#cc44ff" opacity="0.5"/>
+    <circle cx="282" cy="332" r="5" fill="#dd66ff" opacity="0.8"/>
+    <circle cx="282" cy="332" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Green/Gold orbit electrons -->
+    <circle cx="78" cy="312" r="7" fill="#44ff88" opacity="0.4"/>
+    <circle cx="78" cy="312" r="5" fill="#66ffaa" opacity="0.8"/>
+    <circle cx="78" cy="312" r="2.8" fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="322" cy="88" r="7" fill="#ffaa22" opacity="0.4"/>
+    <circle cx="322" cy="88" r="5" fill="#ffbb44" opacity="0.8"/>
+    <circle cx="322" cy="88" r="2.8" fill="#ffffff" opacity="0.9"/>
+  </g>
+
+  <!-- ====== LAYER 7: Core / Nucleus (simplified — no filter, layered opacity) ====== -->
+  <g id="core">
+    <!-- Outer ambient glow (solid fill, low opacity) -->
+    <circle cx="200" cy="200" r="55" fill="#ffaa44" opacity="0.08"/>
+    <circle cx="200" cy="200" r="40" fill="#ffaa44" opacity="0.12"/>
+
+    <!-- Colored lobes -->
+    <circle cx="213" cy="188" r="12" fill="#ff6622" opacity="0.5"/>
+    <circle cx="187" cy="212" r="12" fill="#44ff88" opacity="0.45"/>
+    <circle cx="213" cy="213" r="11" fill="#00aaff" opacity="0.45"/>
+    <circle cx="187" cy="188" r="11" fill="#cc44ff" opacity="0.45"/>
+    <circle cx="200" cy="184" r="10" fill="#ffcc22" opacity="0.4"/>
+    <circle cx="200" cy="216" r="10" fill="#22ddff" opacity="0.4"/>
+
+    <!-- Middle: mixed glow -->
+    <circle cx="200" cy="200" r="25" fill="url(#core-mid-glow)" opacity="0.8"/>
+
+    <!-- Inner: bright white-cyan -->
+    <circle cx="200" cy="200" r="14" fill="url(#core-inner-glow)" opacity="0.9"/>
+
+    <!-- Center: pure bright white -->
+    <circle cx="200" cy="200" r="6" fill="#ffffff" opacity="1.0"/>
+    <circle cx="200" cy="200" r="3.5" fill="#ffffff" opacity="1.0"/>
+  </g>
+
+</svg>

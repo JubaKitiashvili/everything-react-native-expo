@@ -1,0 +1,28 @@
+{
+  "rules": [
+    { "id": "TC-01", "category": "touch", "description": "44x44pt minimum touch targets", "check": "Measure all interactive elements — flag below 44x44pt", "severity": "critical", "weight": 10 },
+    { "id": "TC-02", "category": "touch", "description": "Immediate visual feedback on press", "check": "Verify pressed states on all interactive elements", "severity": "high", "weight": 8 },
+    { "id": "SP-01", "category": "spacing", "description": "8pt minimum between interactive elements", "check": "Check 8pt separation between tappable elements", "severity": "high", "weight": 7 },
+    { "id": "SP-02", "category": "spacing", "description": "16pt horizontal screen margin", "check": "Confirm 16pt insets on iPhone screens", "severity": "critical", "weight": 9 },
+    { "id": "SP-03", "category": "spacing", "description": "Use 4pt grid spacing scale", "check": "Audit for off-scale spacing values", "severity": "medium", "weight": 6 },
+    { "id": "TY-01", "category": "typography", "description": "Dynamic Type support", "check": "Enable largest size, verify no truncation", "severity": "critical", "weight": 10 },
+    { "id": "TY-02", "category": "typography", "description": "4.5:1 WCAG AA contrast for text", "check": "Run contrast check on all text", "severity": "critical", "weight": 10 },
+    { "id": "TY-03", "category": "typography", "description": "Body text max 34pt", "check": "Check body text stays within type scale", "severity": "medium", "weight": 5 },
+    { "id": "CL-01", "category": "color", "description": "Use semantic colors, not hardcoded hex", "check": "Search for hardcoded hex values", "severity": "high", "weight": 8 },
+    { "id": "CL-02", "category": "color", "description": "Dark mode color adaptation", "check": "Toggle dark mode and inspect all screens", "severity": "critical", "weight": 10 },
+    { "id": "CL-03", "category": "color", "description": "Never rely on color alone", "check": "Verify icons or text accompany color meaning", "severity": "high", "weight": 8 },
+    { "id": "AN-01", "category": "animation", "description": "Spring physics, not linear easing", "check": "Audit for linear or ease-in-out timing", "severity": "high", "weight": 7 },
+    { "id": "AN-02", "category": "animation", "description": "Respect reduced motion preference", "check": "Check useReducedMotion usage with animations", "severity": "critical", "weight": 10 },
+    { "id": "AN-03", "category": "animation", "description": "Animations under 500ms", "check": "Time all animations, flag above 500ms", "severity": "medium", "weight": 6 },
+    { "id": "AN-04", "category": "animation", "description": "UI thread animations only", "check": "Verify Reanimated worklets, not JS-driven", "severity": "high", "weight": 8 },
+    { "id": "CR-01", "category": "corners", "description": "Continuous corner curve", "check": "Check borderCurve: continuous on rounded elements", "severity": "medium", "weight": 5 },
+    { "id": "CR-02", "category": "corners", "description": "Concentric radius rule", "check": "Inner radius = outer - padding for nested elements", "severity": "medium", "weight": 5 },
+    { "id": "CP-01", "category": "components", "description": "Native controls where available", "check": "Check for custom implementations of native controls", "severity": "medium", "weight": 6 },
+    { "id": "CP-02", "category": "components", "description": "Consistent button heights", "check": "Verify buttons follow HIG height specs", "severity": "high", "weight": 7 },
+    { "id": "DM-01", "category": "dark-mode", "description": "All screens support dark mode", "check": "Toggle dark mode on every screen", "severity": "critical", "weight": 10 },
+    { "id": "DM-02", "category": "dark-mode", "description": "Elevated surfaces lighter in dark mode", "check": "Verify surface color hierarchy", "severity": "high", "weight": 7 },
+    { "id": "PL-01", "category": "platform", "description": "Safe area insets respected", "check": "Check useSafeAreaInsets usage on all screens", "severity": "critical", "weight": 10 },
+    { "id": "PL-02", "category": "platform", "description": "Haptic feedback on key interactions", "check": "Verify expo-haptics on buttons, toggles, destructive actions", "severity": "medium", "weight": 6 },
+    { "id": "IC-01", "category": "icons", "description": "SF Symbols or consistent icon set", "check": "Check icon consistency across screens", "severity": "medium", "weight": 5 }
+  ]
+}
