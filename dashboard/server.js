@@ -991,93 +991,168 @@ const server = http.createServer(async (req, res) => {
     try {
       const projectDir = process.env.ERNE_PROJECT_DIR || process.cwd();
       const erneRoot = path.resolve(__dirname, '..');
+
+      // Step 1: Run quick audit for score + findings
       const { runAudit } = require(path.join(erneRoot, 'lib', 'audit'));
       const result = runAudit(projectDir);
 
-      // Auto-generate markdown docs from audit data
+      // Step 2: Run deep scan to produce audit-data.json (drives doc generation)
+      const docsDir = path.join(projectDir, 'erne-docs');
+      fs.mkdirSync(docsDir, { recursive: true });
       try {
-        const docsDir = path.join(projectDir, 'erne-docs');
-        fs.mkdirSync(docsDir, { recursive: true });
-        const data = JSON.parse(fs.readFileSync(path.join(docsDir, 'audit-data.json'), 'utf-8'));
+        const { runScan } = require(path.join(erneRoot, 'lib', 'audit-scanner'));
+        const auditData = runScan(projectDir, { skipDepHealth: false, maxFiles: 500 });
+        fs.writeFileSync(path.join(docsDir, 'audit-data.json'), JSON.stringify(auditData, null, 2));
+      } catch { /* scanner may fail on some projects */ }
+
+      // Step 3: Generate all 12 markdown docs from audit-data.json
+      try {
+        const dataPath = path.join(docsDir, 'audit-data.json');
+        const data = fs.existsSync(dataPath) ? JSON.parse(fs.readFileSync(dataPath, 'utf-8')) : {};
         const now = new Date().toISOString();
         const write = (name, lines) => fs.writeFileSync(path.join(docsDir, name), lines.join('\n'));
 
-        // audit-report
+        // audit-report (always generate)
         const ar = [`# Audit Report\nGenerated: ${now}\n`];
-        if (data.meta)
-          ar.push(
-            `Score: ${data.meta.score ?? 'N/A'}`,
-            `Components: ${data.components?.length ?? 0}`,
-            `Hooks: ${data.hooks?.length ?? 0}`,
-          );
+        ar.push(`Score: ${result.jsonReport?.score ?? data.meta?.score ?? 'N/A'}`);
+        ar.push(`Components: ${data.components?.length ?? 0}`);
+        ar.push(`Hooks: ${data.hooks?.length ?? 0}`);
+        if (result.jsonReport?.strengths?.length) {
+          ar.push(`\n## Strengths (${result.jsonReport.strengths.length})\n`);
+          for (const s of result.jsonReport.strengths) ar.push(`- ${s.title}`);
+        }
+        if (result.jsonReport?.findings?.length) {
+          ar.push(`\n## Findings (${result.jsonReport.findings.length})\n`);
+          for (const f of result.jsonReport.findings) ar.push(`- [${f.severity}] ${f.title}: ${f.detail || ''}`);
+        }
         write('audit-report.md', ar);
 
-        // stack-detection
-        if (data.config) {
-          const sd = [`# Stack Detection\nGenerated: ${now}\n`];
-          for (const [k, v] of Object.entries(data.config))
-            sd.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
-          write('stack-detection.md', sd);
+        // stack-detection (always generate)
+        const sd = [`# Stack Detection\nGenerated: ${now}\n`];
+        const stack = data.config || result.jsonReport?.stack || {};
+        for (const [k, v] of Object.entries(stack))
+          sd.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+        if (result.jsonReport?.meta) {
+          sd.push('');
+          for (const [k, v] of Object.entries(result.jsonReport.meta))
+            sd.push(`- **${k}**: ${v}`);
         }
+        write('stack-detection.md', sd);
 
-        // dependency-report
-        if (data.dependencies) {
-          const dr = [`# Dependency Report\nGenerated: ${now}\n`];
-          const d = data.dependencies;
-          dr.push(`Total: ${d.production?.length ?? 0} production, ${d.dev?.length ?? 0} dev\n`);
-          if (d.outdated?.length) {
-            dr.push(`## Outdated (${d.outdated.length})\n`);
-            for (const o of d.outdated.slice(0, 30))
-              dr.push(`- ${o.name}: ${o.current} → ${o.latest}`);
-          }
-          write('dependency-report.md', dr);
+        // dependency-report (always generate)
+        const dr = [`# Dependency Report\nGenerated: ${now}\n`];
+        const deps = data.dependencies || {};
+        dr.push(`Total: ${deps.production?.length ?? 0} production, ${deps.dev?.length ?? 0} dev\n`);
+        if (deps.production?.length) {
+          dr.push('## Production Dependencies\n');
+          for (const d of deps.production.slice(0, 50)) dr.push(`- ${d.name || d}: ${d.version || ''}`);
         }
+        if (deps.outdated?.length) {
+          dr.push(`\n## Outdated (${deps.outdated.length})\n`);
+          for (const o of deps.outdated.slice(0, 30)) dr.push(`- ${o.name}: ${o.current} → ${o.latest}`);
+        }
+        write('dependency-report.md', dr);
 
-        // dead-code
+        // dead-code (always generate)
+        const dc = [`# Dead Code Report\nGenerated: ${now}\n`];
         if (data.deadCode?.length) {
-          const dc = [`# Dead Code\nGenerated: ${now}\nFound: ${data.deadCode.length}\n`];
-          for (const d of data.deadCode.slice(0, 50))
-            dc.push(`- \`${d.name}\` in ${d.file} (${d.type})`);
-          write('dead-code.md', dc);
+          dc.push(`Found: ${data.deadCode.length} unused exports\n`);
+          for (const d of data.deadCode.slice(0, 50)) dc.push(`- \`${d.name}\` in ${d.file} (${d.type})`);
+        } else {
+          dc.push('No dead code detected.');
         }
+        write('dead-code.md', dc);
 
-        // todos
+        // todos (always generate)
+        const td = [`# TODOs & Tech Debt\nGenerated: ${now}\n`];
         if (data.techDebt?.length) {
-          const td = [`# TODOs & Tech Debt\nGenerated: ${now}\n`];
           for (const t of data.techDebt.slice(0, 50))
             td.push(`- **${t.type || 'TODO'}** ${t.file}:${t.line || '?'} — ${t.text || ''}`);
-          write('todos.md', td);
+        } else {
+          td.push('No TODOs or tech debt markers found.');
         }
+        write('todos.md', td);
 
-        // changelog
-        if (data.gitHistory?.length) {
-          const cl = [`# Changelog\nGenerated: ${now}\n`];
-          for (const c of data.gitHistory.slice(0, 30))
-            cl.push(`- ${(c.hash || '').slice(0, 7)} ${c.message || ''} (${c.date || ''})`);
-          write('changelog.md', cl);
-        }
-
-        // type-coverage
-        if (data.typeSafety) {
-          const tc = [`# Type Coverage\nGenerated: ${now}\n`];
+        // type-coverage (always generate)
+        const tc = [`# Type Coverage\nGenerated: ${now}\n`];
+        if (data.typeSafety && Object.keys(data.typeSafety).length) {
           for (const [k, v] of Object.entries(data.typeSafety))
             tc.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
-          write('type-coverage.md', tc);
+        } else {
+          tc.push('No TypeScript coverage data available.');
         }
+        write('type-coverage.md', tc);
 
-        // architecture
-        if (data.structure) {
-          const arch = [`# Architecture\nGenerated: ${now}\n`];
-          if (data.structure.dirs) arch.push(`Directories: ${data.structure.dirs.length}\n`);
-          if (data.routes?.length) {
-            arch.push(`## Routes (${data.routes.length})\n`);
-            for (const r of data.routes.slice(0, 30)) arch.push(`- ${r.path || r.file || r}`);
-          }
-          write('architecture.md', arch);
+        // test-coverage (always generate)
+        const testc = [`# Test Coverage\nGenerated: ${now}\n`];
+        if (data.testCoverage) {
+          for (const [k, v] of Object.entries(data.testCoverage))
+            testc.push(`- **${k}**: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+        } else {
+          testc.push('No test coverage data. Configure a testing framework to enable coverage reports.');
         }
-      } catch {
-        /* best-effort */
-      }
+        write('test-coverage.md', testc);
+
+        // security-report (always generate)
+        const sr = [`# Security Report\nGenerated: ${now}\n`];
+        const secFindings = (result.jsonReport?.findings || []).filter(f => f.category === 'Security');
+        if (secFindings.length) {
+          for (const f of secFindings) sr.push(`- [${f.severity}] ${f.title}: ${f.detail || ''}`);
+        } else {
+          sr.push('No security issues detected.');
+        }
+        write('security-report.md', sr);
+
+        // performance-report (always generate)
+        const pr = [`# Performance Report\nGenerated: ${now}\n`];
+        const perfFindings = (result.jsonReport?.findings || []).filter(f => f.category === 'Performance');
+        if (perfFindings.length) {
+          for (const f of perfFindings) pr.push(`- [${f.severity}] ${f.title}: ${f.detail || ''}`);
+        } else {
+          pr.push('No performance issues detected.');
+        }
+        write('performance-report.md', pr);
+
+        // architecture (always generate)
+        const arch = [`# Architecture\nGenerated: ${now}\n`];
+        if (data.structure?.dirs) {
+          arch.push(`## Directories (${data.structure.dirs.length})\n`);
+          for (const d of data.structure.dirs.slice(0, 30)) arch.push(`- ${d}`);
+        }
+        if (data.routes?.length) {
+          arch.push(`\n## Routes (${data.routes.length})\n`);
+          for (const r of data.routes.slice(0, 30)) arch.push(`- ${r.path || r.file || r}`);
+        }
+        if (data.screens?.length) {
+          arch.push(`\n## Screens (${data.screens.length})\n`);
+          for (const s of data.screens.slice(0, 30)) arch.push(`- ${s.name || s.file || s}`);
+        }
+        if (!data.structure && !data.routes && !data.screens) {
+          arch.push('Run a deeper audit scan for architecture analysis.');
+        }
+        write('architecture.md', arch);
+
+        // api-surface (always generate)
+        const api = [`# API Surface\nGenerated: ${now}\n`];
+        if (data.apiLayer?.length) {
+          for (const a of data.apiLayer.slice(0, 50))
+            api.push(`- \`${a.method || 'GET'} ${a.path || a.url || a.name}\` in ${a.file || 'unknown'}`);
+        } else {
+          api.push('No API endpoints detected.');
+        }
+        write('api-surface.md', api);
+
+        // changelog (always generate)
+        const cl = [`# Changelog\nGenerated: ${now}\n`];
+        if (data.gitHistory?.length) {
+          for (const c of data.gitHistory.slice(0, 50))
+            cl.push(`- ${(c.hash || '').slice(0, 7)} ${c.message || ''} (${c.date || ''})`);
+        } else {
+          cl.push('No git history data available.');
+        }
+        write('changelog.md', cl);
+
+      } catch { /* doc generation is best-effort */ }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.jsonReport));
