@@ -97,13 +97,13 @@ describe('exit helpers', () => {
   it('fail exits with code 1', () => {
     const r = runSnippet('utils.fail("blocked");');
     assert.strictEqual(r.exitCode, 1);
-    assert.strictEqual(r.stdout.trim(), 'blocked');
+    assert.strictEqual(r.stderr.trim(), 'blocked');
   });
 
   it('warn exits with code 2', () => {
     const r = runSnippet('utils.warn("warning");');
     assert.strictEqual(r.exitCode, 2);
-    assert.strictEqual(r.stdout.trim(), 'warning');
+    assert.strictEqual(r.stderr.trim(), 'warning');
   });
 });
 

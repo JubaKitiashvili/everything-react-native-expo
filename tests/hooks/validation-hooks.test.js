@@ -60,7 +60,7 @@ describe('check-console-log.js', () => {
         tool_input: { file_path: path.join(dir, 'src/app.ts') },
       }, { ERNE_PROJECT_DIR: dir });
       assert.strictEqual(result.exitCode, 2);
-      assert.ok(result.stdout.includes('console.log'));
+      assert.ok(result.stderr.includes('console.log'));
     } finally {
       cleanupTempProject(dir);
     }
@@ -257,7 +257,7 @@ describe('check-expo-config.js', () => {
         tool_input: { file_path: path.join(dir, 'app.json') },
       }, { ERNE_PROJECT_DIR: dir });
       assert.strictEqual(result.exitCode, 2);
-      assert.ok(result.stdout.includes('name'));
+      assert.ok(result.stderr.includes('name'));
     } finally {
       cleanupTempProject(dir);
     }

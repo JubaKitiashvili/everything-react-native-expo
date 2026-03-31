@@ -87,7 +87,7 @@ describe('security-scan', () => {
       tool_input: { file_path: path.join(srcDir, 'config.ts') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('secret'));
+    assert.ok(result.stderr.includes('secret'));
   });
 
   it('warns on unvalidated deep link handling', () => {
@@ -102,7 +102,7 @@ describe('security-scan', () => {
       tool_input: { file_path: path.join(srcDir, 'linking.ts') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('deep link'));
+    assert.ok(result.stderr.includes('deep link'));
   });
 
   it('passes on clean file', () => {
@@ -131,7 +131,7 @@ describe('security-scan', () => {
       tool_input: { file_path: path.join(srcDir, 'dynamic.ts') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('unsafe'));
+    assert.ok(result.stderr.includes('unsafe'));
   });
 
   it('skips non-JS/TS files', () => {
@@ -165,7 +165,7 @@ describe('bundle-size-check (merged performance-budget)', () => {
       tool_input: { file_path: path.join(projectDir, 'package.json') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('moment'));
+    assert.ok(result.stderr.includes('moment'));
   });
 
   it('warns on bundle size exceeding budget', () => {
@@ -180,7 +180,7 @@ describe('bundle-size-check (merged performance-budget)', () => {
       tool_input: { file_path: path.join(projectDir, 'package.json') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('dependencies'));
+    assert.ok(result.stderr.includes('dependencies'));
   });
 
   it('passes when within budget', () => {
@@ -216,7 +216,7 @@ describe('native-compat-check', () => {
       tool_input: { file_path: path.join(projectDir, 'ios', 'App.swift') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('android'));
+    assert.ok(result.stderr.includes('android'));
   });
 
   it('warns when android dir exists but ios does not', () => {
@@ -227,7 +227,7 @@ describe('native-compat-check', () => {
       tool_input: { file_path: path.join(projectDir, 'android', 'app', 'src', 'Main.kt') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('ios'));
+    assert.ok(result.stderr.includes('ios'));
   });
 
   it('passes when both platforms present', () => {
@@ -280,7 +280,7 @@ describe('accessibility-check', () => {
       tool_input: { file_path: path.join(srcDir, 'Button.tsx') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('accessibility'));
+    assert.ok(result.stderr.includes('accessibility'));
   });
 
   it('passes when accessibilityLabel is present', () => {
@@ -317,7 +317,7 @@ describe('accessibility-check', () => {
       tool_input: { file_path: path.join(srcDir, 'Card.tsx') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('accessibility'));
+    assert.ok(result.stderr.includes('accessibility'));
   });
 
   it('warns on Image without accessible or alt', () => {
@@ -334,7 +334,7 @@ describe('accessibility-check', () => {
       tool_input: { file_path: path.join(srcDir, 'Avatar.tsx') },
     }, { ERNE_PROJECT_DIR: projectDir });
     assert.strictEqual(result.exitCode, 2);
-    assert.ok(result.stdout.includes('accessibility'));
+    assert.ok(result.stderr.includes('accessibility'));
   });
 
   it('skips non-JSX files', () => {
