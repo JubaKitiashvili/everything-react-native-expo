@@ -223,6 +223,8 @@ Each agent has a distinct personality, quantified success metrics, and memory in
 
 ERNE includes a built-in context intelligence system (auto-enabled with dashboard) that compresses tool outputs by **97-100%**, indexes content with FTS5 search, and manages your context budget. See [BENCHMARK.md](BENCHMARK.md) for the full 21-scenario breakdown.
 
+> **Pairs well with [context-mem](https://github.com/JubaKitiashvili/context-mem)** — ERNE gives your AI deep React Native knowledge, context-mem gives it persistent memory across sessions. Together: an AI assistant that knows RN best practices AND remembers your project patterns. `npm i context-mem && npx context-mem init`
+
 ---
 
 ## 💰 Token Efficiency

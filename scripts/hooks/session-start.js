@@ -103,7 +103,7 @@ let dashboardUrl = '';
 
 if (hasSettings) {
   try {
-    const { getRegisteredPort } = require('./lib/port-registry');
+    const { getRegisteredPort, resolveDashboardPort } = require('./lib/port-registry');
     const existingPort = getRegisteredPort(projectDir);
     if (existingPort) {
       dashboardUrl = `http://localhost:${existingPort}`;
@@ -118,7 +118,8 @@ if (hasSettings) {
           env: { ...process.env, ERNE_PROJECT_DIR: projectDir },
         });
         child.unref();
-        dashboardUrl = 'http://localhost:3333 (starting...)';
+        const startPort = resolveDashboardPort(projectDir);
+        dashboardUrl = `http://localhost:${startPort} (starting...)`;
       } catch {
         /* auto-start failed — skip */
       }
