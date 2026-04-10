@@ -2,10 +2,10 @@
 
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
-**Last updated:** 2026-04-10
+**Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** None (planning complete, ready to start)
-**Overall Progress:** 0/70 tasks
+**Active Task:** Task 2 — Config (next)
+**Overall Progress:** 1/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 0/14 | ⬜ Not started | crashes + network in terminal |
+| 1a Foundation | 1/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -38,7 +38,7 @@
 
 | # | Task | Status | Files Created | Tests | Integrated |
 |---|------|--------|---------------|-------|------------|
-| 1 | MonitorClient | ⬜ | | | |
+| 1 | MonitorClient | ✅ | src/core/MonitorClient.ts, src/core/MonitorClient.test.ts, src/types/index.ts | ✅ (14) | ✅ |
 | 2 | Config | ⬜ | | | |
 | 3 | PlatformBridge | ⬜ | | | |
 | 4 | SignalBus | ⬜ | | | |
@@ -62,6 +62,8 @@ Status legend: ⬜ Not started | 🔄 In progress | ✅ Done | ❌ Blocked | �
 | Date | Type | Description | Resolution | Impact |
 |------|------|-------------|------------|--------|
 | 2026-04-10 | Decision | Design spec approved | Proceed to implementation | All phases |
+| 2026-04-11 | Decision | Repo location | Option A — monorepo at `packages/monitor/` | All phases |
+| 2026-04-11 | Milestone | Bootstrap complete | package.json, tsconfig, jest.config, dirs, entry stub, tsc clean | Phase 1a unblocked |
 
 ---
 
@@ -71,7 +73,7 @@ After each task, verify all existing components still work together.
 
 | Component | Status | Last Verified | Notes |
 |-----------|--------|---------------|-------|
-| — | — | — | No components yet |
+| MonitorClient | ✅ | 2026-04-11 | 14 unit tests passing, tsc clean |
 
 ---
 
@@ -102,3 +104,4 @@ Track coverage of the design spec. Updated at end of each phase.
 | Date | Session # | Phase | Tasks Completed | Notes |
 |------|-----------|-------|-----------------|-------|
 | 2026-04-10 | 1 | Planning | — | Design spec created. 6 projects analyzed (Measure.sh, Callstack Brownfield, Sentry, Embrace, Datadog, Instabug). 3 rounds of improvement analysis. 70 tasks planned across 7 phases. |
+| 2026-04-11 | 2 | 1a | Bootstrap, Task 1 (MonitorClient) | Option A monorepo chosen. packages/monitor/ bootstrapped (package.json, tsconfig strict, jest config, dirs, entry stub). MonitorClient implemented with singleton + priority-ordered lifecycle + rollback. 14 tests passing. tsc clean. |
