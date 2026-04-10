@@ -8,6 +8,8 @@ export {
 } from './core/Config';
 export { JSPlatformBridge } from './core/JSPlatformBridge';
 export type { JSPlatformBridgeDeps } from './core/JSPlatformBridge';
+export { SignalBus } from './core/SignalBus';
+export type { MonitorEventHandler } from './core/SignalBus';
 export type {
   MonitorConfig,
   MonitorConfigOverrides,

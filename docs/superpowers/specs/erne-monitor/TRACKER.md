@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 4 — SignalBus (next)
-**Overall Progress:** 3/70 tasks
+**Active Task:** Task 5 — SessionManager (next)
+**Overall Progress:** 4/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 3/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 4/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -41,7 +41,7 @@
 | 1 | MonitorClient | ✅ | src/core/MonitorClient.ts, src/core/MonitorClient.test.ts, src/types/index.ts | ✅ (14) | ✅ |
 | 2 | Config | ✅ | src/core/Config.ts, src/core/Config.test.ts | ✅ (20) | ✅ |
 | 3 | PlatformBridge | ✅ | src/core/PlatformBridge.ts, src/core/JSPlatformBridge.ts, src/core/PlatformBridge.test.ts | ✅ (17) | ✅ |
-| 4 | SignalBus | ⬜ | | | |
+| 4 | SignalBus | ✅ | src/core/SignalBus.ts, src/core/SignalBus.test.ts | ✅ (15) | ✅ |
 | 5 | SessionManager | ⬜ | | | |
 | 6 | EventStore | ⬜ | | | |
 | 7 | CrashCollector | ⬜ | | | |
@@ -76,6 +76,7 @@ After each task, verify all existing components still work together.
 | MonitorClient | ✅ | 2026-04-11 | 14 unit tests passing, tsc clean |
 | Config | ✅ | 2026-04-11 | 20 unit tests, defaults + validation + deep-freeze |
 | PlatformBridge | ✅ | 2026-04-11 | 17 unit tests, JS impl with DI, native override planned for Phase 2 |
+| SignalBus | ✅ | 2026-04-11 | 15 unit tests, typed + wildcard, error isolation, snapshot dispatch |
 
 ---
 
