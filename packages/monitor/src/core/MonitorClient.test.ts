@@ -1,4 +1,5 @@
 import { MonitorClient } from './MonitorClient';
+import { defineMonitorConfig } from './Config';
 import type { Collector, MonitorConfig } from '../types';
 
 function makeCollector(
@@ -19,7 +20,7 @@ function makeCollector(
 }
 
 describe('MonitorClient', () => {
-  const config: MonitorConfig = { environment: 'development' };
+  const config: MonitorConfig = defineMonitorConfig();
 
   beforeEach(() => {
     MonitorClient.__resetForTesting();
@@ -102,18 +103,21 @@ describe('MonitorClient', () => {
     });
 
     it('passes config to each collector init', () => {
-      const client = MonitorClient.init({ flag: true });
+      const cfg = defineMonitorConfig({ ai: { autoFix: 'apply' } });
+      const client = MonitorClient.init(cfg);
       const received: MonitorConfig[] = [];
       client.registerCollector({
         name: 'a',
         priority: 0,
-        init: (cfg) => received.push(cfg),
+        init: (c) => received.push(c),
         start: () => {},
         stop: () => {},
         dispose: () => {},
       });
       client.start();
-      expect(received).toEqual([{ flag: true }]);
+      expect(received).toHaveLength(1);
+      expect(received[0]).toBe(cfg);
+      expect(received[0]?.ai.autoFix).toBe('apply');
     });
 
     it('is idempotent — second start() is a no-op', () => {

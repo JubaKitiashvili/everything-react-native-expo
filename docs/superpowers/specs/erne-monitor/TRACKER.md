@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 2 — Config (next)
-**Overall Progress:** 1/70 tasks
+**Active Task:** Task 3 — PlatformBridge (next)
+**Overall Progress:** 2/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 1/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 2/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -39,7 +39,7 @@
 | # | Task | Status | Files Created | Tests | Integrated |
 |---|------|--------|---------------|-------|------------|
 | 1 | MonitorClient | ✅ | src/core/MonitorClient.ts, src/core/MonitorClient.test.ts, src/types/index.ts | ✅ (14) | ✅ |
-| 2 | Config | ⬜ | | | |
+| 2 | Config | ✅ | src/core/Config.ts, src/core/Config.test.ts | ✅ (20) | ✅ |
 | 3 | PlatformBridge | ⬜ | | | |
 | 4 | SignalBus | ⬜ | | | |
 | 5 | SessionManager | ⬜ | | | |
@@ -74,6 +74,7 @@ After each task, verify all existing components still work together.
 | Component | Status | Last Verified | Notes |
 |-----------|--------|---------------|-------|
 | MonitorClient | ✅ | 2026-04-11 | 14 unit tests passing, tsc clean |
+| Config | ✅ | 2026-04-11 | 20 unit tests, defaults + validation + deep-freeze |
 
 ---
 
