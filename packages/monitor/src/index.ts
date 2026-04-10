@@ -24,6 +24,12 @@ export {
   EventStore,
   MemoryEventStoreBackend,
 } from './storage/EventStore';
+export { SqliteEventStoreBackend } from './storage/SqliteEventStoreBackend';
+export type {
+  SqliteEventStoreBackendOptions,
+  ExpoSqliteLike,
+  ExpoSqliteDatabase,
+} from './storage/SqliteEventStoreBackend';
 export { Sanitizer } from './processors/Sanitizer';
 export type { SanitizerOptions } from './processors/Sanitizer';
 export { Enricher } from './processors/Enricher';

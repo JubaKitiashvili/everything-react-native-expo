@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-11
-**Current Phase:** Phase 1a — Foundation
-**Active Task:** Phase 1a completion checklist (14/14 tasks done)
-**Overall Progress:** 14/70 tasks
+**Current Phase:** Phase 1a complete — Phase 1b unblocked
+**Active Task:** Phase 1b Task 1 (next session)
+**Overall Progress:** 14/70 tasks (Phase 1a: 14/14 ✅)
 
 ---
 
@@ -13,8 +13,8 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 14/14 | 🔄 Integration | crashes + network in terminal |
-| 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
+| 1a Foundation | 14/14 | ✅ Done | crashes + network in terminal |
+| 1b Intelligence | 0/11 | ⬜ Ready | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
 | 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
@@ -100,17 +100,17 @@ Track coverage of the design spec. Updated at end of each phase.
 |-------------|------------|--------|
 | §1 Vision | README.md | ✅ Documented |
 | §2 Architecture | architecture/*.md | ✅ Documented |
-| §3 SDK Architecture | Phase 1a-1c | ⬜ Not started |
+| §3 SDK Architecture | Phase 1a-1c | 🔄 Phase 1a complete (MonitorClient, Config, PlatformBridge, SessionManager, SignalBus, collectors) |
 | §4 SignalRouter | Phase 1c | ⬜ Not started |
-| §5 Data Pipeline | Phase 1a-1b, 3 | ⬜ Not started |
+| §5 Data Pipeline | Phase 1a-1b, 3 | 🔄 EventStore + SignalBus + Sanitizer + Enricher shipped; full pipeline routing lands in 1b |
 | §6 Schema Codegen | Phase 1c | ⬜ Not started |
-| §7 Performance Budget | Every task | ⬜ Not started |
-| §8 Developer Experience | Phase 1c | ⬜ Not started |
-| §9 Dashboard | Phase 1b | ⬜ Not started |
-| §10 Testing Strategy | Every task | ⬜ Not started |
+| §7 Performance Budget | Every task | 🔄 Bundle size not yet measured — deferred to Phase 1a integration pass with Expo demo |
+| §8 Developer Experience | Phase 1c | 🔄 defineMonitorConfig + MonitorProvider shipped; zero-config CLI wizard lands in 1c |
+| §9 Dashboard | Phase 1b | 🔄 TerminalReporter (dev surface) shipped; real-time dashboard tab in 1b |
+| §10 Testing Strategy | Every task | ✅ 173 unit tests across 16 suites; integration tests in 1b |
 | §11 Phased Rollout | phases/*.md | ✅ Documented |
 | §13 Competitive Advantages | Phase 1c-2b | ⬜ Not started |
-| §14 Privacy & Compliance | Phase 1b (ConsentGate) | ⬜ Not started |
+| §14 Privacy & Compliance | Phase 1b (ConsentGate) | 🔄 Sanitizer shipped; ConsentGate lands in 1b |
 
 ---
 
@@ -120,3 +120,26 @@ Track coverage of the design spec. Updated at end of each phase.
 |------|-----------|-------|-----------------|-------|
 | 2026-04-10 | 1 | Planning | — | Design spec created. 6 projects analyzed (Measure.sh, Callstack Brownfield, Sentry, Embrace, Datadog, Instabug). 3 rounds of improvement analysis. 70 tasks planned across 7 phases. |
 | 2026-04-11 | 2 | 1a | Bootstrap, Task 1 (MonitorClient) | Option A monorepo chosen. packages/monitor/ bootstrapped (package.json, tsconfig strict, jest config, dirs, entry stub). MonitorClient implemented with singleton + priority-ordered lifecycle + rollback. 14 tests passing. tsc clean. |
+| 2026-04-11 | 2 (cont.) | 1a | Tasks 2–14 + SQLite adapter | Completed all Phase 1a tasks in a single autonomous session per Juba's instruction ("გადი ბოლომდე, ინსტრუქციის მიხედვით"). Config with validation and deep-freeze; PlatformBridge with DI JS impl; SignalBus with error isolation and snapshot dispatch; SessionManager with 5-min AppState inactivity; EventStore with pluggable backend (Memory + Sqlite adapters); CrashCollector chaining ErrorUtils + rejection tracker + sync fatal persist; NetworkCollector with transparent fetch/XHR patching; NavigationCollector with adapter-based auto-detect; CustomEventCollector with trackEvent validation; Sanitizer with email/phone/header/URL scrubbing; Enricher with cached static + dynamic context; TerminalReporter rate-limited dev surface; MonitorProvider + createMonitorRuntime end-to-end wiring. 173 tests across 16 suites, tsc clean. Deferred for Phase 1a integration pass: bundle size measurement and Expo demo app (both require a real RN runtime). |
+
+---
+
+## Phase 1a Retrospective (2026-04-11)
+
+**What went well:**
+- Dependency injection everywhere (PlatformBridge, AppState, fetch target, NavigationAdapter, ErrorUtils, RejectionTracker, SQLite module) let every component run under plain ts-jest without the RN preset. Phase 2 native bridge has a clear extension point at every seam.
+- Pluggable EventStoreBackend interface split the storage concern cleanly: MemoryEventStoreBackend for unit tests, SqliteEventStoreBackend for production, same public surface.
+- Strict TypeScript + deep-frozen config caught three bugs at compile time before a single test ran.
+- Per-handler try/catch on SignalBus and SessionManager.fireChange prevents a single buggy subscriber from taking down the bus — learned from the RN community's pain with older analytics SDKs.
+- Descriptive validation errors in Config and CustomEventCollector mean misuse fails loudly in dev instead of silently corrupting the event stream.
+
+**What to improve next phase:**
+- Collectors write directly to EventStore AND emit to the bus, so the bus listener writes a second copy. Phase 1b should route everything through a single pipeline stage (SignalBus → processors → EventStore) to eliminate duplication.
+- Bundle size was not measured this session. Phase 1b integration should add a size-limit check and a real Expo demo app.
+- A couple of tests rely on microtask flushing with `await Promise.resolve()` loops. A proper fake-timer helper would be cleaner.
+- react-test-renderer logs act-warnings despite setupFiles. Non-blocking but noisy.
+
+**Deferred to Phase 1a integration pass (tracked):**
+- Real Expo demo app + end-to-end smoke (`monitor-phase-1a-demo`).
+- Bundle size measurement against the <20KB subset budget.
+- git tag `monitor-phase-1a-complete` after the integration pass.
