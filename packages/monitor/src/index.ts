@@ -14,6 +14,14 @@ export {
   EventStore,
   MemoryEventStoreBackend,
 } from './storage/EventStore';
+export { CrashCollector } from './collectors/CrashCollector';
+export type {
+  CrashCollectorDeps,
+  CrashEventData,
+  ErrorUtilsLike,
+  ErrorUtilsHandler,
+  RejectionTrackerLike,
+} from './collectors/CrashCollector';
 export type {
   EventPriority,
   EventStoreBackend,
