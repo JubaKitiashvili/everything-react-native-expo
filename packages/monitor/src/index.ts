@@ -14,6 +14,8 @@ export {
   EventStore,
   MemoryEventStoreBackend,
 } from './storage/EventStore';
+export { Sanitizer } from './processors/Sanitizer';
+export type { SanitizerOptions } from './processors/Sanitizer';
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
 export { NavigationCollector } from './collectors/NavigationCollector';
