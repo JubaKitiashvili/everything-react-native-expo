@@ -8,6 +8,9 @@
 |----------|---------|
 | [**TRACKER.md**](./TRACKER.md) | ★ Start here every session — current state, tasks, progress |
 | [**PROTOCOLS.md**](./PROTOCOLS.md) | Rules and procedures for implementation |
+| [**BOOTSTRAP.md**](./BOOTSTRAP.md) | Project setup — run BEFORE Task 1 |
+| [**GLOSSARY.md**](./GLOSSARY.md) | Terminology dictionary — all terms defined |
+| [**RISKS.md**](./RISKS.md) | Risk register — 13 known risks with mitigations |
 | [**design-spec.md**](./design-spec.md) | Full design specification (source of truth) |
 
 ### Architecture Documents
