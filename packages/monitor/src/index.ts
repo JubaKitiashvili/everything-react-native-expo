@@ -15,6 +15,11 @@ export {
   MemoryEventStoreBackend,
 } from './storage/EventStore';
 export { CrashCollector } from './collectors/CrashCollector';
+export { NetworkCollector } from './collectors/NetworkCollector';
+export type {
+  NetworkCollectorDeps,
+  NetworkEventData,
+} from './collectors/NetworkCollector';
 export type {
   CrashCollectorDeps,
   CrashEventData,
