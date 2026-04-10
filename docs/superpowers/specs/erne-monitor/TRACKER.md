@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-11
-**Current Phase:** Phase 1a complete — Phase 1b unblocked
-**Active Task:** Phase 1b Task 1 (next session)
-**Overall Progress:** 14/70 tasks (Phase 1a: 14/14 ✅)
+**Current Phase:** Phase 1b (SDK collectors/processors done; dashboard integration pending)
+**Active Task:** Tasks 24 (DashboardBridge) + 25 (Runtime tab) — next session
+**Overall Progress:** 23/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 9/11)
 
 ---
 
@@ -14,7 +14,7 @@
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
 | 1a Foundation | 14/14 | ✅ Done | crashes + network in terminal |
-| 1b Intelligence | 0/11 | ⬜ Ready | real-time dashboard |
+| 1b Intelligence | 9/11 | 🔄 In progress | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
 | 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
@@ -89,6 +89,15 @@ After each task, verify all existing components still work together.
 | TerminalReporter | ✅ | 2026-04-11 | 8 tests, dev-only, rate-limited, severity routing, resilient |
 | createMonitorRuntime | ✅ | 2026-04-11 | 6 tests, wires every Phase 1a component, shutdown releases all resources |
 | MonitorProvider | ✅ | 2026-04-11 | 3 tests via react-test-renderer, mount/unmount, defaults, no re-init on re-render |
+| BreadcrumbCollector | ✅ | 2026-04-11 | 6 tests, ring buffer of 100, attaches trail to crash events |
+| RenderCollector | ✅ | 2026-04-11 | 5 tests, debounced profiler aggregation, unnecessary-render detection |
+| FrameDropCollector | ✅ | 2026-04-11 | 3 tests, rAF-driven, sustained-drop window, app-state pause |
+| StartupCollector | ✅ | 2026-04-11 | 4 tests, cold/warm/hot milestones, budget flag |
+| MemoryCollector | ✅ | 2026-04-11 | 3 tests, periodic sampling, pause on background |
+| LongTaskCollector | ✅ | 2026-04-11 | 3 tests, PerformanceObserver + rAF fallback |
+| Fingerprinter | ✅ | 2026-04-11 | 6 tests, stable across line-number churn, separates rejections |
+| AdaptiveSampler | ✅ | 2026-04-11 | 8 tests, deterministic hashing, battery/CPU degradation, always keeps crashes |
+| ConsentGate | ✅ | 2026-04-11 | 7 tests, per-category buffering + flush + revoke + persistence |
 
 ---
 

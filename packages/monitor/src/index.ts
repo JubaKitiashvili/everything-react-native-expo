@@ -34,6 +34,20 @@ export { Sanitizer } from './processors/Sanitizer';
 export type { SanitizerOptions } from './processors/Sanitizer';
 export { Enricher } from './processors/Enricher';
 export type { EnrichedEvent, EnricherDeps } from './processors/Enricher';
+export { Fingerprinter } from './processors/Fingerprinter';
+export type { FingerprintedCrashData } from './processors/Fingerprinter';
+export { AdaptiveSampler } from './processors/AdaptiveSampler';
+export type {
+  AdaptiveSamplerDeps,
+  BatteryInfo,
+} from './processors/AdaptiveSampler';
+export { ConsentGate } from './processors/ConsentGate';
+export type {
+  ConsentCategory,
+  ConsentState,
+  ConsentStore,
+  ConsentGateOptions,
+} from './processors/ConsentGate';
 export { TerminalReporter } from './integrations/TerminalReporter';
 export type {
   TerminalReporterOptions,
@@ -46,6 +60,40 @@ export {
   CustomEventCollector,
   CUSTOM_EVENT_LIMITS,
 } from './collectors/CustomEventCollector';
+export { BreadcrumbCollector } from './collectors/BreadcrumbCollector';
+export type {
+  Breadcrumb,
+  BreadcrumbCategory,
+  BreadcrumbCollectorDeps,
+} from './collectors/BreadcrumbCollector';
+export { RenderCollector } from './collectors/RenderCollector';
+export type {
+  RenderEventData,
+  RenderCollectorDeps,
+} from './collectors/RenderCollector';
+export { FrameDropCollector } from './collectors/FrameDropCollector';
+export type {
+  FrameDropEventData,
+  FrameDropCollectorDeps,
+} from './collectors/FrameDropCollector';
+export { StartupCollector } from './collectors/StartupCollector';
+export type {
+  StartupEventData,
+  StartupKind,
+  StartupCollectorDeps,
+} from './collectors/StartupCollector';
+export { MemoryCollector } from './collectors/MemoryCollector';
+export type {
+  MemoryEventData,
+  MemoryCollectorDeps,
+} from './collectors/MemoryCollector';
+export { LongTaskCollector } from './collectors/LongTaskCollector';
+export type {
+  LongTaskEventData,
+  LongTaskCollectorDeps,
+  PerformanceObserverLike,
+  PerformanceObserverCtor,
+} from './collectors/LongTaskCollector';
 export type {
   CustomEventCollectorDeps,
   CustomEventData,
