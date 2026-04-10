@@ -647,59 +647,181 @@ Circuit breaker: >5 internal errors in 60s → disable non-critical features
 
 ## 11. Phased Rollout
 
-### Phase 1: JS-Only Monitor + Dev Dashboard
+### Dependency Graph
 
-**Timeline:** First deliverable
-**What:**
-- JS collectors (18): crashes, network, navigation, re-renders, frame drops, state, breadcrumbs, touch, long tasks, frustration, Suspense, Activity, image, a11y, startup, memory, storage, custom events
-- SQLite EventStore (local buffer, no backend needed)
-- SignalRouter with agent auto-dispatch
-- ERNE Dashboard "Runtime" tab
-- Terminal inline warnings
-- `npx @erne/monitor init` setup wizard
-- Schema codegen (TS → Swift/Kotlin types)
-- Babel auto-instrumentation plugin
+```
+Phase 1a ──→ Phase 1b ──→ Phase 1c ──→ Phase 2a ──→ Phase 3
+(Foundation)  (Intelligence) (AI)        (Native Core) (Backend)
+                                             │
+                                             ├──→ Phase 2b (parallel with Phase 3)
+                                             │    (Native Advanced)
+                                             │
+                                                         ├──→ Phase 4
+                                                              (Advanced Intelligence)
+```
+
+**Critical path:** 1a → 1b → 1c → 2a → 3
+**Parallelizable:** Phase 2b runs alongside Phase 3 (independent)
+
+### Phase 1a: Foundation + Core Collectors (MVP)
+
+**Goal:** "ERNE sees what happens in your app"
+**Depends on:** Nothing — this is the starting point
+
+Build order (sequenced by dependency):
+1. `MonitorClient` — singleton, init/start/stop lifecycle
+2. `Config` — defineMonitorConfig, dynamic config
+3. `PlatformBridge` — interface for platform adapters
+4. `SignalBus` — typed event emitter (all collectors emit here)
+5. `SessionManager` — 5min inactivity = new session
+6. `EventStore` — SQLite buffer with priority queue
+7. `CrashCollector` — ErrorUtils + Promise rejections (highest value)
+8. `NetworkCollector` — fetch/XHR monkey-patch (second highest value)
+9. `NavigationCollector` — Expo Router / React Navigation auto-track
+10. `CustomEventCollector` — developer-defined events
+11. `Sanitizer` — PII stripping, data redaction
+12. `Enricher` — device, app, session metadata
+13. `TerminalReporter` — Metro inline warnings (sufficient output for MVP)
+14. `MonitorProvider` — React component wrapper
+
+**Why this order:**
+- Foundation (1-6) is required by everything else
+- Crash + Network (7-8) deliver highest value with minimal effort
+- Navigation (9) is needed for breadcrumbs in Phase 1b
+- Terminal reporter (13) is the simplest output — dashboard not needed yet
 
 **Backend:** SQLite only (local). Zero infrastructure required.
+**Deliverable:** `npm install @erne/monitor` → wrap app → see crashes + network in terminal
 
-### Phase 2: Native Module Layer
+### Phase 1b: Intelligence Collectors + Dashboard
 
-**What:**
-- Native crash handlers (Swift/Kotlin, signal-safe)
-- ANR detection (watchdog thread)
-- Native metrics (CPU, memory, thermal, battery)
-- Dual-thread FPS (native vs JS) ★
-- Fabric commit latency tracking ★
-- Session replay (snapshots + gestures + privacy masking)
-- Layout snapshots
-- Span snapshots (cross-session persistence)
-- Bug reporter (shake → annotate → submit)
-- Visual repro steps (navigation screenshots)
-- Hermes CPU profiler integration
-- Source map auto-upload (EAS Build plugin)
-- Expo Dev Tools Plugin
+**Goal:** "ERNE sees and visualizes runtime intelligence"
+**Depends on:** Phase 1a (foundation + core collectors must be stable)
+
+Build order:
+15. `BreadcrumbCollector` — ring buffer, last 100 actions ★ (needs crash + network + navigation from 1a)
+16. `RenderCollector` — re-render detection ★ (independent)
+17. `FrameDropCollector` — requestAnimationFrame delta ★ (independent)
+18. `StartupCollector` — cold/warm/hot OTel spans ★ (independent)
+19. `MemoryCollector` — periodic sampling (independent)
+20. `LongTaskCollector` — PerformanceObserver >50ms ★ (independent)
+21. `Fingerprinter` — normalized stack hash for dedup (needs CrashCollector)
+22. `AdaptiveSampler` — battery/CPU-aware sampling
+23. `ConsentGate` — GDPR consent check (must exist before Transport in Phase 3)
+24. `DashboardBridge` — WebSocket real-time to ERNE dashboard
+25. ERNE Dashboard "Runtime" tab — health grid, live signals, breadcrumb timeline
+
+**Why this order:**
+- BreadcrumbCollector (15) can now consume events from crash, network, navigation
+- Performance collectors (16-20) are independent — can be built in parallel
+- Fingerprinter (21) needs CrashCollector data to deduplicate
+- Dashboard (24-25) now has enough data to be meaningful
+
+**Deliverable:** Dashboard shows real-time crashes, breadcrumbs, re-renders, FPS, startup time
+
+### Phase 1c: AI Integration + Advanced Collectors
+
+**Goal:** "ERNE sees, analyzes, and suggests fixes"
+**Depends on:** Phase 1b (breadcrumbs, fingerprinting, dashboard must work)
+
+Build order:
+26. `TouchBoundaryCollector` — component-path tap tracking (independent)
+27. `FrustrationCollector` — tap→error correlation ★ (needs TouchBoundary + CrashCollector)
+28. `StateCollector` — Zustand/Redux middleware ★ (independent)
+29. `SuspenseCollector` — boundary fallback duration ★ (independent, React 19)
+30. `ActivityCollector` — wasted pre-render detection ★ (independent, React 19)
+31. `ImageCollector` — load time, cache miss, oversized ★ (independent)
+32. `A11yCollector` — runtime accessibility violations ★ (independent)
+33. `StorageCollector` — AsyncStorage/SQLite/SecureStore pressure ★ (independent)
+34. SignalRouter (full system):
+    - `DedupEngine` — hash-based dedup + token bucket
+    - `CorrelationEngine` — 5s window incident grouping (needs 3+ collector types)
+    - `ConfidenceScorer` — three-tier scoring + self-calibration
+    - `ContextBuilder` — assembles crash context (needs breadcrumbs + state + network)
+    - `DispatchEngine` — auto-fix / suggest / notify (needs ERNE agents)
+    - `FeedbackTracker` — outcome logging + pattern learning
+    - `PatternLibrary` — crash→fix pattern database
+35. Schema codegen — ts-morph → Swift/Kotlin types (preparation for Phase 2)
+36. Babel auto-instrumentation plugin — zero-config collector injection
+37. `npx @erne/monitor init` — interactive setup wizard + verify step
+
+**Why this order:**
+- Advanced collectors (26-33) are mostly independent, can be parallelized
+- FrustrationCollector (27) needs TouchBoundary (26) — build Touch first
+- SignalRouter (34) is the capstone — needs everything else working
+- Schema codegen (35) prepares native types for Phase 2
+- Setup wizard (37) is polish — comes last
+
+**Deliverable:** crash → AI analysis → fix suggestion in dashboard + terminal
+
+### Phase 2a: Native Core
+
+**Goal:** "Production-grade crash and performance monitoring"
+**Depends on:** Phase 1c (schema codegen must exist for type generation)
+
+Build order:
+38. Expo Module API setup — MonitorModule.swift/kt entry points
+39. Schema codegen execution — generate Swift Codable + Kotlin data classes
+40. `CrashHandler.swift/kt` — signal-safe, pre-allocated buffers, write() only, reconstruct on next launch
+41. `ANRDetector.swift/kt` — watchdog thread, main thread monitoring (5s threshold)
+42. `NativeMetrics.swift/kt` — CPU, memory, thermal state, battery
+43. `SpanSnapshot.swift/kt` — cross-session span persistence
+44. Expo Config Plugin — `withErneMonitor.ts` (Podfile hooks, Gradle deps, AppDelegate init, ProGuard rules)
+
+**Why this order:**
+- Module setup (38-39) before any native code
+- CrashHandler (40) is highest value native feature
+- Config plugin (44) last — needs to know all native dependencies
+
+**Deliverable:** Native crashes captured, ANRs detected, system metrics visible
+
+### Phase 2b: Native Advanced (parallel with Phase 3)
+
+**Goal:** "Deep native insights + developer tools"
+**Depends on:** Phase 2a (native module infrastructure must work)
+**Can run parallel with:** Phase 3 (no shared dependencies)
+
+Build order:
+45. `DualThreadFPS.swift/kt` — native vs JS thread FPS ★
+46. `FabricCommitTracker.swift/kt` — React diff→native mutation latency ★
+47. `ReplayCapture.swift/kt` — snapshot + gesture pairs + privacy masking
+48. `LayoutSnapshot.swift/kt` — UI hierarchy capture
+49. Hermes CPU profiler integration — per-span profiling
+50. Source map auto-upload — EAS Build plugin hook
+51. `ExpoDevToolsPlugin` — real-time monitoring tab in Expo dev tools
+52. `BugReporter` — shake → screenshot annotation → submit
+53. `VisualRepro` — low-res screenshot on every navigation
 
 ### Phase 3: Production Backend
 
-**What:**
-- PostgreSQL (config, users, apps)
-- ClickHouse (analytics, events, materialized views)
-- Event pipeline (message queue → workers)
-- Symbolication service (dSYM, ProGuard mapping)
-- OTel exporter (OTLP → any backend)
-- Alerting engine (email, Slack)
-- Data retention / cleanup
+**Goal:** "Cloud-scale monitoring for production apps"
+**Depends on:** Phase 2a (native crash handling for production-ready SDK)
+**Can run parallel with:** Phase 2b
+
+Build order:
+54. `Transport` — offline-first batch upload (gzip, exponential backoff, connectivity-aware)
+55. `OTelExporter` — OTLP wire protocol (spans, logs, metrics)
+56. PostgreSQL — schema + migrations (config, users, apps, API keys)
+57. ClickHouse — schema + materialized views (events, spans, sessions, metrics)
+58. Ingest service — event receiver (HTTP endpoint)
+59. Ingest workers — async processing (symbolication, enrichment)
+60. Symbolication service — dSYM + ProGuard mapping upload + resolution
+61. Alerting engine — threshold-based, email + Slack
+62. Data retention / cleanup — configurable TTL, auto-purge
 
 ### Phase 4: Advanced Intelligence
 
-**What:**
-- On-device ML anomaly detection (ExecuTorch)
-- Cross-project pattern learning (opt-in, anonymized)
-- OTA pattern/model updates (via expo-updates)
-- MTTR dashboard + DORA metrics
-- Plugin/extension marketplace
-- RSC monitoring (Expo Router server components)
-- Metro auto-instrumentation (build-time injection)
+**Goal:** "Self-improving, cross-project intelligence"
+**Depends on:** Phase 3 (backend for persistence and cross-project data)
+
+63. `PatternLibrary` server-side persistence — crash→fix mappings stored in PostgreSQL
+64. Cross-project learning — opt-in, anonymized AST-level patterns
+65. On-device ML — ExecuTorch anomaly detection model on background worklet
+66. OTA pattern/model updates — JSON rules via expo-updates, .pte via ResourceFetcher
+67. MTTR/DORA metrics dashboard — agent vs human resolution comparison
+68. Plugin/extension marketplace — third-party collector registry
+69. RSC monitoring — Expo Router server component error/latency tracking
+70. Metro auto-instrumentation — build-time module injection via serializer config
 
 ---
 
