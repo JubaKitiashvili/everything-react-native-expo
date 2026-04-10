@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 5 — SessionManager (next)
-**Overall Progress:** 4/70 tasks
+**Active Task:** Task 6 — EventStore (next)
+**Overall Progress:** 5/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 4/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 5/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -42,7 +42,7 @@
 | 2 | Config | ✅ | src/core/Config.ts, src/core/Config.test.ts | ✅ (20) | ✅ |
 | 3 | PlatformBridge | ✅ | src/core/PlatformBridge.ts, src/core/JSPlatformBridge.ts, src/core/PlatformBridge.test.ts | ✅ (17) | ✅ |
 | 4 | SignalBus | ✅ | src/core/SignalBus.ts, src/core/SignalBus.test.ts | ✅ (15) | ✅ |
-| 5 | SessionManager | ⬜ | | | |
+| 5 | SessionManager | ✅ | src/core/SessionManager.ts, src/core/SessionManager.test.ts | ✅ (13) | ✅ |
 | 6 | EventStore | ⬜ | | | |
 | 7 | CrashCollector | ⬜ | | | |
 | 8 | NetworkCollector | ⬜ | | | |
@@ -77,6 +77,7 @@ After each task, verify all existing components still work together.
 | Config | ✅ | 2026-04-11 | 20 unit tests, defaults + validation + deep-freeze |
 | PlatformBridge | ✅ | 2026-04-11 | 17 unit tests, JS impl with DI, native override planned for Phase 2 |
 | SignalBus | ✅ | 2026-04-11 | 15 unit tests, typed + wildcard, error isolation, snapshot dispatch |
+| SessionManager | ✅ | 2026-04-11 | 13 unit tests, UUID v4, 5-min inactivity via AppState, DI clock |
 
 ---
 

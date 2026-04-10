@@ -10,6 +10,13 @@ export { JSPlatformBridge } from './core/JSPlatformBridge';
 export type { JSPlatformBridgeDeps } from './core/JSPlatformBridge';
 export { SignalBus } from './core/SignalBus';
 export type { MonitorEventHandler } from './core/SignalBus';
+export { SessionManager } from './core/SessionManager';
+export type {
+  SessionManagerDeps,
+  SessionChangeListener,
+  AppStateLike,
+  AppStateStatus,
+} from './core/SessionManager';
 export type {
   MonitorConfig,
   MonitorConfigOverrides,
