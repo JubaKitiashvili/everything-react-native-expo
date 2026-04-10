@@ -10,6 +10,16 @@ export { JSPlatformBridge } from './core/JSPlatformBridge';
 export type { JSPlatformBridgeDeps } from './core/JSPlatformBridge';
 export { SignalBus } from './core/SignalBus';
 export type { MonitorEventHandler } from './core/SignalBus';
+export {
+  EventStore,
+  MemoryEventStoreBackend,
+} from './storage/EventStore';
+export type {
+  EventPriority,
+  EventStoreBackend,
+  EventStoreOptions,
+  StoredEventRow,
+} from './storage/EventStore';
 export { SessionManager } from './core/SessionManager';
 export type {
   SessionManagerDeps,

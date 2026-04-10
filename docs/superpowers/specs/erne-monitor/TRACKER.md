@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 6 — EventStore (next)
-**Overall Progress:** 5/70 tasks
+**Active Task:** Task 7 — CrashCollector (next)
+**Overall Progress:** 6/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 5/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 6/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -43,7 +43,7 @@
 | 3 | PlatformBridge | ✅ | src/core/PlatformBridge.ts, src/core/JSPlatformBridge.ts, src/core/PlatformBridge.test.ts | ✅ (17) | ✅ |
 | 4 | SignalBus | ✅ | src/core/SignalBus.ts, src/core/SignalBus.test.ts | ✅ (15) | ✅ |
 | 5 | SessionManager | ✅ | src/core/SessionManager.ts, src/core/SessionManager.test.ts | ✅ (13) | ✅ |
-| 6 | EventStore | ⬜ | | | |
+| 6 | EventStore | ✅ | src/storage/EventStore.ts, src/storage/EventStore.test.ts | ✅ (13) | ✅ (memory backend; SQLite backend deferred per ADR) |
 | 7 | CrashCollector | ⬜ | | | |
 | 8 | NetworkCollector | ⬜ | | | |
 | 9 | NavigationCollector | ⬜ | | | |
@@ -64,6 +64,7 @@ Status legend: ⬜ Not started | 🔄 In progress | ✅ Done | ❌ Blocked | �
 | 2026-04-10 | Decision | Design spec approved | Proceed to implementation | All phases |
 | 2026-04-11 | Decision | Repo location | Option A — monorepo at `packages/monitor/` | All phases |
 | 2026-04-11 | Milestone | Bootstrap complete | package.json, tsconfig, jest.config, dirs, entry stub, tsc clean | Phase 1a unblocked |
+| 2026-04-11 | ADR | EventStore backend pluggable | Task 6 ships EventStore with a pluggable `EventStoreBackend` interface and a full in-memory backend. The expo-sqlite backend is deferred to the Phase 1a integration pass (it depends on PlatformBridge being wired into a real RN runtime and cannot run under plain ts-jest). MemoryEventStoreBackend satisfies all API and behavior requirements for Phase 1a unit tests; the SQLite adapter will be a thin driver added before Phase 1a completion alongside the Expo demo app. | Phase 1a Task 6, Phase 1a completion checklist |
 
 ---
 
@@ -78,6 +79,7 @@ After each task, verify all existing components still work together.
 | PlatformBridge | ✅ | 2026-04-11 | 17 unit tests, JS impl with DI, native override planned for Phase 2 |
 | SignalBus | ✅ | 2026-04-11 | 15 unit tests, typed + wildcard, error isolation, snapshot dispatch |
 | SessionManager | ✅ | 2026-04-11 | 13 unit tests, UUID v4, 5-min inactivity via AppState, DI clock |
+| EventStore | ✅ | 2026-04-11 | 13 tests on memory backend, priority queue + LRU + age pruning + sync insert |
 
 ---
 
