@@ -1,0 +1,104 @@
+# @erne/monitor — Implementation Tracker
+
+> ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
+
+**Last updated:** 2026-04-10
+**Current Phase:** Phase 1a — Foundation
+**Active Task:** None (planning complete, ready to start)
+**Overall Progress:** 0/70 tasks
+
+---
+
+## Status Dashboard
+
+| Phase | Progress | Status | Deliverable |
+|-------|----------|--------|-------------|
+| 1a Foundation | 0/14 | ⬜ Not started | crashes + network in terminal |
+| 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
+| 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
+| 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
+| 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
+| 3 Backend | 0/9 | 🔒 Blocked by 2a | production backend |
+| 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
+
+---
+
+## Active Task
+
+> **None** — ready to begin Phase 1a, Task #1: MonitorClient
+
+### Pre-Start Checklist
+- [ ] Read PROTOCOLS.md
+- [ ] Review phase-1a-foundation.md
+- [ ] Verify no blockers in Blockers & Decisions section
+
+---
+
+## Phase 1a — Task Checklist
+
+| # | Task | Status | Files Created | Tests | Integrated |
+|---|------|--------|---------------|-------|------------|
+| 1 | MonitorClient | ⬜ | | | |
+| 2 | Config | ⬜ | | | |
+| 3 | PlatformBridge | ⬜ | | | |
+| 4 | SignalBus | ⬜ | | | |
+| 5 | SessionManager | ⬜ | | | |
+| 6 | EventStore | ⬜ | | | |
+| 7 | CrashCollector | ⬜ | | | |
+| 8 | NetworkCollector | ⬜ | | | |
+| 9 | NavigationCollector | ⬜ | | | |
+| 10 | CustomEventCollector | ⬜ | | | |
+| 11 | Sanitizer | ⬜ | | | |
+| 12 | Enricher | ⬜ | | | |
+| 13 | TerminalReporter | ⬜ | | | |
+| 14 | MonitorProvider | ⬜ | | | |
+
+Status legend: ⬜ Not started | 🔄 In progress | ✅ Done | ❌ Blocked | 🔁 Rework needed
+
+---
+
+## Blockers & Decisions
+
+| Date | Type | Description | Resolution | Impact |
+|------|------|-------------|------------|--------|
+| 2026-04-10 | Decision | Design spec approved | Proceed to implementation | All phases |
+
+---
+
+## Integration Health
+
+After each task, verify all existing components still work together.
+
+| Component | Status | Last Verified | Notes |
+|-----------|--------|---------------|-------|
+| — | — | — | No components yet |
+
+---
+
+## Plan Adherence
+
+Track coverage of the design spec. Updated at end of each phase.
+
+| Spec Section | Covered By | Status |
+|-------------|------------|--------|
+| §1 Vision | README.md | ✅ Documented |
+| §2 Architecture | architecture/*.md | ✅ Documented |
+| §3 SDK Architecture | Phase 1a-1c | ⬜ Not started |
+| §4 SignalRouter | Phase 1c | ⬜ Not started |
+| §5 Data Pipeline | Phase 1a-1b, 3 | ⬜ Not started |
+| §6 Schema Codegen | Phase 1c | ⬜ Not started |
+| §7 Performance Budget | Every task | ⬜ Not started |
+| §8 Developer Experience | Phase 1c | ⬜ Not started |
+| §9 Dashboard | Phase 1b | ⬜ Not started |
+| §10 Testing Strategy | Every task | ⬜ Not started |
+| §11 Phased Rollout | phases/*.md | ✅ Documented |
+| §13 Competitive Advantages | Phase 1c-2b | ⬜ Not started |
+| §14 Privacy & Compliance | Phase 1b (ConsentGate) | ⬜ Not started |
+
+---
+
+## Session History
+
+| Date | Session # | Phase | Tasks Completed | Notes |
+|------|-----------|-------|-----------------|-------|
+| 2026-04-10 | 1 | Planning | — | Design spec created. 6 projects analyzed (Measure.sh, Callstack Brownfield, Sentry, Embrace, Datadog, Instabug). 3 rounds of improvement analysis. 70 tasks planned across 7 phases. |
