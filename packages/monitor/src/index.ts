@@ -17,6 +17,15 @@ export {
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
 export { NavigationCollector } from './collectors/NavigationCollector';
+export {
+  CustomEventCollector,
+  CUSTOM_EVENT_LIMITS,
+} from './collectors/CustomEventCollector';
+export type {
+  CustomEventCollectorDeps,
+  CustomEventData,
+  CustomAttributeValue,
+} from './collectors/CustomEventCollector';
 export type {
   NavigationCollectorDeps,
   NavigationAdapter,
