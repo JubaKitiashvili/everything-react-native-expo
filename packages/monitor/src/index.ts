@@ -16,6 +16,12 @@ export {
 } from './storage/EventStore';
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
+export { NavigationCollector } from './collectors/NavigationCollector';
+export type {
+  NavigationCollectorDeps,
+  NavigationAdapter,
+  NavigationEventData,
+} from './collectors/NavigationCollector';
 export type {
   NetworkCollectorDeps,
   NetworkEventData,

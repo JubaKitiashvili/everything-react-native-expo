@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 9 — NavigationCollector (next)
-**Overall Progress:** 8/70 tasks
+**Active Task:** Task 10 — CustomEventCollector (next)
+**Overall Progress:** 9/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 8/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 9/14 | 🔄 In progress | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -46,7 +46,7 @@
 | 6 | EventStore | ✅ | src/storage/EventStore.ts, src/storage/EventStore.test.ts | ✅ (13) | ✅ (memory backend; SQLite backend deferred per ADR) |
 | 7 | CrashCollector | ✅ | src/collectors/CrashCollector.ts, src/collectors/CrashCollector.test.ts | ✅ (10) | ✅ |
 | 8 | NetworkCollector | ✅ | src/collectors/NetworkCollector.ts, src/collectors/NetworkCollector.test.ts | ✅ (8) | ✅ |
-| 9 | NavigationCollector | ⬜ | | | |
+| 9 | NavigationCollector | ✅ | src/collectors/NavigationCollector.ts, src/collectors/NavigationCollector.test.ts | ✅ (8) | ✅ |
 | 10 | CustomEventCollector | ⬜ | | | |
 | 11 | Sanitizer | ⬜ | | | |
 | 12 | Enricher | ⬜ | | | |
@@ -82,6 +82,7 @@ After each task, verify all existing components still work together.
 | EventStore | ✅ | 2026-04-11 | 13 tests on memory backend, priority queue + LRU + age pruning + sync insert |
 | CrashCollector | ✅ | 2026-04-11 | 10 tests, chained ErrorUtils + promise rejection tracker, sync fatal persist |
 | NetworkCollector | ✅ | 2026-04-11 | 8 tests, fetch + XHR monkey-patch, transparent proxy, host filter |
+| NavigationCollector | ✅ | 2026-04-11 | 8 tests, NavigationAdapter DI, Expo Router/React Nav/manual fallback |
 
 ---
 
