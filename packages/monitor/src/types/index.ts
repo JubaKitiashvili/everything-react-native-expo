@@ -52,6 +52,39 @@ export interface MonitorEvent {
   data: unknown;
 }
 
+export type PlatformName = 'ios' | 'android' | 'web' | 'unknown';
+
+export interface DeviceInfo {
+  readonly platform: PlatformName;
+  readonly osVersion: string;
+  readonly model: string;
+  readonly isEmulator: boolean;
+  readonly screenWidth: number;
+  readonly screenHeight: number;
+  readonly locale: string;
+}
+
+export interface AppInfo {
+  readonly version: string;
+  readonly buildNumber: string;
+  readonly bundleId: string;
+}
+
+export interface MemoryInfo {
+  readonly usedBytes: number;
+  readonly totalBytes: number;
+}
+
+export type ConnectionType = 'wifi' | 'cellular' | 'offline' | 'unknown';
+
+export interface PlatformBridge {
+  getDeviceInfo(): DeviceInfo;
+  getAppInfo(): AppInfo;
+  getMemoryUsage(): MemoryInfo | null;
+  getConnectionType(): ConnectionType;
+  persistCrashData(data: Uint8Array): void;
+}
+
 export interface Collector {
   readonly name: string;
   readonly priority: number;
