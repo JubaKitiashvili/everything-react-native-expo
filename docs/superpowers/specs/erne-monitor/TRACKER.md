@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-11
 **Current Phase:** Phase 1a — Foundation
-**Active Task:** Task 14 — MonitorProvider (next)
-**Overall Progress:** 13/70 tasks
+**Active Task:** Phase 1a completion checklist (14/14 tasks done)
+**Overall Progress:** 14/70 tasks
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Phase | Progress | Status | Deliverable |
 |-------|----------|--------|-------------|
-| 1a Foundation | 13/14 | 🔄 In progress | crashes + network in terminal |
+| 1a Foundation | 14/14 | 🔄 Integration | crashes + network in terminal |
 | 1b Intelligence | 0/11 | 🔒 Blocked by 1a | real-time dashboard |
 | 1c AI Integration | 0/12 | 🔒 Blocked by 1b | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
@@ -51,7 +51,7 @@
 | 11 | Sanitizer | ✅ | src/processors/Sanitizer.ts, src/processors/Sanitizer.test.ts | ✅ (16) | ✅ |
 | 12 | Enricher | ✅ | src/processors/Enricher.ts, src/processors/Enricher.test.ts | ✅ (6) | ✅ |
 | 13 | TerminalReporter | ✅ | src/integrations/TerminalReporter.ts, src/integrations/TerminalReporter.test.ts | ✅ (8) | ✅ |
-| 14 | MonitorProvider | ⬜ | | | |
+| 14 | MonitorProvider | ✅ | src/MonitorProvider.tsx, src/MonitorProvider.test.tsx, src/core/createMonitorRuntime.ts, src/core/createMonitorRuntime.test.ts | ✅ (9) | ✅ |
 
 Status legend: ⬜ Not started | 🔄 In progress | ✅ Done | ❌ Blocked | 🔁 Rework needed
 
@@ -87,6 +87,8 @@ After each task, verify all existing components still work together.
 | Sanitizer | ✅ | 2026-04-11 | 16 tests, email/phone/header/URL redaction, deep walk, pure function |
 | Enricher | ✅ | 2026-04-11 | 6 tests, context envelope, cached static info, dynamic connection/memory |
 | TerminalReporter | ✅ | 2026-04-11 | 8 tests, dev-only, rate-limited, severity routing, resilient |
+| createMonitorRuntime | ✅ | 2026-04-11 | 6 tests, wires every Phase 1a component, shutdown releases all resources |
+| MonitorProvider | ✅ | 2026-04-11 | 3 tests via react-test-renderer, mount/unmount, defaults, no re-init on re-render |
 
 ---
 

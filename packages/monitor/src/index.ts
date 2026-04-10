@@ -1,5 +1,15 @@
 // @erne/monitor — Runtime Intelligence SDK for React Native & Expo
 
+export { MonitorProvider } from './MonitorProvider';
+export type { MonitorProviderProps } from './MonitorProvider';
+export {
+  createMonitorRuntime,
+  startMonitorRuntime,
+} from './core/createMonitorRuntime';
+export type {
+  MonitorRuntime,
+  MonitorRuntimeDeps,
+} from './core/createMonitorRuntime';
 export { MonitorClient } from './core/MonitorClient';
 export {
   defineMonitorConfig,
