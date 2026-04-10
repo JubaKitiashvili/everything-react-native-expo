@@ -18,6 +18,11 @@ export { Sanitizer } from './processors/Sanitizer';
 export type { SanitizerOptions } from './processors/Sanitizer';
 export { Enricher } from './processors/Enricher';
 export type { EnrichedEvent, EnricherDeps } from './processors/Enricher';
+export { TerminalReporter } from './integrations/TerminalReporter';
+export type {
+  TerminalReporterOptions,
+  ConsoleLike,
+} from './integrations/TerminalReporter';
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
 export { NavigationCollector } from './collectors/NavigationCollector';
