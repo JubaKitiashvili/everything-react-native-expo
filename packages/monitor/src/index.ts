@@ -16,6 +16,8 @@ export {
 } from './storage/EventStore';
 export { Sanitizer } from './processors/Sanitizer';
 export type { SanitizerOptions } from './processors/Sanitizer';
+export { Enricher } from './processors/Enricher';
+export type { EnrichedEvent, EnricherDeps } from './processors/Enricher';
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
 export { NavigationCollector } from './collectors/NavigationCollector';
