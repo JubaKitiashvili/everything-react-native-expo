@@ -48,6 +48,18 @@ import { FrameDropCollector } from '../collectors/FrameDropCollector';
 import { StartupCollector } from '../collectors/StartupCollector';
 import { MemoryCollector } from '../collectors/MemoryCollector';
 import { LongTaskCollector } from '../collectors/LongTaskCollector';
+// Phase 1c advanced collectors
+import { TouchBoundaryCollector } from '../collectors/TouchBoundaryCollector';
+import { FrustrationCollector } from '../collectors/FrustrationCollector';
+import { StateCollector } from '../collectors/StateCollector';
+import { SuspenseCollector } from '../collectors/SuspenseCollector';
+import { ActivityCollector } from '../collectors/ActivityCollector';
+import { ImageCollector } from '../collectors/ImageCollector';
+import { A11yCollector } from '../collectors/A11yCollector';
+import { StorageCollector } from '../collectors/StorageCollector';
+// Phase 1c SignalRouter
+import { SignalRouter } from '../signal-router/SignalRouter';
+import type { DispatchedSignal } from '../signal-router/DispatchEngine';
 import { TerminalReporter, type ConsoleLike } from '../integrations/TerminalReporter';
 import {
   DashboardBridge,
@@ -113,7 +125,16 @@ export interface MonitorRuntime {
     startup: StartupCollector;
     memory: MemoryCollector;
     longTask: LongTaskCollector;
+    touchBoundary: TouchBoundaryCollector;
+    frustration: FrustrationCollector;
+    state: StateCollector;
+    suspense: SuspenseCollector;
+    activity: ActivityCollector;
+    image: ImageCollector;
+    a11y: A11yCollector;
+    storage: StorageCollector;
   };
+  signalRouter: SignalRouter;
   terminalReporter: TerminalReporter;
   dashboardBridge: DashboardBridge | null;
   trackEvent: (
@@ -217,14 +238,29 @@ export async function createMonitorRuntime(
     lastEvent: null as MonitorEvent | null,
   };
 
+  // Forward reference — SignalRouter is instantiated after all the
+  // collectors because it needs to wire dispatch outputs that reference
+  // session/bus/store. The pipeline below captures it through a
+  // mutable holder so the closure sees the eventually-assigned router.
+  const routerHolder: { current: SignalRouter | null } = { current: null };
+
   // Main processing pipeline: Breadcrumb-attach → ConsentGate →
-  // AdaptiveSampler → Fingerprinter → Sanitizer → Enricher → EventStore.
+  // AdaptiveSampler → Fingerprinter → Sanitizer → Enricher → EventStore
+  // → SignalRouter (intelligence).
   //
   // We mutate the raw event to attach the breadcrumb trail BEFORE the
   // sanitizer clones it, so the stored copy carries the trail. The
   // BreadcrumbCollector's own onAll subscriber independently updates the
   // ring buffer from non-crash events.
   bus.onAll((event) => {
+    // Guard against re-entrance: SignalRouter dashboard output re-emits
+    // dispatched signals on the bus as a synthetic MonitorEvent so the
+    // DashboardBridge can stream them. We must not feed those back into
+    // the router or we get an infinite loop.
+    const passthrough = (event.data as { __erneSignalPassthrough?: boolean })
+      .__erneSignalPassthrough;
+    if (passthrough) return;
+
     stats.total += 1;
     if (event.type === 'crash') {
       (event.data as { breadcrumbs?: Breadcrumb[] }).breadcrumbs =
@@ -251,6 +287,16 @@ export async function createMonitorRuntime(
       .catch(() => {
         // swallow — originating collector already wrote a raw copy
       });
+
+    // Feed the enriched event through the intelligence layer. The
+    // router handles dedup, correlation, scoring, context, and
+    // dispatch. Safe to call even when no pattern matches — it will
+    // score low and drop.
+    try {
+      routerHolder.current?.process(enriched);
+    } catch {
+      // swallow — router must never break the main bus
+    }
   });
 
   const crash = new CrashCollector({
@@ -287,6 +333,16 @@ export async function createMonitorRuntime(
   });
   const longTask = new LongTaskCollector({ signalBus: bus });
 
+  // Phase 1c advanced collectors
+  const touchBoundary = new TouchBoundaryCollector({ signalBus: bus });
+  const frustration = new FrustrationCollector({ signalBus: bus });
+  const state = new StateCollector({ signalBus: bus });
+  const suspense = new SuspenseCollector({ signalBus: bus });
+  const activity = new ActivityCollector({ signalBus: bus });
+  const image = new ImageCollector({ signalBus: bus });
+  const a11y = new A11yCollector({ signalBus: bus });
+  const storage = new StorageCollector({ signalBus: bus });
+
   const client = MonitorClient.init(config);
   client.registerCollector(crash);
   client.registerCollector(breadcrumb);
@@ -298,6 +354,14 @@ export async function createMonitorRuntime(
   client.registerCollector(startup);
   client.registerCollector(memory);
   client.registerCollector(longTask);
+  client.registerCollector(touchBoundary);
+  client.registerCollector(frustration);
+  client.registerCollector(state);
+  client.registerCollector(suspense);
+  client.registerCollector(activity);
+  client.registerCollector(image);
+  client.registerCollector(a11y);
+  client.registerCollector(storage);
 
   const terminalReporter = new TerminalReporter({
     signalBus: bus,
@@ -314,6 +378,92 @@ export async function createMonitorRuntime(
         WebSocket: deps.webSocketCtor,
       })
     : null;
+
+  // SignalRouter intelligence layer — processes enriched events from
+  // inside the pipeline's onAll subscriber below. Dispatched signals
+  // flow to three output channels:
+  //   terminal — a separate console.log line tagged [monitor:signal]
+  //   dashboard — re-emitted as a synthetic MonitorEvent on the bus so
+  //               DashboardBridge streams it to the runtime tab
+  //   store    — persisted alongside raw events for replay
+  const signalConsole = deps.console ?? (globalThis.console as ConsoleLike);
+  const signalRouter = new SignalRouter({
+    getBreadcrumbs: (limit) => breadcrumb.getTrail().slice(-limit),
+    getCurrentScreen: () => null,
+    ratePerMinute: 30,
+    outputs: [
+      {
+        name: 'terminal',
+        deliver: (signal: DispatchedSignal) => {
+          if (!isDev) return;
+          try {
+            signalConsole.log(
+              `🛎️ [monitor:signal] ${signal.context.summary} (score=${signal.score})`,
+            );
+          } catch {
+            // never fail dispatch
+          }
+        },
+      },
+      {
+        name: 'dashboard',
+        deliver: (signal: DispatchedSignal) => {
+          // Re-emit as a custom MonitorEvent so DashboardBridge picks it up.
+          // Uses a sentinel to avoid re-processing by SignalRouter.
+          const wrapped: MonitorEvent = {
+            type: 'custom',
+            timestamp: signal.ts,
+            wallTime: Date.now(),
+            sessionId: session.getCurrentSessionId(),
+            data: {
+              name: 'monitor_signal',
+              attributes: {
+                id: signal.id,
+                score: signal.score,
+                summary: signal.context.summary,
+                channels: signal.channels,
+                dedupCount: signal.context.dedupCount,
+              },
+              __erneSignalPassthrough: true,
+            },
+          };
+          try {
+            bus.emit(wrapped);
+          } catch {
+            // swallow
+          }
+        },
+      },
+      {
+        name: 'store',
+        deliver: (signal: DispatchedSignal) => {
+          const stored: MonitorEvent = {
+            type: 'custom',
+            timestamp: signal.ts,
+            wallTime: Date.now(),
+            sessionId: session.getCurrentSessionId(),
+            data: {
+              name: 'monitor_signal',
+              attributes: {
+                id: signal.id,
+                score: signal.score,
+                summary: signal.context.summary,
+                channels: signal.channels,
+                dedupCount: signal.context.dedupCount,
+                screen: signal.context.screen,
+                breadcrumbCount: signal.context.breadcrumbs.length,
+              },
+            },
+          };
+          void store.insert(stored, 'high').catch(() => {});
+        },
+      },
+    ],
+    now: () => Date.now(),
+  });
+  // Plug the router into the pipeline's forward reference so the
+  // bus.onAll callback starts routing events through it.
+  routerHolder.current = signalRouter;
 
   const runtime: MonitorRuntime = {
     client,
@@ -337,7 +487,16 @@ export async function createMonitorRuntime(
       startup,
       memory,
       longTask,
+      touchBoundary,
+      frustration,
+      state,
+      suspense,
+      activity,
+      image,
+      a11y,
+      storage,
     },
+    signalRouter,
     terminalReporter,
     dashboardBridge,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),

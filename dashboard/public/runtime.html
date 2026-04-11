@@ -149,6 +149,9 @@
       .ev-navigation .ev-icon { color: var(--ok); }
       .ev-custom .ev-icon { color: var(--accent); }
       .ev-render .ev-icon { color: var(--warn); }
+      .ev-signal .ev-icon { color: #ffd95a; }
+      .ev-signal { background: rgba(255, 217, 90, 0.05); }
+      .ev-signal .ev-msg { color: #ffd95a; }
       aside .client-entry {
         padding: 10px 16px;
         border-bottom: 1px solid var(--border);
@@ -206,7 +209,7 @@
           <div class="grid">
             <div class="tile crash"><div class="label">Crashes</div><div class="value" id="t-crash">0</div></div>
             <div class="tile"><div class="label">Network</div><div class="value" id="t-net">0</div></div>
-            <div class="tile"><div class="label">Navigations</div><div class="value" id="t-nav">0</div></div>
+            <div class="tile"><div class="label">Signals</div><div class="value" id="t-signal" style="color:#ffd95a">0</div></div>
             <div class="tile"><div class="label">Custom</div><div class="value" id="t-custom">0</div></div>
             <div class="tile"><div class="label">Renders</div><div class="value" id="t-render">0</div></div>
           </div>
@@ -228,14 +231,25 @@
       </aside>
     </main>
     <script>
-      const counts = { crash: 0, network: 0, navigation: 0, custom: 0, render: 0 };
+      const counts = { crash: 0, network: 0, navigation: 0, custom: 0, render: 0, signal: 0 };
       let buffered = 0;
       const eventsEl = document.getElementById('events');
       const clientsEl = document.getElementById('clients');
       const wsDot = document.getElementById('ws-dot');
       const wsStatus = document.getElementById('ws-status');
 
-      function iconFor(type, data) {
+      function isSignal(ev) {
+        return (
+          ev.type === 'custom' &&
+          ev.data &&
+          ev.data.name === 'monitor_signal'
+        );
+      }
+
+      function iconFor(ev) {
+        if (isSignal(ev)) return '🛎️';
+        const type = ev.type;
+        const data = ev.data;
         if (type === 'crash') return '🔴';
         if (type === 'network') {
           const s = data && data.statusCode;
@@ -251,6 +265,13 @@
 
       function messageFor(ev) {
         const d = ev.data || {};
+        if (isSignal(ev)) {
+          const a = d.attributes || {};
+          return (
+            'SIGNAL [score ' + a.score + '] ' + a.summary +
+            ' (→ ' + (a.channels || []).join('+') + ')'
+          );
+        }
         if (ev.type === 'crash') return (d.message || 'crash') + (d.fingerprint ? ' (' + d.fingerprint + ')' : '');
         if (ev.type === 'network') return (d.method || '?') + ' ' + (d.url || '') + ' → ' + (d.statusCode != null ? d.statusCode : 'ERR');
         if (ev.type === 'navigation') return (d.previousScreen || '∅') + ' → ' + d.screen;
@@ -267,11 +288,12 @@
         if (eventsEl.firstChild && eventsEl.firstChild.classList && eventsEl.firstChild.classList.contains('empty')) {
           eventsEl.innerHTML = '';
         }
-        counts[ev.type] = (counts[ev.type] || 0) + 1;
-        const icon = iconFor(ev.type, ev.data);
+        const effectiveType = isSignal(ev) ? 'signal' : ev.type;
+        counts[effectiveType] = (counts[effectiveType] || 0) + 1;
+        const icon = iconFor(ev);
         const msg = messageFor(ev);
         const li = document.createElement('li');
-        li.className = 'ev-' + ev.type;
+        li.className = 'ev-' + effectiveType;
         const ts = new Date(ev.wallTime || entry.receivedAt).toLocaleTimeString();
         li.innerHTML =
           '<span class="ev-icon">' + icon + '</span>' +
@@ -293,7 +315,7 @@
       function updateTiles() {
         document.getElementById('t-crash').textContent = counts.crash || 0;
         document.getElementById('t-net').textContent = counts.network || 0;
-        document.getElementById('t-nav').textContent = counts.navigation || 0;
+        document.getElementById('t-signal').textContent = counts.signal || 0;
         document.getElementById('t-custom').textContent = counts.custom || 0;
         document.getElementById('t-render').textContent = counts.render || 0;
         document.getElementById('buffered').textContent = buffered + ' buffered';
