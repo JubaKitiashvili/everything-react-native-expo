@@ -1,5 +1,7 @@
 # @erne/monitor — Project Bootstrap
 
+> **Status: ✅ Executed 2026-04-11.** Option A (inside ERNE monorepo at `packages/monitor/`) chosen. Package built and shipping; build pipeline in place via `tsconfig.build.json` + `npm run build`. This document is retained as historical reference for anyone forking the project.
+
 > Execute this BEFORE Task 1. Sets up the package, workspace, tooling.
 
 ---

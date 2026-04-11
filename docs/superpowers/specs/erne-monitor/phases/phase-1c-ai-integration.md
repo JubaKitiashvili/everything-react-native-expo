@@ -1,5 +1,7 @@
 # Phase 1c: AI Integration + Advanced Collectors
 
+> **Status: ✅ Complete (12/12)** — closed 2026-04-12. 8 advanced collectors + SignalRouter composite (7 sub-components, 20 built-in patterns) + schema codegen + Babel auto-instrumentation + `npx @erne/monitor init`. Phase 2a unblocked.
+
 **Goal:** "ERNE sees, analyzes, and suggests fixes"
 **Depends on:** Phase 1b (intelligence collectors + dashboard must be stable)
 **Deliverable:** AI-powered fix suggestions, full SignalRouter pipeline, auto-instrumentation, init wizard

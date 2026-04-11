@@ -2,8 +2,8 @@
 
 > ERNE Runtime Intelligence SDK — monitoring, analysis, and auto-remediation for React Native & Expo
 
-**Date:** 2026-04-10
-**Status:** Draft
+**Date:** 2026-04-10 (last touched 2026-04-12)
+**Status:** Phase 1 implemented — §3, §4, §5, §6, §7 (partial), §8, §9, §14 are live in `packages/monitor/`. See TRACKER.md for live progress.
 **Author:** Juba + Claude
 
 ---

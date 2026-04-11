@@ -1,5 +1,7 @@
 # Phase 1a: Foundation + Core Collectors (MVP)
 
+> **Status: ✅ Complete (14/14)** — closed 2026-04-11. See TRACKER.md for commit history.
+
 **Goal:** "ERNE sees what happens in your app"
 **Depends on:** Nothing — this is the starting point
 **Deliverable:** `npm install @erne/monitor` → wrap app → see crashes + network in terminal

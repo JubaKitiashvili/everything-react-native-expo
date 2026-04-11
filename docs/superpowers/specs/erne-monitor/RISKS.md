@@ -2,6 +2,11 @@
 
 > Known risks, their likelihood, impact, and mitigation strategies.
 
+**Status pass 2026-04-12** (Phase 1 complete):
+- **Mitigated in shipped code**: Risks 1, 2, 3, 5, 11, 12, 13
+- **Deferred to their phase**: Risks 4 (needs real SQLite runtime), 6/7/9 (Phase 2), 10 (Phase 3)
+- **Partially validated**: Risk 8 (bundle size not yet measured end-to-end)
+
 ---
 
 ## Technical Risks

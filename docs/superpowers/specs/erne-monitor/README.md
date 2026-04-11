@@ -2,6 +2,18 @@
 
 > ERNE Runtime Intelligence SDK — monitoring, analysis, and auto-remediation for React Native & Expo
 
+**Current Status:** 37/70 tasks complete (Phase 1 done end-to-end) · 349 tests across 38 suites · tsc strict clean · live-verified on iPhone 17 Pro with a real Expo SDK 55 / RN 0.83 / React 19 production app. See [TRACKER.md](./TRACKER.md) for the live state.
+
+| Phase | Progress | Status |
+|---|---|---|
+| Phase 1a Foundation | 14/14 | ✅ Done |
+| Phase 1b Intelligence | 11/11 | ✅ Done |
+| Phase 1c AI Integration | 12/12 | ✅ Done |
+| Phase 2a Native Core | 0/7 | ⬜ Ready |
+| Phase 2b Native Advanced | 0/9 | 🔒 Blocked by 2a |
+| Phase 3 Backend | 0/9 | 🔒 Blocked by 2a |
+| Phase 4 Intelligence | 0/8 | 🔒 Blocked by 3 |
+
 ## Quick Navigation
 
 | Document | Purpose |

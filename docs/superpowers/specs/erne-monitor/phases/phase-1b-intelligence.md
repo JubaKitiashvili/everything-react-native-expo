@@ -1,5 +1,7 @@
 # Phase 1b: Intelligence Collectors + Dashboard
 
+> **Status: ✅ Complete (11/11)** — closed 2026-04-12. Live-verified on iPhone 17 Pro with DashboardBridge streaming to `dashboard/public/runtime.html` via WebSocket.
+
 **Goal:** "ERNE sees and visualizes runtime intelligence"
 **Depends on:** Phase 1a (foundation + core collectors must be stable)
 **Deliverable:** Dashboard shows real-time crashes, breadcrumbs, re-renders, FPS, startup time
