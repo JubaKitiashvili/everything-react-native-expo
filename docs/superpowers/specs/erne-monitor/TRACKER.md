@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-12
-**Current Phase:** Phase 1b complete — Phase 1c unblocked
-**Active Task:** Phase 1c Task 1 — SignalRouter (next session)
-**Overall Progress:** 25/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅)
+**Current Phase:** Phase 1c (SDK advanced collectors + SignalRouter done; codegen/babel/CLI pending)
+**Active Task:** Phase 1c Task 35 — Schema Codegen (next session)
+**Overall Progress:** 34/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 9/12)
 
 ---
 
@@ -15,7 +15,7 @@
 |-------|----------|--------|-------------|
 | 1a Foundation | 14/14 | ✅ Done | crashes + network in terminal |
 | 1b Intelligence | 11/11 | ✅ Done | real-time dashboard |
-| 1c AI Integration | 0/12 | ⬜ Ready | AI fix suggestions |
+| 1c AI Integration | 9/12 | 🔄 In progress | AI fix suggestions |
 | 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
 | 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
 | 3 Backend | 0/9 | 🔒 Blocked by 2a | production backend |
@@ -101,6 +101,15 @@ After each task, verify all existing components still work together.
 | DashboardBridge | ✅ | 2026-04-12 | 6 tests, WS client with reconnect + buffer, live-verified against dashboard/server.js |
 | Dashboard Runtime tab | ✅ | 2026-04-12 | New /runtime.html + /api/monitor/{summary,events} endpoints; WS push + REST poll; live-verified against iPhone 17 Pro |
 | createMonitorRuntime (Phase 1b) | ✅ | 2026-04-12 | Wires all 10 collectors + Fingerprinter + AdaptiveSampler + ConsentGate + DashboardBridge + Breadcrumb trail attach in pipeline |
+| TouchBoundaryCollector | ✅ | 2026-04-12 | 6 tests, debounced per-target, DI scheduler |
+| FrustrationCollector | ✅ | 2026-04-12 | 7 tests, rage/dead/error-tap correlation across touch + crash |
+| StateCollector | ✅ | 2026-04-12 | 6 tests, Zustand + Redux middleware factories, shallow-diff only (no PII) |
+| SuspenseCollector | ✅ | 2026-04-12 | 5 tests, nested depth tracking, error outcomes |
+| ActivityCollector | ✅ | 2026-04-12 | 5 tests, React 19 Activity wasted-render detection, debounced flush |
+| ImageCollector | ✅ | 2026-04-12 | 5 tests, per-URI aggregation, oversize detection, error rate |
+| A11yCollector | ✅ | 2026-04-12 | 6 tests, missing label / small target / missing role / image alt |
+| StorageCollector | ✅ | 2026-04-12 | 5 tests, AsyncStorage monkey-patch with clean unpatch, warnings |
+| SignalRouter (composite) | ✅ | 2026-04-12 | 25 tests across 7 sub-components + integration; DedupEngine, CorrelationEngine, ConfidenceScorer, ContextBuilder, DispatchEngine, FeedbackTracker, PatternLibrary (20 built-in patterns) |
 
 ---
 
@@ -113,7 +122,7 @@ Track coverage of the design spec. Updated at end of each phase.
 | §1 Vision | README.md | ✅ Documented |
 | §2 Architecture | architecture/*.md | ✅ Documented |
 | §3 SDK Architecture | Phase 1a-1c | 🔄 Phase 1a complete (MonitorClient, Config, PlatformBridge, SessionManager, SignalBus, collectors) |
-| §4 SignalRouter | Phase 1c | ⬜ Not started |
+| §4 SignalRouter | Phase 1c | ✅ Composite built: Dedup + Correlate + Score + Context + Dispatch + Feedback + 20-pattern library |
 | §5 Data Pipeline | Phase 1a-1b, 3 | 🔄 EventStore + SignalBus + Sanitizer + Enricher shipped; full pipeline routing lands in 1b |
 | §6 Schema Codegen | Phase 1c | ⬜ Not started |
 | §7 Performance Budget | Every task | 🔄 Bundle size not yet measured — deferred to Phase 1a integration pass with Expo demo |
@@ -135,6 +144,7 @@ Track coverage of the design spec. Updated at end of each phase.
 | 2026-04-11 | 2 (cont.) | 1a | Tasks 2–14 + SQLite adapter | Completed all Phase 1a tasks in a single autonomous session per Juba's instruction ("გადი ბოლომდე, ინსტრუქციის მიხედვით"). Config with validation and deep-freeze; PlatformBridge with DI JS impl; SignalBus with error isolation and snapshot dispatch; SessionManager with 5-min AppState inactivity; EventStore with pluggable backend (Memory + Sqlite adapters); CrashCollector chaining ErrorUtils + rejection tracker + sync fatal persist; NetworkCollector with transparent fetch/XHR patching; NavigationCollector with adapter-based auto-detect; CustomEventCollector with trackEvent validation; Sanitizer with email/phone/header/URL scrubbing; Enricher with cached static + dynamic context; TerminalReporter rate-limited dev surface; MonitorProvider + createMonitorRuntime end-to-end wiring. 173 tests across 16 suites, tsc clean. Deferred for Phase 1a integration pass: bundle size measurement and Expo demo app (both require a real RN runtime). |
 | 2026-04-12 | 3 | 1b | Tasks 15–23 | Phase 1b SDK — BreadcrumbCollector (ring buffer + crash trail attach), RenderCollector (Profiler aggregation, unnecessary detection), FrameDropCollector (rAF sustained drop), StartupCollector (cold/warm/hot milestones), MemoryCollector (periodic polling, pause on bg), LongTaskCollector (PerformanceObserver + rAF fallback), Fingerprinter (djb2 stack hash for dedup), AdaptiveSampler (deterministic per-session + battery/CPU degradation), ConsentGate (per-category buffer/flush/revoke + persistence). 218 tests across 25 suites. |
 | 2026-04-12 | 4 | 1b complete | Tasks 24 + 25 + live integration | gpc-expo (Expo SDK 55 / RN 0.83 / React 19) live-wired via build pipeline (tsconfig.build.json, dist/). Found + fixed: NetworkCollector blob/arraybuffer responseType crash (+5 tests), TerminalReporter triggering LogBox overlays (switched to console.log only, +1 test), BreadcrumbCollector pipeline ordering so stored crash copies carry the trail. Phase 1b wiring rewritten in createMonitorRuntime: 10 collectors + Fingerprinter + AdaptiveSampler + ConsentGate + stats counters + `__ERNE_MONITOR__` global. DashboardBridge (Task 24) — WebSocket client with hello/event protocol, exponential backoff reconnect, bounded offline buffer, 6 tests. Dashboard server.js — `monitor:hello` / `monitor:event` WS routes, in-memory 500-slot ring buffer, `/api/monitor/{summary,events}` REST endpoints, broadcast to all connected clients. Runtime tab (Task 25) — `/runtime.html` with health grid (crashes/network/nav/custom/renders), live signal feed, client panel, WS push + 10s REST poll fallback. End-to-end live-verified on iPhone 17 Pro: 23+ events streaming, real PerformanceObserver long-task detection at 51/52/72/133ms, real GPC backend traffic, test crash with stable fingerprint `76hp6x` visible in dashboard. 235 tests across 26 suites, tsc clean. |
+| 2026-04-12 | 5 | 1c (tasks 26-34) | 8 advanced collectors + SignalRouter composite | Phase 1c SDK core — 8 new collectors (TouchBoundary, Frustration, State, Suspense, Activity, Image, A11y, Storage) with full DI and ts-jest coverage. SignalRouter built as 7-file composite: DedupEngine (fingerprint-windowed merge), CorrelationEngine (time-window grouping with confidence), ConfidenceScorer (0-100 weighted by correlation/recurrence/pattern), ContextBuilder (breadcrumbs + summary + screen + source location), DispatchEngine (score-based channel routing with per-channel rate limits), FeedbackTracker (applied/helpful ratings), PatternLibrary (20 built-in RN patterns: Cannot-read-property, unhandled rejection, 5xx, oversized image, missing a11y label, rage tap, wasted Activity render, slow Suspense fallback, re-render storm, long JS task, memory pressure, AsyncStorage pressure, etc.). Router exposes `process(event)` single-entry pipeline with stats tracking. 305 tests across 35 suites. Tasks 35-37 (Schema codegen, Babel auto-instrumentation, init wizard) deferred to next session as separate tooling domains. |
 
 ---
 

@@ -100,6 +100,101 @@ export type {
   PerformanceObserverLike,
   PerformanceObserverCtor,
 } from './collectors/LongTaskCollector';
+// Phase 1c advanced collectors
+export { TouchBoundaryCollector } from './collectors/TouchBoundaryCollector';
+export type {
+  TouchEventData,
+  TouchCollectorDeps,
+} from './collectors/TouchBoundaryCollector';
+export { FrustrationCollector } from './collectors/FrustrationCollector';
+export type {
+  FrustrationEventData,
+  FrustrationSignal,
+  FrustrationLevel,
+  FrustrationCollectorDeps,
+} from './collectors/FrustrationCollector';
+export { StateCollector } from './collectors/StateCollector';
+export type {
+  StateEventData,
+  StateCollectorDeps,
+} from './collectors/StateCollector';
+export { SuspenseCollector } from './collectors/SuspenseCollector';
+export type {
+  SuspenseEventData,
+  SuspenseCollectorDeps,
+} from './collectors/SuspenseCollector';
+export { ActivityCollector } from './collectors/ActivityCollector';
+export type {
+  ActivityEventData,
+  ActivityMode,
+  ActivityCollectorDeps,
+} from './collectors/ActivityCollector';
+export { ImageCollector } from './collectors/ImageCollector';
+export type {
+  ImageEventData,
+  ImageLoadInfo,
+  ImageCacheResult,
+  ImageCollectorDeps,
+} from './collectors/ImageCollector';
+export { A11yCollector } from './collectors/A11yCollector';
+export type {
+  A11yEventData,
+  A11yElementInfo,
+  A11yViolation,
+  A11ySeverity,
+  A11yCollectorDeps,
+} from './collectors/A11yCollector';
+export { StorageCollector } from './collectors/StorageCollector';
+export type {
+  StorageEventData,
+  StorageBackend,
+  StorageOp,
+  AsyncStorageLike,
+  StorageCollectorDeps,
+} from './collectors/StorageCollector';
+// Phase 1c SignalRouter core
+export { SignalRouter } from './signal-router/SignalRouter';
+export type {
+  SignalRouterDeps,
+  SignalRouterStats,
+} from './signal-router/SignalRouter';
+export { DedupEngine } from './signal-router/DedupEngine';
+export type {
+  DedupEntry,
+  DedupEngineOptions,
+} from './signal-router/DedupEngine';
+export { CorrelationEngine } from './signal-router/CorrelationEngine';
+export type {
+  CorrelationGroup,
+  CorrelationEngineOptions,
+} from './signal-router/CorrelationEngine';
+export { ConfidenceScorer } from './signal-router/ConfidenceScorer';
+export type {
+  ConfidenceInput,
+  ConfidenceScorerOptions,
+} from './signal-router/ConfidenceScorer';
+export { ContextBuilder } from './signal-router/ContextBuilder';
+export type {
+  BuiltContext,
+  SourceLocation,
+  ContextBuilderDeps,
+} from './signal-router/ContextBuilder';
+export { DispatchEngine } from './signal-router/DispatchEngine';
+export type {
+  DispatchChannel,
+  DispatchedSignal,
+  DispatchOutput,
+  DispatchEngineOptions,
+} from './signal-router/DispatchEngine';
+export { FeedbackTracker } from './signal-router/FeedbackTracker';
+export type {
+  FeedbackRating,
+  FeedbackEntry,
+  FeedbackStore,
+  FeedbackTrackerOptions,
+} from './signal-router/FeedbackTracker';
+export { PatternLibrary } from './signal-router/PatternLibrary';
+export type { Pattern, PatternMatch } from './signal-router/PatternLibrary';
 export type {
   CustomEventCollectorDeps,
   CustomEventData,
