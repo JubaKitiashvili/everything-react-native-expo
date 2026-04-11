@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-12
-**Current Phase:** Phase 1c (SDK advanced collectors + SignalRouter done; codegen/babel/CLI pending)
-**Active Task:** Phase 1c Task 35 — Schema Codegen (next session)
-**Overall Progress:** 34/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 9/12)
+**Current Phase:** Phase 1c complete — Phase 2a unblocked
+**Active Task:** Phase 2a Task 38 — Native Core (next session)
+**Overall Progress:** 37/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅)
 
 ---
 
@@ -15,8 +15,8 @@
 |-------|----------|--------|-------------|
 | 1a Foundation | 14/14 | ✅ Done | crashes + network in terminal |
 | 1b Intelligence | 11/11 | ✅ Done | real-time dashboard |
-| 1c AI Integration | 9/12 | 🔄 In progress | AI fix suggestions |
-| 2a Native Core | 0/7 | 🔒 Blocked by 1c | native crash/ANR monitoring |
+| 1c AI Integration | 12/12 | ✅ Done | AI fix suggestions |
+| 2a Native Core | 0/7 | ⬜ Ready | native crash/ANR monitoring |
 | 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
 | 3 Backend | 0/9 | 🔒 Blocked by 2a | production backend |
 | 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
@@ -110,6 +110,9 @@ After each task, verify all existing components still work together.
 | A11yCollector | ✅ | 2026-04-12 | 6 tests, missing label / small target / missing role / image alt |
 | StorageCollector | ✅ | 2026-04-12 | 5 tests, AsyncStorage monkey-patch with clean unpatch, warnings |
 | SignalRouter (composite) | ✅ | 2026-04-12 | 25 tests across 7 sub-components + integration; DedupEngine, CorrelationEngine, ConfidenceScorer, ContextBuilder, DispatchEngine, FeedbackTracker, PatternLibrary (20 built-in patterns) |
+| Schema Codegen | ✅ | 2026-04-12 | 12 tests, ts-morph → Swift + Kotlin, deterministic + idempotent, ran against canonical src/types/events.ts (12 interfaces) |
+| Babel auto-instrumentation plugin | ✅ | 2026-04-12 | 18 tests, displayName injection, Pressable/Touchable onMonitorTouch, Suspense marker, include/exclude, @erne-monitor-ignore pragma |
+| `npx @erne/monitor init` CLI wizard | ✅ | 2026-04-12 | 14 tests, detectProject + renderMonitorConfig + patchAppEntry + patchBabelConfig + runInit pipeline, dry-run + idempotent, VFS-injectable for tests |
 
 ---
 
@@ -124,7 +127,7 @@ Track coverage of the design spec. Updated at end of each phase.
 | §3 SDK Architecture | Phase 1a-1c | 🔄 Phase 1a complete (MonitorClient, Config, PlatformBridge, SessionManager, SignalBus, collectors) |
 | §4 SignalRouter | Phase 1c | ✅ Composite built: Dedup + Correlate + Score + Context + Dispatch + Feedback + 20-pattern library |
 | §5 Data Pipeline | Phase 1a-1b, 3 | 🔄 EventStore + SignalBus + Sanitizer + Enricher shipped; full pipeline routing lands in 1b |
-| §6 Schema Codegen | Phase 1c | ⬜ Not started |
+| §6 Schema Codegen | Phase 1c | ✅ ts-morph-based Swift + Kotlin generators in scripts/codegen/, bound to src/types/events.ts, runs via `npm run codegen` |
 | §7 Performance Budget | Every task | 🔄 Bundle size not yet measured — deferred to Phase 1a integration pass with Expo demo |
 | §8 Developer Experience | Phase 1c | 🔄 defineMonitorConfig + MonitorProvider shipped; zero-config CLI wizard lands in 1c |
 | §9 Dashboard | Phase 1b | ✅ TerminalReporter + DashboardBridge + /runtime.html tab; live-verified WS stream from gpc-expo → dashboard |
@@ -145,6 +148,7 @@ Track coverage of the design spec. Updated at end of each phase.
 | 2026-04-12 | 3 | 1b | Tasks 15–23 | Phase 1b SDK — BreadcrumbCollector (ring buffer + crash trail attach), RenderCollector (Profiler aggregation, unnecessary detection), FrameDropCollector (rAF sustained drop), StartupCollector (cold/warm/hot milestones), MemoryCollector (periodic polling, pause on bg), LongTaskCollector (PerformanceObserver + rAF fallback), Fingerprinter (djb2 stack hash for dedup), AdaptiveSampler (deterministic per-session + battery/CPU degradation), ConsentGate (per-category buffer/flush/revoke + persistence). 218 tests across 25 suites. |
 | 2026-04-12 | 4 | 1b complete | Tasks 24 + 25 + live integration | gpc-expo (Expo SDK 55 / RN 0.83 / React 19) live-wired via build pipeline (tsconfig.build.json, dist/). Found + fixed: NetworkCollector blob/arraybuffer responseType crash (+5 tests), TerminalReporter triggering LogBox overlays (switched to console.log only, +1 test), BreadcrumbCollector pipeline ordering so stored crash copies carry the trail. Phase 1b wiring rewritten in createMonitorRuntime: 10 collectors + Fingerprinter + AdaptiveSampler + ConsentGate + stats counters + `__ERNE_MONITOR__` global. DashboardBridge (Task 24) — WebSocket client with hello/event protocol, exponential backoff reconnect, bounded offline buffer, 6 tests. Dashboard server.js — `monitor:hello` / `monitor:event` WS routes, in-memory 500-slot ring buffer, `/api/monitor/{summary,events}` REST endpoints, broadcast to all connected clients. Runtime tab (Task 25) — `/runtime.html` with health grid (crashes/network/nav/custom/renders), live signal feed, client panel, WS push + 10s REST poll fallback. End-to-end live-verified on iPhone 17 Pro: 23+ events streaming, real PerformanceObserver long-task detection at 51/52/72/133ms, real GPC backend traffic, test crash with stable fingerprint `76hp6x` visible in dashboard. 235 tests across 26 suites, tsc clean. |
 | 2026-04-12 | 5 | 1c (tasks 26-34) | 8 advanced collectors + SignalRouter composite | Phase 1c SDK core — 8 new collectors (TouchBoundary, Frustration, State, Suspense, Activity, Image, A11y, Storage) with full DI and ts-jest coverage. SignalRouter built as 7-file composite: DedupEngine (fingerprint-windowed merge), CorrelationEngine (time-window grouping with confidence), ConfidenceScorer (0-100 weighted by correlation/recurrence/pattern), ContextBuilder (breadcrumbs + summary + screen + source location), DispatchEngine (score-based channel routing with per-channel rate limits), FeedbackTracker (applied/helpful ratings), PatternLibrary (20 built-in RN patterns: Cannot-read-property, unhandled rejection, 5xx, oversized image, missing a11y label, rage tap, wasted Activity render, slow Suspense fallback, re-render storm, long JS task, memory pressure, AsyncStorage pressure, etc.). Router exposes `process(event)` single-entry pipeline with stats tracking. 305 tests across 35 suites. Tasks 35-37 (Schema codegen, Babel auto-instrumentation, init wizard) deferred to next session as separate tooling domains. |
+| 2026-04-12 | 6 | 1c complete | Tasks 35, 36, 37 | Phase 1c completion — **Schema codegen** (Task 35): ts-morph-driven parser + Swift/Kotlin emitters in `scripts/codegen/`, canonical types in `src/types/events.ts` (12 interfaces), `npm run codegen` produces `ios/generated/ErneMonitorSchema.swift` and `android/generated/ErneMonitorSchema.kt`. Handles primitives, optionals, arrays, nested refs, X\|null, string-literal unions (as enums), Record<string, X>, and string\|number\|boolean unions (JsonPrimitive). 12 tests. **Babel auto-instrumentation plugin** (Task 36): `babel-plugin/index.ts` + visitors for displayName injection on PascalCase arrow components, `onMonitorTouch` prop injection on Pressable/TouchableOpacity/TouchableHighlight/TouchableWithoutFeedback, and `data-erne-suspense-id` marker on `<Suspense>`. Include/exclude globs, `@erne-monitor-ignore` pragma (walks up to statement-level comments), idempotent. 18 tests via `@babel/core` + preset-react + preset-typescript. **CLI init wizard** (Task 37): `cli/{detect-project, scaffold-config, scaffold-provider, scaffold-babel, init, bin}.ts`. Detects Expo Router / React Navigation / TS / package manager / state mgmt / existing monitor dep. Renders monitor.config.{ts,js}, patches app entry to wrap `<MonitorProvider>`, patches babel.config.* to add the plugin. VFS-injected for tests, `--dry-run` support, fully idempotent, prints post-init summary. 14 tests. Total 349 tests across 38 suites. Phase 1c 12/12 complete; Phase 2a (native core) unblocked. |
 
 ---
 
