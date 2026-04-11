@@ -457,6 +457,67 @@ const handleEvent = (event) => {
 
 let wss;
 
+// ============================================================================
+// @erne/monitor runtime feed — Phase 1b Task 24-25
+// ============================================================================
+// In-memory ring buffer of monitor events streamed from live apps via
+// DashboardBridge (WebSocket). Capped at MONITOR_BUFFER_SIZE — oldest
+// entries are evicted when full. Crashes and other critical events are
+// not evicted until the buffer wraps around them.
+const MONITOR_BUFFER_SIZE = 500;
+const monitorBuffer = [];
+const monitorClients = new Map(); // clientId -> { firstSeen, lastSeen, eventCount }
+
+function recordMonitorEvent(clientId, event) {
+  if (monitorBuffer.length >= MONITOR_BUFFER_SIZE) {
+    monitorBuffer.shift();
+  }
+  const entry = {
+    clientId,
+    receivedAt: Date.now(),
+    event,
+  };
+  monitorBuffer.push(entry);
+
+  const now = Date.now();
+  const info = monitorClients.get(clientId) || {
+    firstSeen: now,
+    lastSeen: now,
+    eventCount: 0,
+  };
+  info.lastSeen = now;
+  info.eventCount += 1;
+  monitorClients.set(clientId, info);
+  return entry;
+}
+
+function broadcastMonitorEntry(entry) {
+  if (!wss) return;
+  const payload = JSON.stringify({ type: 'monitor:live', entry });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) client.send(payload);
+  }
+}
+
+function monitorSummary() {
+  const typeCounts = {};
+  let crashCount = 0;
+  for (const { event } of monitorBuffer) {
+    typeCounts[event.type] = (typeCounts[event.type] || 0) + 1;
+    if (event.type === 'crash') crashCount += 1;
+  }
+  return {
+    bufferedEvents: monitorBuffer.length,
+    bufferCapacity: MONITOR_BUFFER_SIZE,
+    clients: Array.from(monitorClients.entries()).map(([id, info]) => ({
+      clientId: id,
+      ...info,
+    })),
+    typeCounts,
+    crashCount,
+  };
+}
+
 const broadcastState = () => {
   if (!wss) return;
   const data = JSON.stringify({ type: 'state', agents: agentState });
@@ -1274,6 +1335,24 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // @erne/monitor HTTP API (read-only; events ingest happens via WebSocket)
+  const monitorPath = req.url ? req.url.split('?')[0] : '';
+  if (monitorPath === '/api/monitor/summary' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(monitorSummary()));
+    return;
+  }
+  if (monitorPath === '/api/monitor/events' && req.method === 'GET') {
+    const limit = Math.min(
+      parseInt(new URL(req.url, 'http://x').searchParams.get('limit') || '200', 10),
+      MONITOR_BUFFER_SIZE,
+    );
+    const slice = monitorBuffer.slice(-limit);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ events: slice, summary: monitorSummary() }));
+    return;
+  }
+
   serveStatic(req, res);
 });
 
@@ -1318,6 +1397,26 @@ wss.on('connection', (ws) => {
 
     // Validate event shape before processing
     if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
+
+    // @erne/monitor runtime feed — bypass the agent-events whitelist and
+    // route into the monitor buffer instead.
+    if (data.type === 'monitor:hello') {
+      if (typeof data.clientId === 'string') {
+        monitorClients.set(data.clientId, {
+          firstSeen: Date.now(),
+          lastSeen: Date.now(),
+          eventCount: 0,
+        });
+      }
+      return;
+    }
+    if (data.type === 'monitor:event') {
+      if (!data.clientId || !data.event || typeof data.event !== 'object') return;
+      const entry = recordMonitorEvent(data.clientId, data.event);
+      broadcastMonitorEntry(entry);
+      return;
+    }
+
     const VALID_TYPES = [
       'agent:start',
       'agent:complete',

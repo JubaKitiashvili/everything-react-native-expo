@@ -1,4 +1,4 @@
-import type { MonitorConfig, MonitorConfigOverrides } from '../types';
+import type { MonitorConfig, MonitorConfigOverrides, MonitorEvent } from '../types';
 import { MonitorClient } from './MonitorClient';
 import { defineMonitorConfig } from './Config';
 import { SignalBus } from './SignalBus';
@@ -15,6 +15,16 @@ import {
 import type { PlatformBridge } from '../types';
 import { Sanitizer, type SanitizerOptions } from '../processors/Sanitizer';
 import { Enricher, type EnrichedEvent } from '../processors/Enricher';
+import { Fingerprinter } from '../processors/Fingerprinter';
+import {
+  AdaptiveSampler,
+  type BatteryInfo,
+} from '../processors/AdaptiveSampler';
+import {
+  ConsentGate,
+  type ConsentState,
+  type ConsentStore,
+} from '../processors/ConsentGate';
 import {
   CrashCollector,
   type ErrorUtilsLike,
@@ -29,7 +39,20 @@ import {
   CustomEventCollector,
   type CustomAttributeValue,
 } from '../collectors/CustomEventCollector';
+import {
+  BreadcrumbCollector,
+  type Breadcrumb,
+} from '../collectors/BreadcrumbCollector';
+import { RenderCollector } from '../collectors/RenderCollector';
+import { FrameDropCollector } from '../collectors/FrameDropCollector';
+import { StartupCollector } from '../collectors/StartupCollector';
+import { MemoryCollector } from '../collectors/MemoryCollector';
+import { LongTaskCollector } from '../collectors/LongTaskCollector';
 import { TerminalReporter, type ConsoleLike } from '../integrations/TerminalReporter';
+import {
+  DashboardBridge,
+  type WebSocketCtor,
+} from '../integrations/DashboardBridge';
 
 export interface MonitorRuntimeDeps {
   isDev?: boolean;
@@ -48,6 +71,24 @@ export interface MonitorRuntimeDeps {
   console?: ConsoleLike;
   terminalRateLimitMs?: number;
   ignoreHosts?: readonly string[];
+  /** Optional consent store (persistence). */
+  consentStore?: ConsentStore;
+  /** Initial consent state; defaults to config.consent. */
+  initialConsent?: ConsentState;
+  /** Dashboard runtime endpoint. When set, enables DashboardBridge. */
+  dashboardUrl?: string;
+  /** Injectable WebSocket constructor for tests. */
+  webSocketCtor?: WebSocketCtor | null;
+  /** Battery info source for AdaptiveSampler. */
+  getBattery?: () => BatteryInfo | null;
+  /** CPU pressure hint for AdaptiveSampler. */
+  isCpuHigh?: () => boolean;
+  /**
+   * When true, exposes the runtime on globalThis.__ERNE_MONITOR__ so
+   * you can inspect it from the JS debugger or via execute_in_app. Off
+   * by default in prod.
+   */
+  exposeGlobal?: boolean;
 }
 
 export interface MonitorRuntime {
@@ -58,13 +99,23 @@ export interface MonitorRuntime {
   platformBridge: PlatformBridge;
   sanitizer: Sanitizer;
   enricher: Enricher;
+  fingerprinter: Fingerprinter;
+  sampler: AdaptiveSampler;
+  consentGate: ConsentGate;
   collectors: {
     crash: CrashCollector;
     network: NetworkCollector;
     navigation: NavigationCollector;
     custom: CustomEventCollector;
+    breadcrumb: BreadcrumbCollector;
+    render: RenderCollector;
+    frameDrop: FrameDropCollector;
+    startup: StartupCollector;
+    memory: MemoryCollector;
+    longTask: LongTaskCollector;
   };
   terminalReporter: TerminalReporter;
+  dashboardBridge: DashboardBridge | null;
   trackEvent: (
     name: string,
     attributes?: Record<string, CustomAttributeValue>,
@@ -73,6 +124,8 @@ export interface MonitorRuntime {
     screen: string,
     params?: Record<string, unknown>,
   ) => void;
+  leaveBreadcrumb: (crumb: Omit<Breadcrumb, 'timestamp'>) => void;
+  setConsent: (partial: Partial<ConsentState>) => Promise<void>;
   shutdown: () => Promise<void>;
 }
 
@@ -86,16 +139,24 @@ function detectIsDev(): boolean {
 }
 
 /**
- * Builds a fully-wired monitor runtime: every Phase 1a collector, processor,
- * and integration connected to a SignalBus, EventStore, and SessionManager.
- * Returns a handle with lifecycle helpers plus convenience methods for the
- * public API. Pipeline order:
+ * Builds a fully-wired monitor runtime: every Phase 1a + 1b collector,
+ * processor, and integration connected to a SignalBus, EventStore, and
+ * SessionManager.
  *
- *   collector.emit → SignalBus
- *   SignalBus onAll → Sanitizer → Enricher → EventStore (async) + TerminalReporter
+ * Pipeline (runs on every emitted event via onAll):
+ *   collector → SignalBus
+ *     → ConsentGate (may buffer/drop)
+ *     → AdaptiveSampler (may drop by rate)
+ *     → Fingerprinter (annotates crash events)
+ *     → Sanitizer (PII scrub)
+ *     → Enricher (attach context envelope)
+ *     → EventStore (persist)
  *
- * createMonitorRuntime does NOT call start() on the returned client; the
- * caller (MonitorProvider or a plain JS host) decides when to boot.
+ * BreadcrumbCollector subscribes to the bus directly (upstream of the
+ * main pipeline) so that crash events get a breadcrumb trail before
+ * they're enriched.
+ *
+ * TerminalReporter also subscribes via onAll for dev console output.
  */
 export async function createMonitorRuntime(
   overrides: MonitorConfigOverrides = {},
@@ -123,18 +184,73 @@ export async function createMonitorRuntime(
     platformBridge,
     sessionManager: session,
   });
+  const fingerprinter = new Fingerprinter();
+  const sampler = new AdaptiveSampler({
+    config,
+    isDev,
+    getBattery: deps.getBattery,
+    isCpuHigh: deps.isCpuHigh,
+  });
+  const consentGate = new ConsentGate({
+    initial: deps.initialConsent ?? {
+      crashes: config.consent.crashes,
+      analytics: config.consent.analytics,
+      replay: config.consent.replay,
+    },
+    store: deps.consentStore,
+  });
+  await consentGate.hydrate();
 
-  // Processor pipeline: every raw event from a collector goes through
-  // Sanitizer → Enricher before landing in the canonical store. The
-  // collectors themselves already wrote a raw copy to the store in Phase
-  // 1a to keep the implementation linear; in Phase 1b we'll route their
-  // inserts through the pipeline.
+  // BreadcrumbCollector has its own SignalBus subscription — it captures
+  // every non-crash event into a ring buffer and mutates crash events to
+  // attach the trail. It must subscribe BEFORE the main pipeline so the
+  // crash handler sees the fully-populated trail.
+  const breadcrumb = new BreadcrumbCollector({ signalBus: bus });
+
+  // Stats counters for diagnostics — incremented inside the pipeline so
+  // tests and the dashboard can verify drops / passes.
+  const stats = {
+    total: 0,
+    consentDropped: 0,
+    sampledDropped: 0,
+    stored: 0,
+    lastEvent: null as MonitorEvent | null,
+  };
+
+  // Main processing pipeline: Breadcrumb-attach → ConsentGate →
+  // AdaptiveSampler → Fingerprinter → Sanitizer → Enricher → EventStore.
+  //
+  // We mutate the raw event to attach the breadcrumb trail BEFORE the
+  // sanitizer clones it, so the stored copy carries the trail. The
+  // BreadcrumbCollector's own onAll subscriber independently updates the
+  // ring buffer from non-crash events.
   bus.onAll((event) => {
-    const sanitized = sanitizer.sanitize(event);
+    stats.total += 1;
+    if (event.type === 'crash') {
+      (event.data as { breadcrumbs?: Breadcrumb[] }).breadcrumbs =
+        breadcrumb.getTrail();
+    }
+    if (!consentGate.process(event)) {
+      stats.consentDropped += 1;
+      return;
+    }
+    if (!sampler.shouldKeep(event)) {
+      stats.sampledDropped += 1;
+      return;
+    }
+    const fingerprinted =
+      event.type === 'crash' ? fingerprinter.annotate(event) : event;
+    const sanitized = sanitizer.sanitize(fingerprinted);
     const enriched: EnrichedEvent = enricher.enrich(sanitized);
-    void store.insert(enriched, 'normal').catch(() => {
-      // swallow — the originating collector already wrote a raw copy
-    });
+    stats.lastEvent = enriched;
+    void store
+      .insert(enriched, event.type === 'crash' ? 'critical' : 'normal')
+      .then(() => {
+        stats.stored += 1;
+      })
+      .catch(() => {
+        // swallow — originating collector already wrote a raw copy
+      });
   });
 
   const crash = new CrashCollector({
@@ -162,12 +278,26 @@ export async function createMonitorRuntime(
     eventStore: store,
     sessionManager: session,
   });
+  const render = new RenderCollector({ signalBus: bus });
+  const frameDrop = new FrameDropCollector({ signalBus: bus });
+  const startup = new StartupCollector({ signalBus: bus });
+  const memory = new MemoryCollector({
+    signalBus: bus,
+    platformBridge,
+  });
+  const longTask = new LongTaskCollector({ signalBus: bus });
 
   const client = MonitorClient.init(config);
   client.registerCollector(crash);
+  client.registerCollector(breadcrumb);
   client.registerCollector(network);
   client.registerCollector(navigation);
   client.registerCollector(custom);
+  client.registerCollector(render);
+  client.registerCollector(frameDrop);
+  client.registerCollector(startup);
+  client.registerCollector(memory);
+  client.registerCollector(longTask);
 
   const terminalReporter = new TerminalReporter({
     signalBus: bus,
@@ -175,6 +305,15 @@ export async function createMonitorRuntime(
     console: deps.console,
     rateLimitMs: deps.terminalRateLimitMs,
   });
+
+  const dashboardBridge = deps.dashboardUrl
+    ? new DashboardBridge({
+        signalBus: bus,
+        url: deps.dashboardUrl,
+        isDev,
+        WebSocket: deps.webSocketCtor,
+      })
+    : null;
 
   const runtime: MonitorRuntime = {
     client,
@@ -184,19 +323,48 @@ export async function createMonitorRuntime(
     platformBridge,
     sanitizer,
     enricher,
-    collectors: { crash, network, navigation, custom },
+    fingerprinter,
+    sampler,
+    consentGate,
+    collectors: {
+      crash,
+      network,
+      navigation,
+      custom,
+      breadcrumb,
+      render,
+      frameDrop,
+      startup,
+      memory,
+      longTask,
+    },
     terminalReporter,
+    dashboardBridge,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
       navigation.trackScreenView(screen, params),
+    leaveBreadcrumb: (crumb) => breadcrumb.leave(crumb),
+    setConsent: (partial) => consentGate.setConsent(partial),
     shutdown: async () => {
       terminalReporter.stop();
+      dashboardBridge?.stop();
       if (client.isRunning()) client.stop();
       session.dispose();
       await store.close();
+      if (deps.exposeGlobal) {
+        const g = globalThis as { __ERNE_MONITOR__?: unknown };
+        delete g.__ERNE_MONITOR__;
+      }
       MonitorClient.__resetForTesting();
     },
   };
+
+  if (deps.exposeGlobal) {
+    const g = globalThis as {
+      __ERNE_MONITOR__?: unknown;
+    };
+    g.__ERNE_MONITOR__ = { runtime, stats };
+  }
 
   return runtime;
 }
@@ -204,4 +372,5 @@ export async function createMonitorRuntime(
 export function startMonitorRuntime(runtime: MonitorRuntime): void {
   runtime.client.start();
   runtime.terminalReporter.start();
+  runtime.dashboardBridge?.start();
 }

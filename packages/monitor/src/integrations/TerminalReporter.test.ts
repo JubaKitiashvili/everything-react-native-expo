@@ -31,7 +31,7 @@ describe('TerminalReporter', () => {
     const r = new TerminalReporter({ signalBus: bus, isDev: false, console: console_ });
     r.start();
     bus.emit(evt('crash', { kind: 'exception', message: 'b', stack: null, componentStack: null, isFatal: true }));
-    expect(console_.errors).toHaveLength(0);
+    expect(console_.logs).toHaveLength(0);
     expect(r.isRunning()).toBe(false);
   });
 
@@ -49,9 +49,9 @@ describe('TerminalReporter', () => {
         isFatal: true,
       }),
     );
-    expect(console_.errors).toHaveLength(1);
-    expect(console_.errors[0]).toContain('CRASH');
-    expect(console_.errors[0]).toContain('boom');
+    expect(console_.logs).toHaveLength(1);
+    expect(console_.logs[0]).toContain('CRASH');
+    expect(console_.logs[0]).toContain('boom');
   });
 
   it('renders unhandled rejections with the rejection label', () => {
@@ -68,7 +68,7 @@ describe('TerminalReporter', () => {
         isFatal: false,
       }),
     );
-    expect(console_.errors[0]).toContain('(rejection)');
+    expect(console_.logs[0]).toContain('(rejection)');
   });
 
   it('warns only on network errors or 5xx responses', () => {
@@ -87,7 +87,7 @@ describe('TerminalReporter', () => {
         transport: 'fetch',
       }),
     );
-    expect(console_.warns).toHaveLength(0);
+    expect(console_.logs).toHaveLength(0);
     bus.emit(
       evt('network', {
         url: 'https://api/y',
@@ -99,8 +99,8 @@ describe('TerminalReporter', () => {
         transport: 'fetch',
       }),
     );
-    expect(console_.warns).toHaveLength(1);
-    expect(console_.warns[0]).toContain('503');
+    expect(console_.logs).toHaveLength(1);
+    expect(console_.logs[0]).toContain('503');
   });
 
   it('rate-limits repeated events of the same type', () => {
@@ -127,7 +127,7 @@ describe('TerminalReporter', () => {
       );
       t += 1000; // less than rate limit window
     }
-    expect(console_.errors).toHaveLength(1);
+    expect(console_.logs).toHaveLength(1);
     // Advance past the window
     t += 5001;
     bus.emit(
@@ -139,7 +139,7 @@ describe('TerminalReporter', () => {
         isFatal: false,
       }),
     );
-    expect(console_.errors).toHaveLength(2);
+    expect(console_.logs).toHaveLength(2);
   });
 
   it('different event types are rate-limited independently', () => {
@@ -170,8 +170,45 @@ describe('TerminalReporter', () => {
         durationMs: 0,
       }),
     );
-    expect(console_.errors).toHaveLength(1);
-    expect(console_.logs).toHaveLength(1);
+    // Both crash and navigation emit, independently rate-limited.
+    expect(console_.logs).toHaveLength(2);
+    const severities = console_.logs.map((line) => {
+      if (line.includes('🔴')) return 'crash';
+      if (line.includes('🟡')) return 'warn';
+      if (line.includes('🟢')) return 'info';
+      return 'other';
+    });
+    expect(severities).toContain('crash');
+    expect(severities).toContain('info');
+  });
+
+  it('never calls console.error or console.warn (would trigger LogBox)', () => {
+    const bus = new SignalBus();
+    const console_ = fakeConsole();
+    const r = new TerminalReporter({ signalBus: bus, isDev: true, console: console_ });
+    r.start();
+    bus.emit(
+      evt('crash', {
+        kind: 'exception',
+        message: 'boom',
+        stack: null,
+        componentStack: null,
+        isFatal: true,
+      }),
+    );
+    bus.emit(
+      evt('network', {
+        url: 'https://api/down',
+        method: 'GET',
+        statusCode: 503,
+        durationMs: 0,
+        requestSize: 0,
+        responseSize: 0,
+        transport: 'fetch',
+      }),
+    );
+    expect(console_.errors).toHaveLength(0);
+    expect(console_.warns).toHaveLength(0);
   });
 
   it('stop() detaches from the bus', () => {
@@ -194,7 +231,7 @@ describe('TerminalReporter', () => {
         isFatal: false,
       }),
     );
-    expect(console_.errors).toHaveLength(0);
+    expect(console_.logs).toHaveLength(0);
   });
 
   it('swallows console errors gracefully', () => {

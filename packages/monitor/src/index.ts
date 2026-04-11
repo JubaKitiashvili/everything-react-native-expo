@@ -53,6 +53,12 @@ export type {
   TerminalReporterOptions,
   ConsoleLike,
 } from './integrations/TerminalReporter';
+export { DashboardBridge } from './integrations/DashboardBridge';
+export type {
+  DashboardBridgeOptions,
+  WebSocketCtor,
+  WebSocketLike,
+} from './integrations/DashboardBridge';
 export { CrashCollector } from './collectors/CrashCollector';
 export { NetworkCollector } from './collectors/NetworkCollector';
 export { NavigationCollector } from './collectors/NavigationCollector';

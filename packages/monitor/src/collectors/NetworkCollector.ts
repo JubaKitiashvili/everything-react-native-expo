@@ -233,10 +233,7 @@ export class NetworkCollector implements Collector {
             statusCode: this.status || null,
             durationMs: collector.now() - this.__monitorStart,
             requestSize: this.__monitorReqSize,
-            responseSize:
-              typeof this.responseText === 'string'
-                ? this.responseText.length
-                : null,
+            responseSize: collector.safeResponseSize(this),
             transport: 'xhr',
             errorMessage: this.status === 0 ? 'network error' : undefined,
           });
@@ -246,6 +243,43 @@ export class NetworkCollector implements Collector {
     }
 
     this.target.XMLHttpRequest = PatchedXHR as typeof XMLHttpRequest;
+  }
+
+  /**
+   * Reads a response body size without assuming the response type. Touching
+   * `xhr.responseText` when responseType is 'blob' / 'arraybuffer' / 'json'
+   * throws InvalidStateError, so we probe defensively.
+   */
+  safeResponseSize(xhr: XMLHttpRequest): number | null {
+    try {
+      const contentLength = Number(
+        xhr.getResponseHeader?.('content-length') ?? '',
+      );
+      if (Number.isFinite(contentLength) && contentLength > 0) {
+        return contentLength;
+      }
+    } catch {
+      // ignore — headers may not be readable
+    }
+    try {
+      const type = xhr.responseType;
+      if (type === '' || type === 'text') {
+        const text = xhr.responseText;
+        return typeof text === 'string' ? text.length : null;
+      }
+      if (type === 'arraybuffer') {
+        const buf = xhr.response as ArrayBuffer | null;
+        return buf?.byteLength ?? null;
+      }
+      if (type === 'blob') {
+        const blob = xhr.response as Blob | null;
+        return blob?.size ?? null;
+      }
+    } catch {
+      // Hermes / RN can throw on responseText/response access in some
+      // states; treat as "unknown size".
+    }
+    return null;
   }
 
   private record(data: NetworkEventData): void {

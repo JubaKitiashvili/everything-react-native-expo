@@ -135,14 +135,14 @@ export class TerminalReporter {
 
     const color = colorFor(formatted.severity);
     const line = `${formatted.icon} ${color}[monitor]${ANSI.reset} ${formatted.headline}`;
+    // IMPORTANT: always use console.log — console.warn / console.error
+    // trigger the RN LogBox yellow/red screen overlay, which would make a
+    // monitoring SDK loudly interrupt the very app it is observing. ANSI
+    // color codes still render in Metro's terminal (the actual target
+    // audience), and the severity icon (🔴 🟡 🟢) preserves the signal
+    // for devs scrolling the RN DevTools console panel.
     try {
-      if (formatted.severity === 'crash') {
-        this.console.error(line);
-      } else if (formatted.severity === 'warn') {
-        this.console.warn(line);
-      } else {
-        this.console.log(line);
-      }
+      this.console.log(line);
     } catch {
       // never let a broken console break the bus
     }

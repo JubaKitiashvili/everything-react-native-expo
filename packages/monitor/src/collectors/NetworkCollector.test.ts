@@ -150,6 +150,77 @@ describe('NetworkCollector', () => {
     });
   });
 
+  describe('safeResponseSize', () => {
+    function makeCollector() {
+      const bus = new SignalBus();
+      const store = new EventStore({ backend: new MemoryEventStoreBackend() });
+      const session = new SessionManager({ random: () => 0.1 });
+      return new NetworkCollector({
+        signalBus: bus,
+        eventStore: store,
+        sessionManager: session,
+        target: {},
+      });
+    }
+
+    it('prefers content-length header when present', () => {
+      const c = makeCollector();
+      const xhr = {
+        responseType: '',
+        getResponseHeader: (name: string) =>
+          name.toLowerCase() === 'content-length' ? '2048' : null,
+      } as unknown as XMLHttpRequest;
+      expect(c.safeResponseSize(xhr)).toBe(2048);
+    });
+
+    it("returns responseText length for text responseType", () => {
+      const c = makeCollector();
+      const xhr = {
+        responseType: 'text',
+        responseText: 'hello',
+        getResponseHeader: () => null,
+      } as unknown as XMLHttpRequest;
+      expect(c.safeResponseSize(xhr)).toBe(5);
+    });
+
+    it('uses response.byteLength for arraybuffer', () => {
+      const c = makeCollector();
+      const buf = new ArrayBuffer(123);
+      const xhr = {
+        responseType: 'arraybuffer',
+        response: buf,
+        getResponseHeader: () => null,
+      } as unknown as XMLHttpRequest;
+      expect(c.safeResponseSize(xhr)).toBe(123);
+    });
+
+    it('uses blob.size for blob without touching responseText', () => {
+      const c = makeCollector();
+      const blob = { size: 456 } as Blob;
+      const xhr = {
+        responseType: 'blob',
+        response: blob,
+        get responseText(): string {
+          throw new Error(
+            "The 'responseText' property is only available if 'responseType' is set to '' or 'text', but it is 'blob'.",
+          );
+        },
+        getResponseHeader: () => null,
+      } as unknown as XMLHttpRequest;
+      expect(() => c.safeResponseSize(xhr)).not.toThrow();
+      expect(c.safeResponseSize(xhr)).toBe(456);
+    });
+
+    it("returns null for 'json' responseType when no content-length", () => {
+      const c = makeCollector();
+      const xhr = {
+        responseType: 'json',
+        getResponseHeader: () => null,
+      } as unknown as XMLHttpRequest;
+      expect(c.safeResponseSize(xhr)).toBeNull();
+    });
+  });
+
   describe('lifecycle', () => {
     it('restores the original fetch on stop', async () => {
       const original: FetchFn = jest.fn(async () =>

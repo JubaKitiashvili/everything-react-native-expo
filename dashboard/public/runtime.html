@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ERNE · Runtime Monitor</title>
+    <style>
+      :root {
+        --bg: #0b0e14;
+        --panel: #131822;
+        --panel-hi: #1b2230;
+        --border: #232b3b;
+        --text: #e4ebf5;
+        --muted: #7b8599;
+        --accent: #5aa4ff;
+        --crash: #ff5a5a;
+        --warn: #ffb347;
+        --ok: #59d68a;
+        --info: #a890ff;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-monospace, 'SFMono-Regular', 'Cascadia Mono',
+          'Roboto Mono', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      header h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      header .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+      .dot.ok { background: var(--ok); }
+      .dot.warn { background: var(--warn); }
+      .dot.down { background: var(--crash); }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 16px;
+        padding: 16px 24px;
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+      section.panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      section.panel h2 {
+        margin: 0;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--border);
+      }
+      .tile {
+        background: var(--panel-hi);
+        padding: 14px 16px;
+      }
+      .tile .label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .tile .value {
+        font-size: 22px;
+        font-weight: 600;
+        margin-top: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile.crash .value { color: var(--crash); }
+      .tile.warn .value { color: var(--warn); }
+      .tile.ok .value { color: var(--ok); }
+      #events {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: calc(100vh - 260px);
+        overflow-y: auto;
+      }
+      #events li {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: 60px 80px 1fr 80px;
+        gap: 12px;
+        align-items: baseline;
+      }
+      #events li:hover { background: var(--panel-hi); }
+      .ev-icon { font-size: 14px; text-align: center; }
+      .ev-type {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .ev-msg {
+        font-size: 13px;
+        color: var(--text);
+        word-break: break-all;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ev-ts {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .ev-crash .ev-icon { color: var(--crash); }
+      .ev-network .ev-icon { color: var(--info); }
+      .ev-navigation .ev-icon { color: var(--ok); }
+      .ev-custom .ev-icon { color: var(--accent); }
+      .ev-render .ev-icon { color: var(--warn); }
+      aside .client-entry {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+      }
+      aside .client-entry code {
+        color: var(--accent);
+        font-size: 11px;
+      }
+      aside .client-meta {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 4px;
+      }
+      .empty {
+        padding: 40px 16px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .footer {
+        padding: 8px 16px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+      }
+      button.clear {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        padding: 4px 10px;
+        border-radius: 4px;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      button.clear:hover { color: var(--text); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>ERNE · Runtime Monitor</h1>
+      <div class="status">
+        <span class="dot" id="ws-dot"></span>
+        <span id="ws-status">connecting…</span>
+        <button class="clear" onclick="clearView()">clear</button>
+      </div>
+    </header>
+    <main>
+      <div>
+        <section class="panel" style="margin-bottom: 16px;">
+          <h2>Health Grid</h2>
+          <div class="grid">
+            <div class="tile crash"><div class="label">Crashes</div><div class="value" id="t-crash">0</div></div>
+            <div class="tile"><div class="label">Network</div><div class="value" id="t-net">0</div></div>
+            <div class="tile"><div class="label">Navigations</div><div class="value" id="t-nav">0</div></div>
+            <div class="tile"><div class="label">Custom</div><div class="value" id="t-custom">0</div></div>
+            <div class="tile"><div class="label">Renders</div><div class="value" id="t-render">0</div></div>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Live Signals</h2>
+          <ul id="events"><li class="empty">Waiting for events…</li></ul>
+          <div class="footer">
+            <span id="buffered">0 buffered</span>
+            <span id="capacity">/ 500 max</span>
+          </div>
+        </section>
+      </div>
+      <aside>
+        <section class="panel">
+          <h2>Clients</h2>
+          <div id="clients"><div class="empty">No clients connected</div></div>
+        </section>
+      </aside>
+    </main>
+    <script>
+      const counts = { crash: 0, network: 0, navigation: 0, custom: 0, render: 0 };
+      let buffered = 0;
+      const eventsEl = document.getElementById('events');
+      const clientsEl = document.getElementById('clients');
+      const wsDot = document.getElementById('ws-dot');
+      const wsStatus = document.getElementById('ws-status');
+
+      function iconFor(type, data) {
+        if (type === 'crash') return '🔴';
+        if (type === 'network') {
+          const s = data && data.statusCode;
+          if (!s || s >= 500 || data.errorMessage) return '🟡';
+          if (s >= 400) return '🟠';
+          return '🟢';
+        }
+        if (type === 'navigation') return '🟢';
+        if (type === 'custom') return '🔵';
+        if (type === 'render') return '⚡';
+        return '·';
+      }
+
+      function messageFor(ev) {
+        const d = ev.data || {};
+        if (ev.type === 'crash') return (d.message || 'crash') + (d.fingerprint ? ' (' + d.fingerprint + ')' : '');
+        if (ev.type === 'network') return (d.method || '?') + ' ' + (d.url || '') + ' → ' + (d.statusCode != null ? d.statusCode : 'ERR');
+        if (ev.type === 'navigation') return (d.previousScreen || '∅') + ' → ' + d.screen;
+        if (ev.type === 'custom') return (d.name || 'event') + ' ' + JSON.stringify(d.attributes || {});
+        if (ev.type === 'render') {
+          if (d.frameDrop) return 'frame drop · dropped=' + d.frameDrop.droppedFrames + ' minFps=' + Math.round(d.frameDrop.minFps);
+          return (d.componentName || '?') + ' × ' + d.renderCount + (d.isUnnecessary ? ' (unnecessary)' : '');
+        }
+        return JSON.stringify(d).slice(0, 200);
+      }
+
+      function renderEntry(entry, prepend) {
+        const ev = entry.event;
+        if (eventsEl.firstChild && eventsEl.firstChild.classList && eventsEl.firstChild.classList.contains('empty')) {
+          eventsEl.innerHTML = '';
+        }
+        counts[ev.type] = (counts[ev.type] || 0) + 1;
+        const icon = iconFor(ev.type, ev.data);
+        const msg = messageFor(ev);
+        const li = document.createElement('li');
+        li.className = 'ev-' + ev.type;
+        const ts = new Date(ev.wallTime || entry.receivedAt).toLocaleTimeString();
+        li.innerHTML =
+          '<span class="ev-icon">' + icon + '</span>' +
+          '<span class="ev-type">' + ev.type + '</span>' +
+          '<span class="ev-msg"></span>' +
+          '<span class="ev-ts">' + ts + '</span>';
+        li.querySelector('.ev-msg').textContent = msg;
+        if (prepend) {
+          eventsEl.insertBefore(li, eventsEl.firstChild);
+        } else {
+          eventsEl.appendChild(li);
+        }
+        while (eventsEl.children.length > 500) {
+          eventsEl.removeChild(eventsEl.lastChild);
+        }
+        updateTiles();
+      }
+
+      function updateTiles() {
+        document.getElementById('t-crash').textContent = counts.crash || 0;
+        document.getElementById('t-net').textContent = counts.network || 0;
+        document.getElementById('t-nav').textContent = counts.navigation || 0;
+        document.getElementById('t-custom').textContent = counts.custom || 0;
+        document.getElementById('t-render').textContent = counts.render || 0;
+        document.getElementById('buffered').textContent = buffered + ' buffered';
+      }
+
+      function renderClients(summary) {
+        if (!summary.clients || summary.clients.length === 0) {
+          clientsEl.innerHTML = '<div class="empty">No clients connected</div>';
+          return;
+        }
+        clientsEl.innerHTML = '';
+        for (const c of summary.clients) {
+          const div = document.createElement('div');
+          div.className = 'client-entry';
+          div.innerHTML =
+            '<code>' + c.clientId + '</code>' +
+            '<div class="client-meta">' + c.eventCount + ' events · last ' +
+            new Date(c.lastSeen).toLocaleTimeString() + '</div>';
+          clientsEl.appendChild(div);
+        }
+      }
+
+      function clearView() {
+        eventsEl.innerHTML = '<li class="empty">Cleared. Waiting for new events…</li>';
+        for (const k of Object.keys(counts)) counts[k] = 0;
+        updateTiles();
+      }
+
+      async function loadInitial() {
+        try {
+          const r = await fetch('/api/monitor/events?limit=100');
+          const body = await r.json();
+          buffered = body.summary.bufferedEvents;
+          for (const entry of body.events) renderEntry(entry, false);
+          renderClients(body.summary);
+        } catch (e) {
+          wsStatus.textContent = 'API error';
+        }
+      }
+
+      function connectWs() {
+        const ws = new WebSocket('ws://' + location.host);
+        ws.onopen = () => {
+          wsDot.className = 'dot ok';
+          wsStatus.textContent = 'live';
+        };
+        ws.onclose = () => {
+          wsDot.className = 'dot down';
+          wsStatus.textContent = 'disconnected — retrying…';
+          setTimeout(connectWs, 2000);
+        };
+        ws.onerror = () => {};
+        ws.onmessage = (msg) => {
+          try {
+            const data = JSON.parse(msg.data);
+            if (data.type === 'monitor:live' && data.entry) {
+              buffered += 1;
+              renderEntry(data.entry, true);
+              loadInitial(); // refresh client panel
+            }
+          } catch (e) {}
+        };
+      }
+
+      loadInitial();
+      connectWs();
+      setInterval(loadInitial, 10000);
+    </script>
+  </body>
+</html>
