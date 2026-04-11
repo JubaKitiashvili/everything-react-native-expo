@@ -229,6 +229,27 @@ export type {
   AppStateLike,
   AppStateStatus,
 } from './core/SessionManager';
+// Phase 2a — Native module bridge
+export {
+  ErneMonitorNative,
+  LazyNativeModuleLoader,
+  createDefaultNativeModuleLoader,
+  NOOP_NATIVE_SUBSCRIPTION,
+  UNKNOWN_NATIVE_METRICS,
+} from './native';
+export type {
+  ErneMonitorNativeModule,
+  NativeANRReport,
+  NativeCrashReport,
+  NativeEventMap,
+  NativeEventName,
+  NativeMetricsSnapshot,
+  NativeModuleLoader,
+  NativeMonitorState,
+  NativeSubscription,
+  NativeThermalEvent,
+  ThermalState,
+} from './native';
 export type {
   MonitorConfig,
   MonitorConfigOverrides,

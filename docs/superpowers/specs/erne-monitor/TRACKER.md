@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-12
-**Current Phase:** Phase 1c complete — Phase 2a unblocked
-**Active Task:** Phase 2a Task 38 — Native Core (next session)
-**Overall Progress:** 37/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅)
+**Current Phase:** Phase 2a — Native Core in progress
+**Active Task:** Phase 2a Task 38 — ErneMonitorModule shell (Expo Modules API)
+**Overall Progress:** 38/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 1/7)
 
 ---
 
@@ -25,12 +25,25 @@
 
 ## Active Task
 
-> **None** — ready to begin Phase 1a, Task #1: MonitorClient
+> **Phase 2a · Task 38 — ErneMonitorModule shell (Expo Modules API)**
 
 ### Pre-Start Checklist
-- [ ] Read PROTOCOLS.md
-- [ ] Review phase-1a-foundation.md
-- [ ] Verify no blockers in Blockers & Decisions section
+- [x] Read PROTOCOLS.md
+- [x] Review phase-2a-native-core.md (paths updated to root-level layout 2026-04-12)
+- [x] Verify no blockers in Blockers & Decisions section
+- [x] Spec ADR logged for native module layout
+
+## Phase 2a — Task Checklist
+
+| # | Task | Status | Files Created | Tests | Integrated |
+|---|------|--------|---------------|-------|------------|
+| 38 | ErneMonitorModule shell | ✅ | expo-module.config.json, src/native/{types,ErneMonitorNative,defaultLoader,index}.ts, src/native/ErneMonitorNative.test.ts, ios/ErneMonitorModule.swift, ios/ErneMonitor.podspec, android/build.gradle.kts, android/src/main/AndroidManifest.xml, android/src/main/java/expo/modules/ernemonitor/ErneMonitorModule.kt | ✅ (16) | ✅ |
+| 39 | Schema codegen execution (Swift + Kotlin) | ⬜ | — | — | — |
+| 40 | CrashHandler (signal-safe POSIX + JNI) | ⬜ | — | — | — |
+| 41 | ANRDetector | ⬜ | — | — | — |
+| 42 | NativeMetrics | ⬜ | — | — | — |
+| 43 | SpanSnapshot | ⬜ | — | — | — |
+| 44 | Expo Config Plugin (withErneMonitor) | ⬜ | — | — | — |
 
 ---
 
@@ -65,6 +78,7 @@ Status legend: ⬜ Not started | 🔄 In progress | ✅ Done | ❌ Blocked | �
 | 2026-04-11 | Decision | Repo location | Option A — monorepo at `packages/monitor/` | All phases |
 | 2026-04-11 | Milestone | Bootstrap complete | package.json, tsconfig, jest.config, dirs, entry stub, tsc clean | Phase 1a unblocked |
 | 2026-04-11 | ADR | EventStore backend pluggable | Task 6 ships EventStore with a pluggable `EventStoreBackend` interface and a full in-memory backend. The expo-sqlite backend is deferred to the Phase 1a integration pass (it depends on PlatformBridge being wired into a real RN runtime and cannot run under plain ts-jest). MemoryEventStoreBackend satisfies all API and behavior requirements for Phase 1a unit tests; the SQLite adapter will be a thin driver added before Phase 1a completion alongside the Expo demo app. | Phase 1a Task 6, Phase 1a completion checklist |
+| 2026-04-12 | ADR | Native module layout | Phase 2a native code lives directly at `packages/monitor/ios` + `packages/monitor/android` with `expo-module.config.json` at package root, following the standard published Expo Module layout (expo-image, expo-video, expo-camera). The earlier design draft used `modules/erne-monitor/` — that is the in-app module convention and would not autolink when `@erne/monitor` is consumed as an npm dependency. phase-2a-native-core.md file paths updated accordingly. | Phase 2a Tasks 38–44 |
 
 ---
 
@@ -113,6 +127,9 @@ After each task, verify all existing components still work together.
 | Schema Codegen | ✅ | 2026-04-12 | 12 tests, ts-morph → Swift + Kotlin, deterministic + idempotent, ran against canonical src/types/events.ts (12 interfaces) |
 | Babel auto-instrumentation plugin | ✅ | 2026-04-12 | 18 tests, displayName injection, Pressable/Touchable onMonitorTouch, Suspense marker, include/exclude, @erne-monitor-ignore pragma |
 | `npx @erne/monitor init` CLI wizard | ✅ | 2026-04-12 | 14 tests, detectProject + renderMonitorConfig + patchAppEntry + patchBabelConfig + runInit pipeline, dry-run + idempotent, VFS-injectable for tests |
+| ErneMonitorNative (JS wrapper) | ✅ | 2026-04-12 | 16 tests, LazyNativeModuleLoader + safe wrapper, graceful no-op when native module absent, full event surface (onNativeCrash/onANRDetected/onThermalStateChange) |
+| ErneMonitorModule (iOS shell) | ✅ | 2026-04-12 | Swift Module definition, Name/Events/Function declarations, ProcessInfo + thermalState surface, real impls land in Tasks 40–42 |
+| ErneMonitorModule (Android shell) | ✅ | 2026-04-12 | Kotlin Module definition, ActivityManager/PowerManager surface, real impls land in Tasks 40–42 |
 
 ---
 

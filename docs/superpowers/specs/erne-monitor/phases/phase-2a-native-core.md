@@ -30,13 +30,15 @@
 **Description:** Create the native module shell using Expo Modules API. This is the bridge between JS-side collectors and native-side crash/performance monitoring. Defines the module interface, event emitters, and method exports that the JS SDK will call.
 
 **Files to create:**
-- `modules/erne-monitor/expo-module.config.json`
-- `modules/erne-monitor/index.ts` (JS bindings)
-- `modules/erne-monitor/ios/MonitorModule.swift`
-- `modules/erne-monitor/ios/MonitorModule.podspec`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/MonitorModule.kt`
-- `modules/erne-monitor/android/build.gradle.kts`
-- `modules/erne-monitor/src/MonitorModule.test.ts`
+- `packages/monitor/expo-module.config.json`
+- `packages/monitor/src/native/ErneMonitorModule.ts` (JS bindings via requireNativeModule)
+- `packages/monitor/src/native/ErneMonitorModule.test.ts`
+- `packages/monitor/ios/ErneMonitorModule.swift`
+- `packages/monitor/ios/ErneMonitor.podspec`
+- `packages/monitor/android/build.gradle.kts`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/ErneMonitorModule.kt`
+
+> **Layout decision (ADR 2026-04-12):** Native code lives directly under `packages/monitor/ios` and `packages/monitor/android` with `expo-module.config.json` at package root — the standard layout for published Expo Modules (`expo-image`, `expo-video`, `expo-camera`). The earlier `modules/erne-monitor/` path from the design draft was the in-app module convention; it would have required a nested autolink search path that does not match how `@erne/monitor` is consumed as an npm dependency.
 
 **Acceptance criteria:**
 - [ ] Module initializes on both iOS and Android without errors
@@ -60,11 +62,11 @@
 **Description:** Run the schema codegen from Phase 1c to generate the actual Swift structs and Kotlin data classes that the native module will use. Verify generated types compile, match TypeScript definitions, and integrate with the module build.
 
 **Files to create:**
-- `modules/erne-monitor/ios/generated/MonitorEvents.swift`
-- `modules/erne-monitor/ios/generated/MonitorTypes.swift`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/generated/MonitorEvents.kt`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/generated/MonitorTypes.kt`
-- `scripts/codegen/verify-codegen.test.ts`
+- `packages/monitor/ios/generated/ErneMonitorSchema.swift` (refreshed)
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/generated/ErneMonitorSchema.kt` (refreshed)
+- `packages/monitor/scripts/codegen/verify-codegen.test.ts`
+
+> Phase 1c already wired the ts-morph emitters and produced initial output under `ios/generated/` + `android/generated/`. Task 39 moves those outputs into the finalized module paths, adds `Codable`/`Sendable` conformance on Swift, adds `@Serializable` on Kotlin, and ships the CI freshness check.
 
 **Acceptance criteria:**
 - [ ] `npm run codegen` generates all files without errors
@@ -87,13 +89,13 @@
 **Description:** Native crash handler that captures POSIX signals (SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGTRAP) on iOS and uncaught exceptions + native crashes on Android. Uses pre-allocated memory buffers to avoid malloc in signal handlers. Writes crash data synchronously to disk before the process dies.
 
 **Files to create:**
-- `modules/erne-monitor/ios/CrashHandler.swift`
-- `modules/erne-monitor/ios/SignalHandler.c` (C for signal safety)
-- `modules/erne-monitor/ios/CrashReportWriter.swift`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/CrashHandler.kt`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/NativeCrashHandler.java` (JNI bridge)
-- `modules/erne-monitor/android/src/main/cpp/signal_handler.cpp`
-- `modules/erne-monitor/android/src/main/cpp/CMakeLists.txt`
+- `packages/monitor/ios/CrashHandler.swift`
+- `packages/monitor/ios/SignalHandler.c` (C for signal safety)
+- `packages/monitor/ios/CrashReportWriter.swift`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/CrashHandler.kt`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/NativeCrashHandler.java` (JNI bridge)
+- `packages/monitor/android/src/main/cpp/signal_handler.cpp`
+- `packages/monitor/android/src/main/cpp/CMakeLists.txt`
 
 **Acceptance criteria:**
 - [ ] Pre-allocates 64KB write buffer at init (no malloc in signal handler)
@@ -120,8 +122,8 @@
 **Description:** Watchdog thread that monitors the main thread for unresponsiveness. If the main thread does not respond to a ping within 5 seconds, captures a stack trace and reports an ANR event. On Android, also monitors the `MessageQueue` for blocked messages.
 
 **Files to create:**
-- `modules/erne-monitor/ios/ANRDetector.swift`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/ANRDetector.kt`
+- `packages/monitor/ios/ANRDetector.swift`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/ANRDetector.kt`
 
 **Acceptance criteria:**
 - [ ] Spawns a low-priority watchdog thread that pings the main thread every 1 second
@@ -147,8 +149,8 @@
 **Description:** Provides real device metrics that are unavailable from JavaScript. Replaces the placeholder `null` returns from JSPlatformBridge (#3) with actual hardware measurements. Samples periodically and on-demand.
 
 **Files to create:**
-- `modules/erne-monitor/ios/NativeMetrics.swift`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/NativeMetrics.kt`
+- `packages/monitor/ios/NativeMetrics.swift`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/NativeMetrics.kt`
 
 **Acceptance criteria:**
 - [ ] CPU usage: per-process CPU percentage (not system-wide)
@@ -175,8 +177,8 @@
 **Description:** Persists open monitoring spans (in-progress operations) to disk so they survive app crashes and restarts. When the app crashes mid-operation, the next launch can reconstruct what was happening and how far it progressed. Uses memory-mapped files for crash-safe writes.
 
 **Files to create:**
-- `modules/erne-monitor/ios/SpanSnapshot.swift`
-- `modules/erne-monitor/android/src/main/java/expo/modules/ernemonitor/SpanSnapshot.kt`
+- `packages/monitor/ios/SpanSnapshot.swift`
+- `packages/monitor/android/src/main/java/expo/modules/ernemonitor/SpanSnapshot.kt`
 
 **Acceptance criteria:**
 - [ ] Maintains an in-memory list of active spans (operations in progress)
@@ -202,10 +204,10 @@
 **Description:** Expo Config Plugin that automatically configures native iOS and Android projects for @erne/monitor during `npx expo prebuild`. Adds required entitlements, background modes, ProGuard rules, and native module registration.
 
 **Files to create:**
-- `plugin/withErneMonitor.ts`
-- `plugin/withErneMonitorIOS.ts`
-- `plugin/withErneMonitorAndroid.ts`
-- `plugin/withErneMonitor.test.ts`
+- `packages/monitor/plugin/withErneMonitor.ts`
+- `packages/monitor/plugin/withErneMonitorIOS.ts`
+- `packages/monitor/plugin/withErneMonitorAndroid.ts`
+- `packages/monitor/plugin/withErneMonitor.test.ts`
 
 **Acceptance criteria:**
 - [ ] Registered in package.json as `expo.plugins` entry

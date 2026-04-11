@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["ErneMonitorModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.ernemonitor.ErneMonitorModule"]
+  }
+}
