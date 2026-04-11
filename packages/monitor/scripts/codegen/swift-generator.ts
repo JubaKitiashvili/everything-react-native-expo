@@ -23,7 +23,7 @@ export function renderSwift(
         lines.push(`/// ${line}`);
       }
     }
-    lines.push(`public enum ${alias.name}: String, Codable {`);
+    lines.push(`public enum ${alias.name}: String, Codable, Sendable {`);
     for (const value of alias.values) {
       lines.push(`    case ${swiftCaseName(value)} = "${value}"`);
     }
@@ -37,7 +37,7 @@ export function renderSwift(
         lines.push(`/// ${line}`);
       }
     }
-    lines.push(`public struct ${iface.name}: Codable, Equatable {`);
+    lines.push(`public struct ${iface.name}: Codable, Equatable, Sendable {`);
     for (const field of iface.fields) {
       if (field.docComment) {
         lines.push(`    /// ${field.docComment}`);

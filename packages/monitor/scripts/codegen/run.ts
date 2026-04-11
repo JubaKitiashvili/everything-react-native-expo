@@ -8,7 +8,10 @@ async function main(): Promise<void> {
   const root = path.resolve(__dirname, '../..');
   const sourceFile = path.join(root, 'src/types/events.ts');
   const iosOutDir = path.join(root, 'ios/generated');
-  const androidOutDir = path.join(root, 'android/generated');
+  const androidOutDir = path.join(
+    root,
+    'android/src/main/java/expo/modules/ernemonitor/generated',
+  );
   const result = await generateSchemas({
     sourceFile,
     iosOutDir,

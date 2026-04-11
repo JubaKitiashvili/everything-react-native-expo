@@ -14,7 +14,7 @@ export function renderKotlin(
   aliases: readonly SchemaTypeAlias[],
 ): string {
   const lines: string[] = [];
-  lines.push('package dev.erne.monitor.schema');
+  lines.push('package expo.modules.ernemonitor.generated');
   lines.push('');
   lines.push('import kotlinx.serialization.Serializable');
   lines.push('import kotlinx.serialization.SerialName');

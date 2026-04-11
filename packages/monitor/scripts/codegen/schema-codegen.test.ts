@@ -158,7 +158,7 @@ describe('schema-codegen render', () => {
     const file = writeFixture(fixtureSource);
     const result = await generateSchemas({ sourceFile: file, dryRun: true });
     const kotlin = result.kotlin['ErneMonitorSchema.kt']!;
-    expect(kotlin).toContain('package dev.erne.monitor.schema');
+    expect(kotlin).toContain('package expo.modules.ernemonitor.generated');
     expect(kotlin).toContain('@Serializable');
     expect(kotlin).toContain('enum class Severity');
     expect(kotlin).toContain('@SerialName("info") INFO');

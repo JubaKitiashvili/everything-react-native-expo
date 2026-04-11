@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-12
 **Current Phase:** Phase 2a — Native Core in progress
-**Active Task:** Phase 2a Task 38 — ErneMonitorModule shell (Expo Modules API)
-**Overall Progress:** 38/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 1/7)
+**Active Task:** Phase 2a Task 40 — CrashHandler (signal-safe POSIX + JNI)
+**Overall Progress:** 39/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 2/7)
 
 ---
 
@@ -38,7 +38,7 @@
 | # | Task | Status | Files Created | Tests | Integrated |
 |---|------|--------|---------------|-------|------------|
 | 38 | ErneMonitorModule shell | ✅ | expo-module.config.json, src/native/{types,ErneMonitorNative,defaultLoader,index}.ts, src/native/ErneMonitorNative.test.ts, ios/ErneMonitorModule.swift, ios/ErneMonitor.podspec, android/build.gradle.kts, android/src/main/AndroidManifest.xml, android/src/main/java/expo/modules/ernemonitor/ErneMonitorModule.kt | ✅ (16) | ✅ |
-| 39 | Schema codegen execution (Swift + Kotlin) | ⬜ | — | — | — |
+| 39 | Schema codegen execution (Swift + Kotlin) | ✅ | ios/AnyCodable.swift, ios/generated/ErneMonitorSchema.swift (Sendable + Equatable + Codable), android/src/main/java/expo/modules/ernemonitor/generated/ErneMonitorSchema.kt (@Serializable + autolinked package), scripts/codegen/verify-codegen.test.ts | ✅ (9) | ✅ |
 | 40 | CrashHandler (signal-safe POSIX + JNI) | ⬜ | — | — | — |
 | 41 | ANRDetector | ⬜ | — | — | — |
 | 42 | NativeMetrics | ⬜ | — | — | — |
@@ -130,6 +130,7 @@ After each task, verify all existing components still work together.
 | ErneMonitorNative (JS wrapper) | ✅ | 2026-04-12 | 16 tests, LazyNativeModuleLoader + safe wrapper, graceful no-op when native module absent, full event surface (onNativeCrash/onANRDetected/onThermalStateChange) |
 | ErneMonitorModule (iOS shell) | ✅ | 2026-04-12 | Swift Module definition, Name/Events/Function declarations, ProcessInfo + thermalState surface, real impls land in Tasks 40–42 |
 | ErneMonitorModule (Android shell) | ✅ | 2026-04-12 | Kotlin Module definition, ActivityManager/PowerManager surface, real impls land in Tasks 40–42 |
+| Schema codegen verify-codegen | ✅ | 2026-04-12 | 9 tests, drift detection (CI freshness gate) + Swift Codable/Equatable/Sendable assertion + Kotlin @Serializable/@SerialName assertion + TS↔Swift↔Kotlin field cross-reference for every interface and alias |
 
 ---
 
