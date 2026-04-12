@@ -9,6 +9,7 @@ import type {
   NativeMonitorState,
   NativeSubscription,
   NativeThermalEvent,
+  PersistedCrashRecord,
 } from './types';
 import { NOOP_NATIVE_SUBSCRIPTION, UNKNOWN_NATIVE_METRICS } from './types';
 
@@ -123,6 +124,39 @@ export class ErneMonitorNative {
     listener: (event: NativeThermalEvent) => void,
   ): NativeSubscription {
     return this.subscribe('onThermalStateChange', listener);
+  }
+
+  /**
+   * Drains any crash reports persisted by the native module during the
+   * previous session. Returns an empty array if the native module is
+   * absent or does not implement the optional drain hook (Phase 1
+   * fallback).
+   */
+  async drainPersistedCrashes(): Promise<readonly PersistedCrashRecord[]> {
+    const mod = this.loader.load();
+    if (mod === null) return [];
+    if (typeof mod.drainPersistedCrashes !== 'function') return [];
+    try {
+      return await mod.drainPersistedCrashes();
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Tells the native module that a persisted crash has been delivered
+   * through the JS pipeline so its on-disk file can be deleted.
+   * Silently no-ops when the module is absent or the hook is missing.
+   */
+  acknowledgePersistedCrash(id: string): void {
+    const mod = this.loader.load();
+    if (mod === null) return;
+    if (typeof mod.acknowledgePersistedCrash !== 'function') return;
+    try {
+      mod.acknowledgePersistedCrash(id);
+    } catch {
+      // ignore — failure to delete is non-fatal, we just retry next launch
+    }
   }
 
   private subscribe<E extends NativeEventName>(

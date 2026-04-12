@@ -11,6 +11,12 @@ export type {
   NativeMonitorState,
   NativeSubscription,
   NativeThermalEvent,
+  PersistedCrashRecord,
   ThermalState,
 } from './types';
 export { NOOP_NATIVE_SUBSCRIPTION, UNKNOWN_NATIVE_METRICS } from './types';
+export { NativeCrashGateway } from './NativeCrashGateway';
+export type {
+  NativeCrashGatewayDeps,
+  PersistedCrash,
+} from './NativeCrashGateway';

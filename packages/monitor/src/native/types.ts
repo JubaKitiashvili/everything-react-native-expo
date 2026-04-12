@@ -82,6 +82,17 @@ export interface NativeSubscription {
 }
 
 /**
+ * The shape the native module returns when JS asks for crash reports
+ * persisted during the previous session. Each entry pairs the report
+ * itself with the on-disk file identifier so the JS gateway can
+ * acknowledge (delete) the file once dispatch succeeds.
+ */
+export interface PersistedCrashRecord {
+  readonly id: string;
+  readonly report: NativeCrashReport;
+}
+
+/**
  * The minimal interface the underlying Expo Modules API module must satisfy.
  * Tests supply a fake; the real one comes from `requireNativeModule`.
  */
@@ -93,6 +104,16 @@ export interface ErneMonitorNativeModule {
     eventName: E,
     listener: (payload: NativeEventMap[E]) => void,
   ): NativeSubscription;
+  /**
+   * Optional — present once Task 40 CrashHandler is wired. Returns
+   * any crash reports written to disk by the previous session.
+   */
+  drainPersistedCrashes?(): Promise<readonly PersistedCrashRecord[]>;
+  /**
+   * Optional — deletes a persisted crash file once the JS gateway has
+   * delivered it through the SDK pipeline.
+   */
+  acknowledgePersistedCrash?(id: string): void;
 }
 
 /**

@@ -234,12 +234,14 @@ export {
   ErneMonitorNative,
   LazyNativeModuleLoader,
   createDefaultNativeModuleLoader,
+  NativeCrashGateway,
   NOOP_NATIVE_SUBSCRIPTION,
   UNKNOWN_NATIVE_METRICS,
 } from './native';
 export type {
   ErneMonitorNativeModule,
   NativeANRReport,
+  NativeCrashGatewayDeps,
   NativeCrashReport,
   NativeEventMap,
   NativeEventName,
@@ -248,6 +250,8 @@ export type {
   NativeMonitorState,
   NativeSubscription,
   NativeThermalEvent,
+  PersistedCrash,
+  PersistedCrashRecord,
   ThermalState,
 } from './native';
 export type {

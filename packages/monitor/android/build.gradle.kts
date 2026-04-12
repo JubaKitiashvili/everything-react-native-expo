@@ -43,11 +43,25 @@ apply(from = "${rootProject.projectDir}/../node_modules/expo-modules-core/androi
 android {
     namespace = "expo.modules.ernemonitor"
     compileSdk = 35
+    ndkVersion = "27.0.11718014"
 
     defaultConfig {
         minSdk = 24
         targetSdk = 35
         versionName = packageJson["version"]?.toString() ?: "0.0.0"
+        externalNativeBuild {
+            cmake {
+                cppFlags("-std=c++17", "-fno-exceptions", "-fno-rtti")
+                arguments("-DANDROID_STL=c++_static")
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     compileOptions {
@@ -59,7 +73,13 @@ android {
         jvmTarget = "17"
     }
 
-    sourceSets["main"].java.srcDirs("src/main/java", "generated")
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    sourceSets["main"].java.srcDirs("src/main/java")
 }
 
 dependencies {

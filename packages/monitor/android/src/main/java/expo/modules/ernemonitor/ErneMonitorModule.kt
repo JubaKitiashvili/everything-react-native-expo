@@ -32,14 +32,30 @@ class ErneMonitorModule : Module() {
 
         Function("startNativeMonitoring") {
             isActive = true
+            // Task 40: install POSIX (JNI) + JVM uncaught chains.
+            val ctx = appContext.reactContext
+            if (ctx != null) {
+                CrashHandler.install(ctx)
+            }
         }
 
         Function("stopNativeMonitoring") {
             isActive = false
+            CrashHandler.uninstall()
         }
 
         Function("getNativeMetrics") {
             sampleMetrics()
+        }
+
+        // Drain crash reports persisted by the previous run.
+        AsyncFunction("drainPersistedCrashes") {
+            CrashHandler.drainPersistedCrashes()
+        }
+
+        // Delete a persisted crash by id once JS has dispatched it.
+        Function("acknowledgePersistedCrash") { id: String ->
+            CrashHandler.acknowledge(id)
         }
     }
 

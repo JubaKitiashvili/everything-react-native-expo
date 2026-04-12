@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-12
 **Current Phase:** Phase 2a — Native Core in progress
-**Active Task:** Phase 2a Task 40 — CrashHandler (signal-safe POSIX + JNI)
-**Overall Progress:** 39/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 2/7)
+**Active Task:** Phase 2a Task 41 — ANRDetector (watchdog thread, 5s threshold)
+**Overall Progress:** 40/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 3/7)
 
 ---
 
@@ -39,7 +39,7 @@
 |---|------|--------|---------------|-------|------------|
 | 38 | ErneMonitorModule shell | ✅ | expo-module.config.json, src/native/{types,ErneMonitorNative,defaultLoader,index}.ts, src/native/ErneMonitorNative.test.ts, ios/ErneMonitorModule.swift, ios/ErneMonitor.podspec, android/build.gradle.kts, android/src/main/AndroidManifest.xml, android/src/main/java/expo/modules/ernemonitor/ErneMonitorModule.kt | ✅ (16) | ✅ |
 | 39 | Schema codegen execution (Swift + Kotlin) | ✅ | ios/AnyCodable.swift, ios/generated/ErneMonitorSchema.swift (Sendable + Equatable + Codable), android/src/main/java/expo/modules/ernemonitor/generated/ErneMonitorSchema.kt (@Serializable + autolinked package), scripts/codegen/verify-codegen.test.ts | ✅ (9) | ✅ |
-| 40 | CrashHandler (signal-safe POSIX + JNI) | ⬜ | — | — | — |
+| 40 | CrashHandler (signal-safe POSIX + JNI) | ✅ | iOS: SignalHandler.{c,h} (async-signal-safe POSIX, 64KB pre-allocated buffer, 6 signals chained), CrashReportWriter.swift (line-protocol parser), CrashHandler.swift (lifecycle + NSException @convention(c) chain), AnyCodable.swift, ErneMonitorModule.swift (drainPersistedCrashes/acknowledgePersistedCrash). Android: signal_handler.cpp (libunwind backtrace, JNI exports), CMakeLists.txt, NativeCrashHandler.java (JNI bridge), CrashHandler.kt (POSIX + Thread.uncaughtExceptionHandler chain). JS: src/native/NativeCrashGateway.ts, src/native/NativeCrashGateway.test.ts, ErneMonitorNative drain/ack methods, createMonitorRuntime wiring + replay on start. | ✅ (12) | ✅ |
 | 41 | ANRDetector | ⬜ | — | — | — |
 | 42 | NativeMetrics | ⬜ | — | — | — |
 | 43 | SpanSnapshot | ⬜ | — | — | — |
@@ -131,6 +131,12 @@ After each task, verify all existing components still work together.
 | ErneMonitorModule (iOS shell) | ✅ | 2026-04-12 | Swift Module definition, Name/Events/Function declarations, ProcessInfo + thermalState surface, real impls land in Tasks 40–42 |
 | ErneMonitorModule (Android shell) | ✅ | 2026-04-12 | Kotlin Module definition, ActivityManager/PowerManager surface, real impls land in Tasks 40–42 |
 | Schema codegen verify-codegen | ✅ | 2026-04-12 | 9 tests, drift detection (CI freshness gate) + Swift Codable/Equatable/Sendable assertion + Kotlin @Serializable/@SerialName assertion + TS↔Swift↔Kotlin field cross-reference for every interface and alias |
+| NativeCrashGateway | ✅ | 2026-04-12 | 12 tests, live native crash dispatch + persisted crash replay + idempotent start/stop + ack-after-dispatch contract + graceful no-native-module fallback |
+| iOS SignalHandler.c | ✅ | 2026-04-12 | 64KB pre-allocated buffer, 6 signals chained (SIGSEGV/SIGABRT/SIGBUS/SIGFPE/SIGILL/SIGTRAP), backtrace + line-protocol persist, **live-verified end-to-end** on iPhone 17 Pro simulator: SIGSEGV via kill → file written → relaunch → drain → SignalRouter score 82 → dashboard "crash":1 with 17 frames + breadcrumb trail + fingerprint 1vogxht → file deleted via ack |
+| iOS CrashHandler.swift | ✅ | 2026-04-12 | install/uninstall lifecycle, NSException chain via @convention(c) function pointer, CrashReportWriter parses on-disk format on next launch, drain → ErneMonitorModule.AsyncFunction("drainPersistedCrashes") |
+| Android signal_handler.cpp | ✅ | 2026-04-12 | libunwind backtrace, identical line-protocol to iOS, JNI exports (nativeInstall/nativeUninstall/nativeIsInstalled), CMakeLists.txt with NDK r27 + C++17 toolchain |
+| Android CrashHandler.kt | ✅ | 2026-04-12 | NativeCrashHandler.java JNI bridge, Thread.setDefaultUncaughtExceptionHandler chain, on-disk parse identical to iOS, drain → ErneMonitorModule.AsyncFunction("drainPersistedCrashes") |
+| createMonitorRuntime native wiring | ✅ | 2026-04-12 | nativeModuleLoader DI (defaults to createDefaultNativeModuleLoader), NativeCrashGateway constructed in pipeline, startMonitorRuntime calls native.start + gateway.start + replayPersistedCrashes() — all swallowing errors so SDK boot never fails because the native module misbehaved |
 
 ---
 

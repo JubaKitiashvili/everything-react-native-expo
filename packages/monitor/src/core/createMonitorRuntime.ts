@@ -65,6 +65,13 @@ import {
   DashboardBridge,
   type WebSocketCtor,
 } from '../integrations/DashboardBridge';
+import {
+  ErneMonitorNative,
+  LazyNativeModuleLoader,
+  createDefaultNativeModuleLoader,
+  NativeCrashGateway,
+} from '../native';
+import type { NativeModuleLoader } from '../native';
 
 export interface MonitorRuntimeDeps {
   isDev?: boolean;
@@ -101,6 +108,12 @@ export interface MonitorRuntimeDeps {
    * by default in prod.
    */
   exposeGlobal?: boolean;
+  /**
+   * Optional override for the Phase 2a native module loader. Tests
+   * inject a fake; production uses createDefaultNativeModuleLoader().
+   * Pass `null` to opt out entirely (useful for snapshots).
+   */
+  nativeModuleLoader?: NativeModuleLoader | null;
 }
 
 export interface MonitorRuntime {
@@ -137,6 +150,8 @@ export interface MonitorRuntime {
   signalRouter: SignalRouter;
   terminalReporter: TerminalReporter;
   dashboardBridge: DashboardBridge | null;
+  native: ErneMonitorNative;
+  nativeCrashGateway: NativeCrashGateway;
   trackEvent: (
     name: string,
     attributes?: Record<string, CustomAttributeValue>,
@@ -465,6 +480,24 @@ export async function createMonitorRuntime(
   // bus.onAll callback starts routing events through it.
   routerHolder.current = signalRouter;
 
+  // ---- Phase 2a: native module bridge + crash gateway ----
+  const nativeLoader: NativeModuleLoader =
+    deps.nativeModuleLoader === null
+      ? new LazyNativeModuleLoader(() => null)
+      : (deps.nativeModuleLoader ?? createDefaultNativeModuleLoader());
+  const native = new ErneMonitorNative(nativeLoader);
+  const nativeCrashGateway = new NativeCrashGateway({
+    native,
+    signalBus: bus,
+    eventStore: store,
+    sessionManager: session,
+    drainPersistedCrashes: () =>
+      native.drainPersistedCrashes() as Promise<
+        readonly import('../native').PersistedCrash[]
+      >,
+    acknowledgePersistedCrash: (id) => native.acknowledgePersistedCrash(id),
+  });
+
   const runtime: MonitorRuntime = {
     client,
     bus,
@@ -499,6 +532,8 @@ export async function createMonitorRuntime(
     signalRouter,
     terminalReporter,
     dashboardBridge,
+    native,
+    nativeCrashGateway,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
       navigation.trackScreenView(screen, params),
@@ -507,6 +542,8 @@ export async function createMonitorRuntime(
     shutdown: async () => {
       terminalReporter.stop();
       dashboardBridge?.stop();
+      nativeCrashGateway.stop();
+      native.stopNativeMonitoring();
       if (client.isRunning()) client.stop();
       session.dispose();
       await store.close();
@@ -532,4 +569,11 @@ export function startMonitorRuntime(runtime: MonitorRuntime): void {
   runtime.client.start();
   runtime.terminalReporter.start();
   runtime.dashboardBridge?.start();
+  // Phase 2a: install native crash handler if the native module is
+  // linked, then drain any reports from the previous session.
+  runtime.native.startNativeMonitoring();
+  runtime.nativeCrashGateway.start();
+  void runtime.nativeCrashGateway.replayPersistedCrashes().catch(() => {
+    // intentional swallow — boot must never fail because of a stale crash
+  });
 }

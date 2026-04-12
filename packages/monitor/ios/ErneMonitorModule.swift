@@ -36,11 +36,25 @@ public final class ErneMonitorModule: Module {
     Function("startNativeMonitoring") { [weak self] () -> Void in
       guard let self = self else { return }
       self.isActive = true
+      // Task 40: install POSIX signal + NSException chain.
+      CrashHandler.shared.install()
     }
 
     Function("stopNativeMonitoring") { [weak self] () -> Void in
       guard let self = self else { return }
       self.isActive = false
+      CrashHandler.shared.uninstall()
+    }
+
+    // Drain crash reports persisted by the previous run. JS calls this
+    // once at SDK boot via NativeCrashGateway.replayPersistedCrashes().
+    AsyncFunction("drainPersistedCrashes") { () -> [[String: Any]] in
+      return CrashHandler.shared.drainPersistedCrashes()
+    }
+
+    // Delete a persisted crash by its file id once JS has dispatched it.
+    Function("acknowledgePersistedCrash") { (id: String) -> Void in
+      CrashHandler.shared.acknowledge(crashId: id)
     }
 
     // Synchronous getter — fine because we only read cheap APIs.
