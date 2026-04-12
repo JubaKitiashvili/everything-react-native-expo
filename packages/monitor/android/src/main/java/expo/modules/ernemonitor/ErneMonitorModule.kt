@@ -1,9 +1,5 @@
 package expo.modules.ernemonitor
 
-import android.app.ActivityManager
-import android.content.Context
-import android.os.Build
-import android.os.PowerManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -36,16 +32,51 @@ class ErneMonitorModule : Module() {
             val ctx = appContext.reactContext
             if (ctx != null) {
                 CrashHandler.install(ctx)
+                // Task 41: ANR watchdog. Wire the emit callback so the
+                // detector can fire `onANRDetected` events through the
+                // Expo Modules API event emitter.
+                ANRDetector.onANR = { durationMs, stack ->
+                    sendEvent(
+                        "onANRDetected",
+                        mapOf(
+                            "durationMs" to durationMs,
+                            "mainThreadStack" to stack,
+                            "screen" to null,
+                            "timestamp" to System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                ANRDetector.start(ctx)
+
+                // Task 42: thermal listener.
+                ThermalObserver.onChange = { state ->
+                    sendEvent(
+                        "onThermalStateChange",
+                        mapOf(
+                            "state" to state,
+                            "timestamp" to System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                ThermalObserver.install(ctx)
+
+                // Task 43: span persistence — install the file path
+                // before the first JS span call lands.
+                SpanLog.install(ctx)
             }
         }
 
         Function("stopNativeMonitoring") {
             isActive = false
             CrashHandler.uninstall()
+            ANRDetector.stop()
+            ANRDetector.onANR = null
+            ThermalObserver.uninstall()
+            SpanLog.uninstall()
         }
 
         Function("getNativeMetrics") {
-            sampleMetrics()
+            NativeMetrics.currentSnapshot(appContext.reactContext)
         }
 
         // Drain crash reports persisted by the previous run.
@@ -57,70 +88,24 @@ class ErneMonitorModule : Module() {
         Function("acknowledgePersistedCrash") { id: String ->
             CrashHandler.acknowledge(id)
         }
+
+        // Task 43: span persistence functions.
+        Function("startSpan") { id: String, name: String, kind: String,
+                                parentId: String?, startedAtMs: Double ->
+            SpanLog.startSpan(id, name, kind, parentId, startedAtMs.toLong())
+        }
+
+        Function("endSpan") { id: String, endedAtMs: Double ->
+            SpanLog.endSpan(id, endedAtMs.toLong())
+        }
+
+        Function("updateSpan") { id: String, attribute: String, value: String ->
+            SpanLog.updateSpan(id, attribute, value)
+        }
+
+        AsyncFunction("drainInterruptedSpans") {
+            SpanLog.drainInterrupted()
+        }
     }
 
-    private fun sampleMetrics(): Map<String, Any?> {
-        // `appContext` is inherited from expo.modules.kotlin.modules.Module.
-        // `.reactContext` returns the host app's ReactContext, which is a
-        // Context subclass suitable for getSystemService calls.
-        val ctx: Context? = appContext.reactContext
-        val memoryTotal: Long? = try {
-            val am = ctx?.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            if (am != null) {
-                val info = ActivityManager.MemoryInfo()
-                am.getMemoryInfo(info)
-                info.totalMem
-            } else {
-                null
-            }
-        } catch (_: Throwable) {
-            null
-        }
-
-        val memoryAvailable: Long? = try {
-            val am = ctx?.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            if (am != null) {
-                val info = ActivityManager.MemoryInfo()
-                am.getMemoryInfo(info)
-                info.availMem
-            } else {
-                null
-            }
-        } catch (_: Throwable) {
-            null
-        }
-
-        val thermal: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                val pm = ctx?.getSystemService(Context.POWER_SERVICE) as? PowerManager
-                when (pm?.currentThermalStatus) {
-                    PowerManager.THERMAL_STATUS_NONE -> "nominal"
-                    PowerManager.THERMAL_STATUS_LIGHT -> "fair"
-                    PowerManager.THERMAL_STATUS_MODERATE -> "fair"
-                    PowerManager.THERMAL_STATUS_SEVERE -> "serious"
-                    PowerManager.THERMAL_STATUS_CRITICAL -> "critical"
-                    PowerManager.THERMAL_STATUS_EMERGENCY -> "critical"
-                    PowerManager.THERMAL_STATUS_SHUTDOWN -> "critical"
-                    else -> "unknown"
-                }
-            } catch (_: Throwable) {
-                "unknown"
-            }
-        } else {
-            "unknown"
-        }
-
-        return mapOf(
-            "cpuUsagePercent" to null,
-            "memoryUsedBytes" to null,
-            "memoryAvailableBytes" to memoryAvailable,
-            "memoryTotalBytes" to memoryTotal,
-            "thermalState" to thermal,
-            "batteryLevel" to null,
-            "batteryCharging" to null,
-            "diskAvailableBytes" to null,
-            "diskTotalBytes" to null,
-            "sampledAt" to System.currentTimeMillis(),
-        )
-    }
 }

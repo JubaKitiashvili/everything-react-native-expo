@@ -10,16 +10,25 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./plugin": {
+      "types": "./plugin/build/withErneMonitor.d.ts",
+      "default": "./plugin/build/withErneMonitor.js"
+    },
+    "./app.plugin": "./plugin/build/withErneMonitor.js"
   },
   "files": [
     "dist",
     "src",
+    "plugin/build",
+    "ios",
+    "android",
+    "expo-module.config.json",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.plugin.json",
+    "clean": "rm -rf dist plugin/build",
     "prepare": "npm run clean && npm run build",
     "typecheck": "tsc --noEmit",
     "test": "jest",

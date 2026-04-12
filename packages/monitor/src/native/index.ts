@@ -20,3 +20,13 @@ export type {
   NativeCrashGatewayDeps,
   PersistedCrash,
 } from './NativeCrashGateway';
+export { ANRGateway } from './ANRGateway';
+export type { ANRGatewayDeps, ANRDispatchData } from './ANRGateway';
+export { NativeMetricsPoller } from './NativeMetricsPoller';
+export type { NativeMetricsPollerDeps } from './NativeMetricsPoller';
+export { SpanSnapshot } from './SpanSnapshot';
+export type {
+  SpanSnapshotDeps,
+  ActiveSpanInfo,
+  InterruptedSpan,
+} from './SpanSnapshot';

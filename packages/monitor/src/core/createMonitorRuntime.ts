@@ -71,6 +71,13 @@ import {
   createDefaultNativeModuleLoader,
   NativeCrashGateway,
 } from '../native';
+import { ANRGateway } from '../native/ANRGateway';
+import { NativeMetricsPoller } from '../native/NativeMetricsPoller';
+import { SpanSnapshot } from '../native/SpanSnapshot';
+import type {
+  ActiveSpanInfo,
+  InterruptedSpan,
+} from '../native/SpanSnapshot';
 import type { NativeModuleLoader } from '../native';
 
 export interface MonitorRuntimeDeps {
@@ -152,6 +159,9 @@ export interface MonitorRuntime {
   dashboardBridge: DashboardBridge | null;
   native: ErneMonitorNative;
   nativeCrashGateway: NativeCrashGateway;
+  anrGateway: ANRGateway;
+  nativeMetricsPoller: NativeMetricsPoller;
+  spanSnapshot: SpanSnapshot;
   trackEvent: (
     name: string,
     attributes?: Record<string, CustomAttributeValue>,
@@ -497,6 +507,48 @@ export async function createMonitorRuntime(
       >,
     acknowledgePersistedCrash: (id) => native.acknowledgePersistedCrash(id),
   });
+  const anrGateway = new ANRGateway({
+    native,
+    signalBus: bus,
+    eventStore: store,
+    sessionManager: session,
+  });
+  const nativeMetricsPoller = new NativeMetricsPoller({
+    native,
+    signalBus: bus,
+    sessionManager: session,
+    intervalMs: 30_000,
+  });
+  const spanSnapshot = new SpanSnapshot({
+    native,
+    signalBus: bus,
+    sessionManager: session,
+    startSpanImpl: (info: ActiveSpanInfo) =>
+      native.startSpan(info.id, info.name, info.kind, info.parentId, info.startedAt),
+    updateSpanImpl: (id, attributes) => {
+      for (const [k, v] of Object.entries(attributes)) {
+        native.updateSpan(id, k, typeof v === 'string' ? v : JSON.stringify(v));
+      }
+    },
+    endSpanImpl: (id) => native.endSpan(id, Date.now()),
+    drainInterruptedImpl: async () => {
+      const raw = await native.drainInterruptedSpans();
+      const out: InterruptedSpan[] = [];
+      for (const r of raw) {
+        const id = typeof r.id === 'string' ? r.id : '';
+        const name = typeof r.name === 'string' ? r.name : '';
+        const kind = typeof r.kind === 'string' ? r.kind : 'internal';
+        const parentId = typeof r.parentId === 'string' ? r.parentId : null;
+        const startedAt = typeof r.startedAt === 'number' ? r.startedAt : 0;
+        const lastSeenAt = typeof r.lastSeenAt === 'number' ? r.lastSeenAt : startedAt;
+        const durationMs = typeof r.durationMs === 'number' ? r.durationMs : 0;
+        if (id && name) {
+          out.push({ id, name, parentId, kind, startedAt, lastSeenAt, durationMs });
+        }
+      }
+      return out;
+    },
+  });
 
   const runtime: MonitorRuntime = {
     client,
@@ -534,6 +586,9 @@ export async function createMonitorRuntime(
     dashboardBridge,
     native,
     nativeCrashGateway,
+    anrGateway,
+    nativeMetricsPoller,
+    spanSnapshot,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
       navigation.trackScreenView(screen, params),
@@ -542,6 +597,8 @@ export async function createMonitorRuntime(
     shutdown: async () => {
       terminalReporter.stop();
       dashboardBridge?.stop();
+      nativeMetricsPoller.stop();
+      anrGateway.stop();
       nativeCrashGateway.stop();
       native.stopNativeMonitoring();
       if (client.isRunning()) client.stop();
@@ -573,7 +630,12 @@ export function startMonitorRuntime(runtime: MonitorRuntime): void {
   // linked, then drain any reports from the previous session.
   runtime.native.startNativeMonitoring();
   runtime.nativeCrashGateway.start();
+  runtime.anrGateway.start();
+  runtime.nativeMetricsPoller.start();
   void runtime.nativeCrashGateway.replayPersistedCrashes().catch(() => {
     // intentional swallow — boot must never fail because of a stale crash
+  });
+  void runtime.spanSnapshot.replayInterrupted().catch(() => {
+    // same — replay is best-effort
   });
 }

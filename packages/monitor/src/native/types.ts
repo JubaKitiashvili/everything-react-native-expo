@@ -114,6 +114,21 @@ export interface ErneMonitorNativeModule {
    * delivered it through the SDK pipeline.
    */
   acknowledgePersistedCrash?(id: string): void;
+  /**
+   * Optional — Task 43 SpanSnapshot. Persists span lifecycle events
+   * to a memory-mapped append-only log so spans interrupted by a
+   * crash can be replayed on the next session.
+   */
+  startSpan?(
+    id: string,
+    name: string,
+    kind: string,
+    parentId: string | null,
+    startedAtMs: number,
+  ): void;
+  endSpan?(id: string, endedAtMs: number): void;
+  updateSpan?(id: string, attribute: string, value: string): void;
+  drainInterruptedSpans?(): Promise<readonly Record<string, unknown>[]>;
 }
 
 /**

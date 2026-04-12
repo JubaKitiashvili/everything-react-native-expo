@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-12
-**Current Phase:** Phase 2a — Native Core in progress
-**Active Task:** Phase 2a Task 41 — ANRDetector (watchdog thread, 5s threshold)
-**Overall Progress:** 40/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 3/7)
+**Current Phase:** Phase 2a — Native Core complete (physical device smoke deferred to next session)
+**Active Task:** Phase 2b Task 45 — next session
+**Overall Progress:** 44/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅)
 
 ---
 
@@ -16,9 +16,9 @@
 | 1a Foundation | 14/14 | ✅ Done | crashes + network in terminal |
 | 1b Intelligence | 11/11 | ✅ Done | real-time dashboard |
 | 1c AI Integration | 12/12 | ✅ Done | AI fix suggestions |
-| 2a Native Core | 0/7 | ⬜ Ready | native crash/ANR monitoring |
-| 2b Native Advanced | 0/9 | 🔒 Blocked by 2a | replay, profiler, dev tools |
-| 3 Backend | 0/9 | 🔒 Blocked by 2a | production backend |
+| 2a Native Core | 7/7 | ✅ Done | native crash/ANR/metrics/spans + config plugin |
+| 2b Native Advanced | 0/9 | ⬜ Ready | replay, profiler, dev tools |
+| 3 Backend | 0/9 | ⬜ Ready | production backend |
 | 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
 
 ---
@@ -40,10 +40,10 @@
 | 38 | ErneMonitorModule shell | ✅ | expo-module.config.json, src/native/{types,ErneMonitorNative,defaultLoader,index}.ts, src/native/ErneMonitorNative.test.ts, ios/ErneMonitorModule.swift, ios/ErneMonitor.podspec, android/build.gradle.kts, android/src/main/AndroidManifest.xml, android/src/main/java/expo/modules/ernemonitor/ErneMonitorModule.kt | ✅ (16) | ✅ |
 | 39 | Schema codegen execution (Swift + Kotlin) | ✅ | ios/AnyCodable.swift, ios/generated/ErneMonitorSchema.swift (Sendable + Equatable + Codable), android/src/main/java/expo/modules/ernemonitor/generated/ErneMonitorSchema.kt (@Serializable + autolinked package), scripts/codegen/verify-codegen.test.ts | ✅ (9) | ✅ |
 | 40 | CrashHandler (signal-safe POSIX + JNI) | ✅ | iOS: SignalHandler.{c,h} (async-signal-safe POSIX, 64KB pre-allocated buffer, 6 signals chained), CrashReportWriter.swift (line-protocol parser), CrashHandler.swift (lifecycle + NSException @convention(c) chain), AnyCodable.swift, ErneMonitorModule.swift (drainPersistedCrashes/acknowledgePersistedCrash). Android: signal_handler.cpp (libunwind backtrace, JNI exports), CMakeLists.txt, NativeCrashHandler.java (JNI bridge), CrashHandler.kt (POSIX + Thread.uncaughtExceptionHandler chain). JS: src/native/NativeCrashGateway.ts, src/native/NativeCrashGateway.test.ts, ErneMonitorNative drain/ack methods, createMonitorRuntime wiring + replay on start. | ✅ (12) | ✅ |
-| 41 | ANRDetector | ⬜ | — | — | — |
-| 42 | NativeMetrics | ⬜ | — | — | — |
-| 43 | SpanSnapshot | ⬜ | — | — | — |
-| 44 | Expo Config Plugin (withErneMonitor) | ⬜ | — | — | — |
+| 41 | ANRDetector | ✅ | iOS: ios/ANRDetector.swift (DispatchSource watchdog, 1s ping/5s threshold, debugger + background suspend, Thread.callStackSymbols capture, @convention(c) onANR delegation). Android: android/.../ANRDetector.kt (HandlerThread + main Looper ping, identical 1s/5s, Debug.isDebuggerConnected, Looper.getMainLooper().thread.stackTrace). JS: src/native/ANRGateway.{ts,test.ts} translation layer dispatching native_anr custom events. createMonitorRuntime wires anrGateway, startMonitorRuntime starts it. | ✅ (6) | ✅ |
+| 42 | NativeMetrics | ✅ | iOS: ios/NativeMetrics.swift (Mach task_info CPU% via thread_basic_info enumeration, task_vm_info phys_footprint memory, ProcessInfo.thermalState, UIDevice battery, NSURL disk caps, ThermalObserver via thermalStateDidChangeNotification). Android: android/.../NativeMetrics.kt (/proc/self/stat CPU jiffies, /proc/self/statm RSS, ActivityManager.MemoryInfo, PowerManager currentThermalStatus, ACTION_BATTERY_CHANGED sticky, StatFs disk; ThermalObserver via PowerManager.OnThermalStatusChangedListener). JS: src/native/NativeMetricsPoller.{ts,test.ts} 30s interval poller emitting native_metrics + native_thermal custom events. **Live-verified iPhone 17 Pro simulator**: cpuUsagePercent=2, memoryUsedBytes=394MB, memoryTotalBytes=19GB, thermalState=nominal, diskAvailableBytes=14GB, diskTotalBytes=494GB streaming to dashboard. | ✅ (5) | ✅ |
+| 43 | SpanSnapshot | ✅ | iOS: ios/SpanLog.swift (line-protocol append-only log under Application Support/ErneMonitor/spans.log, START/END/UPD records, 1MB rotation, max 50 active, drainInterrupted parses on next launch). Android: android/.../SpanLog.kt (identical line-protocol under filesDir/erne-monitor/spans.log, ConcurrentHashMap active set, synchronized I/O). JS: src/native/SpanSnapshot.{ts,test.ts} startSpan/updateSpan/endSpan API + replayInterrupted dispatch as interrupted_span custom events. ErneMonitorNative startSpan/endSpan/updateSpan/drainInterruptedSpans wrappers. createMonitorRuntime wires spanSnapshot, startMonitorRuntime calls replayInterrupted. | ✅ (7) | ✅ |
+| 44 | Expo Config Plugin (withErneMonitor) | ✅ | plugin/withErneMonitor.ts (composes withErneMonitorIOS + withErneMonitorAndroid via createRunOncePlugin). iOS: ITSAppUsesNonExemptEncryption=false, NSAppTransportSecurity localhost exception (gated by allowDevDashboard option), UIBackgroundModes fetch. Android: WAKE_LOCK + ACCESS_NETWORK_STATE permissions, application extractNativeLibs=true. Idempotent, preserves existing settings, never overwrites consumer values. plugin/build/ ships compiled JS via tsconfig.plugin.json. package.json exports `./plugin` and `./app.plugin` so consumers write `'@erne/monitor/plugin'` in app.config.{ts,js}. | ✅ (11) | ✅ |
 
 ---
 

@@ -159,6 +159,56 @@ export class ErneMonitorNative {
     }
   }
 
+  // ---- Task 43: span persistence ----
+
+  startSpan(
+    id: string,
+    name: string,
+    kind: string,
+    parentId: string | null,
+    startedAtMs: number,
+  ): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.startSpan !== 'function') return;
+    try {
+      mod.startSpan(id, name, kind, parentId, startedAtMs);
+    } catch {
+      // ignore
+    }
+  }
+
+  endSpan(id: string, endedAtMs: number): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.endSpan !== 'function') return;
+    try {
+      mod.endSpan(id, endedAtMs);
+    } catch {
+      // ignore
+    }
+  }
+
+  updateSpan(id: string, attribute: string, value: string): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.updateSpan !== 'function') return;
+    try {
+      mod.updateSpan(id, attribute, value);
+    } catch {
+      // ignore
+    }
+  }
+
+  async drainInterruptedSpans(): Promise<readonly Record<string, unknown>[]> {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.drainInterruptedSpans !== 'function') {
+      return [];
+    }
+    try {
+      return await mod.drainInterruptedSpans();
+    } catch {
+      return [];
+    }
+  }
+
   private subscribe<E extends NativeEventName>(
     eventName: E,
     listener: (payload: NativeEventMap[E]) => void,

@@ -1,0 +1,172 @@
+import Foundation
+
+/**
+ Watchdog-based ANR detector for iOS.
+
+ The strategy is the textbook one used by Sentry, Embrace, KSCrash:
+
+   1. A background DispatchQueue ticks every `pingIntervalMs`.
+   2. On each tick the watchdog posts a "still alive" closure to
+      DispatchQueue.main and starts a deadline.
+   3. If the main queue runs the closure within `thresholdMs`, the
+      tick is healthy and the watchdog moves on.
+   4. If the deadline elapses without the main queue having executed
+      the ack, the main thread is presumed wedged. The watchdog
+      captures the main thread call stack via Thread.callStackSymbols
+      (best-effort — Swift cannot enumerate other threads' frames
+      directly without private SPI) and reports an ANR.
+   5. Multiple consecutive deadline misses are coalesced into a
+      single report so we don't spam the SDK while the main thread
+      is still wedged.
+
+ Edge cases:
+   - When the app goes to background we suspend ticking entirely so
+     a backgrounded app doesn't false-positive while suspended by
+     iOS.
+   - When a debugger is attached we suspend ticking so breakpoints
+     don't look like ANRs (cheap check via sysctl KERN_PROC).
+
+ The detector does not block — every operation either runs on its
+ own queue or is fired-and-forgotten on the main queue.
+ */
+final class ANRDetector {
+  static let shared = ANRDetector()
+
+  // Configuration
+  private let pingIntervalMs: Int = 1000
+  private let thresholdMs: Int = 5000
+
+  // State
+  private let queue = DispatchQueue(label: "dev.erne.monitor.anr",
+                                    qos: .utility)
+  private var timer: DispatchSourceTimer?
+  private(set) var isRunning: Bool = false
+  private var pendingTickId: UInt64 = 0
+  private var lastAckedTickId: UInt64 = 0
+  private var pendingTickStartedAt: TimeInterval = 0
+  private var inAnrState: Bool = false
+  private var notificationObservers: [NSObjectProtocol] = []
+  private var isBackgrounded: Bool = false
+
+  // Callback set by ErneMonitorModule so the detector can emit
+  // events through the Expo Modules API event emitter without
+  // creating a circular import.
+  var onANR: ((_ durationMs: Int, _ stack: [String]) -> Void)?
+
+  func start() {
+    queue.async { [weak self] in
+      guard let self = self else { return }
+      guard !self.isRunning else { return }
+      self.isRunning = true
+      self.installAppStateObservers()
+      self.scheduleTimer()
+    }
+  }
+
+  func stop() {
+    queue.async { [weak self] in
+      guard let self = self else { return }
+      guard self.isRunning else { return }
+      self.isRunning = false
+      self.timer?.cancel()
+      self.timer = nil
+      self.removeAppStateObservers()
+      self.pendingTickId = 0
+      self.lastAckedTickId = 0
+      self.inAnrState = false
+    }
+  }
+
+  // MARK: - Watchdog ticking
+
+  private func scheduleTimer() {
+    let t = DispatchSource.makeTimerSource(queue: queue)
+    let interval = DispatchTimeInterval.milliseconds(pingIntervalMs)
+    t.schedule(deadline: .now() + interval, repeating: interval)
+    t.setEventHandler { [weak self] in
+      self?.tick()
+    }
+    t.resume()
+    timer = t
+  }
+
+  private func tick() {
+    if isBackgrounded { return }
+    if isDebuggerAttached() { return }
+
+    // Check whether the previous outstanding tick has been acked.
+    let outstanding = pendingTickId
+    if outstanding != 0 && outstanding != lastAckedTickId {
+      let now = Date().timeIntervalSince1970 * 1000
+      let elapsed = now - pendingTickStartedAt
+      if Int(elapsed) >= thresholdMs && !inAnrState {
+        inAnrState = true
+        let stack = Thread.callStackSymbols
+        let durationMs = Int(elapsed)
+        let cb = self.onANR
+        DispatchQueue.global(qos: .utility).async {
+          cb?(durationMs, stack)
+        }
+      }
+      // Don't post a new tick while waiting on the old one.
+      return
+    }
+
+    // Post a fresh tick.
+    pendingTickId += 1
+    let myId = pendingTickId
+    pendingTickStartedAt = Date().timeIntervalSince1970 * 1000
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      self.queue.async {
+        self.lastAckedTickId = myId
+        self.inAnrState = false
+      }
+    }
+  }
+
+  // MARK: - App state
+
+  private func installAppStateObservers() {
+    let center = NotificationCenter.default
+    let bg = center.addObserver(
+      forName: Notification.Name("UIApplicationDidEnterBackgroundNotification"),
+      object: nil,
+      queue: nil
+    ) { [weak self] _ in
+      self?.queue.async { self?.isBackgrounded = true }
+    }
+    let fg = center.addObserver(
+      forName: Notification.Name("UIApplicationWillEnterForegroundNotification"),
+      object: nil,
+      queue: nil
+    ) { [weak self] _ in
+      self?.queue.async {
+        self?.isBackgrounded = false
+        self?.pendingTickId = 0
+        self?.lastAckedTickId = 0
+        self?.inAnrState = false
+      }
+    }
+    notificationObservers = [bg, fg]
+  }
+
+  private func removeAppStateObservers() {
+    let center = NotificationCenter.default
+    for token in notificationObservers {
+      center.removeObserver(token)
+    }
+    notificationObservers.removeAll()
+  }
+
+  // MARK: - Debugger detection
+
+  private func isDebuggerAttached() -> Bool {
+    var info = kinfo_proc()
+    var size = MemoryLayout<kinfo_proc>.stride
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+    let result = sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0)
+    if result != 0 { return false }
+    return (info.kp_proc.p_flag & P_TRACED) != 0
+  }
+}

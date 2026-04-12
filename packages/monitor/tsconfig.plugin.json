@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "outDir": "plugin/build",
+    "rootDir": "plugin",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2020"
+  },
+  "include": ["plugin/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "plugin/build",
+    "**/*.test.ts"
+  ]
+}
