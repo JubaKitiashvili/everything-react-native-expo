@@ -267,6 +267,27 @@ export type {
   VisualReproScreenshot,
   VisualReproCollectorDeps,
 } from './collectors/native/VisualReproCollector';
+// Phase 3 — Transport
+export { BatchTransport } from './transport/BatchTransport';
+export type {
+  TransportHealth,
+  NetInfoLike,
+  BatchTransportDeps,
+} from './transport/BatchTransport';
+export { RetryQueue, MemoryRetryQueueStorage } from './transport/RetryQueue';
+export type {
+  RetryEntry,
+  RetryQueueStorage,
+  RetryQueueOptions,
+} from './transport/RetryQueue';
+export { OTelExporter } from './transport/OTelExporter';
+export type { OTelExporterDeps, OTelResource } from './transport/OTelExporter';
+export { mapNavigationToSpan } from './transport/otel/TraceMapper';
+export type { OTelSpan, OTelAttribute } from './transport/otel/TraceMapper';
+export { mapEventToMetrics } from './transport/otel/MetricMapper';
+export type { OTelMetric, OTelMetricDataPoint } from './transport/otel/MetricMapper';
+export { mapEventToLogRecord } from './transport/otel/LogMapper';
+export type { OTelLogRecord } from './transport/otel/LogMapper';
 // Phase 2b — Integrations
 export { ExpoDevToolsPlugin } from './integrations/ExpoDevToolsPlugin';
 export type {

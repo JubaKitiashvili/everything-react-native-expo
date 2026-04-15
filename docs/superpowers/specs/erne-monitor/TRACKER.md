@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-15
 **Current Phase:** Phase 2b — Native Advanced in progress
-**Active Task:** Phase 3 Task 54 — next session
-**Overall Progress:** 53/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 9/9 ✅)
+**Active Task:** Phase 4 Task 63 — next session
+**Overall Progress:** 62/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 9/9 ✅ · Phase 3 9/9 ✅)
 
 ---
 
@@ -18,8 +18,8 @@
 | 1c AI Integration | 12/12 | ✅ Done | AI fix suggestions |
 | 2a Native Core | 7/7 | ✅ Done | native crash/ANR/metrics/spans + config plugin |
 | 2b Native Advanced | 9/9 | ✅ Done | replay, profiler, dev tools |
-| 3 Backend | 0/9 | ⬜ Ready | production backend |
-| 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
+| 3 Backend | 9/9 | ✅ Done | production backend |
+| 4 Intelligence | 0/8 | ⬜ Ready | self-learning AI |
 
 ---
 
@@ -44,6 +44,22 @@
 | 42 | NativeMetrics | ✅ | iOS: ios/NativeMetrics.swift (Mach task_info CPU% via thread_basic_info enumeration, task_vm_info phys_footprint memory, ProcessInfo.thermalState, UIDevice battery, NSURL disk caps, ThermalObserver via thermalStateDidChangeNotification). Android: android/.../NativeMetrics.kt (/proc/self/stat CPU jiffies, /proc/self/statm RSS, ActivityManager.MemoryInfo, PowerManager currentThermalStatus, ACTION_BATTERY_CHANGED sticky, StatFs disk; ThermalObserver via PowerManager.OnThermalStatusChangedListener). JS: src/native/NativeMetricsPoller.{ts,test.ts} 30s interval poller emitting native_metrics + native_thermal custom events. **Live-verified iPhone 16 Pro simulator**: cpuUsagePercent=2, memoryUsedBytes=394MB, memoryTotalBytes=19GB, thermalState=nominal, diskAvailableBytes=14GB, diskTotalBytes=494GB streaming to dashboard. | ✅ (5) | ✅ |
 | 43 | SpanSnapshot | ✅ | iOS: ios/SpanLog.swift (line-protocol append-only log under Application Support/ErneMonitor/spans.log, START/END/UPD records, 1MB rotation, max 50 active, drainInterrupted parses on next launch). Android: android/.../SpanLog.kt (identical line-protocol under filesDir/erne-monitor/spans.log, ConcurrentHashMap active set, synchronized I/O). JS: src/native/SpanSnapshot.{ts,test.ts} startSpan/updateSpan/endSpan API + replayInterrupted dispatch as interrupted_span custom events. ErneMonitorNative startSpan/endSpan/updateSpan/drainInterruptedSpans wrappers. createMonitorRuntime wires spanSnapshot, startMonitorRuntime calls replayInterrupted. | ✅ (7) | ✅ |
 | 44 | Expo Config Plugin (withErneMonitor) | ✅ | plugin/withErneMonitor.ts (composes withErneMonitorIOS + withErneMonitorAndroid via createRunOncePlugin). iOS: ITSAppUsesNonExemptEncryption=false, NSAppTransportSecurity localhost exception (gated by allowDevDashboard option), UIBackgroundModes fetch. Android: WAKE_LOCK + ACCESS_NETWORK_STATE permissions, application extractNativeLibs=true. Idempotent, preserves existing settings, never overwrites consumer values. plugin/build/ ships compiled JS via tsconfig.plugin.json. package.json exports `./plugin` and `./app.plugin` so consumers write `'@erne/monitor/plugin'` in app.config.{ts,js}. | ✅ (11) | ✅ |
+
+## Phase 3 — Task Checklist
+
+| # | Task | Status | Files Created | Tests | Integrated |
+|---|------|--------|---------------|-------|------------|
+| 54 | BatchTransport | ✅ | src/transport/BatchTransport.{ts,test.ts}, src/transport/RetryQueue.{ts,test.ts} (offline-first batch upload, exponential backoff, gzip, crash immediate flush, consent gate) | ✅ (9+12) | ✅ |
+| 55 | OTelExporter | ✅ | src/transport/OTelExporter.{ts,test.ts}, src/transport/otel/{TraceMapper,MetricMapper,LogMapper}.ts (OTLP/HTTP JSON, navigation→spans, FPS/memory→metrics, crash→logs) | ✅ (9) | ✅ |
+| 56 | PostgreSQL Schema | ✅ | server/db/migrations/001_initial_schema.sql, 002_alert_rules.sql, server/db/schema.ts (6 tables, FK indexes, MigrationRunner interface) | ✅ (included in 58) | ✅ |
+| 57 | ClickHouse Schema | ✅ | server/clickhouse/migrations/001_events_table.sql, 002_materialized_views.sql, server/clickhouse/queries.ts (ReplacingMergeTree, 3 materialized views, typed query builders) | ✅ (included in 58) | ✅ |
+| 58 | Ingest Service | ✅ | server/ingest/server.ts, validator.ts, router.ts, server.test.ts (POST /v1/events, OTLP endpoints, API key auth, rate limiting, backpressure) | ✅ (24) | ✅ |
+| 59 | Ingest Workers | ✅ | server/workers/eventProcessor.ts, crashProcessor.ts, metricsAggregator.ts, workers.test.ts (batch ClickHouse inserts, server fingerprinting, 1-min rollups) | ✅ (22) | ✅ |
+| 60 | Symbolication | ✅ | server/symbolication/service.ts, sourceMapResolver.ts, cache.ts, service.test.ts (source map lookup, LRU cache 500MB, frame resolution) | ✅ (18) | ✅ |
+| 61 | Alerting Engine | ✅ | server/alerting/engine.ts, evaluator.ts, channels/{slack,webhook,email}.ts, engine.test.ts (6 operators, cooldown dedup, auto-resolution, 3 channels) | ✅ (17) | ✅ |
+| 62 | Data Retention | ✅ | server/maintenance/retention.ts, cleanup.ts, retention.test.ts (per-app TTL, ClickHouse DROP PARTITION, PostgreSQL orphan cleanup, dry-run) | ✅ (14) | ✅ |
+
+---
 
 ## Phase 2b — Task Checklist
 
