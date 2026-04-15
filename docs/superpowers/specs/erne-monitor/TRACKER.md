@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-15
 **Current Phase:** Phase 2b — Native Advanced in progress
-**Active Task:** Phase 2b Task 50 — Source Map Auto-Upload
-**Overall Progress:** 49/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 5/9)
+**Active Task:** Phase 3 Task 54 — next session
+**Overall Progress:** 53/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 9/9 ✅)
 
 ---
 
@@ -17,7 +17,7 @@
 | 1b Intelligence | 11/11 | ✅ Done | real-time dashboard |
 | 1c AI Integration | 12/12 | ✅ Done | AI fix suggestions |
 | 2a Native Core | 7/7 | ✅ Done | native crash/ANR/metrics/spans + config plugin |
-| 2b Native Advanced | 5/9 | 🔄 In Progress | replay, profiler, dev tools |
+| 2b Native Advanced | 9/9 | ✅ Done | replay, profiler, dev tools |
 | 3 Backend | 0/9 | ⬜ Ready | production backend |
 | 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
 
@@ -54,10 +54,10 @@
 | 47 | ReplayCapture | ✅ | ios/ReplayCapture.swift (UIView.drawHierarchy half-res JPEG, PII mask overlay, touch recording), android/.../ReplayCapture.kt (PixelCopy API 26+ with View.draw fallback, JPEG q30, mask overlay), src/processors/ReplayMasker.{ts,test.ts} (secureTextEntry/a11yLabel/custom mask rules), src/collectors/native/ReplayCollector.{ts,test.ts} (ring buffer, consent gate, mask refresh), ErneMonitorModule.swift/kt wired (startReplayCapture/stopReplayCapture/updateMasks/recordTouch/onReplayFrame). | ✅ (8+11) | ✅ |
 | 48 | LayoutSnapshot | ✅ | ios/LayoutSnapshot.swift (UIView hierarchy walk, screen coords, a11y, PII sanitization, depth truncation), android/.../LayoutSnapshot.kt (View hierarchy walk, FrameMetrics, padding/margin, password redaction), src/collectors/native/LayoutSnapshotCollector.{ts,test.ts} (on-demand capture, node counting). | ✅ (6) | ✅ |
 | 49 | Hermes CPU Profiler | ✅ | ios/HermesProfilerBridge.swift (profile file storage, listing, cleanup), android/.../HermesProfilerBridge.kt (same), src/collectors/native/HermesProfilerCollector.{ts,test.ts} (JS-coordinated via HermesInternal, 30s cap, dev-only gate, concurrent prevention). | ✅ (8) | ✅ |
-| 50 | Source Map Auto-Upload | ⬜ | | | |
-| 51 | ExpoDevToolsPlugin | ⬜ | | | |
-| 52 | BugReporter | ⬜ | | | |
-| 53 | VisualRepro | ⬜ | | | |
+| 50 | Source Map Auto-Upload | ✅ | plugin/withSourceMapUpload.ts (Expo config plugin, writes upload script via withDangerousMod), plugin/sourceMapUpload.test.ts, scripts/upload-sourcemaps.sh (curl-based, HEAD dedup, always exits 0). | ✅ (8) | ✅ |
+| 51 | ExpoDevToolsPlugin | ✅ | src/integrations/ExpoDevToolsPlugin.{ts,test.ts} (registers "ErneMonitor" tab, live health grid + recent events, command handling for captureProfile/layoutSnapshot, dev-only gate). | ✅ (10) | ✅ |
+| 52 | BugReporter | ✅ | ios/ShakeDetector.swift (UIWindow motionEnded swizzle), android/.../ShakeDetector.kt (accelerometer 2.7G threshold), src/integrations/BugReporter.{ts,test.ts} (bundles screenshot+breadcrumbs+replay+layout+device info, 60s rate limit, shake/programmatic triggers), ErneMonitorModule wired (onShakeDetected + start/stopShakeDetection). | ✅ (11) | ✅ |
+| 53 | VisualRepro | ✅ | src/collectors/native/VisualReproCollector.{ts,test.ts} (navigation-triggered screenshots, 10-frame ring buffer, 2MB cap, consent gate, crash attachment). | ✅ (12) | ✅ |
 
 ---
 
@@ -192,6 +192,8 @@ Track coverage of the design spec. Updated at end of each phase.
 | 2026-04-12 | 4 | 1b complete | Tasks 24 + 25 + live integration | gpc-expo (Expo SDK 55 / RN 0.83 / React 19) live-wired via build pipeline (tsconfig.build.json, dist/). Found + fixed: NetworkCollector blob/arraybuffer responseType crash (+5 tests), TerminalReporter triggering LogBox overlays (switched to console.log only, +1 test), BreadcrumbCollector pipeline ordering so stored crash copies carry the trail. Phase 1b wiring rewritten in createMonitorRuntime: 10 collectors + Fingerprinter + AdaptiveSampler + ConsentGate + stats counters + `__ERNE_MONITOR__` global. DashboardBridge (Task 24) — WebSocket client with hello/event protocol, exponential backoff reconnect, bounded offline buffer, 6 tests. Dashboard server.js — `monitor:hello` / `monitor:event` WS routes, in-memory 500-slot ring buffer, `/api/monitor/{summary,events}` REST endpoints, broadcast to all connected clients. Runtime tab (Task 25) — `/runtime.html` with health grid (crashes/network/nav/custom/renders), live signal feed, client panel, WS push + 10s REST poll fallback. End-to-end live-verified on iPhone 16 Pro: 23+ events streaming, real PerformanceObserver long-task detection at 51/52/72/133ms, real GPC backend traffic, test crash with stable fingerprint `76hp6x` visible in dashboard. 235 tests across 26 suites, tsc clean. |
 | 2026-04-12 | 5 | 1c (tasks 26-34) | 8 advanced collectors + SignalRouter composite | Phase 1c SDK core — 8 new collectors (TouchBoundary, Frustration, State, Suspense, Activity, Image, A11y, Storage) with full DI and ts-jest coverage. SignalRouter built as 7-file composite: DedupEngine (fingerprint-windowed merge), CorrelationEngine (time-window grouping with confidence), ConfidenceScorer (0-100 weighted by correlation/recurrence/pattern), ContextBuilder (breadcrumbs + summary + screen + source location), DispatchEngine (score-based channel routing with per-channel rate limits), FeedbackTracker (applied/helpful ratings), PatternLibrary (20 built-in RN patterns: Cannot-read-property, unhandled rejection, 5xx, oversized image, missing a11y label, rage tap, wasted Activity render, slow Suspense fallback, re-render storm, long JS task, memory pressure, AsyncStorage pressure, etc.). Router exposes `process(event)` single-entry pipeline with stats tracking. 305 tests across 35 suites. Tasks 35-37 (Schema codegen, Babel auto-instrumentation, init wizard) deferred to next session as separate tooling domains. |
 | 2026-04-12 | 6 | 1c complete | Tasks 35, 36, 37 | Phase 1c completion — **Schema codegen** (Task 35): ts-morph-driven parser + Swift/Kotlin emitters in `scripts/codegen/`, canonical types in `src/types/events.ts` (12 interfaces), `npm run codegen` produces `ios/generated/ErneMonitorSchema.swift` and `android/generated/ErneMonitorSchema.kt`. Handles primitives, optionals, arrays, nested refs, X\|null, string-literal unions (as enums), Record<string, X>, and string\|number\|boolean unions (JsonPrimitive). 12 tests. **Babel auto-instrumentation plugin** (Task 36): `babel-plugin/index.ts` + visitors for displayName injection on PascalCase arrow components, `onMonitorTouch` prop injection on Pressable/TouchableOpacity/TouchableHighlight/TouchableWithoutFeedback, and `data-erne-suspense-id` marker on `<Suspense>`. Include/exclude globs, `@erne-monitor-ignore` pragma (walks up to statement-level comments), idempotent. 18 tests via `@babel/core` + preset-react + preset-typescript. **CLI init wizard** (Task 37): `cli/{detect-project, scaffold-config, scaffold-provider, scaffold-babel, init, bin}.ts`. Detects Expo Router / React Navigation / TS / package manager / state mgmt / existing monitor dep. Renders monitor.config.{ts,js}, patches app entry to wrap `<MonitorProvider>`, patches babel.config.* to add the plugin. VFS-injected for tests, `--dry-run` support, fully idempotent, prints post-init summary. 14 tests. Total 349 tests across 38 suites. Phase 1c 12/12 complete; Phase 2a (native core) unblocked. |
+
+| 2026-04-15 | 8 | 2b complete | Tasks 45-53 | Phase 2b — all 9 tasks completed in one session. DualThreadFPS (CADisplayLink/Choreographer + JS probe, bottleneck attribution), FabricCommitTracker (CFRunLoopObserver/FrameMetrics, layout thrashing), ReplayCapture + ReplayMasker (session replay with PII masking, ring buffer, consent gate), LayoutSnapshot (native view hierarchy walk, sanitization, depth truncation), HermesProfilerCollector (JS-coordinated via HermesInternal, 30s cap, dev-only), Source Map Auto-Upload (Expo config plugin + shell script), ExpoDevToolsPlugin (DevTools tab with health grid + commands), BugReporter (shake detection + context bundling, rate limiting), VisualRepro (navigation-triggered screenshots, 2MB buffer cap). Also: production-ready diagnostics API (triggerTestCrash/ANR/SpanCrash) + gpc-expo diagnostics screen. 519 tests across 55 suites, tsc clean. iPhone 16 Pro device name corrected in all docs. Phase 3 (backend) unblocked. |
 
 ---
 

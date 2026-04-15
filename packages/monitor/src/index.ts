@@ -262,6 +262,25 @@ export type {
   HermesProfilerCollectorDeps,
   HermesInternalLike,
 } from './collectors/native/HermesProfilerCollector';
+export { VisualReproCollector } from './collectors/native/VisualReproCollector';
+export type {
+  VisualReproScreenshot,
+  VisualReproCollectorDeps,
+} from './collectors/native/VisualReproCollector';
+// Phase 2b — Integrations
+export { ExpoDevToolsPlugin } from './integrations/ExpoDevToolsPlugin';
+export type {
+  DevToolsPluginClient,
+  DevToolsPluginClientFactory,
+  ExpoDevToolsPluginDeps,
+} from './integrations/ExpoDevToolsPlugin';
+export { BugReporter } from './integrations/BugReporter';
+export type {
+  BugReport,
+  BugReportTrigger,
+  BugReporterDeps,
+  ReplayFrameSnapshot,
+} from './integrations/BugReporter';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,

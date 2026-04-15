@@ -27,7 +27,7 @@ public final class ErneMonitorModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ErneMonitor")
 
-    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame")
+    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame", "onShakeDetected")
 
     // Called by ErneMonitorNative.startNativeMonitoring().
     // In Task 38 this only flips a flag — Task 40 will install the
@@ -100,6 +100,7 @@ public final class ErneMonitorModule: Module {
       DualThreadFPS.shared.stop()
       FabricCommitTracker.shared.stop()
       ReplayCapture.shared.stopCapture()
+      ShakeDetector.shared.stop()
     }
 
     // Drain crash reports persisted by the previous run. JS calls this
@@ -139,6 +140,21 @@ public final class ErneMonitorModule: Module {
     // ProcessInfo.thermalState, UIDevice battery, NSFileManager disk).
     Function("getNativeMetrics") { () -> [String: Any?] in
       return NativeMetrics.currentSnapshot()
+    }
+
+    // ── Task 52: Shake Detection ──────────────────────────────────
+
+    Function("startShakeDetection") { [weak self] () -> Void in
+      ShakeDetector.shared.onShake = { [weak self] in
+        self?.sendEvent("onShakeDetected", [
+          "timestamp": Int(Date().timeIntervalSince1970 * 1000),
+        ])
+      }
+      ShakeDetector.shared.start()
+    }
+
+    Function("stopShakeDetection") { () -> Void in
+      ShakeDetector.shared.stop()
     }
 
     // ── Task 49: Hermes CPU Profiler ──────────────────────────────

@@ -24,7 +24,7 @@ class ErneMonitorModule : Module() {
     override fun definition() = ModuleDefinition {
         Name("ErneMonitor")
 
-        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame")
+        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame", "onShakeDetected")
 
         Function("startNativeMonitoring") {
             isActive = true
@@ -110,6 +110,7 @@ class ErneMonitorModule : Module() {
             DualThreadFPS.stop()
             FabricCommitTracker.stop()
             ReplayCapture.stopCapture()
+            ShakeDetector.stop()
         }
 
         Function("getNativeMetrics") {
@@ -142,6 +143,23 @@ class ErneMonitorModule : Module() {
 
         AsyncFunction("drainInterruptedSpans") {
             SpanLog.drainInterrupted()
+        }
+
+        // ── Task 52: Shake Detection ──────────────────────────────────
+
+        Function("startShakeDetection") {
+            val ctx = appContext.reactContext ?: return@Function
+            ShakeDetector.onShake = {
+                sendEvent(
+                    "onShakeDetected",
+                    mapOf("timestamp" to System.currentTimeMillis()),
+                )
+            }
+            ShakeDetector.start(ctx)
+        }
+
+        Function("stopShakeDetection") {
+            ShakeDetector.stop()
         }
 
         // ── Task 49: Hermes CPU Profiler ──────────────────────────────
