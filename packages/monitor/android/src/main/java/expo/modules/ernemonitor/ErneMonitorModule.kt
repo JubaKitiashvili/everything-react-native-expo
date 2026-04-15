@@ -24,7 +24,7 @@ class ErneMonitorModule : Module() {
     override fun definition() = ModuleDefinition {
         Name("ErneMonitor")
 
-        Events("onNativeCrash", "onANRDetected", "onThermalStateChange")
+        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS")
 
         Function("startNativeMonitoring") {
             isActive = true
@@ -63,6 +63,19 @@ class ErneMonitorModule : Module() {
                 // Task 43: span persistence — install the file path
                 // before the first JS span call lands.
                 SpanLog.install(ctx)
+
+                // Task 45: dual-thread FPS monitor.
+                DualThreadFPS.onReport = { uiFPS, jsFPS ->
+                    sendEvent(
+                        "onDualThreadFPS",
+                        mapOf(
+                            "uiFPS" to uiFPS,
+                            "jsFPS" to jsFPS,
+                            "timestamp" to System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                DualThreadFPS.start()
             }
         }
 
@@ -73,6 +86,7 @@ class ErneMonitorModule : Module() {
             ANRDetector.onANR = null
             ThermalObserver.uninstall()
             SpanLog.uninstall()
+            DualThreadFPS.stop()
         }
 
         Function("getNativeMetrics") {
@@ -105,6 +119,51 @@ class ErneMonitorModule : Module() {
 
         AsyncFunction("drainInterruptedSpans") {
             SpanLog.drainInterrupted()
+        }
+
+        // ── Diagnostics (dev-only) ──────────────────────────────────
+        // Standard SDK integration-test surface. BuildConfig.DEBUG
+        // gates the methods so they compile into release builds but
+        // throw if somehow invoked — matching iOS #if DEBUG behavior.
+
+        Function("triggerTestCrash") {
+            if (!isDebugBuild()) {
+                throw IllegalStateException("triggerTestCrash is dev-only")
+            }
+            // Send SIGSEGV to self — the installed signal handler
+            // persists the report for drain on next launch.
+            android.os.Process.sendSignal(android.os.Process.myPid(), 11) // SIGSEGV
+        }
+
+        Function("triggerTestANR") { durationSeconds: Double ->
+            if (!isDebugBuild()) {
+                throw IllegalStateException("triggerTestANR is dev-only")
+            }
+            // Block the main thread. ANR watchdog (1s/5s) fires if ≥5s.
+            Thread.sleep((durationSeconds * 1000).toLong())
+        }
+
+        Function("triggerTestSpanCrash") { spanName: String ->
+            if (!isDebugBuild()) {
+                throw IllegalStateException("triggerTestSpanCrash is dev-only")
+            }
+            val spanId = java.util.UUID.randomUUID().toString()
+            val now = System.currentTimeMillis()
+            SpanLog.startSpan(spanId, spanName, "internal", null, now)
+            // Crash after a brief delay so the span log flushes.
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }, 100)
+        }
+    }
+
+    private fun isDebugBuild(): Boolean {
+        return try {
+            val ctx = appContext.reactContext ?: return false
+            val ai = ctx.packageManager.getApplicationInfo(ctx.packageName, 0)
+            (ai.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        } catch (_: Exception) {
+            false
         }
     }
 

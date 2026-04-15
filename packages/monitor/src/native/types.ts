@@ -69,10 +69,17 @@ export interface NativeThermalEvent {
   readonly timestamp: number;
 }
 
+export interface NativeDualThreadFPSReport {
+  readonly uiFPS: number;
+  readonly jsFPS: number;
+  readonly timestamp: number;
+}
+
 export type NativeEventMap = {
   onNativeCrash: NativeCrashReport;
   onANRDetected: NativeANRReport;
   onThermalStateChange: NativeThermalEvent;
+  onDualThreadFPS: NativeDualThreadFPSReport;
 };
 
 export type NativeEventName = keyof NativeEventMap;
@@ -129,6 +136,21 @@ export interface ErneMonitorNativeModule {
   endSpan?(id: string, endedAtMs: number): void;
   updateSpan?(id: string, attribute: string, value: string): void;
   drainInterruptedSpans?(): Promise<readonly Record<string, unknown>[]>;
+  /**
+   * Dev-only diagnostics — trigger a native crash (SIGSEGV) to verify
+   * the crash handler persists the report and the next launch drains it.
+   */
+  triggerTestCrash?(): void;
+  /**
+   * Dev-only diagnostics — block the main thread for `durationSeconds`
+   * to trigger the ANR watchdog (fires when ≥5s).
+   */
+  triggerTestANR?(durationSeconds: number): void;
+  /**
+   * Dev-only diagnostics — start a named span then crash (SIGABRT).
+   * On next launch, `drainInterruptedSpans` should return this span.
+   */
+  triggerTestSpanCrash?(spanName: string): void;
 }
 
 /**

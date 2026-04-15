@@ -57,6 +57,8 @@ import { ActivityCollector } from '../collectors/ActivityCollector';
 import { ImageCollector } from '../collectors/ImageCollector';
 import { A11yCollector } from '../collectors/A11yCollector';
 import { StorageCollector } from '../collectors/StorageCollector';
+// Phase 2b native collectors
+import { DualThreadFPSCollector } from '../collectors/native/DualThreadFPSCollector';
 // Phase 1c SignalRouter
 import { SignalRouter } from '../signal-router/SignalRouter';
 import type { DispatchedSignal } from '../signal-router/DispatchEngine';
@@ -161,6 +163,7 @@ export interface MonitorRuntime {
   nativeCrashGateway: NativeCrashGateway;
   anrGateway: ANRGateway;
   nativeMetricsPoller: NativeMetricsPoller;
+  dualThreadFPS: DualThreadFPSCollector;
   spanSnapshot: SpanSnapshot;
   trackEvent: (
     name: string,
@@ -549,6 +552,11 @@ export async function createMonitorRuntime(
       return out;
     },
   });
+  const dualThreadFPS = new DualThreadFPSCollector({
+    native,
+    signalBus: bus,
+    sessionManager: session,
+  });
 
   const runtime: MonitorRuntime = {
     client,
@@ -588,6 +596,7 @@ export async function createMonitorRuntime(
     nativeCrashGateway,
     anrGateway,
     nativeMetricsPoller,
+    dualThreadFPS,
     spanSnapshot,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
@@ -598,6 +607,7 @@ export async function createMonitorRuntime(
       terminalReporter.stop();
       dashboardBridge?.stop();
       nativeMetricsPoller.stop();
+      dualThreadFPS.stop();
       anrGateway.stop();
       nativeCrashGateway.stop();
       native.stopNativeMonitoring();
@@ -616,7 +626,7 @@ export async function createMonitorRuntime(
     const g = globalThis as {
       __ERNE_MONITOR__?: unknown;
     };
-    g.__ERNE_MONITOR__ = { runtime, stats };
+    g.__ERNE_MONITOR__ = { runtime, stats, native };
   }
 
   return runtime;
@@ -632,6 +642,7 @@ export function startMonitorRuntime(runtime: MonitorRuntime): void {
   runtime.nativeCrashGateway.start();
   runtime.anrGateway.start();
   runtime.nativeMetricsPoller.start();
+  runtime.dualThreadFPS.start();
   void runtime.nativeCrashGateway.replayPersistedCrashes().catch(() => {
     // intentional swallow — boot must never fail because of a stale crash
   });

@@ -287,3 +287,88 @@ describe('ErneMonitorNative — errors thrown by the native module', () => {
     expect(() => sub.remove()).not.toThrow();
   });
 });
+
+describe('ErneMonitorNative — diagnostics (dev-only test triggers)', () => {
+  test('triggerTestCrash delegates to the native module', () => {
+    const triggerTestCrash = jest.fn();
+    const { module } = makeFakeModule({ triggerTestCrash });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    native.triggerTestCrash();
+    expect(triggerTestCrash).toHaveBeenCalledTimes(1);
+  });
+
+  test('triggerTestCrash is silent no-op when native module absent', () => {
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => null),
+    );
+    expect(() => native.triggerTestCrash()).not.toThrow();
+  });
+
+  test('triggerTestCrash swallows native errors', () => {
+    const { module } = makeFakeModule({
+      triggerTestCrash: () => {
+        throw new Error('boom');
+      },
+    });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    expect(() => native.triggerTestCrash()).not.toThrow();
+  });
+
+  test('triggerTestANR delegates with default 6 seconds', () => {
+    const triggerTestANR = jest.fn();
+    const { module } = makeFakeModule({ triggerTestANR });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    native.triggerTestANR();
+    expect(triggerTestANR).toHaveBeenCalledWith(6);
+  });
+
+  test('triggerTestANR accepts custom duration', () => {
+    const triggerTestANR = jest.fn();
+    const { module } = makeFakeModule({ triggerTestANR });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    native.triggerTestANR(10);
+    expect(triggerTestANR).toHaveBeenCalledWith(10);
+  });
+
+  test('triggerTestANR is silent no-op when native module absent', () => {
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => null),
+    );
+    expect(() => native.triggerTestANR()).not.toThrow();
+  });
+
+  test('triggerTestSpanCrash delegates with default span name', () => {
+    const triggerTestSpanCrash = jest.fn();
+    const { module } = makeFakeModule({ triggerTestSpanCrash });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    native.triggerTestSpanCrash();
+    expect(triggerTestSpanCrash).toHaveBeenCalledWith('test-span');
+  });
+
+  test('triggerTestSpanCrash accepts custom span name', () => {
+    const triggerTestSpanCrash = jest.fn();
+    const { module } = makeFakeModule({ triggerTestSpanCrash });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    native.triggerTestSpanCrash('checkout-flow');
+    expect(triggerTestSpanCrash).toHaveBeenCalledWith('checkout-flow');
+  });
+
+  test('triggerTestSpanCrash is silent no-op when native module absent', () => {
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => null),
+    );
+    expect(() => native.triggerTestSpanCrash()).not.toThrow();
+  });
+});

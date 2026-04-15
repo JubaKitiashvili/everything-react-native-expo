@@ -229,6 +229,12 @@ export type {
   AppStateLike,
   AppStateStatus,
 } from './core/SessionManager';
+// Phase 2b — Native advanced collectors
+export { DualThreadFPSCollector } from './collectors/native/DualThreadFPSCollector';
+export type {
+  DualThreadFPSEventData,
+  DualThreadFPSCollectorDeps,
+} from './collectors/native/DualThreadFPSCollector';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,
@@ -243,6 +249,7 @@ export type {
   NativeANRReport,
   NativeCrashGatewayDeps,
   NativeCrashReport,
+  NativeDualThreadFPSReport,
   NativeEventMap,
   NativeEventName,
   NativeMetricsSnapshot,

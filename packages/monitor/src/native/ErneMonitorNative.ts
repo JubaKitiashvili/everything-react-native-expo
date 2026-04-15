@@ -2,6 +2,7 @@ import type {
   ErneMonitorNativeModule,
   NativeANRReport,
   NativeCrashReport,
+  NativeDualThreadFPSReport,
   NativeEventMap,
   NativeEventName,
   NativeMetricsSnapshot,
@@ -126,6 +127,12 @@ export class ErneMonitorNative {
     return this.subscribe('onThermalStateChange', listener);
   }
 
+  onDualThreadFPS(
+    listener: (report: NativeDualThreadFPSReport) => void,
+  ): NativeSubscription {
+    return this.subscribe('onDualThreadFPS', listener);
+  }
+
   /**
    * Drains any crash reports persisted by the native module during the
    * previous session. Returns an empty array if the native module is
@@ -206,6 +213,60 @@ export class ErneMonitorNative {
       return await mod.drainInterruptedSpans();
     } catch {
       return [];
+    }
+  }
+
+  // ── Diagnostics (dev-only) ──────────────────────────────────
+  // Standard SDK integration-test surface. Callers should guard
+  // with `__DEV__` — native side also gates on DEBUG builds.
+
+  /**
+   * Triggers a native crash (SIGSEGV) to verify the crash handler
+   * persists the report. The app will terminate — on next launch,
+   * `drainPersistedCrashes()` should return the crash.
+   *
+   * Dev-only — no-ops in release builds.
+   */
+  triggerTestCrash(): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.triggerTestCrash !== 'function') return;
+    try {
+      mod.triggerTestCrash();
+    } catch {
+      // ignore — the crash itself may prevent this from returning
+    }
+  }
+
+  /**
+   * Blocks the main thread for `durationSeconds` to trigger the
+   * ANR watchdog (1s ping / 5s threshold). Use ≥6s to guarantee
+   * detection.
+   *
+   * Dev-only — throws in release builds.
+   */
+  triggerTestANR(durationSeconds: number = 6): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.triggerTestANR !== 'function') return;
+    try {
+      mod.triggerTestANR(durationSeconds);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Starts a named span then crashes (SIGABRT). On next launch,
+   * `drainInterruptedSpans()` should return this span as interrupted.
+   *
+   * Dev-only — throws in release builds.
+   */
+  triggerTestSpanCrash(spanName: string = 'test-span'): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.triggerTestSpanCrash !== 'function') return;
+    try {
+      mod.triggerTestSpanCrash(spanName);
+    } catch {
+      // ignore — the crash itself may prevent this from returning
     }
   }
 

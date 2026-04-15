@@ -27,7 +27,7 @@ public final class ErneMonitorModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ErneMonitor")
 
-    Events("onNativeCrash", "onANRDetected", "onThermalStateChange")
+    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS")
 
     // Called by ErneMonitorNative.startNativeMonitoring().
     // In Task 38 this only flips a flag — Task 40 will install the
@@ -64,6 +64,16 @@ public final class ErneMonitorModule: Module {
       // Task 43: install the span log so JS startSpan calls have a
       // file path resolved before the first call lands.
       SpanLog.shared.install()
+
+      // Task 45: dual-thread FPS monitor.
+      DualThreadFPS.shared.onReport = { [weak self] uiFPS, jsFPS in
+        self?.sendEvent("onDualThreadFPS", [
+          "uiFPS": uiFPS,
+          "jsFPS": jsFPS,
+          "timestamp": Int(Date().timeIntervalSince1970 * 1000),
+        ])
+      }
+      DualThreadFPS.shared.start()
     }
 
     Function("stopNativeMonitoring") { [weak self] () -> Void in
@@ -74,6 +84,7 @@ public final class ErneMonitorModule: Module {
       ANRDetector.shared.onANR = nil
       ThermalObserver.shared.uninstall()
       SpanLog.shared.uninstall()
+      DualThreadFPS.shared.stop()
     }
 
     // Drain crash reports persisted by the previous run. JS calls this
@@ -114,6 +125,42 @@ public final class ErneMonitorModule: Module {
     Function("getNativeMetrics") { () -> [String: Any?] in
       return NativeMetrics.currentSnapshot()
     }
+
+    // ── Diagnostics (dev-only) ──────────────────────────────────
+    // Standard SDK integration-test surface — every major monitoring
+    // SDK ships these (Sentry.nativeCrash, Embrace.testCrash, etc.).
+    // Gated by #if DEBUG so they compile out of release builds.
+
+    #if DEBUG
+    Function("triggerTestCrash") {
+      // Force a SIGSEGV — the installed signal handler will catch it,
+      // persist the report, and the next launch will drain it.
+      let ptr = UnsafeMutableRawPointer(bitPattern: 0xDEAD)
+      ptr?.storeBytes(of: 42, as: Int.self)
+    }
+
+    Function("triggerTestANR") { (durationSeconds: Double) -> Void in
+      // Block the main thread for the requested duration. The ANR
+      // watchdog (1s ping / 5s threshold) will fire if duration ≥ 5.
+      Thread.sleep(forTimeInterval: durationSeconds)
+    }
+
+    Function("triggerTestSpanCrash") { [weak self] (spanName: String) -> Void in
+      guard self != nil else { return }
+      // Start a span then crash — on next launch, drainInterruptedSpans
+      // should return this span as interrupted.
+      let spanId = UUID().uuidString.lowercased()
+      let now = Int64(Date().timeIntervalSince1970 * 1000)
+      SpanLog.shared.startSpan(
+        id: spanId, name: spanName, kind: "internal",
+        parentId: nil, startedAtMs: now
+      )
+      // Crash via SIGABRT after a brief delay so the span log flushes.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        abort()
+      }
+    }
+    #endif
   }
 
   // MARK: - Helpers

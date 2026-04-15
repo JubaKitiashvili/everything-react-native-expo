@@ -4,6 +4,7 @@ export type {
   ErneMonitorNativeModule,
   NativeANRReport,
   NativeCrashReport,
+  NativeDualThreadFPSReport,
   NativeEventMap,
   NativeEventName,
   NativeMetricsSnapshot,
