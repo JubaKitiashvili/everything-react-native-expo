@@ -344,3 +344,64 @@ export type {
   MemoryInfo,
   ConnectionType,
 } from './types';
+// Phase 4 — Intelligence
+export { PatternSync } from './intelligence/PatternSync';
+export type {
+  CachedPattern,
+  PatternSyncTransport,
+  PatternSyncDeps,
+} from './intelligence/PatternSync';
+export { AnomalyDetector } from './intelligence/AnomalyDetector';
+export type {
+  AnomalyType,
+  AnomalyResult,
+  AnomalyInput,
+  AnomalyModel,
+  AnomalyDetectorDeps,
+} from './intelligence/AnomalyDetector';
+export { ModelLoader } from './intelligence/ModelLoader';
+export type {
+  ModelStatus,
+  ModelLoadProgress,
+  ModelSource,
+  ModelFactory,
+} from './intelligence/ModelLoader';
+export { OTAUpdater } from './intelligence/OTAUpdater';
+export type {
+  OTAManifest,
+  OTAVersionInfo,
+  OTAStorage,
+  OTAUpdaterDeps,
+  OTAUpdateStatus,
+  OTAUpdateResult,
+} from './intelligence/OTAUpdater';
+// Phase 4 — Plugins
+export { PluginRegistry, validatePlugin } from './plugins/PluginRegistry';
+export type {
+  PluginType,
+  MonitorPlugin,
+  PluginRegistration,
+  PluginRegistryDeps,
+} from './plugins/PluginRegistry';
+export { PluginLoader } from './plugins/PluginLoader';
+export type {
+  PluginResolver,
+  PluginConfig,
+  PluginLoadResult,
+} from './plugins/PluginLoader';
+export {
+  withMetroInstrumentation,
+  shouldInstrument,
+  buildTransformSpec,
+} from './plugins/withMetroInstrumentation';
+export type {
+  MetroInstrumentationConfig,
+  MetroConfig,
+  BabelTransformSpec,
+} from './plugins/withMetroInstrumentation';
+// Phase 4 — RSC Collector
+export { RSCCollector } from './collectors/RSCCollector';
+export type {
+  RSCEventData,
+  RSCCollectorDeps,
+} from './collectors/RSCCollector';

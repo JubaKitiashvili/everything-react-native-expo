@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-15
 **Current Phase:** Phase 2b — Native Advanced in progress
-**Active Task:** Phase 4 Task 63 — next session
-**Overall Progress:** 62/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 9/9 ✅ · Phase 3 9/9 ✅)
+**Active Task:** None — all 70 tasks complete
+**Overall Progress:** 70/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 9/9 ✅ · Phase 3 9/9 ✅ · Phase 4 8/8 ✅)
 
 ---
 
@@ -19,7 +19,7 @@
 | 2a Native Core | 7/7 | ✅ Done | native crash/ANR/metrics/spans + config plugin |
 | 2b Native Advanced | 9/9 | ✅ Done | replay, profiler, dev tools |
 | 3 Backend | 9/9 | ✅ Done | production backend |
-| 4 Intelligence | 0/8 | ⬜ Ready | self-learning AI |
+| 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 
 ---
 
@@ -44,6 +44,21 @@
 | 42 | NativeMetrics | ✅ | iOS: ios/NativeMetrics.swift (Mach task_info CPU% via thread_basic_info enumeration, task_vm_info phys_footprint memory, ProcessInfo.thermalState, UIDevice battery, NSURL disk caps, ThermalObserver via thermalStateDidChangeNotification). Android: android/.../NativeMetrics.kt (/proc/self/stat CPU jiffies, /proc/self/statm RSS, ActivityManager.MemoryInfo, PowerManager currentThermalStatus, ACTION_BATTERY_CHANGED sticky, StatFs disk; ThermalObserver via PowerManager.OnThermalStatusChangedListener). JS: src/native/NativeMetricsPoller.{ts,test.ts} 30s interval poller emitting native_metrics + native_thermal custom events. **Live-verified iPhone 16 Pro simulator**: cpuUsagePercent=2, memoryUsedBytes=394MB, memoryTotalBytes=19GB, thermalState=nominal, diskAvailableBytes=14GB, diskTotalBytes=494GB streaming to dashboard. | ✅ (5) | ✅ |
 | 43 | SpanSnapshot | ✅ | iOS: ios/SpanLog.swift (line-protocol append-only log under Application Support/ErneMonitor/spans.log, START/END/UPD records, 1MB rotation, max 50 active, drainInterrupted parses on next launch). Android: android/.../SpanLog.kt (identical line-protocol under filesDir/erne-monitor/spans.log, ConcurrentHashMap active set, synchronized I/O). JS: src/native/SpanSnapshot.{ts,test.ts} startSpan/updateSpan/endSpan API + replayInterrupted dispatch as interrupted_span custom events. ErneMonitorNative startSpan/endSpan/updateSpan/drainInterruptedSpans wrappers. createMonitorRuntime wires spanSnapshot, startMonitorRuntime calls replayInterrupted. | ✅ (7) | ✅ |
 | 44 | Expo Config Plugin (withErneMonitor) | ✅ | plugin/withErneMonitor.ts (composes withErneMonitorIOS + withErneMonitorAndroid via createRunOncePlugin). iOS: ITSAppUsesNonExemptEncryption=false, NSAppTransportSecurity localhost exception (gated by allowDevDashboard option), UIBackgroundModes fetch. Android: WAKE_LOCK + ACCESS_NETWORK_STATE permissions, application extractNativeLibs=true. Idempotent, preserves existing settings, never overwrites consumer values. plugin/build/ ships compiled JS via tsconfig.plugin.json. package.json exports `./plugin` and `./app.plugin` so consumers write `'@erne/monitor/plugin'` in app.config.{ts,js}. | ✅ (11) | ✅ |
+
+## Phase 4 — Task Checklist
+
+| # | Task | Status | Files Created | Tests | Integrated |
+|---|------|--------|---------------|-------|------------|
+| 63 | PatternLibrary Server Persistence | ✅ | server/patterns/{store,sync}.ts, src/intelligence/PatternSync.ts (throttled sync, cold start fetch, confidence-based merge) | ✅ (26) | ✅ |
+| 64 | Cross-Project Learning | ✅ | server/intelligence/{crossProject,anonymizer}.ts (opt-in, anonymized aggregation, suggestion-only) | ✅ (14) | ✅ |
+| 65 | On-Device ML Anomaly Detection | ✅ | src/intelligence/{AnomalyDetector,ModelLoader}.ts (10s interval, 4 anomaly types, rule-based fallback, 0.8 threshold) | ✅ (22) | ✅ |
+| 66 | OTA Pattern/Model Updates | ✅ | src/intelligence/OTAUpdater.ts, server/ota/manifest.ts (ETag versioning, SHA-256 validation, atomic update, bandwidth-aware) | ✅ (17) | ✅ |
+| 67 | MTTR/DORA Metrics | ✅ | server/metrics/dora.ts (MTTR, Change Failure Rate, Deploy Frequency, Lead Time, trend + export) | ✅ (14) | ✅ |
+| 68 | Plugin/Extension Marketplace | ✅ | src/plugins/{PluginRegistry,PluginLoader}.ts, server/marketplace/registry.ts (sandboxed init, validation, health check) | ✅ (21) | ✅ |
+| 69 | RSC Monitoring | ✅ | src/collectors/RSCCollector.ts (server render time, payload size, streaming, cache, reload timing, no-op in non-RSC) | ✅ (12) | ✅ |
+| 70 | Metro Auto-Instrumentation | ✅ | src/plugins/withMetroInstrumentation.ts (Babel transform, entry wrapping, render tracking, press breadcrumbs, source map preserving) | ✅ (16) | ✅ |
+
+---
 
 ## Phase 3 — Task Checklist
 
@@ -209,6 +224,7 @@ Track coverage of the design spec. Updated at end of each phase.
 | 2026-04-12 | 5 | 1c (tasks 26-34) | 8 advanced collectors + SignalRouter composite | Phase 1c SDK core — 8 new collectors (TouchBoundary, Frustration, State, Suspense, Activity, Image, A11y, Storage) with full DI and ts-jest coverage. SignalRouter built as 7-file composite: DedupEngine (fingerprint-windowed merge), CorrelationEngine (time-window grouping with confidence), ConfidenceScorer (0-100 weighted by correlation/recurrence/pattern), ContextBuilder (breadcrumbs + summary + screen + source location), DispatchEngine (score-based channel routing with per-channel rate limits), FeedbackTracker (applied/helpful ratings), PatternLibrary (20 built-in RN patterns: Cannot-read-property, unhandled rejection, 5xx, oversized image, missing a11y label, rage tap, wasted Activity render, slow Suspense fallback, re-render storm, long JS task, memory pressure, AsyncStorage pressure, etc.). Router exposes `process(event)` single-entry pipeline with stats tracking. 305 tests across 35 suites. Tasks 35-37 (Schema codegen, Babel auto-instrumentation, init wizard) deferred to next session as separate tooling domains. |
 | 2026-04-12 | 6 | 1c complete | Tasks 35, 36, 37 | Phase 1c completion — **Schema codegen** (Task 35): ts-morph-driven parser + Swift/Kotlin emitters in `scripts/codegen/`, canonical types in `src/types/events.ts` (12 interfaces), `npm run codegen` produces `ios/generated/ErneMonitorSchema.swift` and `android/generated/ErneMonitorSchema.kt`. Handles primitives, optionals, arrays, nested refs, X\|null, string-literal unions (as enums), Record<string, X>, and string\|number\|boolean unions (JsonPrimitive). 12 tests. **Babel auto-instrumentation plugin** (Task 36): `babel-plugin/index.ts` + visitors for displayName injection on PascalCase arrow components, `onMonitorTouch` prop injection on Pressable/TouchableOpacity/TouchableHighlight/TouchableWithoutFeedback, and `data-erne-suspense-id` marker on `<Suspense>`. Include/exclude globs, `@erne-monitor-ignore` pragma (walks up to statement-level comments), idempotent. 18 tests via `@babel/core` + preset-react + preset-typescript. **CLI init wizard** (Task 37): `cli/{detect-project, scaffold-config, scaffold-provider, scaffold-babel, init, bin}.ts`. Detects Expo Router / React Navigation / TS / package manager / state mgmt / existing monitor dep. Renders monitor.config.{ts,js}, patches app entry to wrap `<MonitorProvider>`, patches babel.config.* to add the plugin. VFS-injected for tests, `--dry-run` support, fully idempotent, prints post-init summary. 14 tests. Total 349 tests across 38 suites. Phase 1c 12/12 complete; Phase 2a (native core) unblocked. |
 
+| 2026-04-15 | 9 | Phase 4 complete (all 70 tasks) | Tasks 63-70 | Phase 4 Intelligence — PatternSync (server persistence + client sync, throttled, confidence merge), Cross-Project Learning (anonymized aggregation, opt-in, suggestion-only), AnomalyDetector (on-device ML with rule-based fallback, 10s interval, 4 anomaly types), OTA Updater (ETag + SHA-256, atomic, bandwidth-aware), DORA Metrics (MTTR, CFR, Deploy Freq, Lead Time), PluginRegistry + PluginLoader (sandboxed, validated, health checked), RSCCollector (server render time, payload size, streaming, cache), Metro Auto-Instrumentation (Babel transform, entry wrapping, source map preserving). 818 tests across 73 suites, tsc clean. **ALL 70 TASKS COMPLETE — @erne/monitor v1.0 feature-complete.** |
 | 2026-04-15 | 8 | 2b complete | Tasks 45-53 | Phase 2b — all 9 tasks completed in one session. DualThreadFPS (CADisplayLink/Choreographer + JS probe, bottleneck attribution), FabricCommitTracker (CFRunLoopObserver/FrameMetrics, layout thrashing), ReplayCapture + ReplayMasker (session replay with PII masking, ring buffer, consent gate), LayoutSnapshot (native view hierarchy walk, sanitization, depth truncation), HermesProfilerCollector (JS-coordinated via HermesInternal, 30s cap, dev-only), Source Map Auto-Upload (Expo config plugin + shell script), ExpoDevToolsPlugin (DevTools tab with health grid + commands), BugReporter (shake detection + context bundling, rate limiting), VisualRepro (navigation-triggered screenshots, 2MB buffer cap). Also: production-ready diagnostics API (triggerTestCrash/ANR/SpanCrash) + gpc-expo diagnostics screen. 519 tests across 55 suites, tsc clean. iPhone 16 Pro device name corrected in all docs. Phase 3 (backend) unblocked. |
 
 ---
