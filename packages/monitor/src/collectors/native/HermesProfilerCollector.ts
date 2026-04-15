@@ -115,16 +115,8 @@ export class HermesProfilerCollector implements Collector {
 
       if (!profileData) return null;
 
-      // Save via native bridge
-      const mod = this.deps.native as unknown as Record<string, unknown>;
-      const loader = (this.deps.native as unknown as { loader: { load(): unknown } }).loader;
-      const nativeMod = loader.load() as Record<string, unknown> | null;
-      if (!nativeMod || typeof nativeMod.saveHermesProfile !== 'function') {
-        return null;
-      }
-      const path = nativeMod.saveHermesProfile(profileData, trigger) as
-        | string
-        | null;
+      // Save via native bridge (public safe wrapper method)
+      const path = this.deps.native.saveHermesProfile(profileData, trigger);
 
       if (path) {
         // Emit event

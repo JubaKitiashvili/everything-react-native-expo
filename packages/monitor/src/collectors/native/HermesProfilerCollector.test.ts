@@ -174,6 +174,110 @@ describe('HermesProfilerCollector', () => {
     expect(r2).toBeNull();
   });
 
+  test('dispose calls stop', () => {
+    const { module } = makeFakeModule();
+    const { hermes } = makeFakeHermes();
+    const { collector } = makeCollector(module, hermes);
+    collector.start();
+    expect(collector.isRunning()).toBe(true);
+    collector.dispose();
+    expect(collector.isRunning()).toBe(false);
+  });
+
+  test('returns null when disableSampling returns empty string', async () => {
+    const { module } = makeFakeModule();
+    const hermes: HermesInternalLike = {
+      enableSampling: () => {},
+      disableSampling: () => '',
+    };
+    const { collector } = makeCollector(module, hermes);
+    collector.start();
+    const p = collector.captureProfile(50);
+    jest.advanceTimersByTime(50);
+    const result = await p;
+    expect(result).toBeNull();
+  });
+
+  test('returns null when native module lacks saveHermesProfile', async () => {
+    // Make module WITHOUT saveHermesProfile
+    const module: ErneMonitorNativeModule = {
+      startNativeMonitoring: () => {},
+      stopNativeMonitoring: () => {},
+      getNativeMetrics: () => UNKNOWN_NATIVE_METRICS,
+      addListener: (_e, _l) => ({ remove: () => {} }) as NativeSubscription,
+    };
+    const { hermes } = makeFakeHermes();
+    const { collector } = makeCollector(module, hermes);
+    collector.start();
+    const p = collector.captureProfile(50);
+    jest.advanceTimersByTime(50);
+    const result = await p;
+    expect(result).toBeNull();
+  });
+
+  test('returns null when enableSampling is missing on hermes', async () => {
+    const { module } = makeFakeModule();
+    const incompleteHermes: HermesInternalLike = {};
+    const { collector } = makeCollector(module, incompleteHermes);
+    collector.start();
+    const result = await collector.captureProfile(50);
+    expect(result).toBeNull();
+  });
+
+  test('catches errors during capture and returns null', async () => {
+    const { module } = makeFakeModule();
+    const errorHermes: HermesInternalLike = {
+      enableSampling: () => {
+        throw new Error('Hermes error');
+      },
+      disableSampling: () => '',
+    };
+    const { collector } = makeCollector(module, errorHermes);
+    collector.start();
+    const result = await collector.captureProfile(50);
+    expect(result).toBeNull();
+    expect(collector.isProfiling()).toBe(false);
+  });
+
+  test('falls back to globalThis.HermesInternal when deps.hermesInternal undefined', () => {
+    const { module } = makeFakeModule();
+    const bus = new SignalBus();
+    const session = new SessionManager({ random: () => 0.5 });
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+    );
+    // Set on globalThis
+    const g = globalThis as Record<string, unknown>;
+    const origHermes = g.HermesInternal;
+    g.HermesInternal = {
+      enableSampling: () => {},
+      disableSampling: () => 'data',
+    };
+    try {
+      const collector = new HermesProfilerCollector({
+        native,
+        signalBus: bus,
+        sessionManager: session,
+        isDev: true,
+        // hermesInternal intentionally not set — should fall back to global
+      });
+      collector.start();
+      expect(collector.isRunning()).toBe(true);
+      collector.stop();
+    } finally {
+      g.HermesInternal = origHermes;
+    }
+  });
+
+  test('stopProfiling is a no-op when not profiling', () => {
+    const { module } = makeFakeModule();
+    const { hermes } = makeFakeHermes();
+    const { collector } = makeCollector(module, hermes);
+    collector.start();
+    // Not profiling — stopProfiling should not throw
+    expect(() => collector.stopProfiling()).not.toThrow();
+  });
+
   test('stopProfiling cancels in-progress capture', async () => {
     const { module } = makeFakeModule();
     const { hermes, calls } = makeFakeHermes();

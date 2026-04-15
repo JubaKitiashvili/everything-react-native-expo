@@ -1,4 +1,4 @@
-import { BatchTransport } from './BatchTransport';
+import { BatchTransport, type NetInfoLike } from './BatchTransport';
 import { RetryQueue, MemoryRetryQueueStorage } from './RetryQueue';
 import type { MonitorEvent } from '../types';
 
@@ -183,6 +183,137 @@ describe('BatchTransport', () => {
     const after = transport.getHealth();
     expect(after.pending).toBe(0);
     expect(after.lastFlushTime).not.toBeNull();
+  });
+
+  test('isOnline reflects connectivity state', () => {
+    const { transport } = makeTransport();
+    expect(transport.isOnline()).toBe(true);
+  });
+
+  test('netInfo listener updates online state and triggers flush on reconnect', async () => {
+    type NetListener = (state: { isConnected: boolean | null }) => void;
+    let netListener: NetListener | null = null;
+    const netInfo = {
+      addEventListener: (listener: NetListener) => {
+        netListener = listener;
+        return { remove: jest.fn() };
+      },
+    };
+    const storage = new MemoryRetryQueueStorage();
+    const retryQueue = new RetryQueue({ storage, baseDelayMs: 0 });
+    const fetchCalls: Array<{ url: string; body: string }> = [];
+    const fetchImpl = async (url: string, init: RequestInit) => {
+      fetchCalls.push({ url, body: init?.body as string });
+      return { ok: true, status: 202 } as Response;
+    };
+    const transport = new BatchTransport({
+      endpoint: 'https://api.erne.dev/v1/events',
+      apiKey: 'key',
+      retryQueue,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      batchIntervalMs: 60_000,
+      netInfo: netInfo as unknown as NetInfoLike,
+    });
+    transport.start();
+
+    // Go offline
+    netListener!({ isConnected: false });
+    expect(transport.isOnline()).toBe(false);
+
+    // Send while offline — should buffer but not flush
+    transport.send(makeEvent());
+    await transport.flush(); // should not send (offline)
+    expect(fetchCalls).toHaveLength(0);
+
+    // Come back online — triggers flush
+    netListener!({ isConnected: true });
+    await Promise.resolve();
+    await Promise.resolve();
+    // The reconnect handler calls flush() and flushRetryQueue()
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('flushRetryQueue handles failed retry (non-ok response)', async () => {
+    let callCount = 0;
+    const fetchImpl = async () => {
+      callCount++;
+      return { ok: false, status: 500 } as Response;
+    };
+    const storage = new MemoryRetryQueueStorage();
+    const retryQueue = new RetryQueue({ storage, baseDelayMs: 0 });
+    await retryQueue.enqueue('r1', '{"retry":1}');
+
+    const transport = new BatchTransport({
+      endpoint: 'https://api.erne.dev/v1/events',
+      apiKey: 'key',
+      retryQueue,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    transport.start();
+    await transport.flushRetryQueue();
+    expect(callCount).toBe(1);
+    // Entry should still be in queue (failed, not acknowledged)
+  });
+
+  test('flushRetryQueue handles network error during retry', async () => {
+    const failFetch = async () => {
+      throw new Error('Network error');
+    };
+    const storage = new MemoryRetryQueueStorage();
+    const retryQueue = new RetryQueue({ storage, baseDelayMs: 0 });
+    await retryQueue.enqueue('r1', '{"retry":1}');
+
+    const transport = new BatchTransport({
+      endpoint: 'https://api.erne.dev/v1/events',
+      apiKey: 'key',
+      retryQueue,
+      fetchImpl: failFetch as unknown as typeof fetch,
+    });
+    transport.start();
+    // Should not throw
+    await expect(transport.flushRetryQueue()).resolves.not.toThrow();
+  });
+
+  test('periodic flush timer fires', async () => {
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (_url: string, init: RequestInit) => {
+      fetchCalls.push(init?.body as string);
+      return { ok: true, status: 202 } as Response;
+    };
+    const storage = new MemoryRetryQueueStorage();
+    const retryQueue = new RetryQueue({ storage });
+    const transport = new BatchTransport({
+      endpoint: 'https://api.erne.dev/v1/events',
+      apiKey: 'key',
+      retryQueue,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      batchIntervalMs: 1000,
+    });
+    transport.start();
+    transport.send(makeEvent());
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(1);
+    transport.stop();
+  });
+
+  test('stop clears netInfo subscription', () => {
+    const removeFn = jest.fn();
+    const netInfo = {
+      addEventListener: () => ({ remove: removeFn }),
+    };
+    const storage = new MemoryRetryQueueStorage();
+    const retryQueue = new RetryQueue({ storage });
+    const transport = new BatchTransport({
+      endpoint: 'https://api.erne.dev/v1/events',
+      apiKey: 'key',
+      retryQueue,
+      netInfo,
+    });
+    transport.start();
+    transport.stop();
+    expect(removeFn).toHaveBeenCalledTimes(1);
   });
 
   test('includes API key header in requests', async () => {

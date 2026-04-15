@@ -84,4 +84,79 @@ describe('AdaptiveSampler', () => {
     expect(s.shouldKeep(evt('network'))).toBe(false);
     expect(s.shouldKeep(evt('crash'))).toBe(true);
   });
+
+  it('uses the default hash when no sessionHash is provided', () => {
+    const s = new AdaptiveSampler({
+      config: defineMonitorConfig({ sampling: { prod: 0.5 } }),
+      isDev: false,
+    });
+    // The default hash is deterministic — same session+type gives same result
+    const result1 = s.shouldKeep(evt('network', 'fixed-session'));
+    const result2 = s.shouldKeep(evt('network', 'fixed-session'));
+    expect(result1).toBe(result2);
+  });
+
+  it('detects dev via __DEV__ global when isDev is not provided', () => {
+    const g = globalThis as { __DEV__?: unknown };
+    const origDev = g.__DEV__;
+    try {
+      g.__DEV__ = true;
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({ sampling: { dev: 1.0, prod: 0 } }),
+        // isDev omitted — should detect from __DEV__
+      });
+      expect(s.shouldKeep(evt('network'))).toBe(true);
+    } finally {
+      g.__DEV__ = origDev;
+    }
+  });
+
+  it('detects dev via NODE_ENV when __DEV__ is not present', () => {
+    const g = globalThis as { __DEV__?: unknown };
+    const origDev = g.__DEV__;
+    const origEnv = process.env.NODE_ENV;
+    try {
+      delete g.__DEV__;
+      process.env.NODE_ENV = 'production';
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({ sampling: { dev: 1.0, prod: 0 } }),
+        // isDev omitted
+      });
+      // production rate is 0, so non-crash events should be dropped
+      expect(s.shouldKeep(evt('network'))).toBe(false);
+    } finally {
+      g.__DEV__ = origDev;
+      process.env.NODE_ENV = origEnv;
+    }
+  });
+
+  it('applies both battery and CPU degradation together', () => {
+    const s = new AdaptiveSampler({
+      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      isDev: false,
+      getBattery: () => ({ level: 0.1, isCharging: false }),
+      isCpuHigh: () => true,
+      // rate = 1.0 * 0.1 (battery) * 0.2 (CPU) = 0.02
+      sessionHash: () => 0.05, // above 0.02, should be dropped
+    });
+    expect(s.shouldKeep(evt('network'))).toBe(false);
+  });
+
+  it('does not degrade when battery getter returns null', () => {
+    const s = new AdaptiveSampler({
+      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      isDev: false,
+      getBattery: () => null,
+    });
+    expect(s.shouldKeep(evt('network'))).toBe(true);
+  });
+
+  it('does not degrade when isCpuHigh returns false', () => {
+    const s = new AdaptiveSampler({
+      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      isDev: false,
+      isCpuHigh: () => false,
+    });
+    expect(s.shouldKeep(evt('network'))).toBe(true);
+  });
 });

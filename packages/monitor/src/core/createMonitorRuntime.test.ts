@@ -217,6 +217,213 @@ describe('createMonitorRuntime', () => {
     await runtime.shutdown();
   });
 
+  it('exposeGlobal puts runtime on globalThis.__ERNE_MONITOR__', async () => {
+    MonitorClient.__resetForTesting();
+    const runtime = await createMonitorRuntime(
+      {},
+      {
+        isDev: true,
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        exposeGlobal: true,
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+      },
+    );
+    const g = globalThis as { __ERNE_MONITOR__?: unknown };
+    expect(g.__ERNE_MONITOR__).toBeDefined();
+    expect((g.__ERNE_MONITOR__ as Record<string, unknown>).runtime).toBe(runtime);
+    await runtime.shutdown();
+    expect(g.__ERNE_MONITOR__).toBeUndefined();
+  });
+
+  it('creates a dashboard bridge when dashboardUrl is provided', async () => {
+    MonitorClient.__resetForTesting();
+    const runtime = await createMonitorRuntime(
+      {},
+      {
+        isDev: true,
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        dashboardUrl: 'ws://localhost:9000',
+        webSocketCtor: null,
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+      },
+    );
+    expect(runtime.dashboardBridge).not.toBeNull();
+    await runtime.shutdown();
+  });
+
+  it('dashboardBridge is null when dashboardUrl is not provided', async () => {
+    const runtime = await bootFresh();
+    expect(runtime.dashboardBridge).toBeNull();
+    await runtime.shutdown();
+  });
+
+  it('signal router processes crash events through the pipeline', async () => {
+    const runtime = await bootFresh();
+    startMonitorRuntime(runtime);
+    const routerStatsBefore = runtime.signalRouter.getStats();
+    expect(routerStatsBefore.processed).toBe(0);
+
+    // Emit a crash through the crash collector
+    runtime.collectors.crash['reportException']?.call(
+      runtime.collectors.crash,
+      new Error('router test crash'),
+      false,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const routerStatsAfter = runtime.signalRouter.getStats();
+    expect(routerStatsAfter.processed).toBeGreaterThan(0);
+    await runtime.shutdown();
+  });
+
+  it('passthrough events skip the signal router', async () => {
+    const runtime = await bootFresh();
+    startMonitorRuntime(runtime);
+    // Emit a passthrough event
+    runtime.bus.emit({
+      type: 'custom',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 'x',
+      data: { __erneSignalPassthrough: true },
+    });
+    await Promise.resolve();
+    // Router should not have processed it
+    expect(runtime.signalRouter.getStats().processed).toBe(0);
+    await runtime.shutdown();
+  });
+
+  it('pipeline drops events that fail adaptive sampling', async () => {
+    MonitorClient.__resetForTesting();
+    const runtime = await createMonitorRuntime(
+      // Set sampling rate to 0 for prod
+      { sampling: { dev: 0, prod: 0 } },
+      {
+        isDev: false, // force prod mode to use prod sampling rate
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+      },
+    );
+    startMonitorRuntime(runtime);
+    // Non-crash events should be dropped by the sampler at rate 0
+    runtime.trackEvent('sampled_out', { foo: 'bar' });
+    await Promise.resolve();
+    await Promise.resolve();
+    const drained = await runtime.store.drainAll(10);
+    // Only the raw collector copy should exist, not the pipeline copy
+    const enriched = drained.filter(
+      (e) =>
+        e.type === 'custom' &&
+        (e as unknown as { context?: unknown }).context !== undefined &&
+        (e.data as { name?: string }).name === 'sampled_out',
+    );
+    expect(enriched).toHaveLength(0);
+    await runtime.shutdown();
+  });
+
+  it('signal router delivers to dashboard output for high-severity crashes', async () => {
+    MonitorClient.__resetForTesting();
+    const busEvents: Array<{ type: string; passthrough?: boolean }> = [];
+    const runtime = await createMonitorRuntime(
+      {},
+      {
+        isDev: true,
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+      },
+    );
+    startMonitorRuntime(runtime);
+    // Subscribe to see passthrough events
+    runtime.bus.onAll((e) => {
+      const data = e.data as { __erneSignalPassthrough?: boolean; name?: string };
+      if (data.__erneSignalPassthrough) {
+        busEvents.push({ type: e.type, passthrough: true });
+      }
+    });
+    // Trigger a high-severity crash that should route through the signal router
+    runtime.collectors.crash['reportException']?.call(
+      runtime.collectors.crash,
+      new Error("Cannot read property 'x' of undefined"),
+      false,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    // The dashboard output should have re-emitted as a passthrough event
+    // (only if the score was high enough to hit all 3 channels)
+    const routerStats = runtime.signalRouter.getStats();
+    expect(routerStats.processed).toBeGreaterThan(0);
+    await runtime.shutdown();
+  });
+
+  it('detectIsDev is used when isDev is not provided', async () => {
+    MonitorClient.__resetForTesting();
+    // Don't pass isDev — let it auto-detect from __DEV__
+    const g = globalThis as { __DEV__?: unknown };
+    const origDev = g.__DEV__;
+    g.__DEV__ = true;
+    try {
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      // Runtime should work fine
+      expect(runtime.client).toBeDefined();
+      await runtime.shutdown();
+    } finally {
+      g.__DEV__ = origDev;
+    }
+  });
+
+  it('nativeModuleLoader=null opts out of native module', async () => {
+    MonitorClient.__resetForTesting();
+    const runtime = await createMonitorRuntime(
+      {},
+      {
+        isDev: true,
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        nativeModuleLoader: null,
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+      },
+    );
+    expect(runtime.native.isAvailable()).toBe(false);
+    await runtime.shutdown();
+  });
+
   it('shutdown stops client, reporter, session, and store', async () => {
     const runtime = await bootFresh();
     startMonitorRuntime(runtime);

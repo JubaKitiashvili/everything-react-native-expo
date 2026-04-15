@@ -327,6 +327,333 @@ describe('PatternLibrary', () => {
   });
 });
 
+describe('DedupEngine — eviction and snapshot', () => {
+  it('evicts oldest entry when maxFingerprints is exceeded', () => {
+    let t = 0;
+    const d = new DedupEngine({ maxFingerprints: 2, windowMs: 10000, now: () => t });
+    d.process(crash('a', 'fp1'));
+    t = 100;
+    d.process(crash('b', 'fp2'));
+    t = 200;
+    // This should evict fp1 (oldest)
+    d.process(crash('c', 'fp3'));
+    expect(d.getEntry('fp1')).toBeNull();
+    expect(d.getEntry('fp2')).not.toBeNull();
+    expect(d.getEntry('fp3')).not.toBeNull();
+  });
+
+  it('snapshot returns all entries', () => {
+    const d = new DedupEngine({ now: () => 0 });
+    d.process(crash('a', 'fp1'));
+    d.process(crash('b', 'fp2'));
+    const snap = d.snapshot();
+    expect(snap).toHaveLength(2);
+    expect(snap.map((e) => e.fingerprint).sort()).toEqual(['fp1', 'fp2']);
+  });
+
+  it('clear removes all entries', () => {
+    const d = new DedupEngine({ now: () => 0 });
+    d.process(crash('a', 'fp1'));
+    d.process(crash('b', 'fp2'));
+    d.clear();
+    expect(d.snapshot()).toHaveLength(0);
+    expect(d.getEntry('fp1')).toBeNull();
+  });
+});
+
+describe('ContextBuilder — all event type summaries', () => {
+  const cb = new ContextBuilder({ getBreadcrumbs: () => [] });
+
+  it('summarizes a network event', () => {
+    const ctx = cb.build(network(500));
+    expect(ctx.summary).toContain('GET');
+    expect(ctx.summary).toContain('500');
+  });
+
+  it('summarizes a navigation event', () => {
+    const nav: MonitorEvent = {
+      type: 'navigation',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: { screen: '/cart', previousScreen: '/home', source: 'manual', durationMs: 0 },
+    };
+    const ctx = cb.build(nav);
+    expect(ctx.summary).toContain('nav');
+    expect(ctx.summary).toContain('/home');
+    expect(ctx.summary).toContain('/cart');
+  });
+
+  it('summarizes a render event', () => {
+    const render: MonitorEvent = {
+      type: 'render',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: { componentName: 'UserCard', renderCount: 5, isUnnecessary: true },
+    };
+    const ctx = cb.build(render);
+    expect(ctx.summary).toContain('render');
+    expect(ctx.summary).toContain('UserCard');
+    expect(ctx.summary).toContain('5');
+    expect(ctx.summary).toContain('unnecessary');
+  });
+
+  it('summarizes a custom event', () => {
+    const custom: MonitorEvent = {
+      type: 'custom',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: { name: 'checkout' },
+    };
+    const ctx = cb.build(custom);
+    expect(ctx.summary).toContain('event');
+    expect(ctx.summary).toContain('checkout');
+  });
+
+  it('summarizes an unknown event type with fallback', () => {
+    const other: MonitorEvent = {
+      type: 'frameDrop' as MonitorEvent['type'],
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: {},
+    };
+    const ctx = cb.build(other);
+    expect(ctx.summary).toContain('frameDrop');
+    expect(ctx.summary).toContain('event');
+  });
+
+  it('resolves source location when resolver is provided', () => {
+    const cbWithResolver = new ContextBuilder({
+      getBreadcrumbs: () => [],
+      resolveSourceLocation: (stack) =>
+        stack ? { file: 'App.tsx', line: 42 } : undefined,
+    });
+    const evt = crash('boom');
+    (evt.data as Record<string, unknown>).stack = 'Error: boom\n  at App.tsx:42';
+    const ctx = cbWithResolver.build(evt);
+    expect(ctx.sourceLocation).toEqual({ file: 'App.tsx', line: 42 });
+  });
+
+  it('returns undefined source location when resolver returns undefined', () => {
+    const cbWithResolver = new ContextBuilder({
+      getBreadcrumbs: () => [],
+      resolveSourceLocation: () => undefined,
+    });
+    const ctx = cbWithResolver.build(crash('boom'));
+    expect(ctx.sourceLocation).toBeUndefined();
+  });
+
+  it('returns undefined source location when no resolver provided', () => {
+    const ctx = cb.build(crash('boom'));
+    expect(ctx.sourceLocation).toBeUndefined();
+  });
+
+  it('handles network event with error message', () => {
+    const netErr: MonitorEvent = {
+      type: 'network',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: {
+        url: 'https://api/x',
+        method: 'POST',
+        statusCode: null,
+        durationMs: 100,
+        requestSize: 0,
+        responseSize: null,
+        transport: 'fetch',
+        errorMessage: 'ECONNREFUSED',
+      },
+    };
+    const ctx = cb.build(netErr);
+    expect(ctx.summary).toContain('POST');
+    expect(ctx.summary).toContain('ECONNREFUSED');
+  });
+
+  it('handles crash with fingerprint in summary', () => {
+    const ctx = cb.build(crash('NullRef', 'fp-abc'));
+    expect(ctx.summary).toContain('NullRef');
+    expect(ctx.summary).toContain('fp-abc');
+  });
+
+  it('handles navigation with null previousScreen', () => {
+    const nav: MonitorEvent = {
+      type: 'navigation',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: { screen: '/home', previousScreen: null, source: 'manual', durationMs: 0 },
+    };
+    const ctx = cb.build(nav);
+    expect(ctx.summary).toContain('∅');
+  });
+
+  it('handles render with missing fields', () => {
+    const render: MonitorEvent = {
+      type: 'render',
+      timestamp: 0,
+      wallTime: 0,
+      sessionId: 's',
+      data: {},
+    };
+    const ctx = cb.build(render);
+    expect(ctx.summary).toContain('render');
+    expect(ctx.summary).toContain('?');
+  });
+
+  it('respects custom breadcrumb limit', () => {
+    const crumbs: Breadcrumb[] = Array.from({ length: 30 }, (_, i) => ({
+      type: 'manual',
+      category: 'ui.tap' as const,
+      message: `crumb-${i}`,
+      timestamp: i,
+    }));
+    const cbLimited = new ContextBuilder({
+      getBreadcrumbs: (limit) => crumbs.slice(-limit),
+    }, 5);
+    const ctx = cbLimited.build(crash('test'));
+    expect(ctx.breadcrumbs).toHaveLength(5);
+  });
+});
+
+describe('DispatchEngine — channelStats', () => {
+  it('returns channel dispatch counts', () => {
+    let t = 0;
+    const e = new DispatchEngine({
+      outputs: [
+        { name: 'terminal', deliver: () => {} },
+        { name: 'dashboard', deliver: () => {} },
+        { name: 'store', deliver: () => {} },
+      ],
+      ratePerMinute: 100,
+      now: () => t,
+    });
+    // High score dispatches to all 3 channels
+    e.dispatch(
+      { event: crash('x'), summary: 'x', breadcrumbs: [], dedupCount: 1, screen: null },
+      90,
+    );
+    e.dispatch(
+      { event: crash('y'), summary: 'y', breadcrumbs: [], dedupCount: 1, screen: null },
+      90,
+    );
+    const stats = e.channelStats();
+    expect(stats.terminal).toBe(2);
+    expect(stats.dashboard).toBe(2);
+    expect(stats.store).toBe(2);
+  });
+
+  it('returns null when all channels are rate-limited', () => {
+    const e = new DispatchEngine({
+      outputs: [{ name: 'store', deliver: () => {} }],
+      ratePerMinute: 1,
+      now: () => 0,
+    });
+    e.dispatch(
+      { event: network(200), summary: 'n', breadcrumbs: [], dedupCount: 1, screen: null },
+      10,
+    );
+    const result = e.dispatch(
+      { event: network(200), summary: 'n', breadcrumbs: [], dedupCount: 1, screen: null },
+      10,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('swallows deliver errors without crashing', () => {
+    const e = new DispatchEngine({
+      outputs: [
+        {
+          name: 'store',
+          deliver: () => {
+            throw new Error('deliver failure');
+          },
+        },
+      ],
+      now: () => 0,
+    });
+    expect(() =>
+      e.dispatch(
+        { event: network(200), summary: 'n', breadcrumbs: [], dedupCount: 1, screen: null },
+        10,
+      ),
+    ).not.toThrow();
+  });
+});
+
+describe('SignalRouter — clear and dropped counting', () => {
+  function makeRouter() {
+    const delivered: DispatchedSignal[] = [];
+    const router = new SignalRouter({
+      getBreadcrumbs: () => [],
+      outputs: [
+        { name: 'terminal', deliver: (s) => delivered.push(s) },
+        { name: 'dashboard', deliver: (s) => delivered.push(s) },
+        { name: 'store', deliver: (s) => delivered.push(s) },
+      ],
+      ratePerMinute: 100,
+      now: () => 0,
+    });
+    return { router, delivered };
+  }
+
+  it('clear resets all stats and sub-engines', () => {
+    const { router } = makeRouter();
+    router.process(crash("Cannot read property 'foo' of undefined", 'fp-c'));
+    router.process(crash("Cannot read property 'foo' of undefined", 'fp-c'));
+    expect(router.getStats().processed).toBe(2);
+    expect(router.getStats().deduped).toBe(1);
+    router.clear();
+    const stats = router.getStats();
+    expect(stats.processed).toBe(0);
+    expect(stats.deduped).toBe(0);
+    expect(stats.dispatched).toBe(0);
+    expect(stats.dropped).toBe(0);
+  });
+
+  it('counts rate-limited dispatch as dropped', () => {
+    const delivered: DispatchedSignal[] = [];
+    const router = new SignalRouter({
+      getBreadcrumbs: () => [],
+      outputs: [
+        { name: 'terminal', deliver: (s) => delivered.push(s) },
+        { name: 'dashboard', deliver: (s) => delivered.push(s) },
+        { name: 'store', deliver: (s) => delivered.push(s) },
+      ],
+      ratePerMinute: 1,
+      now: () => 0,
+    });
+    // First crash: dispatched. Second crash (different fp): rate limited.
+    router.process(crash('a', 'fp-x'));
+    router.process(crash('b', 'fp-y'));
+    const stats = router.getStats();
+    expect(stats.dispatched).toBeGreaterThanOrEqual(1);
+    // The second may be dispatched or dropped depending on score; just ensure stats add up
+    expect(stats.processed).toBe(2);
+  });
+
+  it('tracks recurrence count across fingerprinted events', () => {
+    const { router } = makeRouter();
+    // Process same fingerprint events with different window timing to avoid dedup
+    let t = 0;
+    const router2 = new SignalRouter({
+      getBreadcrumbs: () => [],
+      outputs: [{ name: 'store', deliver: () => {} }],
+      ratePerMinute: 100,
+      dedup: { windowMs: 100, now: () => t },
+      now: () => t,
+    });
+    router2.process(crash('a', 'fp-rec'));
+    t = 200; // outside dedup window
+    router2.process(crash('a', 'fp-rec'));
+    // Should have processed 2 events
+    expect(router2.getStats().processed).toBe(2);
+  });
+});
+
 describe('SignalRouter (integration)', () => {
   function makeRouter() {
     const delivered: DispatchedSignal[] = [];

@@ -288,6 +288,314 @@ describe('ErneMonitorNative — errors thrown by the native module', () => {
   });
 });
 
+describe('ErneMonitorNative — replay methods', () => {
+  test('captureLayoutSnapshot returns null when module absent', async () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(await native.captureLayoutSnapshot()).toBeNull();
+  });
+
+  test('captureLayoutSnapshot returns null when method not on module', async () => {
+    const { module } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    // module has no captureLayoutSnapshot
+    expect(await native.captureLayoutSnapshot()).toBeNull();
+  });
+
+  test('captureLayoutSnapshot delegates when available', async () => {
+    const snapshot = { root: { type: 'View', children: [] } };
+    const { module } = makeFakeModule({
+      captureLayoutSnapshot: async () => snapshot,
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.captureLayoutSnapshot(20)).toEqual(snapshot);
+  });
+
+  test('captureLayoutSnapshot swallows errors', async () => {
+    const { module } = makeFakeModule({
+      captureLayoutSnapshot: async () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.captureLayoutSnapshot()).toBeNull();
+  });
+
+  test('startReplayCapture no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.startReplayCapture(1000, [])).not.toThrow();
+  });
+
+  test('startReplayCapture delegates when available', () => {
+    const startReplayCapture = jest.fn();
+    const { module } = makeFakeModule({ startReplayCapture });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.startReplayCapture(500, [{ x: 0, y: 0 }]);
+    expect(startReplayCapture).toHaveBeenCalledWith(500, [{ x: 0, y: 0 }]);
+  });
+
+  test('stopReplayCapture no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.stopReplayCapture()).not.toThrow();
+  });
+
+  test('stopReplayCapture delegates when available', () => {
+    const stopReplayCapture = jest.fn();
+    const { module } = makeFakeModule({ stopReplayCapture });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.stopReplayCapture();
+    expect(stopReplayCapture).toHaveBeenCalledTimes(1);
+  });
+
+  test('updateReplayMaskRegions no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.updateReplayMaskRegions([])).not.toThrow();
+  });
+
+  test('updateReplayMaskRegions delegates when available', () => {
+    const updateReplayMaskRegions = jest.fn();
+    const { module } = makeFakeModule({ updateReplayMaskRegions });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.updateReplayMaskRegions([{ x: 10 }]);
+    expect(updateReplayMaskRegions).toHaveBeenCalledWith([{ x: 10 }]);
+  });
+
+  test('recordReplayTouch no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.recordReplayTouch(10, 20, 'began')).not.toThrow();
+  });
+
+  test('recordReplayTouch delegates when available', () => {
+    const recordReplayTouch = jest.fn();
+    const { module } = makeFakeModule({ recordReplayTouch });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.recordReplayTouch(10, 20, 'ended');
+    expect(recordReplayTouch).toHaveBeenCalledWith(10, 20, 'ended');
+  });
+
+  test('onReplayFrame subscribes to event', () => {
+    const { module, calls } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    const listener = jest.fn();
+    native.onReplayFrame(listener);
+    expect(calls.addListener.some((c) => c.eventName === 'onReplayFrame')).toBe(true);
+  });
+
+  test('onDualThreadFPS subscribes to event', () => {
+    const { module, calls } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    const listener = jest.fn();
+    native.onDualThreadFPS(listener);
+    expect(calls.addListener.some((c) => c.eventName === 'onDualThreadFPS')).toBe(true);
+  });
+
+  test('onFabricCommit subscribes to event', () => {
+    const { module, calls } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    const listener = jest.fn();
+    native.onFabricCommit(listener);
+    expect(calls.addListener.some((c) => c.eventName === 'onFabricCommit')).toBe(true);
+  });
+});
+
+describe('ErneMonitorNative — span methods', () => {
+  test('startSpan no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.startSpan('id', 'name', 'internal', null, 1000)).not.toThrow();
+  });
+
+  test('startSpan delegates when available', () => {
+    const startSpan = jest.fn();
+    const { module } = makeFakeModule({ startSpan });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.startSpan('s1', 'http.request', 'client', 'p1', 12345);
+    expect(startSpan).toHaveBeenCalledWith('s1', 'http.request', 'client', 'p1', 12345);
+  });
+
+  test('startSpan swallows errors', () => {
+    const { module } = makeFakeModule({
+      startSpan: () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.startSpan('id', 'n', 'k', null, 0)).not.toThrow();
+  });
+
+  test('endSpan no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.endSpan('id', 1000)).not.toThrow();
+  });
+
+  test('endSpan delegates when available', () => {
+    const endSpan = jest.fn();
+    const { module } = makeFakeModule({ endSpan });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.endSpan('s1', 5000);
+    expect(endSpan).toHaveBeenCalledWith('s1', 5000);
+  });
+
+  test('endSpan swallows errors', () => {
+    const { module } = makeFakeModule({
+      endSpan: () => {
+        throw new Error('boom');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.endSpan('id', 0)).not.toThrow();
+  });
+
+  test('updateSpan no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.updateSpan('id', 'key', 'value')).not.toThrow();
+  });
+
+  test('updateSpan delegates when available', () => {
+    const updateSpan = jest.fn();
+    const { module } = makeFakeModule({ updateSpan });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.updateSpan('s1', 'http.status', '200');
+    expect(updateSpan).toHaveBeenCalledWith('s1', 'http.status', '200');
+  });
+
+  test('updateSpan swallows errors', () => {
+    const { module } = makeFakeModule({
+      updateSpan: () => {
+        throw new Error('boom');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.updateSpan('id', 'k', 'v')).not.toThrow();
+  });
+
+  test('drainInterruptedSpans returns empty when module absent', async () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(await native.drainInterruptedSpans()).toEqual([]);
+  });
+
+  test('drainInterruptedSpans returns empty when method not on module', async () => {
+    const { module } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.drainInterruptedSpans()).toEqual([]);
+  });
+
+  test('drainInterruptedSpans delegates when available', async () => {
+    const spans = [{ id: 's1', name: 'test', kind: 'internal' }];
+    const { module } = makeFakeModule({
+      drainInterruptedSpans: async () => spans,
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.drainInterruptedSpans()).toEqual(spans);
+  });
+
+  test('drainInterruptedSpans swallows errors', async () => {
+    const { module } = makeFakeModule({
+      drainInterruptedSpans: async () => {
+        throw new Error('boom');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.drainInterruptedSpans()).toEqual([]);
+  });
+});
+
+describe('ErneMonitorNative — persisted crashes', () => {
+  test('drainPersistedCrashes returns empty when module absent', async () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(await native.drainPersistedCrashes()).toEqual([]);
+  });
+
+  test('drainPersistedCrashes returns empty when method not on module', async () => {
+    const { module } = makeFakeModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.drainPersistedCrashes()).toEqual([]);
+  });
+
+  test('drainPersistedCrashes delegates when available', async () => {
+    const crashes = [{ id: 'c1', report: { signal: 'SIGSEGV' } }];
+    const { module } = makeFakeModule({
+      drainPersistedCrashes: async () => crashes as never,
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    const result = await native.drainPersistedCrashes();
+    expect(result).toEqual(crashes);
+  });
+
+  test('drainPersistedCrashes swallows errors', async () => {
+    const { module } = makeFakeModule({
+      drainPersistedCrashes: async () => {
+        throw new Error('disk error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(await native.drainPersistedCrashes()).toEqual([]);
+  });
+
+  test('acknowledgePersistedCrash no-ops when module absent', () => {
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => null));
+    expect(() => native.acknowledgePersistedCrash('c1')).not.toThrow();
+  });
+
+  test('acknowledgePersistedCrash delegates when available', () => {
+    const acknowledgePersistedCrash = jest.fn();
+    const { module } = makeFakeModule({ acknowledgePersistedCrash });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    native.acknowledgePersistedCrash('c1');
+    expect(acknowledgePersistedCrash).toHaveBeenCalledWith('c1');
+  });
+
+  test('acknowledgePersistedCrash swallows errors', () => {
+    const { module } = makeFakeModule({
+      acknowledgePersistedCrash: () => {
+        throw new Error('delete failed');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.acknowledgePersistedCrash('c1')).not.toThrow();
+  });
+});
+
+describe('ErneMonitorNative — replay methods that swallow errors', () => {
+  test('startReplayCapture swallows errors', () => {
+    const { module } = makeFakeModule({
+      startReplayCapture: () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.startReplayCapture(100, [])).not.toThrow();
+  });
+
+  test('stopReplayCapture swallows errors', () => {
+    const { module } = makeFakeModule({
+      stopReplayCapture: () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.stopReplayCapture()).not.toThrow();
+  });
+
+  test('updateReplayMaskRegions swallows errors', () => {
+    const { module } = makeFakeModule({
+      updateReplayMaskRegions: () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.updateReplayMaskRegions([])).not.toThrow();
+  });
+
+  test('recordReplayTouch swallows errors', () => {
+    const { module } = makeFakeModule({
+      recordReplayTouch: () => {
+        throw new Error('native error');
+      },
+    });
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => module));
+    expect(() => native.recordReplayTouch(0, 0, 'began')).not.toThrow();
+  });
+});
+
 describe('ErneMonitorNative — diagnostics (dev-only test triggers)', () => {
   test('triggerTestCrash delegates to the native module', () => {
     const triggerTestCrash = jest.fn();

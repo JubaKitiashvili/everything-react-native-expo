@@ -134,6 +134,18 @@ export class ErneMonitorNative {
     return this.subscribe('onDualThreadFPS', listener);
   }
 
+  saveHermesProfile(data: string, trigger: string): string | null {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.saveHermesProfile !== 'function') {
+      return null;
+    }
+    try {
+      return mod.saveHermesProfile(data, trigger);
+    } catch {
+      return null;
+    }
+  }
+
   async captureLayoutSnapshot(
     maxDepth: number = 50,
   ): Promise<Record<string, unknown> | null> {
