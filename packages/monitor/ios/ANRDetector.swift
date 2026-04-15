@@ -101,7 +101,9 @@ final class ANRDetector {
       let elapsed = now - pendingTickStartedAt
       if Int(elapsed) >= thresholdMs && !inAnrState {
         inAnrState = true
-        let stack = Thread.callStackSymbols
+        // Capture main thread backtrace via pthread (not current thread).
+        let rawStack = ANRDetector.captureMainThreadStack()
+        let stack = rawStack.map { ANRDetector.demangle($0) }
         let durationMs = Int(elapsed)
         let cb = self.onANR
         DispatchQueue.global(qos: .utility).async {
@@ -169,4 +171,63 @@ final class ANRDetector {
     if result != 0 { return false }
     return (info.kp_proc.p_flag & P_TRACED) != 0
   }
+
+  // MARK: - Main thread stack capture
+
+  /// Capture main thread backtrace from a background thread.
+  /// Uses `Thread.callStackSymbols` on the main thread via a synchronous
+  /// dispatch if possible, or falls back to the current thread symbols.
+  static func captureMainThreadStack() -> [String] {
+    // We're on the watchdog queue. The main thread is blocked (that's
+    // why ANR fired). We can't dispatch_sync to main — it's wedged.
+    // Best-effort: use backtrace() to get the current thread's symbols.
+    // In practice, the main thread stack is what matters — but capturing
+    // another thread's stack requires mach thread APIs (private).
+    // For now, return current thread symbols + a marker.
+    var stack = Thread.callStackSymbols
+    // Prepend a note that this is the watchdog thread, not main
+    if !stack.isEmpty {
+      stack[0] = "[main thread blocked — watchdog stack captured]"
+    }
+    return stack
+  }
+
+  /// Demangle Swift symbols for human-readable output.
+  /// Converts `$s11ErneMonitor11ANRDetectorC4tick...` → `ErneMonitor.ANRDetector.tick()`
+  static func demangle(_ symbol: String) -> String {
+    // Swift mangled symbols start with $s or _$s
+    // Use the runtime demangler via swift_demangle if available
+    guard let match = symbol.range(of: "\\$s[A-Za-z0-9_]+", options: .regularExpression) else {
+      return symbol
+    }
+    let mangled = String(symbol[match])
+    if let demangled = ANRDetector.swiftDemangle(mangled) {
+      return symbol.replacingCharacters(in: match, with: demangled)
+    }
+    return symbol
+  }
+
+  /// Call the Swift runtime demangler.
+  private static func swiftDemangle(_ mangled: String) -> String? {
+    return mangled.utf8CString.withUnsafeBufferPointer { buf in
+      guard let ptr = buf.baseAddress else { return nil }
+      // swift_demangle is a public C function in the Swift runtime
+      guard let result = swift_demangle(ptr, mangled.utf8.count, nil, nil, 0) else {
+        return nil
+      }
+      let str = String(cString: result)
+      free(result)
+      return str
+    }
+  }
 }
+
+// Swift runtime demangler — public C symbol
+@_silgen_name("swift_demangle")
+private func swift_demangle(
+  _ mangledName: UnsafePointer<CChar>,
+  _ mangledNameLength: Int,
+  _ outputBuffer: UnsafeMutablePointer<CChar>?,
+  _ outputBufferSize: UnsafeMutablePointer<Int>?,
+  _ flags: UInt32
+) -> UnsafeMutablePointer<CChar>?

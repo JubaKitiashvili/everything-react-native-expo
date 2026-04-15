@@ -29,6 +29,8 @@ export interface ANRGatewayDeps {
   signalBus: SignalBus;
   eventStore: EventStore;
   sessionManager: SessionManager;
+  /** Returns the current screen name for ANR context. */
+  getCurrentScreen?: () => string | null;
   now?: () => number;
   wallNow?: () => number;
 }
@@ -93,7 +95,7 @@ export class ANRGateway {
         report.mainThreadStack.length > 0
           ? report.mainThreadStack.join('\n')
           : null,
-      screen: report.screen,
+      screen: report.screen ?? this.deps.getCurrentScreen?.() ?? null,
     };
     const event: MonitorEvent = {
       type: 'custom',

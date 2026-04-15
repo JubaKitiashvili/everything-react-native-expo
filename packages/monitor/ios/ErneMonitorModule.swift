@@ -221,9 +221,11 @@ public final class ErneMonitorModule: Module {
     }
 
     Function("triggerTestANR") { (durationSeconds: Double) -> Void in
-      // Block the main thread for the requested duration. The ANR
-      // watchdog (1s ping / 5s threshold) will fire if duration ≥ 5.
-      Thread.sleep(forTimeInterval: durationSeconds)
+      // Dispatch to main thread — the ANR watchdog monitors the main
+      // thread, not the JS thread. Expo Module Functions run on JS thread.
+      DispatchQueue.main.async {
+        Thread.sleep(forTimeInterval: durationSeconds)
+      }
     }
 
     Function("triggerTestSpanCrash") { [weak self] (spanName: String) -> Void in

@@ -233,8 +233,10 @@ class ErneMonitorModule : Module() {
             if (!isDebugBuild()) {
                 throw IllegalStateException("triggerTestANR is dev-only")
             }
-            // Block the main thread. ANR watchdog (1s/5s) fires if ≥5s.
-            Thread.sleep((durationSeconds * 1000).toLong())
+            // Dispatch to main thread — ANR watchdog monitors main, not JS thread.
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Thread.sleep((durationSeconds * 1000).toLong())
+            }
         }
 
         Function("triggerTestSpanCrash") { spanName: String ->

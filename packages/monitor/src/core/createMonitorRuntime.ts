@@ -495,6 +495,15 @@ export async function createMonitorRuntime(
   // bus.onAll callback starts routing events through it.
   routerHolder.current = signalRouter;
 
+  // ---- Current screen tracker (for ANR/crash context) ----
+  let currentScreen: string | null = null;
+  bus.onAll((event) => {
+    if (event.type === 'navigation') {
+      const d = event.data as Record<string, unknown> | undefined;
+      if (d && typeof d.to === 'string') currentScreen = d.to;
+    }
+  });
+
   // ---- Phase 2a: native module bridge + crash gateway ----
   const nativeLoader: NativeModuleLoader =
     deps.nativeModuleLoader === null
@@ -517,6 +526,7 @@ export async function createMonitorRuntime(
     signalBus: bus,
     eventStore: store,
     sessionManager: session,
+    getCurrentScreen: () => currentScreen,
   });
   const nativeMetricsPoller = new NativeMetricsPoller({
     native,
