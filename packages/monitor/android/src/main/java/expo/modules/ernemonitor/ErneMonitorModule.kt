@@ -24,7 +24,7 @@ class ErneMonitorModule : Module() {
     override fun definition() = ModuleDefinition {
         Name("ErneMonitor")
 
-        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS")
+        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit")
 
         Function("startNativeMonitoring") {
             isActive = true
@@ -76,6 +76,24 @@ class ErneMonitorModule : Module() {
                     )
                 }
                 DualThreadFPS.start()
+
+                // Task 46: Fabric commit tracker.
+                FabricCommitTracker.onReport = { commitCount, avg, max, yoga, thrashing ->
+                    sendEvent(
+                        "onFabricCommit",
+                        mapOf(
+                            "commitCount" to commitCount,
+                            "avgCommitDuration" to avg,
+                            "maxCommitDuration" to max,
+                            "yogaLayoutTime" to yoga,
+                            "isLayoutThrashing" to thrashing,
+                            "timestamp" to System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                // FrameMetrics needs the current Activity
+                val activity = appContext.currentActivity
+                FabricCommitTracker.start(activity)
             }
         }
 
@@ -87,6 +105,7 @@ class ErneMonitorModule : Module() {
             ThermalObserver.uninstall()
             SpanLog.uninstall()
             DualThreadFPS.stop()
+            FabricCommitTracker.stop()
         }
 
         Function("getNativeMetrics") {

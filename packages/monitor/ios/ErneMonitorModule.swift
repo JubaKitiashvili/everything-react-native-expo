@@ -27,7 +27,7 @@ public final class ErneMonitorModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ErneMonitor")
 
-    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS")
+    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit")
 
     // Called by ErneMonitorNative.startNativeMonitoring().
     // In Task 38 this only flips a flag — Task 40 will install the
@@ -74,6 +74,19 @@ public final class ErneMonitorModule: Module {
         ])
       }
       DualThreadFPS.shared.start()
+
+      // Task 46: Fabric commit tracker.
+      FabricCommitTracker.shared.onReport = { [weak self] commitCount, avg, max, yoga, thrashing in
+        self?.sendEvent("onFabricCommit", [
+          "commitCount": commitCount,
+          "avgCommitDuration": avg,
+          "maxCommitDuration": max,
+          "yogaLayoutTime": yoga,
+          "isLayoutThrashing": thrashing,
+          "timestamp": Int(Date().timeIntervalSince1970 * 1000),
+        ])
+      }
+      FabricCommitTracker.shared.start()
     }
 
     Function("stopNativeMonitoring") { [weak self] () -> Void in
@@ -85,6 +98,7 @@ public final class ErneMonitorModule: Module {
       ThermalObserver.shared.uninstall()
       SpanLog.shared.uninstall()
       DualThreadFPS.shared.stop()
+      FabricCommitTracker.shared.stop()
     }
 
     // Drain crash reports persisted by the previous run. JS calls this

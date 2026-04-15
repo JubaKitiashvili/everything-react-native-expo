@@ -5,6 +5,7 @@ import type {
   NativeDualThreadFPSReport,
   NativeEventMap,
   NativeEventName,
+  NativeFabricCommitReport,
   NativeMetricsSnapshot,
   NativeModuleLoader,
   NativeMonitorState,
@@ -131,6 +132,12 @@ export class ErneMonitorNative {
     listener: (report: NativeDualThreadFPSReport) => void,
   ): NativeSubscription {
     return this.subscribe('onDualThreadFPS', listener);
+  }
+
+  onFabricCommit(
+    listener: (report: NativeFabricCommitReport) => void,
+  ): NativeSubscription {
+    return this.subscribe('onFabricCommit', listener);
   }
 
   /**

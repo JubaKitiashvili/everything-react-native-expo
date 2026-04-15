@@ -59,6 +59,7 @@ import { A11yCollector } from '../collectors/A11yCollector';
 import { StorageCollector } from '../collectors/StorageCollector';
 // Phase 2b native collectors
 import { DualThreadFPSCollector } from '../collectors/native/DualThreadFPSCollector';
+import { FabricCommitCollector } from '../collectors/native/FabricCommitCollector';
 // Phase 1c SignalRouter
 import { SignalRouter } from '../signal-router/SignalRouter';
 import type { DispatchedSignal } from '../signal-router/DispatchEngine';
@@ -164,6 +165,7 @@ export interface MonitorRuntime {
   anrGateway: ANRGateway;
   nativeMetricsPoller: NativeMetricsPoller;
   dualThreadFPS: DualThreadFPSCollector;
+  fabricCommit: FabricCommitCollector;
   spanSnapshot: SpanSnapshot;
   trackEvent: (
     name: string,
@@ -557,6 +559,11 @@ export async function createMonitorRuntime(
     signalBus: bus,
     sessionManager: session,
   });
+  const fabricCommit = new FabricCommitCollector({
+    native,
+    signalBus: bus,
+    sessionManager: session,
+  });
 
   const runtime: MonitorRuntime = {
     client,
@@ -597,6 +604,7 @@ export async function createMonitorRuntime(
     anrGateway,
     nativeMetricsPoller,
     dualThreadFPS,
+    fabricCommit,
     spanSnapshot,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
@@ -608,6 +616,7 @@ export async function createMonitorRuntime(
       dashboardBridge?.stop();
       nativeMetricsPoller.stop();
       dualThreadFPS.stop();
+      fabricCommit.stop();
       anrGateway.stop();
       nativeCrashGateway.stop();
       native.stopNativeMonitoring();
@@ -643,6 +652,7 @@ export function startMonitorRuntime(runtime: MonitorRuntime): void {
   runtime.anrGateway.start();
   runtime.nativeMetricsPoller.start();
   runtime.dualThreadFPS.start();
+  runtime.fabricCommit.start();
   void runtime.nativeCrashGateway.replayPersistedCrashes().catch(() => {
     // intentional swallow — boot must never fail because of a stale crash
   });

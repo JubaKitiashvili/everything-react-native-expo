@@ -6,6 +6,7 @@ export type {
   NativeCrashReport,
   NativeDualThreadFPSReport,
   NativeEventMap,
+  NativeFabricCommitReport,
   NativeEventName,
   NativeMetricsSnapshot,
   NativeModuleLoader,

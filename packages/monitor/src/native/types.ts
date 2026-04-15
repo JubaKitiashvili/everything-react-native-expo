@@ -75,11 +75,21 @@ export interface NativeDualThreadFPSReport {
   readonly timestamp: number;
 }
 
+export interface NativeFabricCommitReport {
+  readonly commitCount: number;
+  readonly avgCommitDuration: number;
+  readonly maxCommitDuration: number;
+  readonly yogaLayoutTime: number;
+  readonly isLayoutThrashing: boolean;
+  readonly timestamp: number;
+}
+
 export type NativeEventMap = {
   onNativeCrash: NativeCrashReport;
   onANRDetected: NativeANRReport;
   onThermalStateChange: NativeThermalEvent;
   onDualThreadFPS: NativeDualThreadFPSReport;
+  onFabricCommit: NativeFabricCommitReport;
 };
 
 export type NativeEventName = keyof NativeEventMap;

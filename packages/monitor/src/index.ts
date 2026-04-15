@@ -235,6 +235,11 @@ export type {
   DualThreadFPSEventData,
   DualThreadFPSCollectorDeps,
 } from './collectors/native/DualThreadFPSCollector';
+export { FabricCommitCollector } from './collectors/native/FabricCommitCollector';
+export type {
+  FabricCommitEventData,
+  FabricCommitCollectorDeps,
+} from './collectors/native/FabricCommitCollector';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,
@@ -252,6 +257,7 @@ export type {
   NativeDualThreadFPSReport,
   NativeEventMap,
   NativeEventName,
+  NativeFabricCommitReport,
   NativeMetricsSnapshot,
   NativeModuleLoader,
   NativeMonitorState,
