@@ -7,6 +7,7 @@ export type {
   NativeDualThreadFPSReport,
   NativeEventMap,
   NativeFabricCommitReport,
+  NativeReplayFrame,
   NativeEventName,
   NativeMetricsSnapshot,
   NativeModuleLoader,

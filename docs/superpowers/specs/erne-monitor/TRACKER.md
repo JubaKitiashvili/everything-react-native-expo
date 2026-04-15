@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-04-15
 **Current Phase:** Phase 2b — Native Advanced in progress
-**Active Task:** Phase 2b Task 47 — ReplayCapture
-**Overall Progress:** 46/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 2/9)
+**Active Task:** Phase 2b Task 48 — LayoutSnapshot
+**Overall Progress:** 47/70 tasks (Phase 1a 14/14 ✅ · Phase 1b 11/11 ✅ · Phase 1c 12/12 ✅ · Phase 2a 7/7 ✅ · Phase 2b 3/9)
 
 ---
 
@@ -17,7 +17,7 @@
 | 1b Intelligence | 11/11 | ✅ Done | real-time dashboard |
 | 1c AI Integration | 12/12 | ✅ Done | AI fix suggestions |
 | 2a Native Core | 7/7 | ✅ Done | native crash/ANR/metrics/spans + config plugin |
-| 2b Native Advanced | 2/9 | 🔄 In Progress | replay, profiler, dev tools |
+| 2b Native Advanced | 3/9 | 🔄 In Progress | replay, profiler, dev tools |
 | 3 Backend | 0/9 | ⬜ Ready | production backend |
 | 4 Intelligence | 0/8 | 🔒 Blocked by 3 | self-learning AI |
 
@@ -51,7 +51,7 @@
 |---|------|--------|---------------|-------|------------|
 | 45 | DualThreadFPS | ✅ | ios/DualThreadFPS.swift (CADisplayLink UI + dispatch probe JS), android/.../DualThreadFPS.kt (Choreographer + HandlerThread probe), src/collectors/native/DualThreadFPSCollector.{ts,test.ts}, ErneMonitorModule.swift/kt wired (onDualThreadFPS event, start/stop lifecycle), ErneMonitorNative.ts onDualThreadFPS subscription, types.ts NativeDualThreadFPSReport, createMonitorRuntime wiring + start/stop/shutdown. Also: diagnostics API (triggerTestCrash/triggerTestANR/triggerTestSpanCrash) added to native modules + JS wrapper + 9 diagnostics tests. | ✅ (9+9) | ✅ |
 | 46 | FabricCommitTracker | ✅ | ios/FabricCommitTracker.swift (CFRunLoopObserver layout-pass bracketing, thrashing detection), android/.../FabricCommitTracker.kt (FrameMetrics API 26+ LAYOUT_MEASURE_DURATION + TOTAL_DURATION), src/collectors/native/FabricCommitCollector.{ts,test.ts}, ErneMonitorModule.swift/kt wired (onFabricCommit event), createMonitorRuntime wiring. | ✅ (6) | ✅ |
-| 47 | ReplayCapture | ⬜ | | | |
+| 47 | ReplayCapture | ✅ | ios/ReplayCapture.swift (UIView.drawHierarchy half-res JPEG, PII mask overlay, touch recording), android/.../ReplayCapture.kt (PixelCopy API 26+ with View.draw fallback, JPEG q30, mask overlay), src/processors/ReplayMasker.{ts,test.ts} (secureTextEntry/a11yLabel/custom mask rules), src/collectors/native/ReplayCollector.{ts,test.ts} (ring buffer, consent gate, mask refresh), ErneMonitorModule.swift/kt wired (startReplayCapture/stopReplayCapture/updateMasks/recordTouch/onReplayFrame). | ✅ (8+11) | ✅ |
 | 48 | LayoutSnapshot | ⬜ | | | |
 | 49 | Hermes CPU Profiler | ⬜ | | | |
 | 50 | Source Map Auto-Upload | ⬜ | | | |
@@ -154,6 +154,8 @@ After each task, verify all existing components still work together.
 | Diagnostics API (dev-only) | ✅ | 2026-04-15 | triggerTestCrash/triggerTestANR/triggerTestSpanCrash on iOS (#if DEBUG) + Android (debuggable flag), ErneMonitorNative JS wrapper + 9 tests, gpc-expo diagnostics screen |
 | DualThreadFPSCollector | ✅ | 2026-04-15 | 9 tests, native CADisplayLink/Choreographer UI FPS + dispatch-probe JS FPS, bottleneck attribution (ui/js/both/none), background suppression |
 | FabricCommitCollector | ✅ | 2026-04-15 | 6 tests, iOS CFRunLoopObserver layout-pass bracketing + Android FrameMetrics (LAYOUT_MEASURE + TOTAL), thrashing detection (>10 commits/sec for >2s), 2s batched reports |
+| ReplayMasker | ✅ | 2026-04-15 | 8 tests, secureTextEntry + PII a11yLabel (password/email/phone) + custom testID/nativeID mask matching, case-insensitive |
+| ReplayCollector | ✅ | 2026-04-15 | 11 tests, native capture start/stop, ring buffer (30s FIFO), consent gate, touch recording, mask refresh, frame base64 + touch overlay |
 
 ---
 

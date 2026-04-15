@@ -24,7 +24,7 @@ class ErneMonitorModule : Module() {
     override fun definition() = ModuleDefinition {
         Name("ErneMonitor")
 
-        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit")
+        Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame")
 
         Function("startNativeMonitoring") {
             isActive = true
@@ -106,6 +106,7 @@ class ErneMonitorModule : Module() {
             SpanLog.uninstall()
             DualThreadFPS.stop()
             FabricCommitTracker.stop()
+            ReplayCapture.stopCapture()
         }
 
         Function("getNativeMetrics") {
@@ -138,6 +139,35 @@ class ErneMonitorModule : Module() {
 
         AsyncFunction("drainInterruptedSpans") {
             SpanLog.drainInterrupted()
+        }
+
+        // ── Task 47: Replay Capture ───────────────────────────────────
+
+        Function("startReplayCapture") { intervalMs: Int, maskRegions: List<Map<String, Any>> ->
+            ReplayCapture.onFrame = { base64, touches, timestamp ->
+                sendEvent(
+                    "onReplayFrame",
+                    mapOf(
+                        "frameBase64" to base64,
+                        "touchEvents" to touches,
+                        "timestamp" to timestamp,
+                    ),
+                )
+            }
+            val activity = appContext.currentActivity
+            ReplayCapture.startCapture(activity, intervalMs, maskRegions)
+        }
+
+        Function("stopReplayCapture") {
+            ReplayCapture.stopCapture()
+        }
+
+        Function("updateReplayMaskRegions") { regions: List<Map<String, Any>> ->
+            ReplayCapture.updateMaskRegions(regions)
+        }
+
+        Function("recordReplayTouch") { x: Double, y: Double, phase: String ->
+            ReplayCapture.recordTouch(x, y, phase)
         }
 
         // ── Diagnostics (dev-only) ──────────────────────────────────

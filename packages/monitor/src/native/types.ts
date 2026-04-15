@@ -84,12 +84,24 @@ export interface NativeFabricCommitReport {
   readonly timestamp: number;
 }
 
+export interface NativeReplayFrame {
+  readonly frameBase64: string;
+  readonly touchEvents: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly phase: string;
+    readonly timestamp: number;
+  }[];
+  readonly timestamp: number;
+}
+
 export type NativeEventMap = {
   onNativeCrash: NativeCrashReport;
   onANRDetected: NativeANRReport;
   onThermalStateChange: NativeThermalEvent;
   onDualThreadFPS: NativeDualThreadFPSReport;
   onFabricCommit: NativeFabricCommitReport;
+  onReplayFrame: NativeReplayFrame;
 };
 
 export type NativeEventName = keyof NativeEventMap;
@@ -150,6 +162,16 @@ export interface ErneMonitorNativeModule {
    * Dev-only diagnostics — trigger a native crash (SIGSEGV) to verify
    * the crash handler persists the report and the next launch drains it.
    */
+  /** Task 47: start replay capture at given interval with PII mask regions. */
+  startReplayCapture?(
+    intervalMs: number,
+    maskRegions: readonly Record<string, unknown>[],
+  ): void;
+  stopReplayCapture?(): void;
+  updateReplayMaskRegions?(
+    regions: readonly Record<string, unknown>[],
+  ): void;
+  recordReplayTouch?(x: number, y: number, phase: string): void;
   triggerTestCrash?(): void;
   /**
    * Dev-only diagnostics — block the main thread for `durationSeconds`

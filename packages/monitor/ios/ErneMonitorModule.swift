@@ -27,7 +27,7 @@ public final class ErneMonitorModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ErneMonitor")
 
-    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit")
+    Events("onNativeCrash", "onANRDetected", "onThermalStateChange", "onDualThreadFPS", "onFabricCommit", "onReplayFrame")
 
     // Called by ErneMonitorNative.startNativeMonitoring().
     // In Task 38 this only flips a flag — Task 40 will install the
@@ -99,6 +99,7 @@ public final class ErneMonitorModule: Module {
       SpanLog.shared.uninstall()
       DualThreadFPS.shared.stop()
       FabricCommitTracker.shared.stop()
+      ReplayCapture.shared.stopCapture()
     }
 
     // Drain crash reports persisted by the previous run. JS calls this
@@ -138,6 +139,32 @@ public final class ErneMonitorModule: Module {
     // ProcessInfo.thermalState, UIDevice battery, NSFileManager disk).
     Function("getNativeMetrics") { () -> [String: Any?] in
       return NativeMetrics.currentSnapshot()
+    }
+
+    // ── Task 47: Replay Capture ───────────────────────────────────
+
+    Function("startReplayCapture") { [weak self] (intervalMs: Int,
+                                                   maskRegions: [[String: Any]]) -> Void in
+      ReplayCapture.shared.onFrame = { [weak self] base64, touches, timestamp in
+        self?.sendEvent("onReplayFrame", [
+          "frameBase64": base64,
+          "touchEvents": touches,
+          "timestamp": timestamp,
+        ])
+      }
+      ReplayCapture.shared.startCapture(intervalMs: intervalMs, maskRegions: maskRegions)
+    }
+
+    Function("stopReplayCapture") { () -> Void in
+      ReplayCapture.shared.stopCapture()
+    }
+
+    Function("updateReplayMaskRegions") { (regions: [[String: Any]]) -> Void in
+      ReplayCapture.shared.updateMaskRegions(regions)
+    }
+
+    Function("recordReplayTouch") { (x: Double, y: Double, phase: String) -> Void in
+      ReplayCapture.shared.recordTouch(x: x, y: y, phase: phase)
     }
 
     // ── Diagnostics (dev-only) ──────────────────────────────────

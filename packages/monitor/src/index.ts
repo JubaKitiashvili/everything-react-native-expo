@@ -236,6 +236,17 @@ export type {
   DualThreadFPSCollectorDeps,
 } from './collectors/native/DualThreadFPSCollector';
 export { FabricCommitCollector } from './collectors/native/FabricCommitCollector';
+export { ReplayCollector } from './collectors/native/ReplayCollector';
+export type {
+  ReplayFrame,
+  ReplayCollectorDeps,
+} from './collectors/native/ReplayCollector';
+export { ReplayMasker } from './processors/ReplayMasker';
+export type {
+  ReplayMaskRegion,
+  ReplayMaskerOptions,
+  ViewInfo,
+} from './processors/ReplayMasker';
 export type {
   FabricCommitEventData,
   FabricCommitCollectorDeps,

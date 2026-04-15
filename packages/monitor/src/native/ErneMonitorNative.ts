@@ -134,6 +134,57 @@ export class ErneMonitorNative {
     return this.subscribe('onDualThreadFPS', listener);
   }
 
+  onReplayFrame(
+    listener: (frame: import('./types').NativeReplayFrame) => void,
+  ): NativeSubscription {
+    return this.subscribe('onReplayFrame', listener);
+  }
+
+  startReplayCapture(
+    intervalMs: number,
+    maskRegions: readonly Record<string, unknown>[],
+  ): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.startReplayCapture !== 'function') return;
+    try {
+      mod.startReplayCapture(intervalMs, maskRegions);
+    } catch {
+      // ignore
+    }
+  }
+
+  stopReplayCapture(): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.stopReplayCapture !== 'function') return;
+    try {
+      mod.stopReplayCapture();
+    } catch {
+      // ignore
+    }
+  }
+
+  updateReplayMaskRegions(
+    regions: readonly Record<string, unknown>[],
+  ): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.updateReplayMaskRegions !== 'function') return;
+    try {
+      mod.updateReplayMaskRegions(regions);
+    } catch {
+      // ignore
+    }
+  }
+
+  recordReplayTouch(x: number, y: number, phase: string): void {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.recordReplayTouch !== 'function') return;
+    try {
+      mod.recordReplayTouch(x, y, phase);
+    } catch {
+      // ignore
+    }
+  }
+
   onFabricCommit(
     listener: (report: NativeFabricCommitReport) => void,
   ): NativeSubscription {
