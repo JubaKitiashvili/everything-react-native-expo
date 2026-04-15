@@ -141,6 +141,30 @@ public final class ErneMonitorModule: Module {
       return NativeMetrics.currentSnapshot()
     }
 
+    // ── Task 49: Hermes CPU Profiler ──────────────────────────────
+
+    Function("saveHermesProfile") { (data: String, trigger: String) -> String? in
+      return HermesProfilerBridge.shared.saveProfile(data: data, trigger: trigger)
+    }
+
+    Function("listHermesProfiles") { () -> [[String: Any]] in
+      return HermesProfilerBridge.shared.listProfiles()
+    }
+
+    Function("deleteHermesProfile") { (path: String) -> Bool in
+      return HermesProfilerBridge.shared.deleteProfile(path: path)
+    }
+
+    Function("getHermesProfilerMaxDurationMs") { () -> Int in
+      return HermesProfilerBridge.shared.maxDurationMs
+    }
+
+    // ── Task 48: Layout Snapshot ──────────────────────────────────
+
+    AsyncFunction("captureLayoutSnapshot") { (maxDepth: Int) -> [String: Any]? in
+      return LayoutSnapshot.shared.capture(maxDepth: maxDepth, sanitizeText: true)
+    }
+
     // ── Task 47: Replay Capture ───────────────────────────────────
 
     Function("startReplayCapture") { [weak self] (intervalMs: Int,

@@ -134,6 +134,20 @@ export class ErneMonitorNative {
     return this.subscribe('onDualThreadFPS', listener);
   }
 
+  async captureLayoutSnapshot(
+    maxDepth: number = 50,
+  ): Promise<Record<string, unknown> | null> {
+    const mod = this.loader.load();
+    if (mod === null || typeof mod.captureLayoutSnapshot !== 'function') {
+      return null;
+    }
+    try {
+      return await mod.captureLayoutSnapshot(maxDepth);
+    } catch {
+      return null;
+    }
+  }
+
   onReplayFrame(
     listener: (frame: import('./types').NativeReplayFrame) => void,
   ): NativeSubscription {

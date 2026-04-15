@@ -251,6 +251,17 @@ export type {
   FabricCommitEventData,
   FabricCommitCollectorDeps,
 } from './collectors/native/FabricCommitCollector';
+export { LayoutSnapshotCollector } from './collectors/native/LayoutSnapshotCollector';
+export type {
+  LayoutSnapshotNode,
+  LayoutSnapshotCollectorDeps,
+} from './collectors/native/LayoutSnapshotCollector';
+export { HermesProfilerCollector } from './collectors/native/HermesProfilerCollector';
+export type {
+  ProfileInfo,
+  HermesProfilerCollectorDeps,
+  HermesInternalLike,
+} from './collectors/native/HermesProfilerCollector';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,

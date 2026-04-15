@@ -60,6 +60,9 @@ class ErneMonitorModule : Module() {
                 }
                 ThermalObserver.install(ctx)
 
+                // Task 49: Hermes profiler storage directory.
+                HermesProfilerBridge.install(ctx)
+
                 // Task 43: span persistence — install the file path
                 // before the first JS span call lands.
                 SpanLog.install(ctx)
@@ -139,6 +142,30 @@ class ErneMonitorModule : Module() {
 
         AsyncFunction("drainInterruptedSpans") {
             SpanLog.drainInterrupted()
+        }
+
+        // ── Task 49: Hermes CPU Profiler ──────────────────────────────
+
+        Function("saveHermesProfile") { data: String, trigger: String ->
+            HermesProfilerBridge.saveProfile(data, trigger)
+        }
+
+        Function("listHermesProfiles") {
+            HermesProfilerBridge.listProfiles()
+        }
+
+        Function("deleteHermesProfile") { path: String ->
+            HermesProfilerBridge.deleteProfile(path)
+        }
+
+        Function("getHermesProfilerMaxDurationMs") {
+            HermesProfilerBridge.maxDurationMs
+        }
+
+        // ── Task 48: Layout Snapshot ──────────────────────────────────
+
+        AsyncFunction("captureLayoutSnapshot") { maxDepth: Int ->
+            LayoutSnapshot.capture(appContext.currentActivity, maxDepth, sanitizeText = true)
         }
 
         // ── Task 47: Replay Capture ───────────────────────────────────

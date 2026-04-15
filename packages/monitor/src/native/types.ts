@@ -162,6 +162,13 @@ export interface ErneMonitorNativeModule {
    * Dev-only diagnostics — trigger a native crash (SIGSEGV) to verify
    * the crash handler persists the report and the next launch drains it.
    */
+  /** Task 49: Hermes CPU profiler — save profile data to file. */
+  saveHermesProfile?(data: string, trigger: string): string | null;
+  listHermesProfiles?(): readonly Record<string, unknown>[];
+  deleteHermesProfile?(path: string): boolean;
+  getHermesProfilerMaxDurationMs?(): number;
+  /** Task 48: capture the native view hierarchy as a serializable tree. */
+  captureLayoutSnapshot?(maxDepth: number): Promise<Record<string, unknown> | null>;
   /** Task 47: start replay capture at given interval with PII mask regions. */
   startReplayCapture?(
     intervalMs: number,
