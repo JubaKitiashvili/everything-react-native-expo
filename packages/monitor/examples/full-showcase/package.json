@@ -1,0 +1,35 @@
+{
+  "name": "erne-monitor-full-showcase",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "perf": "reassure"
+  },
+  "dependencies": {
+    "@erne/monitor": "*",
+    "@shopify/flash-list": "~1.7.0",
+    "expo": "~55.0.0",
+    "expo-constants": "~20.0.0",
+    "expo-image": "~2.0.0",
+    "expo-router": "~8.0.0",
+    "expo-sqlite": "~16.0.0",
+    "expo-status-bar": "~3.0.0",
+    "react": "19.0.0",
+    "react-native": "0.83.0",
+    "react-native-safe-area-context": "~5.4.0",
+    "react-native-screens": "~4.10.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@testing-library/react-native": "^13.0.0",
+    "@types/react": "~19.0.0",
+    "reassure": "^1.4.0",
+    "typescript": "~5.9.0"
+  }
+}

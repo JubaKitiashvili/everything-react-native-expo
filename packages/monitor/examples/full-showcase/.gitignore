@@ -1,0 +1,8 @@
+ios/
+android/
+node_modules/
+.expo/
+.expo-shared/
+dist/
+.reassure/
+.DS_Store
