@@ -182,4 +182,97 @@ describe('EventStore', () => {
       expect(removed).toBe(1);
     });
   });
+
+  describe('findByUserId / deleteByUserId (DSAR)', () => {
+    // Helper — build a raw event then wrap it in the enriched shape the
+    // pipeline produces (context.userId is what the DSAR methods key on).
+    function enrichedEvent(
+      userId: string | null,
+      data: unknown = { x: 1 },
+    ): MonitorEvent {
+      return {
+        type: 'custom',
+        timestamp: 0,
+        wallTime: 0,
+        sessionId: 's',
+        data,
+        // Enricher attaches this field in the real pipeline; we inline it
+        // here so the tests don't need to spin the whole runtime.
+        ...({ context: { userId } } as unknown as Record<string, unknown>),
+      } as MonitorEvent;
+    }
+
+    it('findByUserId returns only events tagged with that id', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice', { n: 1 }), 'normal');
+      await store.insert(enrichedEvent('bob', { n: 2 }), 'normal');
+      await store.insert(enrichedEvent('alice', { n: 3 }), 'normal');
+      await store.insert(enrichedEvent(null, { n: 4 }), 'normal');
+
+      const alice = await store.findByUserId('alice', 10);
+      expect(alice).toHaveLength(2);
+      expect(alice.map((e) => (e.data as { n: number }).n).sort()).toEqual(
+        [1, 3],
+      );
+    });
+
+    it('findByUserId respects the limit', async () => {
+      const store = await freshStore();
+      for (let i = 0; i < 5; i++) {
+        await store.insert(enrichedEvent('x', { i }), 'normal');
+      }
+      const out = await store.findByUserId('x', 2);
+      expect(out).toHaveLength(2);
+    });
+
+    it('findByUserId is non-destructive', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice'), 'normal');
+      await store.findByUserId('alice', 10);
+      expect(await store.count()).toBe(1);
+    });
+
+    it('findByUserId returns empty for unknown user or empty input', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice'), 'normal');
+      expect(await store.findByUserId('ghost', 10)).toEqual([]);
+      expect(await store.findByUserId('', 10)).toEqual([]);
+    });
+
+    it('deleteByUserId removes every matching row across priorities', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice', { n: 1 }), 'critical');
+      await store.insert(enrichedEvent('bob', { n: 2 }), 'normal');
+      await store.insert(enrichedEvent('alice', { n: 3 }), 'low');
+
+      const removed = await store.deleteByUserId('alice');
+      expect(removed).toBe(2);
+      expect(await store.count()).toBe(1);
+      const rest = await store.drainAll(10);
+      expect((rest[0]?.data as { n: number }).n).toBe(2);
+    });
+
+    it('deleteByUserId with unknown id returns 0', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice'), 'normal');
+      expect(await store.deleteByUserId('ghost')).toBe(0);
+      expect(await store.count()).toBe(1);
+    });
+
+    it('deleteByUserId with empty input is a no-op', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice'), 'normal');
+      expect(await store.deleteByUserId('')).toBe(0);
+      expect(await store.count()).toBe(1);
+    });
+
+    it('sizeBytes drops after deleteByUserId', async () => {
+      const store = await freshStore();
+      await store.insert(enrichedEvent('alice', { big: 'x'.repeat(100) }), 'normal');
+      const before = await store.size();
+      expect(before).toBeGreaterThan(0);
+      await store.deleteByUserId('alice');
+      expect(await store.size()).toBe(0);
+    });
+  });
 });

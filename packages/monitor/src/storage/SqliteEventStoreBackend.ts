@@ -204,6 +204,32 @@ export class SqliteEventStoreBackend implements EventStoreBackend {
     this.db = null;
   }
 
+  async findByUserId(
+    userId: string,
+    limit: number,
+  ): Promise<StoredEventRow[]> {
+    const db = this.requireDb();
+    // JSON search via LIKE on the payload — good enough for single-user
+    // DSAR lookups. An indexed column would scale better but requires a
+    // schema migration; revisit when event volume warrants it.
+    const pattern = `%"userId":${JSON.stringify(userId)}%`;
+    const rows = await db.getAllAsync<Row>(
+      'SELECT id, priority, payload, size_bytes, inserted_at FROM monitor_events WHERE payload LIKE ? ORDER BY inserted_at ASC LIMIT ?',
+      [pattern, limit],
+    );
+    return rows.map(deserialize);
+  }
+
+  async deleteByUserId(userId: string): Promise<number> {
+    const db = this.requireDb();
+    const pattern = `%"userId":${JSON.stringify(userId)}%`;
+    const result = await db.runAsync(
+      'DELETE FROM monitor_events WHERE payload LIKE ?',
+      [pattern],
+    );
+    return result.changes;
+  }
+
   private async deleteIds(ids: readonly number[]): Promise<void> {
     const db = this.requireDb();
     if (ids.length === 0) return;

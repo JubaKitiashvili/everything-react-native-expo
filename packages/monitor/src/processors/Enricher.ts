@@ -18,6 +18,13 @@ export interface EnrichedEvent extends MonitorEvent {
     };
     connectionType: ConnectionType;
     memory: MemoryInfo | null;
+    /**
+     * Opaque user identifier set by the host app via
+     * `monitor.setUserId(id)`. Null when no user is attached (anonymous
+     * session). Used by the DSAR APIs (exportUserData / deleteUserData)
+     * to scope a user's data for GDPR export / deletion.
+     */
+    userId: string | null;
   };
 }
 
@@ -39,6 +46,7 @@ export class Enricher {
   private readonly deps: EnricherDeps;
   private cachedDevice: DeviceInfo | null = null;
   private cachedApp: AppInfo | null = null;
+  private userId: string | null = null;
 
   constructor(deps: EnricherDeps) {
     this.deps = deps;
@@ -62,6 +70,7 @@ export class Enricher {
         },
         connectionType: this.deps.platformBridge.getConnectionType(),
         memory: this.deps.platformBridge.getMemoryUsage(),
+        userId: this.userId,
       },
     };
   }
@@ -70,5 +79,22 @@ export class Enricher {
   invalidateCache(): void {
     this.cachedDevice = null;
     this.cachedApp = null;
+  }
+
+  /**
+   * Attaches an opaque user identifier to every subsequently-enriched
+   * event. Pass `null` on logout to detach. The value is never hashed
+   * or interpreted by the SDK — it's whatever the host app considers a
+   * stable user identifier (backend user id, session id, etc.).
+   *
+   * GDPR: stored alongside events so `exportUserData(id)` and
+   * `deleteUserData(id)` can find everything tagged with this id.
+   */
+  setUserId(userId: string | null): void {
+    this.userId = userId;
+  }
+
+  getUserId(): string | null {
+    return this.userId;
   }
 }

@@ -25,6 +25,19 @@ export interface EventStoreBackend {
   sizeBytes(): Promise<number>;
   deleteOlderThan(cutoffWallTime: number): Promise<number>;
   evictLRUPreservingCritical(targetBytes: number): Promise<number>;
+  /**
+   * GDPR support — returns up to `limit` stored events whose enriched
+   * context carries the given user identifier. Non-destructive. Returns
+   * rows in insertion order (oldest first).
+   */
+  findByUserId(userId: string, limit: number): Promise<StoredEventRow[]>;
+  /**
+   * GDPR support — removes every stored event whose enriched context
+   * carries the given user identifier. Returns the number of rows
+   * deleted. Critical-priority rows are NOT exempt here: a DSAR delete
+   * must purge everything attributable to the user.
+   */
+  deleteByUserId(userId: string): Promise<number>;
   close(): Promise<void>;
 }
 
@@ -154,6 +167,32 @@ export class EventStore {
     this.initialized = false;
   }
 
+  /**
+   * Returns up to `limit` events attributable to the given user. Used
+   * by `monitor.exportUserData(id)` — non-destructive, does not remove
+   * the events from storage.
+   */
+  async findByUserId(
+    userId: string,
+    limit: number = 10_000,
+  ): Promise<MonitorEvent[]> {
+    this.assertInit();
+    if (!userId || limit <= 0) return [];
+    const rows = await this.backend.findByUserId(userId, limit);
+    return rows.map((r) => r.event);
+  }
+
+  /**
+   * Purges every stored event whose enriched context carries `userId`.
+   * Used by `monitor.deleteUserData(id)` — destructive and permanent.
+   * Returns the number of rows removed.
+   */
+  async deleteByUserId(userId: string): Promise<number> {
+    this.assertInit();
+    if (!userId) return 0;
+    return this.backend.deleteByUserId(userId);
+  }
+
   private async enforceSizeCap(): Promise<void> {
     const current = await this.backend.sizeBytes();
     if (current > this.maxBytes) {
@@ -279,9 +318,47 @@ export class MemoryEventStoreBackend implements EventStoreBackend {
     this.totalBytes = 0;
   }
 
+  async findByUserId(
+    userId: string,
+    limit: number,
+  ): Promise<StoredEventRow[]> {
+    const out: StoredEventRow[] = [];
+    for (const row of this.rows) {
+      if (out.length >= limit) break;
+      if (extractUserId(row.event) === userId) out.push(row);
+    }
+    return out;
+  }
+
+  async deleteByUserId(userId: string): Promise<number> {
+    const before = this.rows.length;
+    const kept: StoredEventRow[] = [];
+    for (const row of this.rows) {
+      if (extractUserId(row.event) === userId) {
+        this.totalBytes -= row.sizeBytes;
+      } else {
+        kept.push(row);
+      }
+    }
+    this.rows = kept;
+    return before - this.rows.length;
+  }
+
   private insertInternal(row: StoredEventRow): void {
     const assigned: StoredEventRow = { ...row, id: this.nextId++ };
     this.rows.push(assigned);
     this.totalBytes += assigned.sizeBytes;
   }
+}
+
+/**
+ * Reads the userId tag attached by Enricher from an event's enriched
+ * context. Returns `null` for raw (un-enriched) events and for any
+ * anonymous session where no userId was set.
+ */
+function extractUserId(event: MonitorEvent): string | null {
+  const ctx = (event as MonitorEvent & { context?: { userId?: unknown } })
+    .context;
+  if (!ctx || typeof ctx.userId !== 'string') return null;
+  return ctx.userId || null;
 }

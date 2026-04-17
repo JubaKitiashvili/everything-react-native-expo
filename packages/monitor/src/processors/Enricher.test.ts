@@ -164,4 +164,44 @@ describe('Enricher', () => {
     const out = enricher.enrich(rawEvent());
     expect(out.context.memory).toEqual({ usedBytes: 12_345_678, totalBytes: 100_000_000 });
   });
+
+  describe('userId tagging (DSAR)', () => {
+    it('defaults to null when no user is set', () => {
+      const bridge = makeBridge();
+      const session = new SessionManager({ random: () => 0.4 });
+      const enricher = new Enricher({
+        platformBridge: bridge,
+        sessionManager: session,
+      });
+      const out = enricher.enrich(rawEvent());
+      expect(out.context.userId).toBeNull();
+    });
+
+    it('tags events with the userId after setUserId()', () => {
+      const bridge = makeBridge();
+      const session = new SessionManager({ random: () => 0.4 });
+      const enricher = new Enricher({
+        platformBridge: bridge,
+        sessionManager: session,
+      });
+      enricher.setUserId('user-42');
+      const out = enricher.enrich(rawEvent());
+      expect(out.context.userId).toBe('user-42');
+      expect(enricher.getUserId()).toBe('user-42');
+    });
+
+    it('clears userId when set to null', () => {
+      const bridge = makeBridge();
+      const session = new SessionManager({ random: () => 0.4 });
+      const enricher = new Enricher({
+        platformBridge: bridge,
+        sessionManager: session,
+      });
+      enricher.setUserId('user-42');
+      enricher.setUserId(null);
+      const out = enricher.enrich(rawEvent());
+      expect(out.context.userId).toBeNull();
+      expect(enricher.getUserId()).toBeNull();
+    });
+  });
 });
