@@ -14,24 +14,46 @@ export interface DedupEngineOptions {
   /** Max concurrent fingerprints kept in memory. Default 200. */
   maxFingerprints?: number;
   now?: () => number;
+  /**
+   * Optional burst-throttle key derivation for events that have no
+   * fingerprint (e.g. renders, navigation, network). When provided, the
+   * first `burstMaxPerWindow` events sharing a burst key within
+   * `windowMs` pass through; subsequent events are dropped. Returning
+   * `null` means "pass through, no throttling for this event".
+   */
+  burstKey?: (event: MonitorEvent) => string | null;
+  /** Max events per burst key per window. Default 3. */
+  burstMaxPerWindow?: number;
+}
+
+interface BurstEntry {
+  firstSeenAt: number;
+  lastSeenAt: number;
+  count: number;
 }
 
 /**
  * Groups events by fingerprint, merges duplicates inside a sliding
  * window, and returns one per unique fingerprint to the downstream
- * pipeline. Events without a fingerprint (non-crash types) pass
- * straight through without grouping.
+ * pipeline. For events without a fingerprint, an optional burst-throttle
+ * keyed by a caller-supplied derivation prevents floods (e.g. 1000
+ * render events per second on a busy screen).
  */
 export class DedupEngine {
   private readonly windowMs: number;
   private readonly maxFingerprints: number;
   private readonly now: () => number;
   private readonly entries = new Map<string, DedupEntry>();
+  private readonly burstKey?: (event: MonitorEvent) => string | null;
+  private readonly burstMaxPerWindow: number;
+  private readonly bursts = new Map<string, BurstEntry>();
 
   constructor(options: DedupEngineOptions = {}) {
     this.windowMs = options.windowMs ?? 5000;
     this.maxFingerprints = options.maxFingerprints ?? 200;
     this.now = options.now ?? Date.now;
+    this.burstKey = options.burstKey;
+    this.burstMaxPerWindow = options.burstMaxPerWindow ?? 3;
   }
 
   /**
@@ -41,8 +63,12 @@ export class DedupEngine {
    */
   process(event: MonitorEvent): MonitorEvent | null {
     const fp = (event.data as { fingerprint?: string }).fingerprint;
-    if (!fp) return event;
     const now = this.now();
+
+    if (!fp) {
+      return this.applyBurstThrottle(event, now);
+    }
+
     this.evict(now);
     const existing = this.entries.get(fp);
     if (existing && now - existing.lastSeenAt <= this.windowMs) {
@@ -73,6 +99,46 @@ export class DedupEngine {
     return event;
   }
 
+  private applyBurstThrottle(
+    event: MonitorEvent,
+    now: number,
+  ): MonitorEvent | null {
+    if (!this.burstKey) return event;
+    const key = this.burstKey(event);
+    if (key === null) return event;
+
+    this.evictBursts(now);
+    const existing = this.bursts.get(key);
+    if (!existing) {
+      this.bursts.set(key, { firstSeenAt: now, lastSeenAt: now, count: 1 });
+      return event;
+    }
+    if (now - existing.firstSeenAt > this.windowMs) {
+      // Window expired — reset.
+      this.bursts.set(key, { firstSeenAt: now, lastSeenAt: now, count: 1 });
+      return event;
+    }
+    existing.lastSeenAt = now;
+    existing.count += 1;
+    if (existing.count <= this.burstMaxPerWindow) {
+      return event;
+    }
+    return null;
+  }
+
+  private evictBursts(now: number): void {
+    for (const [k, v] of this.bursts.entries()) {
+      if (now - v.firstSeenAt > this.windowMs) {
+        this.bursts.delete(k);
+      }
+    }
+  }
+
+  /** Diagnostic: returns the current number of throttled burst keys. */
+  burstSnapshotSize(): number {
+    return this.bursts.size;
+  }
+
   getEntry(fp: string): DedupEntry | null {
     return this.entries.get(fp) ?? null;
   }
@@ -84,6 +150,7 @@ export class DedupEngine {
 
   clear(): void {
     this.entries.clear();
+    this.bursts.clear();
   }
 
   private evict(now: number): void {

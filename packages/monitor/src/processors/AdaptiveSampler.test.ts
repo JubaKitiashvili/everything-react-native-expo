@@ -25,8 +25,11 @@ describe('AdaptiveSampler', () => {
   });
 
   it('drops everything at rate 0 (except crashes)', () => {
+    // Override byType defaults so the global rate actually applies.
     const s = new AdaptiveSampler({
-      config: defineMonitorConfig({ sampling: { prod: 0 } }),
+      config: defineMonitorConfig({
+        sampling: { prod: 0, byType: { network: { prod: 0 } } },
+      }),
       isDev: false,
     });
     expect(s.shouldKeep(evt('network'))).toBe(false);
@@ -67,7 +70,9 @@ describe('AdaptiveSampler', () => {
 
   it('ignores low battery when charging', () => {
     const s = new AdaptiveSampler({
-      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      config: defineMonitorConfig({
+        sampling: { prod: 1.0, byType: { network: { prod: 1.0 } } },
+      }),
       isDev: false,
       getBattery: () => ({ level: 0.05, isCharging: true }),
     });
@@ -144,7 +149,9 @@ describe('AdaptiveSampler', () => {
 
   it('does not degrade when battery getter returns null', () => {
     const s = new AdaptiveSampler({
-      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      config: defineMonitorConfig({
+        sampling: { prod: 1.0, byType: { network: { prod: 1.0 } } },
+      }),
       isDev: false,
       getBattery: () => null,
     });
@@ -153,10 +160,120 @@ describe('AdaptiveSampler', () => {
 
   it('does not degrade when isCpuHigh returns false', () => {
     const s = new AdaptiveSampler({
-      config: defineMonitorConfig({ sampling: { prod: 1.0 } }),
+      config: defineMonitorConfig({
+        sampling: { prod: 1.0, byType: { network: { prod: 1.0 } } },
+      }),
       isDev: false,
       isCpuHigh: () => false,
     });
     expect(s.shouldKeep(evt('network'))).toBe(true);
+  });
+
+  describe('per-type sampling (byType)', () => {
+    it('applies per-type prod rate when present', () => {
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({
+          sampling: {
+            prod: 1.0, // global would keep everything
+            byType: { network: { prod: 0.1 } },
+          },
+        }),
+        isDev: false,
+        sessionHash: () => 0.5, // would be kept at 1.0 but dropped at 0.1
+      });
+      expect(s.shouldKeep(evt('network'))).toBe(false);
+    });
+
+    it('applies per-type dev rate when in dev', () => {
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({
+          sampling: {
+            dev: 1.0,
+            byType: { render: { dev: 0.05 } },
+          },
+        }),
+        isDev: true,
+        sessionHash: () => 0.5, // above 0.05
+      });
+      expect(s.shouldKeep(evt('render' as MonitorEventType))).toBe(false);
+    });
+
+    it('falls back to global rate when type not in byType', () => {
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({
+          sampling: {
+            prod: 0.5,
+            byType: { render: { prod: 0.01 } },
+          },
+        }),
+        isDev: false,
+        sessionHash: () => 0.3, // kept at 0.5, dropped at 0.01
+      });
+      expect(s.shouldKeep(evt('network'))).toBe(true); // uses global 0.5
+      expect(s.shouldKeep(evt('render' as MonitorEventType))).toBe(false); // uses 0.01
+    });
+
+    it('falls back to global rate when per-type entry has no override for current env', () => {
+      // Use a fresh type name not in the defaults so we can test dev-only override.
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({
+          sampling: {
+            prod: 0.5,
+            byType: { my_custom: { dev: 0.05 } }, // only dev is set
+          },
+        }),
+        isDev: false,
+        sessionHash: () => 0.3,
+      });
+      // In prod, my_custom falls back to global 0.5 → 0.3 < 0.5 → keep
+      expect(
+        s.shouldKeep({
+          type: 'my_custom' as unknown as MonitorEventType,
+          timestamp: 0,
+          wallTime: 0,
+          sessionId: 's',
+          data: {},
+        }),
+      ).toBe(true);
+    });
+
+    it('still bypasses sampling for crash events regardless of byType', () => {
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({
+          sampling: {
+            prod: 0,
+            byType: { crash: { prod: 0 } }, // even if we set 0
+          },
+        }),
+        isDev: false,
+      });
+      expect(s.shouldKeep(evt('crash'))).toBe(true);
+    });
+
+    it('bypasses sampling for native_anr events', () => {
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig({ sampling: { prod: 0 } }),
+        isDev: false,
+      });
+      expect(
+        s.shouldKeep({
+          type: 'native_anr' as unknown as MonitorEventType,
+          timestamp: 0,
+          wallTime: 0,
+          sessionId: 's',
+          data: {},
+        }),
+      ).toBe(true);
+    });
+
+    it('keeps default chatty-type rates down in prod without explicit override', () => {
+      // Default byType.render.prod = 0.01 from DEFAULT_SAMPLING_BY_TYPE
+      const s = new AdaptiveSampler({
+        config: defineMonitorConfig(),
+        isDev: false,
+        sessionHash: () => 0.5, // above 0.01
+      });
+      expect(s.shouldKeep(evt('render' as MonitorEventType))).toBe(false);
+    });
   });
 });

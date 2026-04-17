@@ -21,6 +21,10 @@ import {
   type BatteryInfo,
 } from '../processors/AdaptiveSampler';
 import {
+  BurstThrottle,
+  defaultBurstKeyFor,
+} from '../processors/BurstThrottle';
+import {
   ConsentGate,
   type ConsentState,
   type ConsentStore,
@@ -112,6 +116,12 @@ export interface MonitorRuntimeDeps {
   getBattery?: () => BatteryInfo | null;
   /** CPU pressure hint for AdaptiveSampler. */
   isCpuHigh?: () => boolean;
+  /** BurstThrottle config overrides. Defaults: windowMs=5000, maxPerWindow=3. */
+  burstThrottle?: {
+    windowMs?: number;
+    maxPerWindow?: number;
+    enabled?: boolean;
+  };
   /**
    * When true, exposes the runtime on globalThis.__ERNE_MONITOR__ so
    * you can inspect it from the JS debugger or via execute_in_app. Off
@@ -136,6 +146,7 @@ export interface MonitorRuntime {
   enricher: Enricher;
   fingerprinter: Fingerprinter;
   sampler: AdaptiveSampler;
+  burstThrottle: BurstThrottle;
   consentGate: ConsentGate;
   collectors: {
     crash: CrashCollector;
@@ -177,8 +188,53 @@ export interface MonitorRuntime {
   ) => void;
   leaveBreadcrumb: (crumb: Omit<Breadcrumb, 'timestamp'>) => void;
   setConsent: (partial: Partial<ConsentState>) => Promise<void>;
+  /**
+   * Attaches an opaque user identifier to every subsequently-enriched
+   * event. Pass `null` on logout to detach. Enables GDPR DSAR export /
+   * deletion via `exportUserData(id)` / `deleteUserData(id)`.
+   */
+  setUserId: (userId: string | null) => void;
+  getUserId: () => string | null;
+  /**
+   * GDPR export — returns a JSON-serializable dump of every stored event
+   * tagged with the given userId. Non-destructive. Returns an empty
+   * array when userId is empty or unknown.
+   */
+  exportUserData: (
+    userId: string,
+    options?: { limit?: number },
+  ) => Promise<UserDataExport>;
+  /**
+   * GDPR delete — purges every stored event tagged with the given
+   * userId, clears the local Enricher userId if it matches, and
+   * returns the number of rows removed.
+   */
+  deleteUserData: (userId: string) => Promise<UserDataDeletionResult>;
   shutdown: () => Promise<void>;
 }
+
+/** Serializable output of `monitor.exportUserData(id)`. */
+export interface UserDataExport {
+  readonly userId: string;
+  readonly exportedAt: number;
+  readonly sdkVersion: string;
+  readonly eventCount: number;
+  readonly events: readonly unknown[];
+}
+
+/** Result of `monitor.deleteUserData(id)`. */
+export interface UserDataDeletionResult {
+  readonly userId: string;
+  readonly deletedAt: number;
+  readonly eventsDeleted: number;
+  readonly currentUserCleared: boolean;
+}
+
+/**
+ * Kept here (not package.json) so a JS-only test can assert the version
+ * embedded in exports. Bumped alongside package.json on publish.
+ */
+const SDK_VERSION = '0.1.0';
 
 function detectIsDev(): boolean {
   const g = globalThis as { __DEV__?: unknown };
@@ -242,6 +298,13 @@ export async function createMonitorRuntime(
     getBattery: deps.getBattery,
     isCpuHigh: deps.isCpuHigh,
   });
+  const burstThrottle = new BurstThrottle({
+    windowMs: deps.burstThrottle?.windowMs ?? 5000,
+    maxPerWindow: deps.burstThrottle?.maxPerWindow ?? 3,
+    keyFor: deps.burstThrottle?.enabled === false
+      ? () => null // disabled: pass everything
+      : defaultBurstKeyFor,
+  });
   const consentGate = new ConsentGate({
     initial: deps.initialConsent ?? {
       crashes: config.consent.crashes,
@@ -251,6 +314,12 @@ export async function createMonitorRuntime(
     store: deps.consentStore,
   });
   await consentGate.hydrate();
+
+  // Current screen tracker — declared early so collectors that want to
+  // attach screen context (FrameDropCollector, ANRGateway, future
+  // BugReporter) can read it via a lazy getter. It's updated by the
+  // navigation listener wired below.
+  let currentScreen: string | null = null;
 
   // BreadcrumbCollector has its own SignalBus subscription — it captures
   // every non-crash event into a ring buffer and mutates crash events to
@@ -264,6 +333,7 @@ export async function createMonitorRuntime(
     total: 0,
     consentDropped: 0,
     sampledDropped: 0,
+    burstThrottled: 0,
     stored: 0,
     lastEvent: null as MonitorEvent | null,
   };
@@ -302,6 +372,10 @@ export async function createMonitorRuntime(
     }
     if (!sampler.shouldKeep(event)) {
       stats.sampledDropped += 1;
+      return;
+    }
+    if (!burstThrottle.accept(event)) {
+      stats.burstThrottled += 1;
       return;
     }
     const fingerprinted =
@@ -355,7 +429,10 @@ export async function createMonitorRuntime(
     sessionManager: session,
   });
   const render = new RenderCollector({ signalBus: bus });
-  const frameDrop = new FrameDropCollector({ signalBus: bus });
+  const frameDrop = new FrameDropCollector({
+    signalBus: bus,
+    getCurrentScreen: () => currentScreen,
+  });
   const startup = new StartupCollector({ signalBus: bus });
   const memory = new MemoryCollector({
     signalBus: bus,
@@ -495,8 +572,10 @@ export async function createMonitorRuntime(
   // bus.onAll callback starts routing events through it.
   routerHolder.current = signalRouter;
 
-  // ---- Current screen tracker (for ANR/crash context) ----
-  let currentScreen: string | null = null;
+  // ---- Current screen tracker — subscriber installs here after the
+  // main pipeline so it runs on every emitted navigation event. The
+  // `currentScreen` binding was declared up top; collectors that need it
+  // (FrameDropCollector, ANRGateway, etc.) read via lazy getter. ----
   bus.onAll((event) => {
     if (event.type === 'navigation') {
       const d = event.data as Record<string, unknown> | undefined;
@@ -585,6 +664,7 @@ export async function createMonitorRuntime(
     enricher,
     fingerprinter,
     sampler,
+    burstThrottle,
     consentGate,
     collectors: {
       crash,
@@ -621,6 +701,44 @@ export async function createMonitorRuntime(
       navigation.trackScreenView(screen, params),
     leaveBreadcrumb: (crumb) => breadcrumb.leave(crumb),
     setConsent: (partial) => consentGate.setConsent(partial),
+    setUserId: (userId) => enricher.setUserId(userId),
+    getUserId: () => enricher.getUserId(),
+    exportUserData: async (userId, options) => {
+      const limit = options?.limit ?? 10_000;
+      const events =
+        userId && userId.length > 0
+          ? await store.findByUserId(userId, limit)
+          : [];
+      return {
+        userId,
+        exportedAt: Date.now(),
+        sdkVersion: SDK_VERSION,
+        eventCount: events.length,
+        events,
+      };
+    },
+    deleteUserData: async (userId) => {
+      if (!userId) {
+        return {
+          userId,
+          deletedAt: Date.now(),
+          eventsDeleted: 0,
+          currentUserCleared: false,
+        };
+      }
+      const eventsDeleted = await store.deleteByUserId(userId);
+      let currentUserCleared = false;
+      if (enricher.getUserId() === userId) {
+        enricher.setUserId(null);
+        currentUserCleared = true;
+      }
+      return {
+        userId,
+        deletedAt: Date.now(),
+        eventsDeleted,
+        currentUserCleared,
+      };
+    },
     shutdown: async () => {
       terminalReporter.stop();
       dashboardBridge?.stop();

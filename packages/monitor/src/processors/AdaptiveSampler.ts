@@ -1,4 +1,4 @@
-import type { MonitorConfig, MonitorEvent, MonitorEventType } from '../types';
+import type { MonitorConfig, MonitorEvent } from '../types';
 
 export interface BatteryInfo {
   level: number; // 0..1
@@ -15,13 +15,18 @@ export interface AdaptiveSamplerDeps {
    * Deterministic hash function — takes a session id + event type and
    * returns a number in [0, 1). Defaults to a simple djb2 hash.
    */
-  sessionHash?: (sessionId: string, type: MonitorEventType) => number;
+  sessionHash?: (sessionId: string, type: string) => number;
   /** Override isDev detection. */
   isDev?: boolean;
 }
 
-const CRITICAL_TYPES: ReadonlySet<MonitorEventType> = new Set<MonitorEventType>([
+/**
+ * Event types that bypass sampling entirely. Safety crashes/ANRs must always
+ * reach the pipeline even at rate 0.
+ */
+const CRITICAL_TYPES: ReadonlySet<string> = new Set<string>([
   'crash',
+  'native_anr',
 ]);
 
 function defaultHash(sessionId: string, type: string): number {
@@ -61,9 +66,7 @@ export class AdaptiveSampler {
   shouldKeep(event: MonitorEvent): boolean {
     if (CRITICAL_TYPES.has(event.type)) return true;
 
-    const base = this.isDev
-      ? this.deps.config.sampling.dev
-      : this.deps.config.sampling.prod;
+    const base = this.resolveBaseRate(event.type);
 
     let rate = base;
     const battery = this.deps.getBattery?.();
@@ -71,7 +74,7 @@ export class AdaptiveSampler {
       rate *= 0.1;
     }
     if (this.deps.isCpuHigh?.()) {
-      // CPU pressure drops everything except crashes.
+      // CPU pressure drops everything except critical events.
       rate *= 0.2;
     }
 
@@ -83,5 +86,17 @@ export class AdaptiveSampler {
       this.deps.sessionHash?.(event.sessionId, event.type) ??
       defaultHash(event.sessionId, event.type);
     return hash < rate;
+  }
+
+  private resolveBaseRate(type: string): number {
+    const global = this.isDev
+      ? this.deps.config.sampling.dev
+      : this.deps.config.sampling.prod;
+
+    const perType = this.deps.config.sampling.byType?.[type];
+    if (!perType) return global;
+
+    const override = this.isDev ? perType.dev : perType.prod;
+    return override ?? global;
   }
 }

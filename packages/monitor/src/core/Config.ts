@@ -2,7 +2,46 @@ import type {
   CollectorMode,
   MonitorConfig,
   MonitorConfigOverrides,
+  PerTypeSamplingRate,
 } from '../types';
+
+/**
+ * Per-type sampling defaults — tuned so the SDK is quiet at idle even when
+ * every collector is enabled. The goal is <10 events/minute on a static screen
+ * in prod, while dev remains high-fidelity for crash/nav/custom.
+ *
+ * Chatty types (render, frame_drop) are aggressively down-sampled even in dev
+ * because RenderCollector fires on every commit and FrameDropCollector on
+ * every RAF tick. Rare-but-important types (navigation, crash, custom) stay
+ * at 1.0 in both environments.
+ */
+export const DEFAULT_SAMPLING_BY_TYPE: Readonly<
+  Record<string, PerTypeSamplingRate>
+> = Object.freeze({
+  render: Object.freeze({ dev: 0.05, prod: 0.01 }),
+  frame_drop: Object.freeze({ dev: 1.0, prod: 0.2 }),
+  long_task: Object.freeze({ dev: 1.0, prod: 0.5 }),
+  navigation: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  network: Object.freeze({ dev: 1.0, prod: 0.5 }),
+  memory: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  startup: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  custom: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  touch: Object.freeze({ dev: 1.0, prod: 0.1 }),
+  breadcrumb: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  frustration: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  suspense: Object.freeze({ dev: 1.0, prod: 0.5 }),
+  activity: Object.freeze({ dev: 0.1, prod: 0.01 }),
+  image: Object.freeze({ dev: 0.2, prod: 0.05 }),
+  a11y: Object.freeze({ dev: 1.0, prod: 0.5 }),
+  storage: Object.freeze({ dev: 1.0, prod: 0.2 }),
+  state: Object.freeze({ dev: 0.5, prod: 0.1 }),
+  native_metrics: Object.freeze({ dev: 1.0, prod: 0.1 }),
+  native_thermal: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  native_anr: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  interrupted_span: Object.freeze({ dev: 1.0, prod: 1.0 }),
+  dual_thread_fps: Object.freeze({ dev: 0.5, prod: 0.1 }),
+  fabric_commit: Object.freeze({ dev: 0.5, prod: 0.1 }),
+});
 
 /**
  * Default configuration for @erne/monitor.
@@ -26,7 +65,11 @@ export const DEFAULT_MONITOR_CONFIG: MonitorConfig = Object.freeze({
     startup: true,
     replay: 'dev',
   }) as Readonly<Record<string, CollectorMode>>,
-  sampling: Object.freeze({ dev: 1.0, prod: 0.1 }),
+  sampling: Object.freeze({
+    dev: 1.0,
+    prod: 0.1,
+    byType: DEFAULT_SAMPLING_BY_TYPE,
+  }),
   consent: Object.freeze({
     crashes: true,
     analytics: false,
@@ -76,6 +119,19 @@ function validateNonNegativeInt(value: number, path: string): void {
   }
 }
 
+function validateSamplingByType(
+  byType: Record<string, PerTypeSamplingRate>,
+): void {
+  for (const [type, rate] of Object.entries(byType)) {
+    if (rate.dev !== undefined) {
+      validateSampling(rate.dev, `byType.${type}.dev`);
+    }
+    if (rate.prod !== undefined) {
+      validateSampling(rate.prod, `byType.${type}.prod`);
+    }
+  }
+}
+
 function validateCollectors(
   collectors: Record<string, CollectorMode>,
 ): void {
@@ -117,14 +173,27 @@ function deepFreeze<T>(value: T): T {
 export function defineMonitorConfig(
   overrides: MonitorConfigOverrides = {},
 ): MonitorConfig {
+  const mergedByType: Record<string, PerTypeSamplingRate> = {
+    ...DEFAULT_SAMPLING_BY_TYPE,
+  };
+  if (overrides.sampling?.byType) {
+    for (const [type, rate] of Object.entries(overrides.sampling.byType)) {
+      mergedByType[type] = {
+        ...(DEFAULT_SAMPLING_BY_TYPE[type] ?? {}),
+        ...rate,
+      };
+    }
+  }
+
   const merged: MonitorConfig = {
     collectors: {
       ...DEFAULT_MONITOR_CONFIG.collectors,
       ...(overrides.collectors ?? {}),
     },
     sampling: {
-      ...DEFAULT_MONITOR_CONFIG.sampling,
-      ...(overrides.sampling ?? {}),
+      dev: overrides.sampling?.dev ?? DEFAULT_MONITOR_CONFIG.sampling.dev,
+      prod: overrides.sampling?.prod ?? DEFAULT_MONITOR_CONFIG.sampling.prod,
+      byType: mergedByType,
     },
     consent: {
       ...DEFAULT_MONITOR_CONFIG.consent,
@@ -143,6 +212,7 @@ export function defineMonitorConfig(
   validateCollectors(merged.collectors);
   validateSampling(merged.sampling.dev, 'dev');
   validateSampling(merged.sampling.prod, 'prod');
+  validateSamplingByType(merged.sampling.byType);
 
   if (typeof merged.consent.crashes !== 'boolean') {
     throw new Error('[monitor] config.consent.crashes must be a boolean');

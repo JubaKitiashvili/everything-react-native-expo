@@ -6,11 +6,23 @@ export type CollectorMode = boolean | 'dev' | 'prod';
 
 export type AutoFixMode = 'suggest' | 'apply' | 'off';
 
+export interface PerTypeSamplingRate {
+  readonly dev?: number;
+  readonly prod?: number;
+}
+
 export interface MonitorConfig {
   readonly collectors: Readonly<Record<string, CollectorMode>>;
   readonly sampling: {
     readonly dev: number;
     readonly prod: number;
+    /**
+     * Optional per-type sampling rates. When an event type has an entry here
+     * the matching dev/prod rate is used instead of the global one. Unknown
+     * types fall back to the global rate. The 'crash' type is always kept
+     * regardless of this map.
+     */
+    readonly byType: Readonly<Record<string, PerTypeSamplingRate>>;
   };
   readonly consent: {
     readonly crashes: boolean;
@@ -31,18 +43,31 @@ export interface MonitorConfig {
 
 export type MonitorConfigOverrides = {
   readonly collectors?: Record<string, CollectorMode>;
-  readonly sampling?: Partial<MonitorConfig['sampling']>;
+  readonly sampling?: {
+    readonly dev?: number;
+    readonly prod?: number;
+    readonly byType?: Record<string, PerTypeSamplingRate>;
+  };
   readonly consent?: Partial<MonitorConfig['consent']>;
   readonly ai?: Partial<MonitorConfig['ai']>;
   readonly transport?: Partial<MonitorConfig['transport']>;
 };
 
+/**
+ * Declared event types. Kept narrow for codegen + sampler byType defaults,
+ * but `string` is accepted at runtime for custom collectors — see the
+ * escape hatch union member below.
+ */
 export type MonitorEventType =
   | 'crash'
   | 'network'
   | 'navigation'
   | 'render'
-  | 'custom';
+  | 'custom'
+  | 'frame_drop'
+  // Preserve autocomplete for the canonical types above while still
+  // letting third-party collectors emit arbitrary strings.
+  | (string & {});
 
 export interface MonitorEvent {
   type: MonitorEventType;

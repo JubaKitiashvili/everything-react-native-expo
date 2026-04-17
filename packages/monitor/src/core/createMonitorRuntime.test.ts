@@ -307,8 +307,16 @@ describe('createMonitorRuntime', () => {
   it('pipeline drops events that fail adaptive sampling', async () => {
     MonitorClient.__resetForTesting();
     const runtime = await createMonitorRuntime(
-      // Set sampling rate to 0 for prod
-      { sampling: { dev: 0, prod: 0 } },
+      // Set sampling rate to 0 globally AND override byType defaults so the
+      // per-type `custom` entry (which defaults to 1.0 in prod) doesn't
+      // keep the event alive.
+      {
+        sampling: {
+          dev: 0,
+          prod: 0,
+          byType: { custom: { dev: 0, prod: 0 } },
+        },
+      },
       {
         isDev: false, // force prod mode to use prod sampling rate
         errorUtils: null,
@@ -441,5 +449,174 @@ describe('createMonitorRuntime', () => {
       },
       'normal',
     )).rejects.toThrow();
+  });
+
+  describe('DSAR API (userId export / delete)', () => {
+    it('setUserId tags subsequent events with the userId in enriched context', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      startMonitorRuntime(runtime);
+      runtime.setUserId('user-42');
+      runtime.trackEvent('did-something', { ok: true });
+      await Promise.resolve();
+      await Promise.resolve();
+      const drained = await runtime.store.drainAll(10);
+      const tagged = drained.find(
+        (e) =>
+          e.type === 'custom' &&
+          (e as unknown as { context?: { userId?: unknown } }).context
+            ?.userId === 'user-42',
+      );
+      expect(tagged).toBeDefined();
+      await runtime.shutdown();
+    });
+
+    it('exportUserData returns a serializable dump of the user-tagged events', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      startMonitorRuntime(runtime);
+      runtime.setUserId('alice');
+      runtime.trackEvent('a', {});
+      runtime.trackEvent('b', {});
+      runtime.setUserId('bob');
+      runtime.trackEvent('c', {});
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const dump = await runtime.exportUserData('alice');
+      expect(dump.userId).toBe('alice');
+      expect(dump.eventCount).toBe(2);
+      expect(dump.events).toHaveLength(2);
+      expect(typeof dump.sdkVersion).toBe('string');
+      // JSON-serializable end-to-end.
+      expect(() => JSON.stringify(dump)).not.toThrow();
+      await runtime.shutdown();
+    });
+
+    it('exportUserData returns empty dump for empty userId', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      const dump = await runtime.exportUserData('');
+      expect(dump.eventCount).toBe(0);
+      expect(dump.events).toEqual([]);
+      await runtime.shutdown();
+    });
+
+    it('deleteUserData purges tagged events and clears current user if matching', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      startMonitorRuntime(runtime);
+      runtime.setUserId('alice');
+      runtime.trackEvent('a', {});
+      runtime.trackEvent('b', {});
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const result = await runtime.deleteUserData('alice');
+      expect(result.eventsDeleted).toBe(2);
+      expect(result.currentUserCleared).toBe(true);
+      expect(runtime.getUserId()).toBeNull();
+      expect(await runtime.store.findByUserId('alice', 10)).toEqual([]);
+      await runtime.shutdown();
+    });
+
+    it('deleteUserData leaves other users intact', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      startMonitorRuntime(runtime);
+      runtime.setUserId('alice');
+      runtime.trackEvent('a', {});
+      runtime.setUserId('bob');
+      runtime.trackEvent('b', {});
+      await Promise.resolve();
+      await Promise.resolve();
+
+      await runtime.deleteUserData('alice');
+      const remaining = await runtime.store.findByUserId('bob', 10);
+      expect(remaining).toHaveLength(1);
+      expect(runtime.getUserId()).toBe('bob'); // current user untouched
+      await runtime.shutdown();
+    });
+
+    it('deleteUserData on unknown user is a no-op', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      const result = await runtime.deleteUserData('ghost');
+      expect(result.eventsDeleted).toBe(0);
+      expect(result.currentUserCleared).toBe(false);
+      await runtime.shutdown();
+    });
   });
 });

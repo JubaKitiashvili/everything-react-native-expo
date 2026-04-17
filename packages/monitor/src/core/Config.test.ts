@@ -1,5 +1,6 @@
 import {
   DEFAULT_MONITOR_CONFIG,
+  DEFAULT_SAMPLING_BY_TYPE,
   defineMonitorConfig,
   resolveCollectorMode,
 } from './Config';
@@ -7,7 +8,9 @@ import {
 describe('defineMonitorConfig', () => {
   it('returns defaults when called with no overrides', () => {
     const config = defineMonitorConfig();
-    expect(config.sampling).toEqual({ dev: 1.0, prod: 0.1 });
+    expect(config.sampling.dev).toBe(1.0);
+    expect(config.sampling.prod).toBe(0.1);
+    expect(config.sampling.byType).toEqual(DEFAULT_SAMPLING_BY_TYPE);
     expect(config.consent).toEqual({
       crashes: true,
       analytics: false,
@@ -28,12 +31,56 @@ describe('defineMonitorConfig', () => {
       ai: { autoFix: 'apply' },
       collectors: { crash: false, newCollector: 'prod' },
     });
-    expect(config.sampling).toEqual({ dev: 1.0, prod: 0.5 });
+    expect(config.sampling.dev).toBe(1.0);
+    expect(config.sampling.prod).toBe(0.5);
+    expect(config.sampling.byType).toEqual(DEFAULT_SAMPLING_BY_TYPE);
     expect(config.ai.autoFix).toBe('apply');
     expect(config.ai.crashExplainer).toBe(true); // unchanged
     expect(config.collectors.crash).toBe(false);
     expect(config.collectors.newCollector).toBe('prod');
     expect(config.collectors.network).toBe(true); // default preserved
+  });
+
+  describe('sampling.byType', () => {
+    it('merges byType overrides with defaults', () => {
+      const config = defineMonitorConfig({
+        sampling: {
+          byType: {
+            render: { dev: 0.5 }, // override dev only, keep default prod
+            myCustomType: { dev: 0.3, prod: 0.1 },
+          },
+        },
+      });
+      expect(config.sampling.byType['render']?.dev).toBe(0.5);
+      expect(config.sampling.byType['render']?.prod).toBe(0.01); // default preserved
+      expect(config.sampling.byType['myCustomType']).toEqual({
+        dev: 0.3,
+        prod: 0.1,
+      });
+      // defaults for other types stay intact
+      expect(config.sampling.byType['navigation']?.dev).toBe(1.0);
+    });
+
+    it('throws on byType rate out of range', () => {
+      expect(() =>
+        defineMonitorConfig({
+          sampling: { byType: { render: { prod: 1.5 } } },
+        }),
+      ).toThrow(/byType\.render\.prod/);
+      expect(() =>
+        defineMonitorConfig({
+          sampling: { byType: { render: { dev: -0.01 } } },
+        }),
+      ).toThrow(/byType\.render\.dev/);
+    });
+
+    it('does not mutate DEFAULT_SAMPLING_BY_TYPE when overriding', () => {
+      const beforeRender = DEFAULT_SAMPLING_BY_TYPE['render']?.dev;
+      defineMonitorConfig({
+        sampling: { byType: { render: { dev: 0.9 } } },
+      });
+      expect(DEFAULT_SAMPLING_BY_TYPE['render']?.dev).toBe(beforeRender);
+    });
   });
 
   it('returns a deeply frozen config', () => {

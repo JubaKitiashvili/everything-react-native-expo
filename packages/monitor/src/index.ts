@@ -9,13 +9,17 @@ export {
 export type {
   MonitorRuntime,
   MonitorRuntimeDeps,
+  UserDataExport,
+  UserDataDeletionResult,
 } from './core/createMonitorRuntime';
 export { MonitorClient } from './core/MonitorClient';
 export {
   defineMonitorConfig,
   resolveCollectorMode,
   DEFAULT_MONITOR_CONFIG,
+  DEFAULT_SAMPLING_BY_TYPE,
 } from './core/Config';
+export type { PerTypeSamplingRate } from './types';
 export { JSPlatformBridge } from './core/JSPlatformBridge';
 export type { JSPlatformBridgeDeps } from './core/JSPlatformBridge';
 export { SignalBus } from './core/SignalBus';
@@ -41,6 +45,11 @@ export type {
   AdaptiveSamplerDeps,
   BatteryInfo,
 } from './processors/AdaptiveSampler';
+export {
+  BurstThrottle,
+  defaultBurstKeyFor,
+} from './processors/BurstThrottle';
+export type { BurstThrottleOptions } from './processors/BurstThrottle';
 export { ConsentGate } from './processors/ConsentGate';
 export type {
   ConsentCategory,
@@ -75,6 +84,8 @@ export type {
 export { RenderCollector } from './collectors/RenderCollector';
 export type {
   RenderEventData,
+  RenderEventReason,
+  RenderSampleHints,
   RenderCollectorDeps,
 } from './collectors/RenderCollector';
 export { FrameDropCollector } from './collectors/FrameDropCollector';
