@@ -174,22 +174,13 @@ final class ANRDetector {
 
   // MARK: - Main thread stack capture
 
-  /// Capture main thread backtrace from a background thread.
-  /// Uses `Thread.callStackSymbols` on the main thread via a synchronous
-  /// dispatch if possible, or falls back to the current thread symbols.
+  /// Capture the main thread's backtrace from a background thread.
+  /// Delegates to `MainThreadStackCapture`, which uses mach thread APIs to
+  /// suspend the main thread, read its CPU state, walk the frame pointer
+  /// chain, and symbolicate each address. Falls back to the watchdog's
+  /// own stack with a diagnostic marker if any of that fails.
   static func captureMainThreadStack() -> [String] {
-    // We're on the watchdog queue. The main thread is blocked (that's
-    // why ANR fired). We can't dispatch_sync to main — it's wedged.
-    // Best-effort: use backtrace() to get the current thread's symbols.
-    // In practice, the main thread stack is what matters — but capturing
-    // another thread's stack requires mach thread APIs (private).
-    // For now, return current thread symbols + a marker.
-    var stack = Thread.callStackSymbols
-    // Prepend a note that this is the watchdog thread, not main
-    if !stack.isEmpty {
-      stack[0] = "[main thread blocked — watchdog stack captured]"
-    }
-    return stack
+    return MainThreadStackCapture.capture()
   }
 
   /// Demangle Swift symbols for human-readable output.

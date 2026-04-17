@@ -38,6 +38,11 @@ public final class ErneMonitorModule: Module {
       self.isActive = true
       // Task 40: install POSIX signal + NSException chain.
       CrashHandler.shared.install()
+      // Task 75: capture the main thread's mach port while we're
+      // (assumed) on the main thread. Must happen before ANR capture
+      // fires — otherwise the port lookup falls back to a dispatch with
+      // a 500ms timeout.
+      MainThreadStackCapture.primeOnMainThread()
       // Task 41: ANR watchdog. The detector emits via the closure
       // we install here, which calls the module's `sendEvent` —
       // captured weakly to avoid retain cycles.
