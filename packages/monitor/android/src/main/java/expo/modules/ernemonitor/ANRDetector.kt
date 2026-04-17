@@ -90,6 +90,52 @@ object ANRDetector {
 
   // ---- internals ----
 
+  /**
+   * Stack trace tail we don't need in the report — these frames are on
+   * every main-thread stack dump because the UI thread lives inside the
+   * Looper message pump. Dropping them makes the report usable at a
+   * glance. We keep them if the stack is otherwise empty.
+   */
+  private val TAIL_FRAME_PREFIXES = arrayOf(
+    "android.os.MessageQueue.nativePollOnce",
+    "android.os.MessageQueue.next",
+    "android.os.Looper.loopOnce",
+    "android.os.Looper.loop",
+    "android.app.ActivityThread.main",
+    "java.lang.reflect.Method.invoke",
+    "com.android.internal.os.RuntimeInit\$MethodAndArgsCaller.run",
+    "com.android.internal.os.ZygoteInit.main",
+  )
+
+  /**
+   * Capture the main thread's call stack. `Thread.getStackTrace()` on a
+   * non-current thread returns that thread's actual frames — this is
+   * the canonical Android API for ANR diagnostics. We trim the
+   * Looper/Zygote tail so the report surfaces actual app code.
+   */
+  internal fun captureMainThreadStack(): List<String> {
+    val frames = try {
+      Looper.getMainLooper().thread.stackTrace.map { it.toString() }
+    } catch (t: Throwable) {
+      Log.w(TAG, "ANR stack capture failed", t)
+      return emptyList()
+    }
+    if (frames.isEmpty()) return frames
+    val trimmed = trimLooperTail(frames)
+    return if (trimmed.isEmpty()) frames else trimmed
+  }
+
+  private fun trimLooperTail(frames: List<String>): List<String> {
+    var end = frames.size
+    while (end > 0) {
+      val frame = frames[end - 1]
+      val matches = TAIL_FRAME_PREFIXES.any { frame.startsWith(it) }
+      if (!matches) break
+      end -= 1
+    }
+    return if (end == frames.size) frames else frames.subList(0, end)
+  }
+
   private fun scheduleTick() {
     val handler = workerHandler ?: return
     handler.postDelayed({ tick() }, PING_INTERVAL_MS)
@@ -110,13 +156,7 @@ object ANRDetector {
     if (outstanding != 0L && outstanding != lastAckedTickId.get()) {
       val elapsed = System.currentTimeMillis() - pendingTickStartedAt.get()
       if (elapsed >= THRESHOLD_MS && inAnrState.compareAndSet(false, true)) {
-        val mainThread = Looper.getMainLooper().thread
-        val frames = try {
-          mainThread.stackTrace.map { it.toString() }
-        } catch (t: Throwable) {
-          Log.w(TAG, "ANR stack capture failed", t)
-          emptyList()
-        }
+        val frames = captureMainThreadStack()
         val cb = onANR
         cb?.invoke(elapsed, frames)
       }
