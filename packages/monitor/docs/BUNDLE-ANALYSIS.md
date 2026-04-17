@@ -12,7 +12,7 @@ always — but it's also the simplest to wire.
 
 | Entry | Files | Raw (KB) | Gzip (KB) | Budget (KB) | Status |
 | ----- | ----: | -------: | --------: | ----------: | :----- |
-| `main` | 75 | 310.70 | 66.74 | 75 | ok |
+| `main` | 75 | 312.15 | 67.23 | 75 | ok |
 | `/performance` | 11 | 36.35 | 7.01 | 20 | ok |
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |

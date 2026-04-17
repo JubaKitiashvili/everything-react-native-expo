@@ -33,13 +33,22 @@ describe('expo-module autolinking', () => {
     expect(config.android.modules.length).toBeGreaterThan(0);
   });
 
-  it('ships expo-module.config.json to consumers via package.json files', () => {
+  it('ships expo-module.config.json + native source trees to consumers', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8'),
     ) as { files?: string[] };
-    expect(pkg.files).toContain('expo-module.config.json');
-    expect(pkg.files).toContain('ios');
-    expect(pkg.files).toContain('android');
+    const files = pkg.files ?? [];
+    expect(files).toContain('expo-module.config.json');
+    // Allow either the old whole-dir form ('ios') or the new glob form
+    // ('ios/**/*.swift') — both ship the iOS sources.
+    const shipsIOS = files.some(
+      (p) => p === 'ios' || p.startsWith('ios/'),
+    );
+    const shipsAndroid = files.some(
+      (p) => p === 'android' || p.startsWith('android/'),
+    );
+    expect(shipsIOS).toBe(true);
+    expect(shipsAndroid).toBe(true);
   });
 
   it('Podspec + Android build + module classes are all wired correctly', () => {

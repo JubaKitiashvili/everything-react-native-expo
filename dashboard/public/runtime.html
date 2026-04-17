@@ -277,8 +277,22 @@
         if (ev.type === 'navigation') return (d.previousScreen || '∅') + ' → ' + d.screen;
         if (ev.type === 'custom') return (d.name || 'event') + ' ' + JSON.stringify(d.attributes || {});
         if (ev.type === 'render') {
-          if (d.frameDrop) return 'frame drop · dropped=' + d.frameDrop.droppedFrames + ' minFps=' + Math.round(d.frameDrop.minFps);
-          return (d.componentName || '?') + ' × ' + d.renderCount + (d.isUnnecessary ? ' (unnecessary)' : '');
+          const reason = d.reason ? ' [' + d.reason + ']' : (d.isUnnecessary ? ' (storm)' : '');
+          return (d.componentName || '?') + ' × ' + (d.renderCount || 1) + reason;
+        }
+        if (ev.type === 'frame_drop') {
+          return 'frame drop · ' + (d.droppedFrames || 0) + '/' + (d.expectedFrames || 0) +
+            ' frames · minFps=' + Math.round(d.minFps || 0) +
+            (d.screen ? ' · ' + d.screen : '');
+        }
+        if (ev.type === 'native_anr') {
+          return 'ANR ' + (d.durationMs || 0) + 'ms' + (d.screen ? ' on ' + d.screen : '');
+        }
+        if (ev.type === 'long_task') return 'long task ' + Math.round(d.durationMs || 0) + 'ms (' + (d.detector || '?') + ')';
+        if (ev.type === 'memory') {
+          const used = Math.round((d.usedBytes || 0) / 1024 / 1024);
+          const total = Math.round((d.totalBytes || 0) / 1024 / 1024);
+          return 'memory ' + used + 'MB / ' + total + 'MB';
         }
         return JSON.stringify(d).slice(0, 200);
       }

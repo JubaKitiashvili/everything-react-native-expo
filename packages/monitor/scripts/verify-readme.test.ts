@@ -69,9 +69,11 @@ describe('README', () => {
   });
 
   it('DSAR snippet references the methods the SDK actually exports', () => {
-    expect(README).toMatch(/monitor\.setUserId\(/);
-    expect(README).toMatch(/monitor\.exportUserData\(/);
-    expect(README).toMatch(/monitor\.deleteUserData\(/);
+    // Allow `monitor?.x(` or `monitor.x(` (null-chain patterns both OK).
+    expect(README).toMatch(/monitor\??\.setUserId\(/);
+    expect(README).toMatch(/monitor\??\.exportUserData\(/);
+    expect(README).toMatch(/monitor\??\.deleteUserData\(/);
+    expect(README).toMatch(/useMonitor\(/);
   });
 
   it('competitive comparison table lists every primary competitor', () => {

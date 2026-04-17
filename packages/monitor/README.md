@@ -112,7 +112,7 @@ const config = defineMonitorConfig({
 <MonitorProvider config={config}>…</MonitorProvider>
 ```
 
-See [`defineMonitorConfig` docs](./docs/config.md) for every option.
+See the JSDoc on `defineMonitorConfig` in [`src/core/Config.ts`](./src/core/Config.ts) and `DEFAULT_SAMPLING_BY_TYPE` for every option and per-type sampling floor.
 
 ---
 
@@ -121,12 +121,19 @@ See [`defineMonitorConfig` docs](./docs/config.md) for every option.
 Tag events with an opaque user id, export them on request, delete them on revoke.
 
 ```tsx
-const monitor = useMonitor();
-monitor.setUserId('user-42');
+import { useMonitor } from '@erne/monitor';
 
-const dump = await monitor.exportUserData('user-42');
-await monitor.deleteUserData('user-42');
+function Settings() {
+  const monitor = useMonitor();
+
+  const onLogin = (userId: string) => monitor?.setUserId(userId);
+  const onExport = () => monitor?.exportUserData('user-42');
+  const onDelete = () => monitor?.deleteUserData('user-42');
+  // ...
+}
 ```
+
+`useMonitor()` returns `MonitorRuntime | null` — null during the one-frame boot or outside a `<MonitorProvider>`. Use `useMonitor({ strict: true })` to throw on missing provider.
 
 ---
 
@@ -171,11 +178,11 @@ New Architecture only (Fabric + TurboModules).
 
 ## Docs
 
-- [Collector reference](./docs/collectors.md)
-- [SignalRouter architecture](./docs/signal-router.md)
-- [Native module internals](./docs/native.md)
-- [Dashboard integration](./docs/dashboard.md)
 - [Migrating from Sentry](./docs/MIGRATING-FROM-SENTRY.md) · [from Crashlytics](./docs/MIGRATING-FROM-CRASHLYTICS.md)
+- [Bundle analysis](./docs/BUNDLE-ANALYSIS.md) — live per-subpath sizes + transitive imports
+- [CHANGELOG](./CHANGELOG.md) — semver policy + release notes
+- Source-level reference: `src/core/Config.ts` · `src/core/createMonitorRuntime.ts` · `src/signal-router/SignalRouter.ts` · `src/native/ErneMonitorNative.ts`
+- Collector catalog: every collector lives in [`src/collectors/`](./src/collectors) with JSDoc on its options, events, and edge cases
 
 ---
 
