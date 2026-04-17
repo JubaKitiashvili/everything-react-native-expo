@@ -1,0 +1,46 @@
+{
+  "name": "@erne/monitor-dashboard-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Node HTTP + WebSocket server for the @erne/monitor local dashboard. Persists events, crash groups, sessions, bug reports, and alerts to a SQLite file (default ~/.erne/monitor/dashboard.db).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage/sqliteStore.d.ts",
+      "default": "./dist/storage/sqliteStore.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.19.17",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.3.3",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
