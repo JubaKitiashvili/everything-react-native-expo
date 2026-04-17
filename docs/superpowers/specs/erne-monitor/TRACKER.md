@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 5 — SDK v1 Launch-Ready ✅ complete
-**Active Task:** Task 92 — Dashboard v2 Vite + React + TS scaffold (Phase 6 kickoff)
-**Overall Progress:** 91/124 tasks (Phases 1a–4 ✅ · Phase 5 21/21 ✅ · Phase 6 0/25 · Phase 7 0/8) · 1145 tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (1/25)
+**Active Task:** Task 93 — Design tokens + base UI kit (Panel, Tile, Pill, EventRow, Sparkline, StackFrame)
+**Overall Progress:** 92/124 tasks (Phases 1a–5 ✅ · Phase 6 1/25 · Phase 7 0/8) · 1152 tests passing (SDK) + dashboard scaffold green
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 0/25 | ⬜ Blocked on 5 | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 1/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -95,7 +95,7 @@
 
 | # | Task | Status | Files Created | Tests | Integrated |
 |---|------|--------|---------------|-------|------------|
-| 92 | Vite + React 19 + TS scaffold in `dashboard/app/` | ⬜ | — | — | — |
+| 92 | Vite + React 19 + TS scaffold in `dashboard/app/` | ✅ | dashboard/app/{package.json, package-lock.json, vite.config.ts, tsconfig.json, tsconfig.app.json, tsconfig.node.json, index.html, eslint.config.js, .prettierrc.json, .prettierignore, .gitignore, README.md}, dashboard/app/src/{main.tsx, App.tsx, App.module.css, index.css, vite-env.d.ts}; modified packages/monitor/.gitignore (dashboard/public/ + .vite/ + app/dist/) | — (scaffold; dashboard unit tests land in 93) | ✅ — `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build` all green; dev server smoke-tested on http://127.0.0.1:5173/ (HTTP 200, HMR injected); build outputs to `dashboard/public/` (index.html + assets/{index-*.css, index-*.js + sourcemap}); monitor SDK still 1152/1152 tests and `check:budget` green |
 | 93 | Design tokens + base UI kit (Panel, Tile, Pill, EventRow, Sparkline, StackFrame) | ⬜ | — | — | — |
 | 94 | SQLite persistent backend (`better-sqlite3`, `~/.erne/monitor/dashboard.db`) | ⬜ | — | — | — |
 | 95 | WebSocket ingest + broadcast + crash-group fingerprinting | ⬜ | — | — | — |
@@ -329,6 +329,7 @@ Track coverage of the design spec. Updated at end of each phase.
 
 | 2026-04-15 | 9 | Phase 4 complete (all 70 tasks) | Tasks 63-70 | Phase 4 Intelligence — PatternSync (server persistence + client sync, throttled, confidence merge), Cross-Project Learning (anonymized aggregation, opt-in, suggestion-only), AnomalyDetector (on-device ML with rule-based fallback, 10s interval, 4 anomaly types), OTA Updater (ETag + SHA-256, atomic, bandwidth-aware), DORA Metrics (MTTR, CFR, Deploy Freq, Lead Time), PluginRegistry + PluginLoader (sandboxed, validated, health checked), RSCCollector (server render time, payload size, streaming, cache), Metro Auto-Instrumentation (Babel transform, entry wrapping, source map preserving). 818 tests across 73 suites, tsc clean. **ALL 70 TASKS COMPLETE — @erne/monitor v1.0 feature-complete.** |
 | 2026-04-15 | 8 | 2b complete | Tasks 45-53 | Phase 2b — all 9 tasks completed in one session. DualThreadFPS (CADisplayLink/Choreographer + JS probe, bottleneck attribution), FabricCommitTracker (CFRunLoopObserver/FrameMetrics, layout thrashing), ReplayCapture + ReplayMasker (session replay with PII masking, ring buffer, consent gate), LayoutSnapshot (native view hierarchy walk, sanitization, depth truncation), HermesProfilerCollector (JS-coordinated via HermesInternal, 30s cap, dev-only), Source Map Auto-Upload (Expo config plugin + shell script), ExpoDevToolsPlugin (DevTools tab with health grid + commands), BugReporter (shake detection + context bundling, rate limiting), VisualRepro (navigation-triggered screenshots, 2MB buffer cap). Also: production-ready diagnostics API (triggerTestCrash/ANR/SpanCrash) + gpc-expo diagnostics screen. 519 tests across 55 suites, tsc clean. iPhone 16 Pro device name corrected in all docs. Phase 3 (backend) unblocked. |
+| 2026-04-18 | 11 | 6.1 start | Task 92 | Phase 6 kickoff — Vite + React 19 + TS scaffold at `packages/monitor/dashboard/app/`. Stack: Vite 6.4, React 19, TypeScript 5.9, ESLint 9 flat config (`typescript-eslint` + react-hooks + react-refresh plugins with `@typescript-eslint/consistent-type-imports` rule), Prettier 3. `tsconfig.json` uses project references to `tsconfig.app.json` (composite, strict, `noUncheckedIndexedAccess`, `noUnusedLocals`, `verbatimModuleSyntax`, DOM libs, react-jsx) and `tsconfig.node.json` (for `vite.config.ts`). Vite config: port 5173 (strict), host 127.0.0.1, `build.outDir` → `../public/`, sourcemap on, cssCodeSplit, target ES2022, `@/*` → `src/*` alias. Shell UI (`App.tsx` + CSS modules): dark theme, brand lockup + subtitle + placeholder card. Scaffold verifications: `npm run typecheck` ✅, `npm run lint` ✅, `npm run format:check` ✅ (after one prettier pass on eslint.config.js + tsconfig.json), `npm run build` ✅ emitting `dashboard/public/{index.html, assets/index-*.css, assets/index-*.js + .map}`, `npm run dev` smoke-tested (HTTP 200 on `http://127.0.0.1:5173/`, HMR client injected, title correct). Added `dashboard/public/`, `dashboard/app/dist/`, `dashboard/app/.vite/` to `packages/monitor/.gitignore`. SDK unchanged: 1152/1152 tests green + `check:budget` all seven subpath entries within budget. |
 
 ---
 
