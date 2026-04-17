@@ -1,10 +1,12 @@
 export { ErneMonitorNative, LazyNativeModuleLoader } from './ErneMonitorNative';
+export type { ErneMonitorNativeOptions } from './ErneMonitorNative';
 export { createDefaultNativeModuleLoader } from './defaultLoader';
 export type {
   ErneMonitorNativeModule,
   NativeANRReport,
   NativeCrashReport,
   NativeDualThreadFPSReport,
+  NativeErrorRecord,
   NativeEventMap,
   NativeFabricCommitReport,
   NativeReplayFrame,

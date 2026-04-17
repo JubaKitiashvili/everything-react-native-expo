@@ -3,6 +3,7 @@ import type {
   NativeANRReport,
   NativeCrashReport,
   NativeDualThreadFPSReport,
+  NativeErrorRecord,
   NativeEventMap,
   NativeEventName,
   NativeFabricCommitReport,
@@ -59,12 +60,40 @@ export class LazyNativeModuleLoader implements NativeModuleLoader {
  * NOOP_NATIVE_SUBSCRIPTION) and why we expose isAvailable() so Phase 2+
  * collectors can skip work cheaply.
  */
+export interface ErneMonitorNativeOptions {
+  /** Max number of recent error records kept in the ring buffer. Default 20. */
+  errorHistorySize?: number;
+  /** Optional hook invoked every time a native call fails. */
+  onError?: (record: NativeErrorRecord) => void;
+  /**
+   * After this many consecutive failures, the wrapper flips into
+   * `'disabled'` state and short-circuits every subsequent call to a
+   * safe default. Default 5 — protects against native modules that panic
+   * on every call (prevents the SDK from eating CPU in a retry storm).
+   */
+  disableAfterErrors?: number;
+}
+
 export class ErneMonitorNative {
   private state: NativeMonitorState = 'idle';
+  private disabledReason: string | null = null;
+  private consecutiveErrors = 0;
+  private readonly errorHistory: NativeErrorRecord[] = [];
+  private readonly errorHistorySize: number;
+  private readonly disableAfterErrors: number;
+  private readonly onError?: (record: NativeErrorRecord) => void;
 
-  constructor(private readonly loader: NativeModuleLoader) {}
+  constructor(
+    private readonly loader: NativeModuleLoader,
+    options: ErneMonitorNativeOptions = {},
+  ) {
+    this.errorHistorySize = options.errorHistorySize ?? 20;
+    this.disableAfterErrors = options.disableAfterErrors ?? 5;
+    this.onError = options.onError;
+  }
 
   isAvailable(): boolean {
+    if (this.state === 'disabled') return false;
     return this.loader.load() !== null;
   }
 
@@ -72,7 +101,33 @@ export class ErneMonitorNative {
     return this.state;
   }
 
+  /** Reason the SDK was disabled, if any. */
+  getDisabledReason(): string | null {
+    return this.disabledReason;
+  }
+
+  /** Most recent native errors (oldest first). For support dumps. */
+  getRecentErrors(): readonly NativeErrorRecord[] {
+    return this.errorHistory;
+  }
+
+  /**
+   * Re-enables the wrapper after it circuit-broke. Clears the error
+   * history and flips state back to `'idle'` so the next call will
+   * re-dispatch to native. Use this when the consumer knows the native
+   * issue has been resolved (e.g. after a fresh launch).
+   */
+  resetFromDisabled(): void {
+    if (this.state === 'disabled') {
+      this.state = 'idle';
+      this.disabledReason = null;
+      this.consecutiveErrors = 0;
+      this.errorHistory.length = 0;
+    }
+  }
+
   startNativeMonitoring(): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null) {
       this.state = 'idle';
@@ -81,12 +136,15 @@ export class ErneMonitorNative {
     try {
       mod.startNativeMonitoring();
       this.state = 'running';
-    } catch {
+      this.consecutiveErrors = 0;
+    } catch (err) {
+      this.recordError('startNativeMonitoring', err);
       this.state = 'idle';
     }
   }
 
   stopNativeMonitoring(): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null) {
       this.state = 'idle';
@@ -94,18 +152,21 @@ export class ErneMonitorNative {
     }
     try {
       mod.stopNativeMonitoring();
-    } catch {
+    } catch (err) {
+      this.recordError('stopNativeMonitoring', err);
       // fall through — still mark as stopped so the SDK can re-enter later
     }
     this.state = 'stopped';
   }
 
   getNativeMetrics(): NativeMetricsSnapshot {
+    if (this.state === 'disabled') return UNKNOWN_NATIVE_METRICS;
     const mod = this.loader.load();
     if (mod === null) return UNKNOWN_NATIVE_METRICS;
     try {
       return mod.getNativeMetrics();
-    } catch {
+    } catch (err) {
+      this.recordError('getNativeMetrics', err);
       return UNKNOWN_NATIVE_METRICS;
     }
   }
@@ -141,7 +202,8 @@ export class ErneMonitorNative {
     }
     try {
       return mod.saveHermesProfile(data, trigger);
-    } catch {
+    } catch (err) {
+      this.recordError('saveHermesProfile', err);
       return null;
     }
   }
@@ -155,7 +217,8 @@ export class ErneMonitorNative {
     }
     try {
       return await mod.captureLayoutSnapshot(maxDepth);
-    } catch {
+    } catch (err) {
+      this.recordError('captureLayoutSnapshot', err);
       return null;
     }
   }
@@ -170,44 +233,48 @@ export class ErneMonitorNative {
     intervalMs: number,
     maskRegions: readonly Record<string, unknown>[],
   ): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.startReplayCapture !== 'function') return;
     try {
       mod.startReplayCapture(intervalMs, maskRegions);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('startReplayCapture', err);
     }
   }
 
   stopReplayCapture(): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.stopReplayCapture !== 'function') return;
     try {
       mod.stopReplayCapture();
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('stopReplayCapture', err);
     }
   }
 
   updateReplayMaskRegions(
     regions: readonly Record<string, unknown>[],
   ): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.updateReplayMaskRegions !== 'function') return;
     try {
       mod.updateReplayMaskRegions(regions);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('updateReplayMaskRegions', err);
     }
   }
 
   recordReplayTouch(x: number, y: number, phase: string): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.recordReplayTouch !== 'function') return;
     try {
       mod.recordReplayTouch(x, y, phase);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('recordReplayTouch', err);
     }
   }
 
@@ -224,12 +291,14 @@ export class ErneMonitorNative {
    * fallback).
    */
   async drainPersistedCrashes(): Promise<readonly PersistedCrashRecord[]> {
+    if (this.state === 'disabled') return [];
     const mod = this.loader.load();
     if (mod === null) return [];
     if (typeof mod.drainPersistedCrashes !== 'function') return [];
     try {
       return await mod.drainPersistedCrashes();
-    } catch {
+    } catch (err) {
+      this.recordError('drainPersistedCrashes', err);
       return [];
     }
   }
@@ -240,13 +309,15 @@ export class ErneMonitorNative {
    * Silently no-ops when the module is absent or the hook is missing.
    */
   acknowledgePersistedCrash(id: string): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null) return;
     if (typeof mod.acknowledgePersistedCrash !== 'function') return;
     try {
       mod.acknowledgePersistedCrash(id);
-    } catch {
-      // ignore — failure to delete is non-fatal, we just retry next launch
+    } catch (err) {
+      this.recordError('acknowledgePersistedCrash', err);
+      // failure to delete is non-fatal, we just retry next launch
     }
   }
 
@@ -259,43 +330,48 @@ export class ErneMonitorNative {
     parentId: string | null,
     startedAtMs: number,
   ): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.startSpan !== 'function') return;
     try {
       mod.startSpan(id, name, kind, parentId, startedAtMs);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('startSpan', err);
     }
   }
 
   endSpan(id: string, endedAtMs: number): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.endSpan !== 'function') return;
     try {
       mod.endSpan(id, endedAtMs);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('endSpan', err);
     }
   }
 
   updateSpan(id: string, attribute: string, value: string): void {
+    if (this.state === 'disabled') return;
     const mod = this.loader.load();
     if (mod === null || typeof mod.updateSpan !== 'function') return;
     try {
       mod.updateSpan(id, attribute, value);
-    } catch {
-      // ignore
+    } catch (err) {
+      this.recordError('updateSpan', err);
     }
   }
 
   async drainInterruptedSpans(): Promise<readonly Record<string, unknown>[]> {
+    if (this.state === 'disabled') return [];
     const mod = this.loader.load();
     if (mod === null || typeof mod.drainInterruptedSpans !== 'function') {
       return [];
     }
     try {
       return await mod.drainInterruptedSpans();
-    } catch {
+    } catch (err) {
+      this.recordError('drainInterruptedSpans', err);
       return [];
     }
   }
@@ -358,12 +434,44 @@ export class ErneMonitorNative {
     eventName: E,
     listener: (payload: NativeEventMap[E]) => void,
   ): NativeSubscription {
+    if (this.state === 'disabled') return NOOP_NATIVE_SUBSCRIPTION;
     const mod = this.loader.load();
     if (mod === null) return NOOP_NATIVE_SUBSCRIPTION;
     try {
       return mod.addListener(eventName, listener);
-    } catch {
+    } catch (err) {
+      this.recordError(`addListener(${String(eventName)})`, err);
       return NOOP_NATIVE_SUBSCRIPTION;
+    }
+  }
+
+  /**
+   * Captures a native-side failure. Pushes into the ring buffer (evicting
+   * oldest), calls the user-supplied hook if any, and — if we've crossed
+   * `disableAfterErrors` consecutive failures — flips the SDK into the
+   * `'disabled'` terminal state so every subsequent call short-circuits.
+   */
+  private recordError(method: string, err: unknown): void {
+    const message =
+      err instanceof Error ? err.message : String(err ?? 'unknown');
+    const record: NativeErrorRecord = {
+      method,
+      message,
+      timestamp: Date.now(),
+    };
+    this.errorHistory.push(record);
+    if (this.errorHistory.length > this.errorHistorySize) {
+      this.errorHistory.shift();
+    }
+    try {
+      this.onError?.(record);
+    } catch {
+      // onError itself must never break the wrapper
+    }
+    this.consecutiveErrors += 1;
+    if (this.consecutiveErrors >= this.disableAfterErrors) {
+      this.state = 'disabled';
+      this.disabledReason = `native_errors_${this.consecutiveErrors}: ${message}`;
     }
   }
 }

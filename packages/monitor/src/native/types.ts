@@ -19,7 +19,22 @@ export type ThermalState =
   | 'critical'
   | 'unknown';
 
-export type NativeMonitorState = 'idle' | 'running' | 'stopped';
+export type NativeMonitorState = 'idle' | 'running' | 'stopped' | 'disabled';
+
+/**
+ * Diagnostic record of a native-module failure. `ErneMonitorNative`
+ * keeps a small ring buffer of the most recent errors so consumers can
+ * pull them via `getRecentErrors()` for support dumps. The SDK never
+ * throws on a native failure — it records + returns a safe default.
+ */
+export interface NativeErrorRecord {
+  /** Method name that failed, e.g. 'startNativeMonitoring'. */
+  readonly method: string;
+  /** Error message from the caught exception. */
+  readonly message: string;
+  /** Wall-clock timestamp (Date.now()). */
+  readonly timestamp: number;
+}
 
 export interface NativeMetricsSnapshot {
   /** Per-process CPU percentage (0-100), null if unsupported on the platform. */

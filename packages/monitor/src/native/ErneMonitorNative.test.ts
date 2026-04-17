@@ -680,3 +680,143 @@ describe('ErneMonitorNative — diagnostics (dev-only test triggers)', () => {
     expect(() => native.triggerTestSpanCrash()).not.toThrow();
   });
 });
+
+describe('ErneMonitorNative — error boundaries', () => {
+  function throwingModule(): ErneMonitorNativeModule {
+    const err = () => {
+      throw new Error('native-boom');
+    };
+    return {
+      startNativeMonitoring: err,
+      stopNativeMonitoring: err,
+      getNativeMetrics: () => {
+        throw new Error('metrics-boom');
+      },
+      addListener: () => {
+        throw new Error('listener-boom');
+      },
+    };
+  }
+
+  test('records native errors in history with method + message + timestamp', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(new LazyNativeModuleLoader(() => mod));
+    native.startNativeMonitoring();
+    const history = native.getRecentErrors();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.method).toBe('startNativeMonitoring');
+    expect(history[0]?.message).toBe('native-boom');
+    expect(typeof history[0]?.timestamp).toBe('number');
+  });
+
+  test('calls onError hook for each recorded failure', () => {
+    const mod = throwingModule();
+    const seen: string[] = [];
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      { onError: (rec) => seen.push(rec.method) },
+    );
+    native.startNativeMonitoring();
+    native.getNativeMetrics();
+    expect(seen).toEqual(['startNativeMonitoring', 'getNativeMetrics']);
+  });
+
+  test('flips to disabled state after consecutive errors exceed threshold', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      { disableAfterErrors: 3 },
+    );
+    native.getNativeMetrics(); // 1
+    native.getNativeMetrics(); // 2
+    expect(native.getState()).not.toBe('disabled');
+    native.getNativeMetrics(); // 3 → trips
+    expect(native.getState()).toBe('disabled');
+    expect(native.getDisabledReason()).toContain('native_errors_3');
+  });
+
+  test('disabled state short-circuits every call to a safe default', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      { disableAfterErrors: 1 },
+    );
+    native.getNativeMetrics(); // trips
+    expect(native.getState()).toBe('disabled');
+    // All subsequent calls return safe defaults, no new errors recorded.
+    const before = native.getRecentErrors().length;
+    native.startNativeMonitoring();
+    native.getNativeMetrics();
+    native.stopNativeMonitoring();
+    native.startReplayCapture(100, []);
+    expect(native.getRecentErrors().length).toBe(before);
+    expect(native.isAvailable()).toBe(false);
+  });
+
+  test('ring buffer evicts oldest when errorHistorySize is hit', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      { errorHistorySize: 3, disableAfterErrors: 999 },
+    );
+    native.getNativeMetrics();
+    native.startNativeMonitoring();
+    native.stopNativeMonitoring();
+    native.getNativeMetrics();
+    const history = native.getRecentErrors();
+    expect(history).toHaveLength(3);
+    expect(history[0]?.method).toBe('startNativeMonitoring');
+    expect(history[2]?.method).toBe('getNativeMetrics');
+  });
+
+  test('resetFromDisabled clears state and re-enables the wrapper', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      { disableAfterErrors: 1 },
+    );
+    native.getNativeMetrics();
+    expect(native.getState()).toBe('disabled');
+    native.resetFromDisabled();
+    expect(native.getState()).toBe('idle');
+    expect(native.getDisabledReason()).toBeNull();
+    expect(native.getRecentErrors()).toHaveLength(0);
+  });
+
+  test('onError hook throwing does not break the wrapper', () => {
+    const mod = throwingModule();
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => mod),
+      {
+        onError: () => {
+          throw new Error('hook-broken');
+        },
+      },
+    );
+    expect(() => native.getNativeMetrics()).not.toThrow();
+  });
+
+  test('successful calls reset consecutive error counter', () => {
+    let throwing = true;
+    const module: ErneMonitorNativeModule = {
+      startNativeMonitoring: () => {
+        if (throwing) throw new Error('boom');
+      },
+      stopNativeMonitoring: () => {},
+      getNativeMetrics: () => UNKNOWN_NATIVE_METRICS,
+      addListener: () => ({ remove: () => {} }),
+    };
+    const native = new ErneMonitorNative(
+      new LazyNativeModuleLoader(() => module),
+      { disableAfterErrors: 3 },
+    );
+    native.startNativeMonitoring(); // 1 err
+    native.startNativeMonitoring(); // 2 err
+    throwing = false;
+    native.startNativeMonitoring(); // success — resets counter
+    throwing = true;
+    native.startNativeMonitoring(); // 1 err again (counter reset)
+    native.startNativeMonitoring(); // 2 err
+    expect(native.getState()).not.toBe('disabled');
+  });
+});
