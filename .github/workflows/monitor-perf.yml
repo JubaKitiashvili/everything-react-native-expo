@@ -1,0 +1,67 @@
+name: monitor / performance budget
+
+on:
+  pull_request:
+    paths:
+      - 'packages/monitor/src/**'
+      - 'packages/monitor/package.json'
+      - 'packages/monitor/scripts/check-bundle-size.js'
+      - 'packages/monitor/.size-limit.json'
+      - '.github/workflows/monitor-perf.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/monitor/**'
+
+jobs:
+  bundle-size:
+    name: bundle size budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: packages/monitor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/monitor/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Bundle size budget (gzipped)
+        run: node scripts/check-bundle-size.js
+
+      - name: Declaration map completeness
+        run: node scripts/verify-declaration-maps.js
+
+      - name: Expo autolink configuration
+        run: node scripts/verify-autolink.js
+
+      - name: Bundle analysis report up-to-date
+        run: node scripts/generate-bundle-analysis.js --check
+
+      # Uploaded for historical tracking — the workflow file keeps
+      # pull-request reviewers from having to re-run the script locally.
+      - name: Upload size report
+        if: always()
+        run: node scripts/check-bundle-size.js --json > bundle-sizes.json
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: monitor-bundle-sizes
+          path: packages/monitor/bundle-sizes.json
+          if-no-files-found: ignore
+          retention-days: 30

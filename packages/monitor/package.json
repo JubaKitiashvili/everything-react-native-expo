@@ -11,9 +11,37 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./performance": {
+      "types": "./dist/exports/performance.d.ts",
+      "default": "./dist/exports/performance.js"
+    },
+    "./network": {
+      "types": "./dist/exports/network.d.ts",
+      "default": "./dist/exports/network.js"
+    },
+    "./ai": {
+      "types": "./dist/exports/ai.d.ts",
+      "default": "./dist/exports/ai.js"
+    },
+    "./replay": {
+      "types": "./dist/exports/replay.d.ts",
+      "default": "./dist/exports/replay.js"
+    },
+    "./dev": {
+      "types": "./dist/exports/dev.d.ts",
+      "default": "./dist/exports/dev.js"
+    },
+    "./testing": {
+      "types": "./dist/exports/testing.d.ts",
+      "default": "./dist/exports/testing.js"
+    },
     "./plugin": {
       "types": "./plugin/build/withErneMonitor.d.ts",
       "default": "./plugin/build/withErneMonitor.js"
+    },
+    "./plugin/privacy": {
+      "types": "./plugin/build/withPrivacyManifest.d.ts",
+      "default": "./plugin/build/withPrivacyManifest.js"
     },
     "./app.plugin": "./plugin/build/withErneMonitor.js"
   },
@@ -23,7 +51,11 @@
     "plugin/build",
     "ios",
     "android",
+    "maestro",
+    "perf",
+    "docs",
     "expo-module.config.json",
+    "CHANGELOG.md",
     "README.md"
   ],
   "scripts": {
@@ -34,17 +66,38 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "codegen": "ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true}' scripts/codegen/run.ts"
+    "codegen": "ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true}' scripts/codegen/run.ts",
+    "check:bundle-size": "node scripts/check-bundle-size.js",
+    "check:declaration-maps": "node scripts/verify-declaration-maps.js",
+    "check:autolink": "node scripts/verify-autolink.js",
+    "check:analysis": "node scripts/generate-bundle-analysis.js --check",
+    "analyze": "node scripts/generate-bundle-analysis.js",
+    "check:budget": "npm run build && npm run check:bundle-size && npm run check:declaration-maps && npm run check:autolink && npm run check:analysis"
   },
   "peerDependencies": {
-    "react": ">=18.2.0",
-    "react-native": ">=0.74.0",
-    "expo": ">=51.0.0"
+    "react": ">=18.2.0 <20",
+    "react-native": ">=0.74.0 <0.90",
+    "expo": ">=51.0.0 <57",
+    "expo-sqlite": ">=14.0.0 <17",
+    "expo-modules-core": ">=1.11.0 <3",
+    "@expo/config-plugins": ">=7.0.0 <10"
   },
   "peerDependenciesMeta": {
     "expo": {
       "optional": true
+    },
+    "expo-sqlite": {
+      "optional": true
+    },
+    "expo-modules-core": {
+      "optional": true
+    },
+    "@expo/config-plugins": {
+      "optional": true
     }
+  },
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
     "@testing-library/react-native": "^12.0.0",
