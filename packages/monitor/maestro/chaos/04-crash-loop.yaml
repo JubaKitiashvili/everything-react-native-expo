@@ -1,0 +1,22 @@
+# 04 — Crash-loop safety net. Fires 5 JS crashes in quick succession;
+# after the 3rd within-5s crash the SDK's circuit breaker should flip
+# non-critical collectors off. Verifies Task 77 (disabled state).
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - crash-loop
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Trigger Crash Loop (5)"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "crashes: [3-9]"
+    regex: true
+# Disabled reason must surface so ops can tell which subsystem triggered.
+- assertVisible:
+    text: "disabled|circuitBroken"
+    regex: true

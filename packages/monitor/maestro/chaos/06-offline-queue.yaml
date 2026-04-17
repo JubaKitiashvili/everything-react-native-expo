@@ -1,0 +1,30 @@
+# 06 — Offline simulation + reconnect. Verifies BatchTransport buffers
+# events in EventStore while NetworkDegrader.simulateOffline() is active,
+# then flushes on reconnect.
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - offline
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Simulate Offline"
+# Emit a batch of synthetic events while offline.
+- tapOn: "Emit 50 Synthetic Events"
+- tapOn: "Diagnostics Dump"
+# Events should be buffered locally; transport queue has retries pending.
+- assertVisible:
+    text: "eventStore: [5-9][0-9]|[1-9][0-9]{2,}"
+    regex: true
+- assertVisible:
+    text: "transportQueue: [1-9]"
+    regex: true
+- tapOn: "Restore Network"
+# After reconnect, the transport drains. Small delay for backoff.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "transportQueue: 0"
+    regex: true

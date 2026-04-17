@@ -1,0 +1,18 @@
+# 05 — Active span + crash → `drainInterruptedSpans` surfaces the span.
+# Verifies Task 43 (SpanLog + replayInterrupted) end-to-end.
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - span-crash
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Trigger Span Crash"
+# Crashes inside an active span named 'checkout-flow'.
+- launchApp
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "interruptedSpans: [1-9]"
+    regex: true
+- assertVisible: "checkout-flow"

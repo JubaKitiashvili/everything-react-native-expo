@@ -1,0 +1,22 @@
+# 03 — ANR (6s main-thread block) captured with a real main-thread
+# stack. Verifies Task 75 (iOS mach_thread) + Task 76 (Android Looper).
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - anr
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Trigger ANR (6s)"
+# Main thread blocks for ~6s — the watchdog thread still ticks in the
+# background, detects the deadline miss, emits an onANRDetected event.
+- waitForAnimationToEnd:
+    timeout: 10000
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "anr: [1-9]"
+    regex: true
+# The mainThreadStack must NOT be the watchdog fallback marker — we
+# require the real app-code frames Task 75 makes available.
+- assertNotVisible: "main-thread capture unavailable"

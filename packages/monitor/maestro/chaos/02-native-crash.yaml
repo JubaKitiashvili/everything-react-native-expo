@@ -1,0 +1,23 @@
+# 02 — Native crash (SIGSEGV/abort) → persisted → drained on relaunch.
+# Verifies the signal-safe crash handler (iOS SignalHandler.c + Swift
+# CrashHandler, Android libunwind + JNI) correctly writes the crash
+# report to disk even as the process dies.
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - native-crash
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Trigger Native Crash"
+# Native crash terminates the process — Maestro detects the exit and
+# resumes with the next step after relaunch.
+- launchApp
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "persistedCrashes: [1-9]"
+    regex: true
+- assertVisible:
+    text: "SIGSEGV|SIGABRT"
+    regex: true

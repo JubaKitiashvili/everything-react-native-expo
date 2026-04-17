@@ -1,0 +1,31 @@
+# 01 — JS crash capture + persist across launch.
+# Runs against examples/minimal-demo (Task 87).
+#
+# Flow:
+#   1. Launch app, wait for the demo home screen.
+#   2. Tap "Trigger JS Crash" — CrashInjector.triggerJSCrash().
+#   3. The crash is caught by the Error Boundary; the app stays alive.
+#   4. Tap "Diagnostics Dump" to show collected counts.
+#   5. Assert the dump reports >= 1 crash event in the pipeline.
+#   6. Kill + relaunch; on next launch the drain pipeline replays the
+#      persisted crash so the in-session count is preserved.
+appId: dev.erne.monitor.demo
+tags:
+  - chaos
+  - js-crash
+---
+- launchApp:
+    clearState: true
+- assertVisible: "ERNE Monitor Demo"
+- tapOn: "Trigger JS Crash"
+- assertVisible: "[synthetic]"
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "crashes: [1-9]"
+    regex: true
+- stopApp
+- launchApp
+- tapOn: "Diagnostics Dump"
+- assertVisible:
+    text: "persistedCrashes: [1-9]"
+    regex: true
