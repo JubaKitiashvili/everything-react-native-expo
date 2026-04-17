@@ -1,0 +1,51 @@
+[
+  {
+    "name": "main",
+    "path": "dist/index.js",
+    "limit": "75 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/performance",
+    "path": "dist/exports/performance.js",
+    "limit": "20 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/network",
+    "path": "dist/exports/network.js",
+    "limit": "5 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/ai",
+    "path": "dist/exports/ai.js",
+    "limit": "30 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/replay",
+    "path": "dist/exports/replay.js",
+    "limit": "10 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/dev",
+    "path": "dist/exports/dev.js",
+    "limit": "15 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  },
+  {
+    "name": "@erne/monitor/testing",
+    "path": "dist/exports/testing.js",
+    "limit": "10 KB",
+    "gzip": true,
+    "ignore": ["react", "react-native", "expo", "expo-modules-core"]
+  }
+]
