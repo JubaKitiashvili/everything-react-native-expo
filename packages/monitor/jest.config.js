@@ -6,7 +6,7 @@ module.exports = {
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/perf/', '/examples/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/perf/', '/examples/', '/dashboard/'],
   setupFiles: ['<rootDir>/jest.setup.ts'],
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   collectCoverageFrom: [

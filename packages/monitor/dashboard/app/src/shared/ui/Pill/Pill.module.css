@@ -1,0 +1,72 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+button.pill {
+  appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sizeSm {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  line-height: 1.5;
+}
+
+.sizeMd {
+  font-size: var(--font-size-sm);
+  padding: 3px 10px;
+  line-height: 1.5;
+}
+
+.critical {
+  background: var(--color-severity-critical-subtle);
+  color: var(--color-severity-critical);
+  border-color: color-mix(in srgb, var(--color-severity-critical) 30%, transparent);
+}
+
+.warning {
+  background: var(--color-severity-warning-subtle);
+  color: var(--color-severity-warning);
+  border-color: color-mix(in srgb, var(--color-severity-warning) 30%, transparent);
+}
+
+.info {
+  background: var(--color-severity-info-subtle);
+  color: var(--color-severity-info);
+  border-color: color-mix(in srgb, var(--color-severity-info) 30%, transparent);
+}
+
+.success {
+  background: var(--color-severity-success-subtle);
+  color: var(--color-severity-success);
+  border-color: color-mix(in srgb, var(--color-severity-success) 30%, transparent);
+}
+
+.muted {
+  background: var(--color-severity-muted-subtle);
+  color: var(--color-severity-muted);
+  border-color: color-mix(in srgb, var(--color-severity-muted) 30%, transparent);
+}
+
+.interactive:hover {
+  filter: brightness(1.12);
+}
+
+.interactive:focus-visible {
+  outline: 2px solid var(--color-brand-mint);
+  outline-offset: 2px;
+}

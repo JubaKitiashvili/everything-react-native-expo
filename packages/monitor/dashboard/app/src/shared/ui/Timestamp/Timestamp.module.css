@@ -1,0 +1,17 @@
+.ts {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+}
+
+.divider {
+  color: var(--color-text-disabled);
+}
+
+.muted {
+  color: var(--color-text-tertiary);
+}

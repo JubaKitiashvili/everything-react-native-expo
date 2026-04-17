@@ -22,10 +22,11 @@
     "noUncheckedSideEffectImports": true,
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
+    "types": ["vite/client", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "vitest.setup.ts"]
 }
