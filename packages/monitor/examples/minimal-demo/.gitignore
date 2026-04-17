@@ -1,0 +1,12 @@
+# Generated native projects
+ios/
+android/
+
+# Build artifacts
+node_modules/
+.expo/
+.expo-shared/
+dist/
+
+# OS
+.DS_Store
