@@ -23,6 +23,11 @@ jest.mock('@expo/config-plugins', () => {
         android: { ...(config.android ?? {}), manifest: next.modResults },
       };
     },
+    withDangerousMod: (config: any, [, action]: any) => {
+      const wrapped = { ...config, modResults: config };
+      action(wrapped);
+      return config;
+    },
     createRunOncePlugin: (plugin: any) => plugin,
   };
   return helpers;
@@ -137,5 +142,21 @@ describe('withErneMonitor — Android', () => {
     }[]).map((p) => p.$['android:name']);
     expect(names).toContain('android.permission.CAMERA');
     expect(names).toContain('android.permission.WAKE_LOCK');
+  });
+});
+
+describe('withErneMonitor — privacy manifest composition', () => {
+  test('passes privacyManifest=false to skip manifest validation', () => {
+    // Should not throw even if the ios/PrivacyInfo.xcprivacy is missing.
+    const out = withErneMonitor(makeBaseConfig() as any, {
+      privacyManifest: false,
+    });
+    expect(out).toBeDefined();
+  });
+
+  test('passes privacyManifest=true (default) and requires the real file', () => {
+    // The real file exists in ios/ — plugin should succeed silently.
+    const out = withErneMonitor(makeBaseConfig() as any, {});
+    expect(out).toBeDefined();
   });
 });

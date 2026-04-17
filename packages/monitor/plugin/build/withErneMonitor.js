@@ -28,6 +28,7 @@ exports.withErneMonitor = void 0;
  *   { expo: { plugins: [['@erne/monitor/plugin', { proguardKeep: true }]] } }
  */
 const config_plugins_1 = require("@expo/config-plugins");
+const withPrivacyManifest_1 = require("./withPrivacyManifest");
 const PKG_NAME = '@erne/monitor';
 const PKG_VERSION = '0.1.0';
 const withErneMonitorIOS = (config, props) => {
@@ -90,6 +91,9 @@ const withErneMonitorBase = (config, props = {}) => {
     let next = config;
     next = withErneMonitorIOS(next, props);
     next = withErneMonitorAndroid(next, props);
+    if (props.privacyManifest !== false) {
+        next = (0, withPrivacyManifest_1.withPrivacyManifest)(next, { logNotice: false });
+    }
     return next;
 };
 exports.withErneMonitor = (0, config_plugins_1.createRunOncePlugin)(withErneMonitorBase, PKG_NAME, PKG_VERSION);

@@ -24,6 +24,13 @@ Pod::Spec.new do |s|
   s.exclude_files = 'generated/placeholder-*.swift'
   s.public_header_files = 'SignalHandler.h'
 
+  # Apple Privacy Manifest (required for SDK listing on the App Store).
+  # Bundled as a pod resource so consumer apps pick it up automatically
+  # when they build — no manual action by developers required.
+  s.resource_bundles = {
+    'ErneMonitor' => ['PrivacyInfo.xcprivacy']
+  }
+
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'SWIFT_COMPILATION_MODE' => 'wholemodule',

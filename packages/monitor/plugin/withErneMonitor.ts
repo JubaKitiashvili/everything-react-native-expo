@@ -31,6 +31,7 @@ import {
   type ConfigPlugin,
 } from '@expo/config-plugins';
 import type { ExpoConfig } from '@expo/config-types';
+import { withPrivacyManifest } from './withPrivacyManifest';
 
 export interface ErneMonitorPluginOptions {
   /**
@@ -45,6 +46,12 @@ export interface ErneMonitorPluginOptions {
    * Pass an explicit value to override.
    */
   allowDevDashboard?: boolean;
+  /**
+   * When false, skips the privacy manifest validation step. Useful in
+   * test harnesses. Defaults to true — keeps every production build
+   * gated on the bundled `ios/PrivacyInfo.xcprivacy` file.
+   */
+  privacyManifest?: boolean;
 }
 
 const PKG_NAME = '@erne/monitor';
@@ -124,6 +131,9 @@ const withErneMonitorBase: ConfigPlugin<ErneMonitorPluginOptions> = (
   let next: ExpoConfig = config;
   next = withErneMonitorIOS(next, props);
   next = withErneMonitorAndroid(next, props);
+  if (props.privacyManifest !== false) {
+    next = withPrivacyManifest(next, { logNotice: false });
+  }
   return next;
 };
 

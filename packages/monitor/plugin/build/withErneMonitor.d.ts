@@ -38,6 +38,12 @@ export interface ErneMonitorPluginOptions {
      * Pass an explicit value to override.
      */
     allowDevDashboard?: boolean;
+    /**
+     * When false, skips the privacy manifest validation step. Useful in
+     * test harnesses. Defaults to true — keeps every production build
+     * gated on the bundled `ios/PrivacyInfo.xcprivacy` file.
+     */
+    privacyManifest?: boolean;
 }
 export declare const withErneMonitor: ConfigPlugin<ErneMonitorPluginOptions>;
 export default withErneMonitor;
