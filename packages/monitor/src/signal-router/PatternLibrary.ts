@@ -211,13 +211,13 @@ const BUILTIN_PATTERNS: Pattern[] = [
     category: 'performance',
     title: 'Sustained frame drop',
     suggestion:
-      'FPS dropped below 55 for >500ms. Check for layout-heavy renders, synchronous measurements, or JSON.parse on the main thread.',
+      'FPS dropped below 55 for at least 1s with >=20% dropped frames. Check for layout-heavy renders, synchronous measurements, or JSON.parse on the main thread.',
     fixHint: 'investigate-frame-drop',
     baseStrength: 0.7,
     test: (e) => {
-      if (e.type !== 'render') return false;
-      const d = e.data as { frameDrop?: { droppedFrames?: number } };
-      return !!d.frameDrop && (d.frameDrop.droppedFrames ?? 0) > 0;
+      if (e.type !== 'frame_drop') return false;
+      const d = e.data as { droppedFrames?: number };
+      return (d.droppedFrames ?? 0) > 0;
     },
   },
   {
