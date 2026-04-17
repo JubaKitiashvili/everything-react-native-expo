@@ -1,0 +1,106 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.item {
+  margin: 0;
+}
+
+.row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.row:hover {
+  border-color: var(--color-border-default);
+  background: var(--color-bg-surface-hover);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-brand-mint);
+  outline-offset: -2px;
+}
+
+.selected {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-elevated);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.fingerprint {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sessions {
+  color: var(--color-text-tertiary);
+}
+
+.message {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  gap: var(--space-2);
+}
+
+.screen {
+  font-family: var(--font-mono);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}

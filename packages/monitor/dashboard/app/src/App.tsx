@@ -1,5 +1,6 @@
 import { Sparkline, Tile } from './shared/ui';
 import { LiveFeed } from './panels/LiveFeed';
+import { CrashExplorer } from './panels/CrashExplorer';
 import styles from './App.module.css';
 
 export function App() {
@@ -35,6 +36,7 @@ export function App() {
         </section>
 
         <LiveFeed />
+        <CrashExplorer />
       </main>
     </div>
   );
