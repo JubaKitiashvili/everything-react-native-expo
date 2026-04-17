@@ -34,6 +34,21 @@ export interface CrashCollectorDeps {
    * the bridge stays testable.
    */
   rejectionTracker?: RejectionTrackerLike | null;
+  /**
+   * When true, every rejection is reported (including ones the app handled
+   * later). Default `false` — only truly unhandled rejections are reported.
+   * Prefer `false` in production so `catch()`ed promises don't flood the
+   * SDK with noise. Tests that want to exercise the tracker path set this
+   * to `true`.
+   */
+  allRejections?: boolean;
+  /**
+   * Window (ms) over which identical-message crashes are coalesced. Within
+   * the window the first event emits with `coalescedCount: 1`; subsequent
+   * identical events bump the count on the stored record but do NOT emit
+   * a new bus event. Default 1000 ms. Set to 0 to disable coalescing.
+   */
+  coalesceWindowMs?: number;
   /** Monotonic clock for event.timestamp; defaults to performance-style now. */
   now?: () => number;
   /** Wall-clock now(); defaults to Date.now. */
@@ -47,6 +62,13 @@ export interface CrashEventData {
   componentStack: string | null;
   isFatal: boolean;
   rejectionId?: number;
+  /**
+   * Set to >1 when this event absorbed later identical bursts before the
+   * coalesce window expired. The first emission is always `1`; subsequent
+   * matches within the window increment the stored copy and are silently
+   * dropped from the bus.
+   */
+  coalescedCount?: number;
 }
 
 function extractMessage(err: unknown): string {
@@ -91,6 +113,12 @@ export class CrashCollector implements Collector {
   private running = false;
   private readonly now: () => number;
   private readonly wallNow: () => number;
+  private readonly coalesceWindowMs: number;
+  /** Fingerprint → { firstSeenAt, count, lastEvent } for coalescing. */
+  private readonly coalesce = new Map<
+    string,
+    { firstSeenAt: number; count: number; event: MonitorEvent }
+  >();
 
   constructor(deps: CrashCollectorDeps) {
     this.deps = deps;
@@ -102,6 +130,7 @@ export class CrashCollector implements Collector {
           ? performance.now()
           : Date.now());
     this.wallNow = deps.wallNow ?? Date.now;
+    this.coalesceWindowMs = deps.coalesceWindowMs ?? 1000;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -130,7 +159,11 @@ export class CrashCollector implements Collector {
     const tracker = this.deps.rejectionTracker;
     if (tracker) {
       tracker.enable({
-        allRejections: true,
+        // Default: only fire for rejections still unhandled after the
+        // microtask queue drains, so code that does `.catch()` never
+        // shows up as a crash. Callers may opt into `allRejections: true`
+        // for test harnesses that simulate the tracker directly.
+        allRejections: this.deps.allRejections ?? false,
         onUnhandled: (id, err) => this.reportRejection(id, err),
       });
       this.rejectionTrackerEnabled = true;
@@ -150,6 +183,7 @@ export class CrashCollector implements Collector {
       this.deps.rejectionTracker.disable();
       this.rejectionTrackerEnabled = false;
     }
+    this.coalesce.clear();
     this.running = false;
   }
 
@@ -185,13 +219,37 @@ export class CrashCollector implements Collector {
   }
 
   private deliver(data: CrashEventData): void {
+    const now = this.now();
+
+    // Coalesce identical non-fatal events inside the window — keeps noisy
+    // rejection loops from dispatching 1000 events when the real signal
+    // is "same thing happened a bunch of times."
+    if (!data.isFatal && this.coalesceWindowMs > 0) {
+      this.pruneCoalesce(now);
+      const key = this.coalesceKey(data);
+      const existing = this.coalesce.get(key);
+      if (existing && now - existing.firstSeenAt <= this.coalesceWindowMs) {
+        existing.count += 1;
+        (existing.event.data as CrashEventData).coalescedCount = existing.count;
+        return; // silently absorb — the first event already made it to the bus
+      }
+    }
+
     const event: MonitorEvent = {
       type: 'crash',
-      timestamp: this.now(),
+      timestamp: now,
       wallTime: this.wallNow(),
       sessionId: this.deps.sessionManager.getCurrentSessionId(),
-      data,
+      data: { ...data, coalescedCount: 1 },
     };
+    if (!data.isFatal && this.coalesceWindowMs > 0) {
+      this.coalesce.set(this.coalesceKey(data), {
+        firstSeenAt: now,
+        count: 1,
+        event,
+      });
+    }
+
     // Fatal crashes go to disk synchronously so we don't lose them if the
     // process dies before the next microtask. Non-fatal crashes and
     // rejections use the normal async path.
@@ -209,6 +267,20 @@ export class CrashCollector implements Collector {
         });
     }
     this.deps.signalBus.emit(event);
+  }
+
+  private coalesceKey(data: CrashEventData): string {
+    // Distinguish exception-vs-rejection — same message from the two
+    // different surfaces is probably NOT the same bug.
+    return `${data.kind}::${data.message}`;
+  }
+
+  private pruneCoalesce(now: number): void {
+    for (const [k, v] of this.coalesce.entries()) {
+      if (now - v.firstSeenAt > this.coalesceWindowMs) {
+        this.coalesce.delete(k);
+      }
+    }
   }
 
   private detectErrorUtils(): ErrorUtilsLike | null {

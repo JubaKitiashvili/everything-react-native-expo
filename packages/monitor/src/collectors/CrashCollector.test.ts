@@ -42,13 +42,16 @@ function makeRejectionTracker(): {
   module: RejectionTrackerLike;
   fire: (id: number, err: unknown) => void;
   enabled: boolean;
+  lastAllRejections: boolean | undefined;
 } {
   let onUnhandled: ((id: number, err: unknown) => void) | null = null;
   let enabled = false;
+  let lastAllRejections: boolean | undefined;
   const module: RejectionTrackerLike = {
     enable: (opts) => {
       enabled = true;
       onUnhandled = opts.onUnhandled;
+      lastAllRejections = opts.allRejections;
     },
     disable: () => {
       enabled = false;
@@ -61,10 +64,19 @@ function makeRejectionTracker(): {
     get enabled() {
       return enabled;
     },
+    get lastAllRejections() {
+      return lastAllRejections;
+    },
   };
 }
 
-async function wiring() {
+async function wiring(
+  opts: {
+    nowFn?: () => number;
+    coalesceWindowMs?: number;
+    allRejections?: boolean;
+  } = {},
+) {
   const bus = new SignalBus();
   const store = new EventStore({ backend: new MemoryEventStoreBackend() });
   await store.init();
@@ -80,8 +92,10 @@ async function wiring() {
     sessionManager: session,
     errorUtils: errorUtils.module,
     rejectionTracker: tracker.module,
-    now: () => 100,
+    now: opts.nowFn ?? (() => 100),
     wallNow: () => 2000,
+    coalesceWindowMs: opts.coalesceWindowMs,
+    allRejections: opts.allRejections,
   });
   collector.init(defineMonitorConfig());
   return { bus, store, session, errorUtils, tracker, collector };
@@ -217,6 +231,138 @@ describe('CrashCollector', () => {
       expect((drained[0]?.data as CrashEventData).kind).toBe(
         'unhandled-rejection',
       );
+    });
+  });
+
+  describe('rejection tracker filter', () => {
+    it('defaults to allRejections: false (only unhandled surface)', async () => {
+      const w = await wiring();
+      w.collector.start();
+      expect(w.tracker.lastAllRejections).toBe(false);
+    });
+
+    it('respects allRejections: true opt-in', async () => {
+      const w = await wiring({ allRejections: true });
+      w.collector.start();
+      expect(w.tracker.lastAllRejections).toBe(true);
+    });
+  });
+
+  describe('burst coalescing', () => {
+    it('coalesces identical rejections within the window into a single bus event', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('same-boom'));
+      now = 300;
+      w.tracker.fire(2, new Error('same-boom'));
+      now = 500;
+      w.tracker.fire(3, new Error('same-boom'));
+      expect(received).toHaveLength(1);
+      const data = received[0]?.data as CrashEventData;
+      expect(data.coalescedCount).toBe(3);
+    });
+
+    it('emits fresh event once the window has expired', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('same-boom'));
+      now = 1500; // past window
+      w.tracker.fire(2, new Error('same-boom'));
+      expect(received).toHaveLength(2);
+      const first = received[0]?.data as CrashEventData;
+      const second = received[1]?.data as CrashEventData;
+      expect(first.coalescedCount).toBe(1);
+      expect(second.coalescedCount).toBe(1);
+    });
+
+    it('does not coalesce different messages', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('one'));
+      now = 200;
+      w.tracker.fire(2, new Error('two'));
+      expect(received).toHaveLength(2);
+    });
+
+    it('does not coalesce rejections with exceptions of the same message', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('boom'));
+      now = 150;
+      w.errorUtils.trigger(new Error('boom'), false);
+      expect(received).toHaveLength(2);
+    });
+
+    it('coalesces identical non-fatal exceptions', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.errorUtils.trigger(new Error('repeat'), false);
+      now = 200;
+      w.errorUtils.trigger(new Error('repeat'), false);
+      expect(received).toHaveLength(1);
+      expect((received[0]?.data as CrashEventData).coalescedCount).toBe(2);
+    });
+
+    it('fatal crashes bypass coalescing', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.errorUtils.trigger(new Error('fatal'), true);
+      now = 200;
+      w.errorUtils.trigger(new Error('fatal'), true);
+      expect(received).toHaveLength(2);
+    });
+
+    it('coalesceWindowMs=0 disables coalescing', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 0 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('boom'));
+      now = 150;
+      w.tracker.fire(2, new Error('boom'));
+      expect(received).toHaveLength(2);
+    });
+
+    it('clears coalesce state on stop', async () => {
+      let now = 0;
+      const w = await wiring({ nowFn: () => now, coalesceWindowMs: 1000 });
+      const received: MonitorEvent[] = [];
+      w.bus.on('crash', (e) => received.push(e));
+      w.collector.start();
+      now = 100;
+      w.tracker.fire(1, new Error('x'));
+      w.collector.stop();
+      w.collector.start();
+      now = 200;
+      w.tracker.fire(2, new Error('x'));
+      // After stop/start, the second one is treated as fresh.
+      expect(received).toHaveLength(2);
     });
   });
 });
