@@ -4,6 +4,8 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
 import type { EventListFilter } from './storage/types.js';
+import { IngestWebSocketHandler } from './ingest/wsHandler.js';
+import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
 
 export interface DashboardServerOptions {
   port?: number;
@@ -11,6 +13,16 @@ export interface DashboardServerOptions {
   publicDir?: string;
   store?: DashboardStore;
   dbPath?: string;
+  /**
+   * Opt-out for tests or future transports. Default: attach the
+   * WebSocket ingest/broadcast handler to the HTTP server.
+   */
+  enableWebsocket?: boolean;
+  /**
+   * Tuning + injection for the WS handler (rate limits, clock, logger).
+   * Ignored when `enableWebsocket === false`.
+   */
+  websocket?: Omit<IngestWsHandlerOptions, 'store'>;
 }
 
 export interface DashboardServerHandle {
@@ -18,6 +30,7 @@ export interface DashboardServerHandle {
   store: DashboardStore;
   port: number;
   host: string;
+  websocket: IngestWebSocketHandler | null;
   close: () => Promise<void>;
   url: string;
 }
@@ -95,13 +108,27 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   const store =
     options.store ?? new DashboardStore({ dbPath: options.dbPath ?? defaultDashboardDbPath() });
 
+  const websocket =
+    options.enableWebsocket === false
+      ? null
+      : new IngestWebSocketHandler({ store, ...(options.websocket ?? {}) });
+
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? host}`);
     const pathname = requestUrl.pathname;
 
     try {
       if (req.method === 'GET' && pathname === '/api/health') {
-        sendJson(res, 200, { ...store.selfCheck(), uptimeSeconds: process.uptime() });
+        sendJson(res, 200, {
+          ...store.selfCheck(),
+          uptimeSeconds: process.uptime(),
+          ingest: websocket
+            ? {
+                subscribers: websocket.subscriberCount,
+                stats: websocket.stats,
+              }
+            : null,
+        });
         return;
       }
 
@@ -157,14 +184,20 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     }
   });
 
+  if (websocket) {
+    websocket.attach(server);
+  }
+
   return {
     server,
     store,
     host,
     port,
+    websocket,
     url: `http://${host}:${port}`,
     close: () =>
       new Promise<void>((resolveClose) => {
+        websocket?.close();
         server.close(() => {
           store.close();
           resolveClose();

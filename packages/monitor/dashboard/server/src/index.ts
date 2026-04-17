@@ -21,3 +21,11 @@ export type {
 } from './storage/types.js';
 export { createDashboardServer, startDashboardServer } from './server.js';
 export type { DashboardServerHandle, DashboardServerOptions } from './server.js';
+export { IngestWebSocketHandler, INGEST_PATH, SUBSCRIBE_PATH } from './ingest/wsHandler.js';
+export type {
+  IngestWsHandlerOptions,
+  IngestSessionPayload,
+  IngestEventPayload,
+  IngestStats,
+} from './ingest/wsHandler.js';
+export { computeFallbackFingerprint, normaliseStack, djb2 } from './ingest/fingerprint.js';
