@@ -115,7 +115,11 @@ function ConsentPrivacyView({
     setFeedback(null);
     try {
       const exported = await onExport(summary.userId);
-      downloader(`erne-monitor-${summary.userId}.json`, JSON.stringify(exported, null, 2));
+      // Sanitise the userId for the download filename — slashes / dots /
+      // control chars would either confuse the OS save dialog or produce
+      // accidental path segments on misbehaving browsers.
+      const safe = summary.userId.replace(/[^\w.-]/g, '_').slice(0, 120) || 'user';
+      downloader(`erne-monitor-${safe}.json`, JSON.stringify(exported, null, 2));
       setStatus('loaded');
       setFeedback(`Exported ${exported.events.length} events.`);
     } catch (err) {

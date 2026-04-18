@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { Pill } from '../../shared/ui/Pill/Pill';
 import { Timestamp } from '../../shared/ui/Timestamp/Timestamp';
 import type { Device } from './aggregate';
@@ -18,7 +19,7 @@ const PLATFORM_GLYPH: Record<string, string> = {
   web: '🌐',
 };
 
-export function DeviceCard({
+function DeviceCardInner({
   device,
   selected,
   activeSessionId,
@@ -27,7 +28,13 @@ export function DeviceCard({
   now,
 }: DeviceCardProps) {
   const glyph = PLATFORM_GLYPH[device.platform] ?? '📱';
-  const freshSessions = [...device.sessions].sort((a, b) => b.startedAt - a.startedAt).slice(0, 5);
+  // Sort once per `device.sessions` reference. Parent memoises `devices` by
+  // the raw sessions array, so this only recomputes when the upstream query
+  // actually changes shape — not on every re-render of the grid.
+  const freshSessions = useMemo(
+    () => [...device.sessions].sort((a, b) => b.startedAt - a.startedAt).slice(0, 5),
+    [device.sessions],
+  );
 
   return (
     <article
@@ -116,3 +123,7 @@ export function DeviceCard({
     </article>
   );
 }
+
+// Memoise so the grid can re-render (selection flip, etc.) without every
+// card recomputing its sort + JSX when its own device didn't change.
+export const DeviceCard = memo(DeviceCardInner);

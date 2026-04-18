@@ -315,7 +315,11 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           sendJson(res, 400, { error: 'missing_id' });
           return;
         }
-        store.deleteAlertRule(id);
+        const deleted = store.deleteAlertRule(id);
+        if (!deleted) {
+          sendJson(res, 404, { error: 'not_found', id });
+          return;
+        }
         sendJson(res, 200, { ok: true });
         return;
       }
@@ -481,7 +485,11 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           sendJson(res, 400, { error: 'missing_id' });
           return;
         }
-        store.deleteSymbolFile(id);
+        const deleted = store.deleteSymbolFile(id);
+        if (!deleted) {
+          sendJson(res, 404, { error: 'not_found', id });
+          return;
+        }
         sendJson(res, 200, { ok: true });
         return;
       }

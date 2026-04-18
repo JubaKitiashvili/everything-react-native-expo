@@ -3,11 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Panel } from '../../shared/ui/Panel/Panel';
 import { Pill } from '../../shared/ui/Pill/Pill';
 import { useApi } from '../../shared/api/useApi';
+import { queryKeys } from '../../shared/hooks/queryKeys';
 import { useUiStore, type ThemePreference } from '../../shared/store/uiStore';
 import type { DashboardSettings } from '../../shared/api/types';
 import styles from './Settings.module.css';
-
-const SETTINGS_KEY = ['settings'] as const;
 
 export interface SettingsProps {
   /** Bypass providers in tests. */
@@ -26,16 +25,19 @@ function SettingsContainer() {
   const api = useApi();
   const queryClient = useQueryClient();
 
-  const query = useQuery({ queryKey: SETTINGS_KEY, queryFn: () => api.fetchSettings() });
+  const query = useQuery({
+    queryKey: queryKeys.settings.root(),
+    queryFn: () => api.fetchSettings(),
+  });
 
   const patchMutation = useMutation({
     mutationFn: (patch: { retentionDays: number }) => api.patchSettings(patch),
-    onSuccess: (settings) => queryClient.setQueryData(SETTINGS_KEY, settings),
+    onSuccess: (settings) => queryClient.setQueryData(queryKeys.settings.root(), settings),
   });
   const rotateMutation = useMutation({
     mutationFn: () => api.rotateWsToken(),
     onSuccess: (out) => {
-      queryClient.setQueryData<DashboardSettings | undefined>(SETTINGS_KEY, (prev) =>
+      queryClient.setQueryData<DashboardSettings | undefined>(queryKeys.settings.root(), (prev) =>
         prev ? { ...prev, wsTokenMasked: out.wsTokenMasked, wsTokenSet: out.wsTokenSet } : prev,
       );
     },

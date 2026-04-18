@@ -87,6 +87,18 @@ export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
 ]);
 
+const RESET_TABLES = [
+  'events',
+  'sessions',
+  'crash_groups',
+  'bug_reports',
+  'alert_rules',
+  'alert_history',
+  'symbol_files',
+] as const;
+
+const RESET_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(RESET_TABLES);
+
 export function defaultDashboardDbPath(): string {
   return join(homedir(), '.erne', 'monitor', 'dashboard.db');
 }
@@ -699,8 +711,9 @@ export class DashboardStore {
     return rows.map(rowToAlertRule);
   }
 
-  deleteAlertRule(id: string): void {
-    this.statements.deleteAlertRule.run(id);
+  deleteAlertRule(id: string): boolean {
+    const info = this.statements.deleteAlertRule.run(id);
+    return Number(info.changes) > 0;
   }
 
   // ------------------------------ Alert history ------------------------------
@@ -789,8 +802,9 @@ export class DashboardStore {
     return row ? rowToSymbolFile(row) : null;
   }
 
-  deleteSymbolFile(id: string): void {
-    this.statements.deleteSymbolFile.run(id);
+  deleteSymbolFile(id: string): boolean {
+    const info = this.statements.deleteSymbolFile.run(id);
+    return Number(info.changes) > 0;
   }
 
   /**
@@ -847,20 +861,19 @@ export class DashboardStore {
    * reports, alert rules + history, symbol files. Preserves the schema +
    * migration bookkeeping + server_settings themselves so the next request
    * keeps working. Returns a map of table → rowsDeleted.
+   *
+   * The table list is interpolated into the DELETE statement, so we guard
+   * it with an allowlist. That's strictly defensive — the set is also
+   * declared as a `const readonly` tuple — but the pattern stops any future
+   * copy-paste from turning this into an injection point.
    */
   resetAllUserData(): Record<string, number> {
-    const tables = [
-      'events',
-      'sessions',
-      'crash_groups',
-      'bug_reports',
-      'alert_rules',
-      'alert_history',
-      'symbol_files',
-    ];
     const counts: Record<string, number> = {};
     const run = this.db.transaction(() => {
-      for (const t of tables) {
+      for (const t of RESET_TABLES) {
+        if (!RESET_TABLES_ALLOWED.has(t)) {
+          throw new Error(`[dashboard-store] resetAllUserData: unknown table ${t}`);
+        }
         const info = this.db.prepare(`DELETE FROM ${t}`).run();
         counts[t] = Number(info.changes);
       }

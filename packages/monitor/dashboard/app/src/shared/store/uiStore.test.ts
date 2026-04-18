@@ -60,4 +60,14 @@ describe('uiStore', () => {
     expect(state.selectedEventId).toBe('evt-1');
     expect(state.selectedCrashFingerprint).toBe('fp-1');
   });
+
+  test('setTheme flips the store value and persists it to localStorage so reloads stick', () => {
+    expect(useUiStore.getState().theme).toBe('system');
+    useUiStore.getState().setTheme('dark');
+    expect(useUiStore.getState().theme).toBe('dark');
+    expect(localStorage.getItem('erne-monitor:theme')).toBe('dark');
+
+    useUiStore.getState().setTheme('light');
+    expect(localStorage.getItem('erne-monitor:theme')).toBe('light');
+  });
 });

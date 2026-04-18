@@ -62,6 +62,27 @@ const DEFAULT_FILTERS: UiFilters = {
   search: '',
 };
 
+const THEME_STORAGE_KEY = 'erne-monitor:theme';
+
+function readStoredTheme(): ThemePreference {
+  if (typeof localStorage === 'undefined') return 'system';
+  try {
+    const raw = localStorage.getItem(THEME_STORAGE_KEY);
+    return raw === 'dark' || raw === 'light' || raw === 'system' ? raw : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+function writeStoredTheme(theme: ThemePreference): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* no-op — storage quota / privacy-mode; theme just stays in memory */
+  }
+}
+
 /**
  * Client-only UI state. Server state lives in TanStack Query. Anything
  * derivable from event data should go into a selector over this store,
@@ -78,7 +99,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
   },
   realtimeStatus: 'idle',
   realtimeError: null,
-  theme: 'system',
+  theme: readStoredTheme(),
   setSelectedSession: (id) => set({ selectedSessionId: id }),
   setSelectedEvent: (id) => set({ selectedEventId: id }),
   setSelectedCrashFingerprint: (fp) => set({ selectedCrashFingerprint: fp }),
@@ -107,7 +128,10 @@ export const useUiStore = create<UiStoreState>((set) => ({
     }),
   setRealtimeStatus: (realtimeStatus, realtimeError = null) =>
     set({ realtimeStatus, realtimeError }),
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    writeStoredTheme(theme);
+    set({ theme });
+  },
 }));
 
 /**
@@ -116,6 +140,13 @@ export const useUiStore = create<UiStoreState>((set) => ({
  * selection state.
  */
 export function resetUiStore(): void {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.removeItem(THEME_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
   useUiStore.setState({
     selectedSessionId: null,
     selectedEventId: null,

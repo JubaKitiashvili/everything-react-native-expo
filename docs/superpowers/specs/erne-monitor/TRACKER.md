@@ -5,7 +5,8 @@
 **Last updated:** 2026-04-18
 **Current Phase:** Phase 6 — Dashboard v2 Production UI (22/25)
 **Active Task:** Task 114 — Dashboard CLI (`npx @erne/monitor dashboard`)
-**Overall Progress:** 113/124 tasks (Phases 1a–5 ✅ · Phase 6 22/25 · Phase 7 0/8) · 1152 SDK tests + 181 dashboard-app tests + 37 dashboard-server tests passing
+**Overall Progress:** 113/124 tasks (Phases 1a–5 ✅ · Phase 6 22/25 · Phase 7 0/8) · 1152 SDK tests + 182 dashboard-app tests + 42 dashboard-server tests passing
+_2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing-id DELETE, resetAllUserData allowlist, query-key factory for settings, DeviceCard memo + useMemo, theme → localStorage, userId filename sanitise. +4 server store tests + 1 resolver R8 test + 1 uiStore setTheme test._
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---

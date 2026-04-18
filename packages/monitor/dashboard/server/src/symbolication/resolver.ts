@@ -41,10 +41,13 @@ export interface ProGuardMapping {
 }
 
 const CLASS_LINE = /^(?<original>[^\s][\w$.]+)\s+->\s+(?<obfuscated>[\w$.]+):\s*$/;
-// Example member lines:
+// Example member lines — ProGuard emits a 2-segment `startLine:endLine:` prefix,
+// R8 emits either 2-segment or 4-segment (`start:end:origStart:origEnd:`) ranges.
+// We accept any number of colon-separated integer segments (0, 2, or 4 in practice).
 //   "    int myField -> d"
-//   "    12:15:void myMethod(com.example.Other) -> e"
-const MEMBER_LINE = /^\s+(?:\d+:\d+:)?(?<type>[\w$.[\]]+)\s+(?<name>[\w$<>]+)\s*(?<args>\([^)]*\))?\s+->\s+(?<obfuscated>[\w$<>]+)\s*$/;
+//   "    12:15:void myMethod(com.example.Other) -> e"             (ProGuard)
+//   "    12:15:34:50:void myMethod(com.example.Other) -> e"       (R8 retrace)
+const MEMBER_LINE = /^\s+(?:\d+:\d+:(?:\d+:\d+:)?)?(?<type>[\w$.[\]]+)\s+(?<name>[\w$<>]+)\s*(?<args>\([^)]*\))?\s+->\s+(?<obfuscated>[\w$<>]+)\s*$/;
 
 export function parseProGuardMapping(text: string): ProGuardMapping {
   const classes = new Map<string, ProGuardClass>();

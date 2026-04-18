@@ -30,6 +30,18 @@ function makeProGuardRecord(
 }
 
 describe('parseProGuardMapping', () => {
+  test('parses R8 four-segment line ranges (start:end:origStart:origEnd:)', () => {
+    const R8_MAPPING = `com.example.R8Class -> r.s.t:
+    12:15:34:50:void onCreate(android.os.Bundle) -> a
+    void noRange() -> b
+`;
+    const mapping = parseProGuardMapping(R8_MAPPING);
+    const cls = mapping.classes.get('r.s.t');
+    expect(cls?.members.get('a')?.original).toBe('onCreate');
+    expect(cls?.members.get('a')?.signature).toBe('(android.os.Bundle)');
+    expect(cls?.members.get('b')?.original).toBe('noRange');
+  });
+
   test('indexes classes by obfuscated name and captures member mappings', () => {
     const mapping = parseProGuardMapping(SAMPLE_MAPPING);
     const cls = mapping.classes.get('a.b.c');
