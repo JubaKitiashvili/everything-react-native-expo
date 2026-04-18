@@ -3,6 +3,7 @@ import { LiveFeed } from './panels/LiveFeed';
 import { CrashExplorer } from './panels/CrashExplorer';
 import { SessionReplay } from './panels/SessionReplay';
 import { Performance } from './panels/Performance';
+import { ANRInspector } from './panels/ANRInspector';
 import styles from './App.module.css';
 
 export function App() {
@@ -39,6 +40,7 @@ export function App() {
 
         <LiveFeed />
         <Performance />
+        <ANRInspector />
         <CrashExplorer />
         <SessionReplay />
       </main>
