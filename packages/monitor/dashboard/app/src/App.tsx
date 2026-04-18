@@ -11,6 +11,7 @@ import { AlertsConsole } from './panels/AlertsConsole';
 import { DORA } from './panels/DORA';
 import { BugReportsInbox } from './panels/BugReportsInbox';
 import { PatternLibrary } from './panels/PatternLibrary';
+import { DeviceSwitcher } from './panels/DeviceSwitcher';
 import styles from './App.module.css';
 
 export function App() {
@@ -46,6 +47,7 @@ export function App() {
         </section>
 
         <LiveFeed />
+        <DeviceSwitcher />
         <DORA />
         <Performance />
         <AIInsights />
