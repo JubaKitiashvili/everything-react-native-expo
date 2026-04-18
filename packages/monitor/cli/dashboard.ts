@@ -244,11 +244,23 @@ async function defaultLauncher(
     const loaded = (await import(moduleId)) as unknown;
     server = loaded as ServerModuleShape;
   } catch (err) {
-    const hint =
-      'Install the dashboard server: `npm i @erne/monitor-dashboard-server` (or run via `npx @erne/monitor dashboard` once the server is bundled).';
-    throw new Error(
-      `could not resolve @erne/monitor-dashboard-server — ${err instanceof Error ? err.message : String(err)}. ${hint}`,
-    );
+    // The direct import resolves from the compiled CLI's install location,
+    // which for a symlinked `file:` dep points back at the SDK source — not
+    // the user's project node_modules. Fall back to resolving from the
+    // user's cwd so workspace + symlinked installs still work.
+    try {
+      const { createRequire } = await import('node:module');
+      const requireFromCwd = createRequire(`${process.cwd()}/package.json`);
+      const resolved = requireFromCwd.resolve(moduleId);
+      const loaded = (await import(resolved)) as unknown;
+      server = loaded as ServerModuleShape;
+    } catch {
+      const hint =
+        'Install the dashboard server: `npm i @erne/monitor-dashboard-server` (or run via `npx @erne/monitor dashboard` once the server is bundled).';
+      throw new Error(
+        `could not resolve @erne/monitor-dashboard-server — ${err instanceof Error ? err.message : String(err)}. ${hint}`,
+      );
+    }
   }
   const handle = await server.startDashboardServer({
     port: config.port,

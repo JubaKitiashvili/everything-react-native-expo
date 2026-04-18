@@ -97,7 +97,8 @@
     "expo": ">=51.0.0 <57",
     "expo-sqlite": ">=14.0.0 <17",
     "expo-modules-core": ">=1.11.0 <3",
-    "@expo/config-plugins": ">=7.0.0 <10"
+    "@expo/config-plugins": ">=7.0.0 <10",
+    "@erne/monitor-dashboard-server": ">=0.1.0 <1"
   },
   "peerDependenciesMeta": {
     "expo": {
@@ -110,6 +111,9 @@
       "optional": true
     },
     "@expo/config-plugins": {
+      "optional": true
+    },
+    "@erne/monitor-dashboard-server": {
       "optional": true
     }
   },
