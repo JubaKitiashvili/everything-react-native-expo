@@ -10,6 +10,7 @@ import { AIInsights } from './panels/AIInsights';
 import { AlertsConsole } from './panels/AlertsConsole';
 import { DORA } from './panels/DORA';
 import { BugReportsInbox } from './panels/BugReportsInbox';
+import { PatternLibrary } from './panels/PatternLibrary';
 import styles from './App.module.css';
 
 export function App() {
@@ -48,6 +49,7 @@ export function App() {
         <DORA />
         <Performance />
         <AIInsights />
+        <PatternLibrary />
         <ANRInspector />
         <NetworkWaterfall />
         <CrashExplorer />
