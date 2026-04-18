@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (5/25)
-**Active Task:** Task 97 — Live Feed panel (smart grouping, severity lanes, type/screen/fingerprint filters)
-**Overall Progress:** 96/124 tasks (Phases 1a–5 ✅ · Phase 6 5/25 · Phase 7 0/8) · 1152 SDK tests + 48 dashboard-app tests + 27 dashboard-server tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (11/25)
+**Active Task:** Task 103 — Breadcrumb Timeline (visual last-100 actions)
+**Overall Progress:** 102/124 tasks (Phases 1a–5 ✅ · Phase 6 11/25 · Phase 7 0/8) · 1152 SDK tests + 109 dashboard-app tests + 27 dashboard-server tests passing
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 5/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 11/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
