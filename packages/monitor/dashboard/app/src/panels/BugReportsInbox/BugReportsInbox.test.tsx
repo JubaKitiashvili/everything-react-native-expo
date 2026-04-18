@@ -105,6 +105,13 @@ describe('BugReportsInbox wired to the API', () => {
       resolveFrame: vi.fn(async () => {
         throw new Error('not used');
       }),
+      fetchUserSummary: vi.fn(async () => {
+        throw new Error('not used');
+      }),
+      exportUserData: vi.fn(async () => {
+        throw new Error('not used');
+      }),
+      deleteUserData: vi.fn(async () => ({ deletedEvents: 0 })),
     };
   }
 

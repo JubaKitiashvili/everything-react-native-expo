@@ -10,6 +10,8 @@ import type {
   SymbolFileRecord,
   SymbolPlatform,
   SymbolResolveInput,
+  UserDataExport,
+  UserDataSummary,
 } from './types';
 
 export interface AlertFiringRecord {
@@ -74,6 +76,9 @@ export interface DashboardApiClient {
   uploadSymbolFile(input: UploadSymbolFileInput): Promise<SymbolFileRecord>;
   deleteSymbolFile(id: string): Promise<void>;
   resolveFrame(input: SymbolResolveInput): Promise<ResolvedFrame>;
+  fetchUserSummary(userId: string): Promise<UserDataSummary>;
+  exportUserData(userId: string): Promise<UserDataExport>;
+  deleteUserData(userId: string): Promise<{ deletedEvents: number }>;
 }
 
 export interface CreateApiClientOptions {
@@ -226,6 +231,25 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
         input,
       );
       return frame;
+    },
+    async fetchUserSummary(userId) {
+      const { summary } = await getJson<{ summary: UserDataSummary }>(
+        `/api/users/${encodeURIComponent(userId)}/summary`,
+      );
+      return summary;
+    },
+    async exportUserData(userId) {
+      const { export: exported } = await getJson<{ export: UserDataExport }>(
+        `/api/users/${encodeURIComponent(userId)}/export`,
+      );
+      return exported;
+    },
+    async deleteUserData(userId) {
+      const response = await sendJson<{ ok: true; deletedEvents: number }>(
+        `/api/users/${encodeURIComponent(userId)}`,
+        'DELETE',
+      );
+      return { deletedEvents: response.deletedEvents };
     },
   };
 }

@@ -122,3 +122,20 @@ export interface ResolvedFrame {
     version: string;
   };
 }
+
+export interface UserDataSummary {
+  userId: string;
+  sessionCount: number;
+  eventCount: number;
+  crashCount: number;
+  firstSeen: number | null;
+  lastSeen: number | null;
+  eventTypes: { type: string; count: number }[];
+}
+
+export interface UserDataExport {
+  userId: string;
+  sessions: SessionRecord[];
+  events: EventRecord[];
+  exportedAt: number;
+}

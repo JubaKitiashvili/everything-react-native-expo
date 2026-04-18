@@ -289,6 +289,49 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      if (
+        req.method === 'GET' &&
+        pathname.startsWith('/api/users/') &&
+        pathname.endsWith('/summary')
+      ) {
+        const userId = decodeURIComponent(
+          pathname.slice('/api/users/'.length, -'/summary'.length),
+        );
+        if (!userId) {
+          sendJson(res, 400, { error: 'missing_user_id' });
+          return;
+        }
+        sendJson(res, 200, { summary: store.summariseUserData(userId) });
+        return;
+      }
+
+      if (
+        req.method === 'GET' &&
+        pathname.startsWith('/api/users/') &&
+        pathname.endsWith('/export')
+      ) {
+        const userId = decodeURIComponent(
+          pathname.slice('/api/users/'.length, -'/export'.length),
+        );
+        if (!userId) {
+          sendJson(res, 400, { error: 'missing_user_id' });
+          return;
+        }
+        sendJson(res, 200, { export: store.exportUserData(userId) });
+        return;
+      }
+
+      if (req.method === 'DELETE' && pathname.startsWith('/api/users/')) {
+        const userId = decodeURIComponent(pathname.slice('/api/users/'.length));
+        if (!userId) {
+          sendJson(res, 400, { error: 'missing_user_id' });
+          return;
+        }
+        const deletedEvents = store.deleteEventsByUserId(userId);
+        sendJson(res, 200, { ok: true, deletedEvents });
+        return;
+      }
+
       if (req.method === 'GET' && pathname === '/api/symbols') {
         const platform = coerceSymbolPlatform(requestUrl.searchParams.get('platform'));
         const bundleId = requestUrl.searchParams.get('bundleId');

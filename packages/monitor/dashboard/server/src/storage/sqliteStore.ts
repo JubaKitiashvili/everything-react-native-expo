@@ -433,6 +433,84 @@ export class DashboardStore {
     return run(userId);
   }
 
+  /**
+   * DSAR export: every session + event owned by `userId`. Returned in the
+   * shape the dashboard serialises verbatim to a JSON file the operator can
+   * hand to the data subject. No PII scrubbing beyond the user-id filter —
+   * export is literally what the server stored.
+   */
+  exportUserData(userId: string): {
+    userId: string;
+    sessions: SessionRecord[];
+    events: EventRecord[];
+    exportedAt: number;
+  } {
+    const sessionRows = this.db
+      .prepare('SELECT * FROM sessions WHERE user_id = ? ORDER BY started_at DESC')
+      .all(userId) as SessionRow[];
+    const eventRows = this.db
+      .prepare('SELECT * FROM events WHERE user_id = ? ORDER BY timestamp DESC LIMIT 10000')
+      .all(userId) as EventRow[];
+    return {
+      userId,
+      sessions: sessionRows.map(rowToSession),
+      events: eventRows.map(rowToEvent),
+      exportedAt: Date.now(),
+    };
+  }
+
+  /**
+   * DSAR summary: counts by category for the consent viewer. The dashboard
+   * renders these as chips so operators see what's actually on file before
+   * committing to an export / delete.
+   */
+  summariseUserData(userId: string): {
+    userId: string;
+    sessionCount: number;
+    eventCount: number;
+    crashCount: number;
+    firstSeen: number | null;
+    lastSeen: number | null;
+    eventTypes: { type: string; count: number }[];
+  } {
+    const sessionStats = this.db
+      .prepare(
+        `SELECT COUNT(*) AS sessionCount,
+                MIN(started_at) AS firstSeen,
+                MAX(COALESCE(ended_at, started_at)) AS lastSeen
+         FROM sessions WHERE user_id = ?`,
+      )
+      .get(userId) as {
+      sessionCount: number;
+      firstSeen: number | null;
+      lastSeen: number | null;
+    };
+    const eventStats = this.db
+      .prepare(
+        `SELECT COUNT(*) AS eventCount,
+                SUM(CASE WHEN type = 'crash' THEN 1 ELSE 0 END) AS crashCount
+         FROM events WHERE user_id = ?`,
+      )
+      .get(userId) as { eventCount: number; crashCount: number };
+    const typeRows = this.db
+      .prepare(
+        `SELECT type, COUNT(*) AS count FROM events
+         WHERE user_id = ?
+         GROUP BY type
+         ORDER BY count DESC`,
+      )
+      .all(userId) as { type: string; count: number }[];
+    return {
+      userId,
+      sessionCount: sessionStats.sessionCount,
+      eventCount: eventStats.eventCount,
+      crashCount: eventStats.crashCount ?? 0,
+      firstSeen: sessionStats.firstSeen,
+      lastSeen: sessionStats.lastSeen,
+      eventTypes: typeRows,
+    };
+  }
+
   // ------------------------------ Sessions ------------------------------
 
   getSession(id: string): SessionRecord | null {

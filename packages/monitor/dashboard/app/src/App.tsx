@@ -14,6 +14,7 @@ import { PatternLibrary } from './panels/PatternLibrary';
 import { DeviceSwitcher } from './panels/DeviceSwitcher';
 import { Symbolication } from './panels/Symbolication';
 import { ReplayMasker } from './panels/ReplayMasker';
+import { ConsentPrivacy } from './panels/ConsentPrivacy';
 import styles from './App.module.css';
 
 export function App() {
@@ -63,6 +64,7 @@ export function App() {
         <BugReportsInbox />
         <SessionReplay />
         <ReplayMasker />
+        <ConsentPrivacy />
       </main>
     </div>
   );
