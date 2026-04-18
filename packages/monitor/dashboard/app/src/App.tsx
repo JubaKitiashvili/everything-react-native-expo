@@ -5,6 +5,7 @@ import { SessionReplay } from './panels/SessionReplay';
 import { Performance } from './panels/Performance';
 import { ANRInspector } from './panels/ANRInspector';
 import { NetworkWaterfall } from './panels/NetworkWaterfall';
+import { BreadcrumbTimeline } from './panels/BreadcrumbTimeline';
 import styles from './App.module.css';
 
 export function App() {
@@ -44,6 +45,7 @@ export function App() {
         <ANRInspector />
         <NetworkWaterfall />
         <CrashExplorer />
+        <BreadcrumbTimeline />
         <SessionReplay />
       </main>
     </div>
