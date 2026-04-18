@@ -4,8 +4,12 @@ import type {
   CrashGroupRecord,
   EventListFilter,
   EventRecord,
+  ResolvedFrame,
   SessionRecord,
   Severity,
+  SymbolFileRecord,
+  SymbolPlatform,
+  SymbolResolveInput,
 } from './types';
 
 export interface AlertFiringRecord {
@@ -40,6 +44,22 @@ export interface UpdateBugReportInput {
   description?: string;
 }
 
+export interface SymbolFileListFilter {
+  platform?: SymbolPlatform;
+  bundleId?: string;
+  version?: string;
+}
+
+export interface UploadSymbolFileInput {
+  platform: SymbolPlatform;
+  bundleId: string;
+  version: string;
+  filename: string;
+  uuid?: string;
+  mappingText?: string;
+  sizeBytes?: number;
+}
+
 export interface DashboardApiClient {
   fetchEvents(filter?: EventListFilter): Promise<EventRecord[]>;
   fetchSessions(): Promise<SessionRecord[]>;
@@ -50,6 +70,10 @@ export interface DashboardApiClient {
   fetchAlertHistory(filter?: AlertHistoryFilter): Promise<AlertFiringRecord[]>;
   fetchBugReports(): Promise<BugReportRecord[]>;
   updateBugReport(id: string, patch: UpdateBugReportInput): Promise<BugReportRecord | null>;
+  fetchSymbolFiles(filter?: SymbolFileListFilter): Promise<SymbolFileRecord[]>;
+  uploadSymbolFile(input: UploadSymbolFileInput): Promise<SymbolFileRecord>;
+  deleteSymbolFile(id: string): Promise<void>;
+  resolveFrame(input: SymbolResolveInput): Promise<ResolvedFrame>;
 }
 
 export interface CreateApiClientOptions {
@@ -176,6 +200,32 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
         patch,
       );
       return report;
+    },
+    async fetchSymbolFiles(filter = {}) {
+      const params = new URLSearchParams();
+      if (filter.platform) params.set('platform', filter.platform);
+      if (filter.bundleId) params.set('bundleId', filter.bundleId);
+      if (filter.version) params.set('version', filter.version);
+      const qs = params.toString();
+      const { files } = await getJson<{ files: SymbolFileRecord[] }>(
+        `/api/symbols${qs.length > 0 ? `?${qs}` : ''}`,
+      );
+      return files;
+    },
+    async uploadSymbolFile(input) {
+      const { file } = await sendJson<{ file: SymbolFileRecord }>('/api/symbols', 'POST', input);
+      return file;
+    },
+    async deleteSymbolFile(id) {
+      await sendJson<{ ok: true }>(`/api/symbols/${encodeURIComponent(id)}`, 'DELETE');
+    },
+    async resolveFrame(input) {
+      const { frame } = await sendJson<{ frame: ResolvedFrame }>(
+        '/api/symbols/resolve',
+        'POST',
+        input,
+      );
+      return frame;
     },
   };
 }

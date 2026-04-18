@@ -29,6 +29,10 @@ export const queryKeys = {
     root: () => ['bug-reports'] as const,
     list: () => ['bug-reports', 'list'] as const,
   },
+  symbols: {
+    root: () => ['symbols'] as const,
+    list: () => ['symbols', 'list'] as const,
+  },
 } as const;
 
 export type EventsQueryKey = ReturnType<typeof queryKeys.events.list>;
@@ -36,3 +40,4 @@ export type SessionsQueryKey = ReturnType<typeof queryKeys.sessions.list>;
 export type CrashGroupsQueryKey = ReturnType<typeof queryKeys.crashGroups.list>;
 export type AlertRulesQueryKey = ReturnType<typeof queryKeys.alertRules.list>;
 export type BugReportsQueryKey = ReturnType<typeof queryKeys.bugReports.list>;
+export type SymbolsQueryKey = ReturnType<typeof queryKeys.symbols.list>;

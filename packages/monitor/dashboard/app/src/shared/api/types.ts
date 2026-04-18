@@ -87,3 +87,38 @@ export interface EventListFilter {
   userId?: string;
   limit?: number;
 }
+
+export type SymbolPlatform = 'ios' | 'android';
+
+export interface SymbolFileRecord {
+  id: string;
+  platform: SymbolPlatform;
+  bundleId: string;
+  version: string;
+  filename: string;
+  sizeBytes: number;
+  uploadedAt: number;
+  entryCount: number;
+  uuid: string | null;
+  mappingText: string | null;
+}
+
+export interface SymbolResolveInput {
+  platform: SymbolPlatform;
+  bundleId: string;
+  version: string;
+  symbol: string;
+  fileId?: string;
+}
+
+export interface ResolvedFrame {
+  input: Omit<SymbolResolveInput, 'fileId'>;
+  resolved: boolean;
+  symbol: string;
+  note?: string;
+  source?: {
+    fileId: string;
+    platform: SymbolPlatform;
+    version: string;
+  };
+}

@@ -4,7 +4,13 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
-import type { EventListFilter } from './storage/types.js';
+import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js';
+import type {
+  EventListFilter,
+  SymbolFileRecord,
+  SymbolPlatform,
+  SymbolResolveInput,
+} from './storage/types.js';
 import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
 
@@ -24,14 +30,39 @@ function generateRuleId(): string {
   return `rule_${randomUUID()}`;
 }
 
-function readJsonBody(req: IncomingMessage): Promise<unknown> {
+function generateSymbolId(): string {
+  return `sym_${randomUUID()}`;
+}
+
+interface SymbolUploadInput {
+  platform?: unknown;
+  bundleId?: unknown;
+  version?: unknown;
+  filename?: unknown;
+  uuid?: unknown;
+  mappingText?: unknown;
+  sizeBytes?: unknown;
+}
+
+interface SymbolResolvePayload {
+  platform?: unknown;
+  bundleId?: unknown;
+  version?: unknown;
+  symbol?: unknown;
+  fileId?: unknown;
+}
+
+function coerceSymbolPlatform(raw: unknown): SymbolPlatform | null {
+  return raw === 'ios' || raw === 'android' ? raw : null;
+}
+
+function readJsonBody(req: IncomingMessage, maxBytes = 128 * 1024): Promise<unknown> {
   return new Promise((resolveBody, rejectBody) => {
     const chunks: Buffer[] = [];
     let total = 0;
-    const MAX_BYTES = 128 * 1024;
     req.on('data', (chunk: Buffer) => {
       total += chunk.length;
-      if (total > MAX_BYTES) {
+      if (total > maxBytes) {
         rejectBody(new Error('request body too large'));
         req.destroy();
         return;
@@ -255,6 +286,109 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           ...(limitParam ? { limit: Math.min(500, Number(limitParam)) } : {}),
         });
         sendJson(res, 200, { firings });
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/symbols') {
+        const platform = coerceSymbolPlatform(requestUrl.searchParams.get('platform'));
+        const bundleId = requestUrl.searchParams.get('bundleId');
+        const version = requestUrl.searchParams.get('version');
+        const files = store.listSymbolFiles({
+          ...(platform ? { platform } : {}),
+          ...(bundleId ? { bundleId } : {}),
+          ...(version ? { version } : {}),
+        });
+        sendJson(res, 200, { files });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/symbols') {
+        // 8 MiB cap — large enough for mid-sized ProGuard mappings, small
+        // enough to reject accidental uploads of full dSYM bundles (those
+        // stay on the developer's machine; we only record metadata).
+        void readJsonBody(req, 8 * 1024 * 1024)
+          .then((body) => {
+            const input = body as SymbolUploadInput;
+            if (!input || typeof input !== 'object') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const platform = coerceSymbolPlatform(input.platform);
+            if (!platform) {
+              sendJson(res, 400, { error: 'invalid_platform' });
+              return;
+            }
+            const mappingText =
+              typeof input.mappingText === 'string' && input.mappingText.length > 0
+                ? input.mappingText
+                : null;
+            const entryCount = mappingText ? parseProGuardMapping(mappingText).entryCount : 0;
+            const record: SymbolFileRecord = {
+              id: generateSymbolId(),
+              platform,
+              bundleId: String(input.bundleId ?? 'unknown'),
+              version: String(input.version ?? '0.0.0'),
+              filename: String(input.filename ?? 'upload'),
+              sizeBytes: Number.isFinite(Number(input.sizeBytes))
+                ? Number(input.sizeBytes)
+                : (mappingText?.length ?? 0),
+              uploadedAt: Date.now(),
+              entryCount,
+              uuid: typeof input.uuid === 'string' && input.uuid.length > 0 ? input.uuid : null,
+              mappingText,
+            };
+            store.saveSymbolFile(record);
+            sendJson(res, 200, { file: record });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      if (req.method === 'DELETE' && pathname.startsWith('/api/symbols/')) {
+        const id = pathname.slice('/api/symbols/'.length);
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        store.deleteSymbolFile(id);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/symbols/resolve') {
+        void readJsonBody(req)
+          .then((body) => {
+            const payload = body as SymbolResolvePayload;
+            if (!payload || typeof payload !== 'object') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const platform = coerceSymbolPlatform(payload.platform);
+            if (!platform) {
+              sendJson(res, 400, { error: 'invalid_platform' });
+              return;
+            }
+            const bundleId = String(payload.bundleId ?? '');
+            const version = String(payload.version ?? '');
+            const symbol = String(payload.symbol ?? '');
+            if (!symbol) {
+              sendJson(res, 400, { error: 'missing_symbol' });
+              return;
+            }
+            const artefact =
+              typeof payload.fileId === 'string' && payload.fileId.length > 0
+                ? store.getSymbolFile(payload.fileId)
+                : store.findSymbolFile(platform, bundleId, version);
+            const input: SymbolResolveInput = { platform, bundleId, version, symbol };
+            sendJson(res, 200, { frame: resolveFrame(input, artefact) });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
         return;
       }
 

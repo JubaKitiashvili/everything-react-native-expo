@@ -97,6 +97,14 @@ describe('BugReportsInbox wired to the API', () => {
         state[idx] = next;
         return next;
       }),
+      fetchSymbolFiles: vi.fn(async () => []),
+      uploadSymbolFile: vi.fn(async () => {
+        throw new Error('not used');
+      }),
+      deleteSymbolFile: vi.fn(async () => undefined),
+      resolveFrame: vi.fn(async () => {
+        throw new Error('not used');
+      }),
     };
   }
 

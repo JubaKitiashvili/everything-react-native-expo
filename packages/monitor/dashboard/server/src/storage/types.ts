@@ -111,3 +111,42 @@ export interface AlertHistoryListFilter {
   until?: number;
   limit?: number;
 }
+
+export type SymbolPlatform = 'ios' | 'android';
+
+/**
+ * Metadata + optional text body for an uploaded symbolication artefact.
+ *
+ * - Android / ProGuard: `mappingText` holds the parsed `mapping.txt`, `uuid`
+ *   is null. We parse the mapping client-side so the server stays dumb.
+ * - iOS / dSYM: `mappingText` is null (dSYM is a binary bundle we don't
+ *   parse in the dashboard MVP), `uuid` is the machO UUID the SDK reports
+ *   with every crash frame so the server can match the right artefact.
+ */
+export interface SymbolFileRecord {
+  id: string;
+  platform: SymbolPlatform;
+  bundleId: string;
+  version: string;
+  filename: string;
+  sizeBytes: number;
+  uploadedAt: number;
+  entryCount: number;
+  uuid: string | null;
+  mappingText: string | null;
+}
+
+export interface SymbolFileListFilter {
+  platform?: SymbolPlatform;
+  bundleId?: string;
+  version?: string;
+  limit?: number;
+}
+
+export interface SymbolResolveInput {
+  platform: SymbolPlatform;
+  bundleId: string;
+  version: string;
+  /** Full symbol string, e.g. `a.b.c.d` (ProGuard) or a hex address (iOS). */
+  symbol: string;
+}

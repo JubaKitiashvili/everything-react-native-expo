@@ -19,6 +19,9 @@ import {
   type EventRecord,
   type SessionRecord,
   type Severity,
+  type SymbolFileListFilter,
+  type SymbolFileRecord,
+  type SymbolPlatform,
 } from './types.js';
 
 export interface DashboardStoreOptions {
@@ -50,8 +53,29 @@ export interface Migration {
 const here = dirname(fileURLToPath(import.meta.url));
 const SCHEMA_SQL = readFileSync(join(here, 'schema.sql'), 'utf8');
 
+const V2_SYMBOL_FILES_SQL = `
+CREATE TABLE IF NOT EXISTS symbol_files (
+  id            TEXT    PRIMARY KEY,
+  platform      TEXT    NOT NULL,
+  bundle_id     TEXT    NOT NULL,
+  version       TEXT    NOT NULL,
+  filename      TEXT    NOT NULL,
+  size_bytes    INTEGER NOT NULL DEFAULT 0,
+  uploaded_at   INTEGER NOT NULL,
+  entry_count   INTEGER NOT NULL DEFAULT 0,
+  uuid          TEXT,
+  mapping_text  TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_symbol_files_uploaded
+  ON symbol_files (uploaded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_symbol_files_signature
+  ON symbol_files (platform, bundle_id, version, uploaded_at DESC);
+`;
+
 export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 1, name: 'initial', up: SCHEMA_SQL },
+  { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
 ]);
 
 export function defaultDashboardDbPath(): string {
@@ -108,6 +132,9 @@ interface PreparedStatements {
   upsertAlertRule: Statement;
   deleteAlertRule: Statement;
   insertAlertFiring: Statement;
+  insertSymbolFile: Statement;
+  deleteSymbolFile: Statement;
+  getSymbolFileById: Statement;
 }
 
 /**
@@ -251,6 +278,23 @@ export class DashboardStore {
          (id, rule_id, fired_at, metric_value, severity, payload_json)
          VALUES (@id, @ruleId, @firedAt, @metricValue, @severity, @payloadJson)`,
       ),
+      insertSymbolFile: this.db.prepare(
+        `INSERT INTO symbol_files
+         (id, platform, bundle_id, version, filename, size_bytes, uploaded_at, entry_count, uuid, mapping_text)
+         VALUES (@id, @platform, @bundleId, @version, @filename, @sizeBytes, @uploadedAt, @entryCount, @uuid, @mappingText)
+         ON CONFLICT(id) DO UPDATE SET
+           platform     = excluded.platform,
+           bundle_id    = excluded.bundle_id,
+           version      = excluded.version,
+           filename     = excluded.filename,
+           size_bytes   = excluded.size_bytes,
+           uploaded_at  = excluded.uploaded_at,
+           entry_count  = excluded.entry_count,
+           uuid         = excluded.uuid,
+           mapping_text = excluded.mapping_text`,
+      ),
+      deleteSymbolFile: this.db.prepare('DELETE FROM symbol_files WHERE id = ?'),
+      getSymbolFileById: this.db.prepare('SELECT * FROM symbol_files WHERE id = ?'),
     };
   }
 
@@ -610,6 +654,79 @@ export class DashboardStore {
     return rows.map(rowToAlertFiring);
   }
 
+  // ------------------------------ Symbol files ------------------------------
+
+  saveSymbolFile(record: SymbolFileRecord): void {
+    this.statements.insertSymbolFile.run({
+      id: record.id,
+      platform: record.platform,
+      bundleId: record.bundleId,
+      version: record.version,
+      filename: record.filename,
+      sizeBytes: record.sizeBytes,
+      uploadedAt: record.uploadedAt,
+      entryCount: record.entryCount,
+      uuid: record.uuid,
+      mappingText: record.mappingText,
+    });
+  }
+
+  listSymbolFiles(filter: SymbolFileListFilter = {}): SymbolFileRecord[] {
+    const clauses: string[] = [];
+    const params: Record<string, unknown> = {};
+    if (filter.platform !== undefined) {
+      clauses.push('platform = @platform');
+      params.platform = filter.platform;
+    }
+    if (filter.bundleId !== undefined) {
+      clauses.push('bundle_id = @bundleId');
+      params.bundleId = filter.bundleId;
+    }
+    if (filter.version !== undefined) {
+      clauses.push('version = @version');
+      params.version = filter.version;
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const limit = filter.limit ?? 100;
+    params.limit = limit;
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM symbol_files ${where} ORDER BY uploaded_at DESC LIMIT @limit`,
+      )
+      .all(params) as SymbolFileRow[];
+    return rows.map(rowToSymbolFile);
+  }
+
+  getSymbolFile(id: string): SymbolFileRecord | null {
+    const row = this.statements.getSymbolFileById.get(id) as SymbolFileRow | undefined;
+    return row ? rowToSymbolFile(row) : null;
+  }
+
+  deleteSymbolFile(id: string): void {
+    this.statements.deleteSymbolFile.run(id);
+  }
+
+  /**
+   * Find the freshest symbol artefact matching a (platform, bundleId, version)
+   * signature. Used by the resolve endpoint when the client doesn't already
+   * know which artefact to consult.
+   */
+  findSymbolFile(
+    platform: SymbolPlatform,
+    bundleId: string,
+    version: string,
+  ): SymbolFileRecord | null {
+    const row = this.db
+      .prepare(
+        `SELECT * FROM symbol_files
+         WHERE platform = @platform AND bundle_id = @bundleId AND version = @version
+         ORDER BY uploaded_at DESC
+         LIMIT 1`,
+      )
+      .get({ platform, bundleId, version }) as SymbolFileRow | undefined;
+    return row ? rowToSymbolFile(row) : null;
+  }
+
   /** Sanity probe used by the health endpoint in server.ts. */
   selfCheck(): { ok: true; tables: string[] } {
     const names = (
@@ -797,4 +914,32 @@ function rowToAlertFiring(row: AlertFiringRow): AlertFiringRecord {
     rec.payload = JSON.parse(row.payload_json) as Record<string, unknown>;
   }
   return rec;
+}
+
+interface SymbolFileRow {
+  id: string;
+  platform: string;
+  bundle_id: string;
+  version: string;
+  filename: string;
+  size_bytes: number;
+  uploaded_at: number;
+  entry_count: number;
+  uuid: string | null;
+  mapping_text: string | null;
+}
+
+function rowToSymbolFile(row: SymbolFileRow): SymbolFileRecord {
+  return {
+    id: row.id,
+    platform: row.platform as SymbolPlatform,
+    bundleId: row.bundle_id,
+    version: row.version,
+    filename: row.filename,
+    sizeBytes: row.size_bytes,
+    uploadedAt: row.uploaded_at,
+    entryCount: row.entry_count,
+    uuid: row.uuid,
+    mappingText: row.mapping_text,
+  };
 }

@@ -32,6 +32,14 @@ function makeApi(
     fetchAlertHistory: vi.fn(async () => []),
     fetchBugReports: vi.fn(async () => []),
     updateBugReport: vi.fn(async () => null),
+    fetchSymbolFiles: vi.fn(async () => []),
+    uploadSymbolFile: vi.fn(async () => {
+      throw new Error('not used');
+    }),
+    deleteSymbolFile: vi.fn(async () => undefined),
+    resolveFrame: vi.fn(async () => {
+      throw new Error('not used');
+    }),
     ...overrides,
   };
 }

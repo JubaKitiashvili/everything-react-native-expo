@@ -12,6 +12,7 @@ import { DORA } from './panels/DORA';
 import { BugReportsInbox } from './panels/BugReportsInbox';
 import { PatternLibrary } from './panels/PatternLibrary';
 import { DeviceSwitcher } from './panels/DeviceSwitcher';
+import { Symbolication } from './panels/Symbolication';
 import styles from './App.module.css';
 
 export function App() {
@@ -55,6 +56,7 @@ export function App() {
         <ANRInspector />
         <NetworkWaterfall />
         <CrashExplorer />
+        <Symbolication />
         <BreadcrumbTimeline />
         <AlertsConsole />
         <BugReportsInbox />
