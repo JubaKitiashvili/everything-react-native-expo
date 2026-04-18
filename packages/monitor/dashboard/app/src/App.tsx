@@ -4,6 +4,7 @@ import { CrashExplorer } from './panels/CrashExplorer';
 import { SessionReplay } from './panels/SessionReplay';
 import { Performance } from './panels/Performance';
 import { ANRInspector } from './panels/ANRInspector';
+import { NetworkWaterfall } from './panels/NetworkWaterfall';
 import styles from './App.module.css';
 
 export function App() {
@@ -41,6 +42,7 @@ export function App() {
         <LiveFeed />
         <Performance />
         <ANRInspector />
+        <NetworkWaterfall />
         <CrashExplorer />
         <SessionReplay />
       </main>
