@@ -13,11 +13,7 @@
  * resolve() simply echoes the input with `resolved: false` on that path.
  */
 
-import type {
-  SymbolFileRecord,
-  SymbolPlatform,
-  SymbolResolveInput,
-} from '../storage/types.js';
+import type { SymbolFileRecord, SymbolPlatform, SymbolResolveInput } from '../storage/types.js';
 
 export interface ProGuardMember {
   /** Deobfuscated name (method name or field name). */
@@ -47,7 +43,8 @@ const CLASS_LINE = /^(?<original>[^\s][\w$.]+)\s+->\s+(?<obfuscated>[\w$.]+):\s*
 //   "    int myField -> d"
 //   "    12:15:void myMethod(com.example.Other) -> e"             (ProGuard)
 //   "    12:15:34:50:void myMethod(com.example.Other) -> e"       (R8 retrace)
-const MEMBER_LINE = /^\s+(?:\d+:\d+:(?:\d+:\d+:)?)?(?<type>[\w$.[\]]+)\s+(?<name>[\w$<>]+)\s*(?<args>\([^)]*\))?\s+->\s+(?<obfuscated>[\w$<>]+)\s*$/;
+const MEMBER_LINE =
+  /^\s+(?:\d+:\d+:(?:\d+:\d+:)?)?(?<type>[\w$.[\]]+)\s+(?<name>[\w$<>]+)\s*(?<args>\([^)]*\))?\s+->\s+(?<obfuscated>[\w$<>]+)\s*$/;
 
 export function parseProGuardMapping(text: string): ProGuardMapping {
   const classes = new Map<string, ProGuardClass>();

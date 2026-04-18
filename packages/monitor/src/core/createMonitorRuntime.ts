@@ -483,6 +483,31 @@ export async function createMonitorRuntime(
         url: deps.dashboardUrl,
         isDev,
         WebSocket: deps.webSocketCtor,
+        // Enrich the hello frame so the dashboard can render a real
+        // device card (Platform / OS / version) instead of an empty
+        // "unknown" row. Safe to read inline — PlatformBridge is
+        // already constructed at this point and all getters are sync.
+        deviceInfo: (() => {
+          const device = platformBridge.getDeviceInfo();
+          const app = platformBridge.getAppInfo();
+          const info: {
+            platform?: 'ios' | 'android' | 'web';
+            model?: string;
+            osVersion?: string;
+            appVersion?: string;
+          } = {};
+          if (
+            device.platform === 'ios' ||
+            device.platform === 'android' ||
+            device.platform === 'web'
+          ) {
+            info.platform = device.platform;
+          }
+          if (device.model) info.model = device.model;
+          if (device.osVersion) info.osVersion = device.osVersion;
+          if (app.version) info.appVersion = app.version;
+          return info;
+        })(),
       })
     : null;
 

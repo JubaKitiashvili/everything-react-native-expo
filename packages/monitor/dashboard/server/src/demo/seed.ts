@@ -114,9 +114,7 @@ export function seedDemoData(store: DashboardStore, now: number): SeedCounts {
     description: 'User shook the phone to submit a sample bug.',
     status: 'new',
     attachments: {
-      breadcrumbs: [
-        { category: 'nav', message: 'Navigated to /home', timestamp: now - 100_000 },
-      ],
+      breadcrumbs: [{ category: 'nav', message: 'Navigated to /home', timestamp: now - 100_000 }],
       device: { model: 'iPhone 16 Pro' },
     },
     eventIds: ['demo-nav-1'],

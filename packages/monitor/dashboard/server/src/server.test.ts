@@ -41,7 +41,9 @@ describe('server alert rule endpoints', () => {
       }),
     });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { rule: { id: string; name: string; createdAt: number } };
+    const body = (await response.json()) as {
+      rule: { id: string; name: string; createdAt: number };
+    };
     expect(body.rule.id).toMatch(/^rule_/);
     expect(body.rule.name).toBe('Crash spike');
     expect(body.rule.createdAt).toBeGreaterThan(0);
@@ -122,9 +124,9 @@ describe('server alert rule endpoints', () => {
     };
     expect(all.firings.map((f) => f.id).sort()).toEqual(['fire-1', 'fire-2']);
 
-    const filtered = (await (
-      await fetch(`${ctx.url}/api/alert-history?ruleId=rule-b`)
-    ).json()) as { firings: Array<{ id: string }> };
+    const filtered = (await (await fetch(`${ctx.url}/api/alert-history?ruleId=rule-b`)).json()) as {
+      firings: Array<{ id: string }>;
+    };
     expect(filtered.firings.map((f) => f.id)).toEqual(['fire-2']);
   });
 });

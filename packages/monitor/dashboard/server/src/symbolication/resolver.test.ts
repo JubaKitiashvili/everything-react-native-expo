@@ -12,9 +12,7 @@ com.example.app.Utils -> a.b.d:
     java.lang.String formatDate(long) -> a
 `;
 
-function makeProGuardRecord(
-  partial: Partial<SymbolFileRecord> = {},
-): SymbolFileRecord {
+function makeProGuardRecord(partial: Partial<SymbolFileRecord> = {}): SymbolFileRecord {
   return {
     id: partial.id ?? 'sym-1',
     platform: 'android',

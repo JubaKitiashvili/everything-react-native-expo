@@ -12,19 +12,19 @@ always — but it's also the simplest to wire.
 
 | Entry | Files | Raw (KB) | Gzip (KB) | Budget (KB) | Status |
 | ----- | ----: | -------: | --------: | ----------: | :----- |
-| `main` | 75 | 312.15 | 67.23 | 75 | ok |
+| `main` | 75 | 313.25 | 67.49 | 75 | ok |
 | `/performance` | 11 | 36.35 | 7.01 | 20 | ok |
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
 | `/replay` | 5 | 13.73 | 3.57 | 10 | ok |
-| `/dev` | 5 | 17.48 | 4.56 | 15 | ok |
+| `/dev` | 5 | 17.61 | 4.58 | 15 | ok |
 | `/testing` | 4 | 14.62 | 4.86 | 10 | ok |
 
 ## Largest files (main entry)
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/core/createMonitorRuntime.js` | 22.37 | 5.64 |
+| `dist/core/createMonitorRuntime.js` | 23.35 | 5.91 |
 | `dist/signal-router/PatternLibrary.js` | 11.55 | 2.84 |
 | `dist/native/ErneMonitorNative.js` | 13.10 | 2.81 |
 | `dist/core/Config.js` | 8.58 | 2.46 |
@@ -34,7 +34,7 @@ always — but it's also the simplest to wire.
 | `dist/storage/SqliteEventStoreBackend.js` | 6.46 | 1.85 |
 | `dist/collectors/RenderCollector.js` | 5.76 | 1.73 |
 | `dist/processors/Sanitizer.js` | 4.53 | 1.70 |
-| `dist/integrations/DashboardBridge.js` | 5.36 | 1.61 |
+| `dist/integrations/DashboardBridge.js` | 5.48 | 1.65 |
 | `dist/core/JSPlatformBridge.js` | 4.95 | 1.60 |
 | `dist/processors/BurstThrottle.js` | 4.44 | 1.56 |
 | `dist/collectors/FrameDropCollector.js` | 5.60 | 1.53 |
@@ -95,7 +95,7 @@ always — but it's also the simplest to wire.
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/integrations/DashboardBridge.js` | 5.36 | 1.61 |
+| `dist/integrations/DashboardBridge.js` | 5.48 | 1.65 |
 | `dist/integrations/TerminalReporter.js` | 3.59 | 1.30 |
 | `dist/integrations/ExpoDevToolsPlugin.js` | 4.34 | 1.16 |
 | `dist/integrations/BugReporter.js` | 3.56 | 1.12 |

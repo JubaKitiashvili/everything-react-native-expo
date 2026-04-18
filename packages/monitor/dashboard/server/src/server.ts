@@ -221,8 +221,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     uptimeSeconds: number;
   } => {
     const address = server.address();
-    const listenPort =
-      typeof address === 'object' && address !== null ? address.port : port;
+    const listenPort = typeof address === 'object' && address !== null ? address.port : port;
     const wsToken = store.getSetting('ws_auth_token');
     return {
       retentionDays: resolveRetentionDays(),
@@ -341,9 +340,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/users/') &&
         pathname.endsWith('/summary')
       ) {
-        const userId = decodeURIComponent(
-          pathname.slice('/api/users/'.length, -'/summary'.length),
-        );
+        const userId = decodeURIComponent(pathname.slice('/api/users/'.length, -'/summary'.length));
         if (!userId) {
           sendJson(res, 400, { error: 'missing_user_id' });
           return;
@@ -357,9 +354,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/users/') &&
         pathname.endsWith('/export')
       ) {
-        const userId = decodeURIComponent(
-          pathname.slice('/api/users/'.length, -'/export'.length),
-        );
+        const userId = decodeURIComponent(pathname.slice('/api/users/'.length, -'/export'.length));
         if (!userId) {
           sendJson(res, 400, { error: 'missing_user_id' });
           return;

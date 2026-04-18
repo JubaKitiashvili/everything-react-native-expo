@@ -4,6 +4,7 @@ export {
   DEFAULT_MIGRATIONS,
 } from './storage/sqliteStore.js';
 export type { DashboardStoreOptions, Migration } from './storage/sqliteStore.js';
+export type { IMonitorStore } from './storage/IMonitorStore.js';
 export type {
   AlertFiringRecord,
   AlertHistoryListFilter,

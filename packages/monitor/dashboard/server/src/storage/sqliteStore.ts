@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
+import type { IMonitorStore } from './IMonitorStore.js';
 import {
   type AlertFiringRecord,
   type AlertHistoryListFilter,
@@ -167,7 +168,7 @@ interface PreparedStatements {
  * filter by type / severity / session / time range without string
  * interpolation.
  */
-export class DashboardStore {
+export class DashboardStore implements IMonitorStore {
   private readonly db: Db;
   private readonly statements: PreparedStatements;
   private closed = false;
@@ -790,9 +791,7 @@ export class DashboardStore {
     const limit = filter.limit ?? 100;
     params.limit = limit;
     const rows = this.db
-      .prepare(
-        `SELECT * FROM symbol_files ${where} ORDER BY uploaded_at DESC LIMIT @limit`,
-      )
+      .prepare(`SELECT * FROM symbol_files ${where} ORDER BY uploaded_at DESC LIMIT @limit`)
       .all(params) as SymbolFileRow[];
     return rows.map(rowToSymbolFile);
   }
@@ -831,9 +830,9 @@ export class DashboardStore {
   // ------------------------------ Server settings ------------------------------
 
   getSetting(key: string): string | null {
-    const row = this.db
-      .prepare('SELECT value FROM server_settings WHERE key = ?')
-      .get(key) as { value: string } | undefined;
+    const row = this.db.prepare('SELECT value FROM server_settings WHERE key = ?').get(key) as
+      | { value: string }
+      | undefined;
     return row?.value ?? null;
   }
 

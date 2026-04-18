@@ -3,11 +3,11 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 7 — Launch (0/8)
-**Active Task:** Task 117 — npm publish prep
-**Overall Progress:** 116/124 tasks (Phases 1a–6 ✅ · Phase 7 0/8) · 1160 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 42 dashboard-server tests passing
-_2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing-id DELETE, resetAllUserData allowlist, query-key factory for settings, DeviceCard memo + useMemo, theme → localStorage, userId filename sanitise. +4 server store tests + 1 resolver R8 test + 1 uiStore setTheme test._
-**Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
+**Current Phase:** Phase 7 — Launch (0/106)
+**Active Task:** Task 117.1 — Dashboard unification (rewrite into multi-page platform shell)
+**Overall Progress:** 116/222 tasks (Phases 1a–6 ✅ · Phase 7 0/106) · 1160 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 42 dashboard-server tests passing
+_2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
+**Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
 ---
 
@@ -24,7 +24,7 @@ _2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
+| 7 Launch (expanded) | 0/106 | 🛠 Starting | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -134,18 +134,178 @@ _2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing
 
 ---
 
-## Phase 7 — Task Checklist (Launch)
+## Phase 7 — Task Checklist (Launch — 106 tasks, 6 milestones, 34 weeks)
 
-| # | Task | Status | Deliverable |
-|---|------|--------|-------------|
-| 117 | npm publish v1.0.0 | ⬜ | `npm install @erne/monitor` works |
-| 118 | GitHub release + tag `monitor-v1.0.0` | ⬜ | Release notes + CHANGELOG linked |
-| 119 | Docs site (Nextra) at `docs.erne.dev/monitor` | ⬜ | Quickstart + API + config + collectors + migrations |
-| 120 | `erne.dev/monitor` landing page update | ⬜ | Features grid + "Try it now" CTA |
-| 121 | 2-min demo video (install → crash → dashboard → fix) | ⬜ | YouTube link |
-| 122 | HN launch post | ⬜ | "Show HN: @erne/monitor — …" |
-| 123 | Reddit + Twitter launch | ⬜ | r/reactnative + Twitter thread |
-| 124 | Monitor Cloud integration plan doc | ⬜ | Wire protocol + auth strategy for Platform Phase 6 |
+> **Canonical spec**: see `PHASE-7-IMPLEMENTATION.md` for acceptance criteria, dependencies, effort, and file-level detail per task.
+>
+> **3 proof claims at launch:**
+> 1. "Claude can read your crashes" — MCP server unique + verifiable
+> 2. "Zero-config crash ingestion for Expo JS" — benchmark suite <3min from init
+> 3. "Your data stays on your machine" — privacy-provable SDK + local WebLLM
+
+### Milestone 0 — Foundation (Weeks 1-4)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.1 | Dashboard REWRITE (7 purpose-built pages, react-router 7, not migration) | ⬜ |
+| 117.4 | StorageAdapter interface + SQLite + PostgreSQL adapters | ⬜ |
+| 117.5 | Message queue abstraction (`better-queue` default, pluggable) | ⬜ |
+| 117.47 | Crash loop guard (native persistent counter, self-disable after 3 in 5s) | ⬜ |
+| 117.49 | Ingest deduplication (event UUID, server-side idempotency) | ⬜ |
+| 117.61 | Dashboard authentication (API-key gate minimum) | ⬜ |
+| 117.67 | /api/health + /api/ready endpoints (K8s probes) | ⬜ |
+| 117.71 | Retention purge automation (background TTL enforcement per event type) | ⬜ |
+| 117.100 | /api/ready separate from /health (migration gate + WAL checkpoint) | ⬜ |
+| 117.101 | /ws/subscribe auth gate (currently any process can tap live stream) | ⬜ |
+
+### Milestone 1 — MCP + AI + Source Maps (Weeks 5-9)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.2 | ERNE MCP server (Vercel AI SDK primitives, 15+ tools across monitor/agents/skills/tasks) | ⬜ |
+| 117.3 | Hermes source maps — fork `@sentry/react-native@5.x` MIT client utilities only | ⬜ |
+| 117.6 | AI Fix PR agent (Claude → GitHub PR with fix suggestion) | ⬜ |
+| 117.80 | MCP tool input sanitization (prompt injection guard) | ⬜ |
+| 117.81 | AI agent action audit trail (tools called, files considered, confidence, PR link) | ⬜ |
+| 117.91 | ERNE Benchmark Suite (standalone repo, reproducible vs competitors) | ⬜ |
+| 117.99 | Alert evaluator + webhook delivery (rules currently store config but fire nothing) | ⬜ |
+| 117.102 | Design partner cohort (3-5 real apps, weekly async Loom check-ins) | ⬜ |
+
+### Milestone 2 — Observability depth + docs parallel (Weeks 10-13)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.7 | Visual session replay with UI hierarchy (combine Bitdrift ring-buffer + Instabug layout) | ⬜ |
+| 117.8 | Hermes flamegraph viewer (d3-flame-graph + span-tree transform) | ⬜ |
+| 117.12 | User Journeys panel (Sankey flow + crash/ANR overlay per screen) | ⬜ |
+| 117.13 | Trace waterfall panel (collapsible span tree + attributes + checkpoints) | ⬜ |
+| 117.16 | Latency histograms with CDF (bimodal distribution detection) | ⬜ |
+| 117.22 | ANR Inspector multi-page (overview + list + detail) | ⬜ |
+| 117.23 | Error Taps frustration panel ("this button causes errors for 12% of users") | ⬜ |
+| 117.38 | Docs site (Starlight/Astro, parallel authoring starts here) | ⬜ |
+
+### Milestone 3 — Intelligence layer (Weeks 14-18)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.9 | WebLLM local AI (browser WASM, zero external install) + server-side fallback | ⬜ |
+| 117.10 | Terminal-first UX (`erne monitor live` TUI + `erne doctor`) | ⬜ |
+| 117.14 | Global search (Cmd-K across crashes/sessions/users/traces/agents/skills/tasks/docs) | ⬜ |
+| 117.15 | User-centric view `/monitor/users/:id` | ⬜ |
+| 117.21 | Screenshot annotation canvas + shake-to-report accelerometer wiring | ⬜ |
+| 117.25 | Suspense telemetry with stall detection | ⬜ |
+| 117.26 | RSC boundary panel (we have collector, surface to dashboard) | ⬜ |
+| 117.94 | `erne scan` static analysis CLI (scan consumer's app before install) | ⬜ |
+| 117.95 | Privacy-provable SDK test suite (adversarial tests, CI badge) | ⬜ |
+
+### Milestone 4 — Enterprise + OTel moat (Weeks 19-23)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.11 | OTel bidirectional — ingest `/v1/traces` `/v1/logs` `/v1/metrics` from any OTel source | ⬜ |
+| 117.17 | Remote adaptive config (server-pushed sampling / PII rules / feature toggles) | ⬜ |
+| 117.18 | Multi-tenant RBAC (3-role Owner/Member/Viewer, JWT localStorage) | ⬜ |
+| 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ⬜ |
+| 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
+| 117.56 | CCPA compliance (Do Not Sell signal, CA-specific disclosures) | ⬜ |
+| 117.57 | Transitive dependency privacy manifest audit (App Store compliance) | ⬜ |
+| 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ⬜ |
+| 117.60 | SECURITY.md + responsible disclosure policy | ⬜ |
+| 117.64 | Per-tenant ingest rate limiting | ⬜ |
+| 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ⬜ |
+| 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ⬜ |
+| 117.103 | DPA template + subprocessor list (enterprise prerequisite) | ⬜ |
+
+### Milestone 5 — Launch artifacts + iconic moves (Weeks 24-30, 34 with buffer)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.33 | Docker compose + Railway + Render one-click + Kubernetes Helm chart + CloudFormation | ⬜ |
+| 117.34 | Cross-platform init test matrix (Expo SDK 52/53/54/55, managed/bare, mac/win/linux) | ⬜ |
+| 117.35 | 90-second hero demo video (init → crash → Claude opens PR) | ⬜ |
+| 117.36 | 15-minute technical deep-dive video (architecture + self-hosting + MCP) | ⬜ |
+| 117.37 | README + landing page (3-line quickstart, comparison matrix, architecture diagram, benchmark numbers) | ⬜ |
+| 117.40 | Benchmark blog post (ERNE vs Sentry vs measure.sh vs Bitdrift — reproducible numbers) | ⬜ |
+| 117.41 | Comparison pages (vs Sentry / measure.sh / Bitdrift / Firebase) | ⬜ |
+| 117.43 | Example apps (Expo Router + tabs / bare RN / e-commerce clone / complex nav) | ⬜ |
+| 117.44 | Playwright E2E suite (50+ specs against `POST /api/demo/seed`) | ⬜ |
+| 117.85 | Pricing page + tier matrix (OSS free / Cloud / Enterprise) | ⬜ |
+| 117.92 | ERNE Live public dashboard `monitor.erne.dev` (seed cron for bootstrap) | ⬜ |
+| 117.93 | Pattern Encyclopedia public registry (20 launch patterns, community PR flow) | ⬜ |
+| 117.96 | Twitch/YouTube Live "fix my crash with Claude" session | ⬜ |
+| 117.97 | $500 bug bounty launch day (tax-safe gift-card structure, fraud guards) | ⬜ |
+| 117.98 | Bilateral MCP demo with partner (Linear / Cursor / Copilot Workspace — stretch) | ⬜ |
+| 117.104 | Launch-day rollback / kill switch (feature flags, npm unpublish window, comms template) | ⬜ |
+| 117.105 | Self-analytics + KPI instrumentation (Plausible + KPI dashboard doc) | ⬜ |
+| 117.106 | Contractor agreements template (IP assignment + NDA + payment terms, before M2) | ⬜ |
+
+### SDK parallel track (distributed across M0-M4)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.24 | React 19 Actions instrumentation | ⬜ |
+| 117.27 | Deep link instrumentation | ⬜ |
+| 117.28 | Background fetch lifecycle capture | ⬜ |
+| 117.29 | App size tracking + bundle diff per build | ⬜ |
+| 117.30 | Custom dimensions / user properties for slicing | ⬜ |
+| 117.31 | Offline event queue with resumable uploads | ⬜ |
+| 117.32 | JS+native temporal correlation timeline (honest rename from "causal graph") | ⬜ |
+
+### Cross-cutting infrastructure (all milestones)
+
+| # | Task | Status |
+|---|------|--------|
+| 117.50 | ClickHouse materialized views (crash-free rate, latency percentiles, user impact) — deferred Phase 8 if slip | ⬜ |
+| 117.51 | Caching layer (Redis/Valkey: rate limiting, session dedup, hot-path query cache) | ⬜ |
+| 117.52 | Brownfield RN support (SDK init from native host, cross-boundary session continuity) | ⬜ |
+| 117.53 | AST-based auto-discovery (ts-morph scan of routes/navigation/API clients) | ⬜ |
+| 117.54 | Copy-as-AI-context button on crash/error detail panels | ⬜ |
+| 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
+| 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ⬜ |
+| 117.62 | SDK key rotation + revocation endpoint | ⬜ |
+| 117.63 | Webhook HMAC signature (X-ERNE-Signature header) | ⬜ |
+| 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ⬜ |
+| 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ⬜ |
+| 117.69 | Structured server logging (JSON, correlation IDs) | ⬜ |
+| 117.70 | Backup/restore CLI commands (dump + restore across storage adapters) | ⬜ |
+| 117.72 | SDK version telemetry + upgrade nag (dashboard badge if outdated) | ⬜ |
+| 117.73 | npm release channels (stable/beta/canary + promotion workflow) | ⬜ |
+| 117.74 | VS Code extension (CodeLens crash count, jump to dashboard) | ⬜ |
+| 117.75 | GitHub App (deploy markers + crash-regression status check + issue↔crash linking) | ⬜ |
+| 117.76 | Jest matchers for @erne/monitor/testing | ⬜ |
+| 117.78 | Widget + Live Activity crash capture (App Extension forwarding) | ⬜ |
+| 117.79 | mDNS/Bonjour LAN auto-discovery (device finds dashboard without IP config) | ⬜ |
+| 117.82 | MCP tool permission tiers (read-only vs write-capable, per-tool confirmation) | ⬜ |
+| 117.83 | Common frame extraction (shared stack frame across error group) | ⬜ |
+| 117.84 | Dashboard WCAG 2.1 AA audit (axe-core in Playwright) | ⬜ |
+| 117.86 | OSS → Cloud migration guide + data export format spec | ⬜ |
+| 117.87 | Public roadmap (GitHub Projects board + ROADMAP.md) | ⬜ |
+| 117.88 | GitHub issue templates + triage guidelines | ⬜ |
+| 117.89 | Changesets / release-please automation | ⬜ |
+| 117.90 | Discord server (channels: help/showcase/releases/contributing) | ⬜ |
+
+### Cut from Phase 7 (deferred to Phase 8+)
+
+- 117.42 i18n (Georgian translation) — deferred; no "best" claim requires it at launch
+- 117.45 OpenAPI spec as separate task — auto-generated from code instead
+- 117.46 Plugin marketplace — 6-8 week product, not feature; Phase 8
+- 117.39 Separate launch blog — folded into 117.40 benchmark post
+
+### Decisions locked in during planning
+
+- **Timeline**: 30 weeks MVP, 34 weeks with buffer (not 16)
+- **OSS vs cloud tier line**: all launch features OSS; Cloud tier = managed hosting + auto-updates only (documented in README)
+- **Execution model**: solo pace + build-in-public Twitch/YouTube + 2 contractors (docs + Playwright) + OSS cohort for patterns (M3 start) + design partners (M2 start)
+- **Narrative**: 3 hard-proof claims (not 12 diffuse cards)
+- **Sentry fork**: pin `@sentry/react-native@5.x` — MIT client utils only, no sentry-cli
+- **Local LLM**: WebLLM not ollama (zero external install, WebGPU requirement documented)
+- **Storage**: SQLite default + PostgreSQL adapter; ClickHouse deferred to Phase 8 unless time permits
+- **Queue**: `better-queue` npm package (handles 1MB+ payloads locally, avoids NATS ops burden)
+- **RBAC**: 3 roles only (Owner/Member/Viewer) — full ACL/SSO is Phase 8
+
+### npm placeholder (do TODAY)
+
+- Publish `@erne/monitor` `0.0.1` stub and reserve `erne` bin name before M5 rename cascade risk (20-min task)
 
 ---
 

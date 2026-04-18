@@ -125,7 +125,14 @@ export class IngestWebSocketHandler {
   attach(httpServer: Server): void {
     httpServer.on('upgrade', (req, socket, head) => {
       const url = new URL(req.url ?? '/', 'http://internal');
-      if (url.pathname === INGEST_PATH) {
+      // Root `/` is accepted as an alias for ingest — the @erne/monitor
+      // SDK's DashboardBridge connects to the configured `dashboardUrl`
+      // without a path component, so consumers setting
+      // `dashboardUrl: 'ws://localhost:3333'` land here instead of
+      // `/ws/ingest`. Both paths route through the same handler, which
+      // sniffs the first message to decide whether it's the new
+      // `{kind: ...}` protocol or the legacy `{type: 'monitor:...'}` frame.
+      if (url.pathname === INGEST_PATH || url.pathname === '/') {
         this.wss.handleUpgrade(req, socket, head, (ws) => this.onIngestConnection(ws));
         return;
       }
@@ -182,6 +189,13 @@ export class IngestWebSocketHandler {
       this.sendTo(ws, { kind: 'error', message: 'invalid JSON' });
       return;
     }
+    // Translate legacy `{type: 'monitor:...'}` frames emitted by the SDK's
+    // DashboardBridge into the new `{kind: ...}` envelope. Preserves
+    // backwards compat with shipped SDK versions that still speak the
+    // Phase 4 protocol.
+    const legacyTranslated = translateLegacyFrame(parsed, this.now);
+    if (legacyTranslated !== null) parsed = legacyTranslated;
+
     const msg = parsed as Partial<SdkMessage>;
     if (!msg || typeof msg !== 'object' || typeof msg.kind !== 'string') {
       this.stats.rejected += 1;
@@ -442,4 +456,111 @@ function toText(raw: Buffer | ArrayBuffer | Buffer[]): string {
   if (Buffer.isBuffer(raw)) return raw.toString('utf8');
   if (Array.isArray(raw)) return Buffer.concat(raw).toString('utf8');
   return Buffer.from(raw as ArrayBuffer).toString('utf8');
+}
+
+/**
+ * Accept legacy `{type: 'monitor:hello' | 'monitor:event'}` frames from the
+ * SDK's DashboardBridge (Phase 4 protocol) and return a translated
+ * `{kind: ...}` envelope so the rest of the pipeline doesn't care which
+ * version of the SDK connected. Returns null when the frame is already in
+ * the new protocol (or cannot be interpreted).
+ */
+function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const frame = raw as { type?: unknown; clientId?: unknown; event?: unknown };
+  if (typeof frame.type !== 'string') return null;
+
+  if (frame.type === 'monitor:hello') {
+    const clientId = typeof frame.clientId === 'string' ? frame.clientId : 'legacy-unknown';
+    const device = (frame as { device?: Record<string, unknown> }).device ?? {};
+    const session: Record<string, unknown> = {
+      id: `sdk-${clientId}`,
+      startedAt: now(),
+    };
+    if (typeof device.platform === 'string') session.platform = device.platform;
+    if (typeof device.appVersion === 'string') session.appVersion = device.appVersion;
+    if (typeof device.runtimeVersion === 'string') session.runtimeVersion = device.runtimeVersion;
+    if (typeof device.channel === 'string') session.channel = device.channel;
+    if (typeof device.userId === 'string') session.userId = device.userId;
+    const modelBits: Record<string, string> = {};
+    if (typeof device.model === 'string') modelBits.model = device.model;
+    if (typeof device.systemVersion === 'string') modelBits.systemVersion = device.systemVersion;
+    else if (typeof device.osVersion === 'string') modelBits.osVersion = device.osVersion;
+    if (Object.keys(modelBits).length > 0) session.device = modelBits;
+    if (!session.appVersion) session.appVersion = 'unknown';
+    return { kind: 'hello', session };
+  }
+
+  if (frame.type === 'monitor:event') {
+    const ev = frame.event as
+      | {
+          type?: string;
+          sessionId?: string;
+          timestamp?: number;
+          wallTime?: number;
+          [key: string]: unknown;
+        }
+      | undefined;
+    if (!ev || typeof ev.type !== 'string') return null;
+    const clientId = typeof frame.clientId === 'string' ? frame.clientId : 'legacy-unknown';
+    // Pin every event to the clientId-derived session regardless of the
+    // internal sessionId the SDK's session manager uses. The legacy
+    // `monitor:hello` carries only clientId, so this is the only way the
+    // event can be attributed back to the session record we upserted on
+    // hello — otherwise events pile up against orphan SDK-UUIDs and the
+    // Device Switcher / panels show empty.
+    const sessionId = `sdk-${clientId}`;
+    // Retain the SDK's original sessionId inside payload for debugging.
+    const originalSessionId = typeof ev.sessionId === 'string' ? ev.sessionId : undefined;
+    const timestamp = typeof ev.timestamp === 'number' ? ev.timestamp : now();
+    // Strip envelope fields from the payload — they've already been promoted
+    // to top-level SdkMessage keys above. The remaining keys are the actual
+    // event-specific payload.
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(ev)) {
+      if (key === 'type' || key === 'sessionId' || key === 'timestamp' || key === 'wallTime') {
+        continue;
+      }
+      payload[key] = value;
+    }
+    const { type } = ev;
+    if (originalSessionId) payload.__sdkSessionId = originalSessionId;
+
+    // Legacy type → server event-type mapping. Kept deliberately narrow —
+    // the schema codegen already documents every SDK event kind and we
+    // only forward the ones the dashboard panels render.
+    const normalisedType =
+      type === 'crash'
+        ? 'crash'
+        : type === 'network'
+          ? 'network'
+          : type === 'navigation'
+            ? 'breadcrumb'
+            : type === 'render'
+              ? 'performance'
+              : type === 'custom'
+                ? 'custom'
+                : type;
+
+    const severity: 'critical' | 'warning' | 'info' =
+      normalisedType === 'crash'
+        ? 'critical'
+        : type === 'network' && typeof payload.statusCode === 'number' && payload.statusCode >= 500
+          ? 'warning'
+          : 'info';
+
+    return {
+      kind: 'event',
+      event: {
+        id: `${sessionId}-${timestamp}-${Math.random().toString(36).slice(2, 8)}`,
+        type: normalisedType,
+        severity,
+        sessionId,
+        timestamp,
+        payload: normalisedType === 'breadcrumb' ? { category: 'nav', ...payload } : payload,
+      },
+    };
+  }
+
+  return null;
 }

@@ -38,6 +38,23 @@ export interface DashboardBridgeOptions {
   clientId?: string;
   /** Clock for tests. Defaults to Date.now. */
   now?: () => number;
+  /**
+   * Device + app-version metadata included in the initial `monitor:hello`
+   * frame. Lets the dashboard's Device Switcher / Sessions panels render
+   * a real card instead of an anonymous "unknown" entry. All fields are
+   * optional — the bridge falls back to undefined so dashboards on older
+   * servers ignore them.
+   */
+  deviceInfo?: {
+    platform?: 'ios' | 'android' | 'web';
+    model?: string;
+    systemVersion?: string;
+    osVersion?: string;
+    appVersion?: string;
+    runtimeVersion?: string;
+    channel?: string;
+    userId?: string;
+  };
 }
 
 const READY_OPEN = 1;
@@ -73,6 +90,7 @@ export class DashboardBridge {
   private readonly bufferSize: number;
   private readonly clientId: string;
   private readonly now: () => number;
+  private readonly deviceInfo: DashboardBridgeOptions['deviceInfo'];
 
   private ws: WebSocketLike | null = null;
   private running = false;
@@ -101,6 +119,7 @@ export class DashboardBridge {
       options.clientId ??
       `monitor-${Math.random().toString(36).slice(2, 10)}`;
     this.now = options.now ?? Date.now;
+    this.deviceInfo = options.deviceInfo;
   }
 
   start(): void {
@@ -193,6 +212,7 @@ export class DashboardBridge {
             type: 'monitor:hello',
             clientId: this.clientId,
             ts: this.now(),
+            ...(this.deviceInfo ? { device: this.deviceInfo } : {}),
           },
         });
         const drained = this.buffer;
