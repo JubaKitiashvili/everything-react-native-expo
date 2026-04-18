@@ -128,3 +128,63 @@ describe('server alert rule endpoints', () => {
     expect(filtered.firings.map((f) => f.id)).toEqual(['fire-2']);
   });
 });
+
+describe('server bug report endpoints', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+  });
+
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('PATCH /api/bug-reports/:id updates status + assignee and returns the fresh row', async () => {
+    ctx.store.insertBugReport({
+      id: 'bug-1',
+      sessionId: 's1',
+      submittedAt: 100,
+      title: 'Shaky UI',
+      status: 'new',
+    });
+
+    const response = await fetch(`${ctx.url}/api/bug-reports/bug-1`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'assigned', assignee: 'juba' }),
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      report: { id: string; status: string; assignee: string };
+    };
+    expect(body.report.status).toBe('assigned');
+    expect(body.report.assignee).toBe('juba');
+
+    const list = (await (await fetch(`${ctx.url}/api/bug-reports`)).json()) as {
+      reports: Array<{ id: string; status: string; assignee: string }>;
+    };
+    expect(list.reports[0]?.status).toBe('assigned');
+    expect(list.reports[0]?.assignee).toBe('juba');
+  });
+
+  test('PATCH with invalid status ignores the field rather than corrupting the row', async () => {
+    ctx.store.insertBugReport({
+      id: 'bug-2',
+      sessionId: 's1',
+      submittedAt: 200,
+      title: 'Initial',
+      status: 'new',
+    });
+    await fetch(`${ctx.url}/api/bug-reports/bug-2`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'bogus', title: 'Edited title' }),
+    });
+    const list = (await (await fetch(`${ctx.url}/api/bug-reports`)).json()) as {
+      reports: Array<{ id: string; status: string; title: string }>;
+    };
+    expect(list.reports[0]?.status).toBe('new');
+    expect(list.reports[0]?.title).toBe('Edited title');
+  });
+});

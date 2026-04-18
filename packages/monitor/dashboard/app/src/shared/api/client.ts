@@ -33,6 +33,13 @@ export interface AlertHistoryFilter {
   limit?: number;
 }
 
+export interface UpdateBugReportInput {
+  status?: 'new' | 'assigned' | 'resolved';
+  assignee?: string;
+  title?: string;
+  description?: string;
+}
+
 export interface DashboardApiClient {
   fetchEvents(filter?: EventListFilter): Promise<EventRecord[]>;
   fetchSessions(): Promise<SessionRecord[]>;
@@ -42,6 +49,7 @@ export interface DashboardApiClient {
   deleteAlertRule(id: string): Promise<void>;
   fetchAlertHistory(filter?: AlertHistoryFilter): Promise<AlertFiringRecord[]>;
   fetchBugReports(): Promise<BugReportRecord[]>;
+  updateBugReport(id: string, patch: UpdateBugReportInput): Promise<BugReportRecord | null>;
 }
 
 export interface CreateApiClientOptions {
@@ -93,7 +101,11 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
     return (await response.json()) as T;
   }
 
-  async function sendJson<T>(path: string, method: 'POST' | 'DELETE', body?: unknown): Promise<T> {
+  async function sendJson<T>(
+    path: string,
+    method: 'POST' | 'DELETE' | 'PATCH',
+    body?: unknown,
+  ): Promise<T> {
     const init: RequestInit = {
       method,
       signal: options.signal ?? null,
@@ -156,6 +168,14 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
     async fetchBugReports() {
       const { reports } = await getJson<{ reports: BugReportRecord[] }>('/api/bug-reports');
       return reports;
+    },
+    async updateBugReport(id, patch) {
+      const { report } = await sendJson<{ report: BugReportRecord | null }>(
+        `/api/bug-reports/${encodeURIComponent(id)}`,
+        'PATCH',
+        patch,
+      );
+      return report;
     },
   };
 }

@@ -108,6 +108,7 @@ describe('AlertsConsole (wired via QueryClient + ApiProvider)', () => {
       }),
       fetchAlertHistory: vi.fn(async () => []),
       fetchBugReports: vi.fn(async () => []),
+      updateBugReport: vi.fn(async () => null),
     };
   }
 

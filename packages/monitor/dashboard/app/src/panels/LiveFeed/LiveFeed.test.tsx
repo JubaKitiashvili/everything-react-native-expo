@@ -21,6 +21,7 @@ function makeApi(events: EventRecord[]): DashboardApiClient {
     deleteAlertRule: vi.fn(async () => undefined),
     fetchAlertHistory: vi.fn(async () => []),
     fetchBugReports: vi.fn(async () => []),
+    updateBugReport: vi.fn(async () => null),
   };
 }
 

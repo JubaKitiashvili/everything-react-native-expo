@@ -33,6 +33,7 @@ function makeApi(overrides: Partial<DashboardApiClient> = {}): DashboardApiClien
     deleteAlertRule: vi.fn(async () => undefined),
     fetchAlertHistory: vi.fn(async () => []),
     fetchBugReports: vi.fn(async () => []),
+    updateBugReport: vi.fn(async () => null),
     ...overrides,
   };
 }

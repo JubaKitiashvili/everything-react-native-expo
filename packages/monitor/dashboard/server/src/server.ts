@@ -264,6 +264,51 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      if (req.method === 'PATCH' && pathname.startsWith('/api/bug-reports/')) {
+        const id = pathname.slice('/api/bug-reports/'.length);
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        void readJsonBody(req)
+          .then((body) => {
+            const patch = body as {
+              status?: unknown;
+              assignee?: unknown;
+              title?: unknown;
+              description?: unknown;
+            };
+            if (!patch || typeof patch !== 'object') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const cleaned: Partial<{
+              status: 'new' | 'assigned' | 'resolved';
+              assignee: string;
+              title: string;
+              description: string;
+            }> = {};
+            if (
+              patch.status === 'new' ||
+              patch.status === 'assigned' ||
+              patch.status === 'resolved'
+            ) {
+              cleaned.status = patch.status;
+            }
+            if (typeof patch.assignee === 'string') cleaned.assignee = patch.assignee;
+            if (typeof patch.title === 'string') cleaned.title = patch.title;
+            if (typeof patch.description === 'string') cleaned.description = patch.description;
+            store.updateBugReport(id, cleaned);
+            const updated = store.listBugReports().find((r) => r.id === id) ?? null;
+            sendJson(res, 200, { report: updated });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
       // Static assets — serve the built dashboard app.
       if (req.method === 'GET' && publicDir) {
         const staticPath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
