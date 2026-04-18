@@ -1,6 +1,20 @@
 import Darwin
 import Foundation
 
+// `mach_vm_read_overwrite` is declared in `<mach/mach_vm.h>`, which the iOS
+// Swift overlay does not auto-expose from `import Darwin` (macOS does — iOS
+// intentionally hides the 64-bit VM API). Forward-declare the C symbol so
+// we can call it from Swift without requiring a bridging header in the
+// host app. This is the pattern Sentry / KSCrash / Embrace all use.
+@_silgen_name("mach_vm_read_overwrite")
+private func mach_vm_read_overwrite_impl(
+  _ target_task: mach_port_t,
+  _ address: mach_vm_address_t,
+  _ size: mach_vm_size_t,
+  _ data: mach_vm_address_t,
+  _ outsize: UnsafeMutablePointer<mach_vm_size_t>
+) -> kern_return_t
+
 /**
  * Captures the main thread's stack from a background thread using mach
  * thread APIs. This is what lets an ANR watchdog show the real stack of
@@ -158,7 +172,7 @@ enum MainThreadStackCapture {
     var readSize: mach_vm_size_t = mach_vm_size_t(MemoryLayout<UInt>.size)
     let kr = withUnsafeMutablePointer(to: &result) { dstPtr -> Int32 in
       let dstAddress = mach_vm_address_t(UInt(bitPattern: UnsafeRawPointer(dstPtr)))
-      return mach_vm_read_overwrite(
+      return mach_vm_read_overwrite_impl(
         mach_task_self_,
         mach_vm_address_t(address),
         mach_vm_size_t(MemoryLayout<UInt>.size),
