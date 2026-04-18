@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": true,
+    "outDir": "dist/cli",
+    "rootDir": "cli",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["cli/**/*.ts"],
+  "exclude": ["cli/**/*.test.ts", "node_modules", "dist"]
+}

@@ -61,7 +61,13 @@ function check(dist, src) {
   }
 
   const problems = [];
-  const files = walk(dist).filter((f) => f.endsWith('.js'));
+  // `dist/cli/` is the compiled CLI — it's executed via the `bin` entry, not
+  // imported by consumers, so Go-to-Definition into its .d.ts is irrelevant.
+  // The verifier only cares about the consumer-facing library surface.
+  const cliDir = path.join(dist, 'cli') + path.sep;
+  const files = walk(dist).filter(
+    (f) => f.endsWith('.js') && !f.startsWith(cliDir),
+  );
 
   for (const js of files) {
     const dts = js.replace(/\.js$/, '.d.ts');

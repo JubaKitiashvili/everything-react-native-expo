@@ -6,6 +6,9 @@
   "author": "Juba Kitiashvili",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "erne-monitor": "./dist/cli/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -73,7 +76,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.plugin.json",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.plugin.json && tsc -p tsconfig.cli.json && node scripts/finalize-cli.mjs",
     "clean": "rm -rf dist plugin/build",
     "prepare": "npm run clean && npm run build",
     "typecheck": "tsc --noEmit",
