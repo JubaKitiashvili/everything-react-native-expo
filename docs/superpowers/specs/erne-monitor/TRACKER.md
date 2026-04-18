@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (11/25)
-**Active Task:** Task 103 — Breadcrumb Timeline (visual last-100 actions)
-**Overall Progress:** 102/124 tasks (Phases 1a–5 ✅ · Phase 6 11/25 · Phase 7 0/8) · 1152 SDK tests + 109 dashboard-app tests + 27 dashboard-server tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (12/25)
+**Active Task:** Task 104 — AI Insights (fix success rate, MTTR, pattern hits)
+**Overall Progress:** 103/124 tasks (Phases 1a–5 ✅ · Phase 6 12/25 · Phase 7 0/8) · 1152 SDK tests + 116 dashboard-app tests + 27 dashboard-server tests passing
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 11/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 12/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -111,7 +111,7 @@
 | 100 | Performance (dual-thread FPS, memory, CPU, Fabric histogram, startup waterfall) | ✅ | dashboard/app/src/panels/Performance/{Performance.tsx, Performance.module.css, Performance.test.tsx, FpsChart.tsx+.module.css, MemoryCpuChart.tsx+.module.css, FabricHistogram.tsx+.module.css, StartupWaterfall.tsx+.module.css, aggregate.ts, aggregate.test.ts, index.ts}; modified src/App.tsx (wires Performance between LiveFeed and CrashExplorer). Pure `aggregate.ts` pulls parallel series out of the event stream: extractFpsSeries (dual_thread_fps events → sorted timestamps + jsThread + uiThread arrays, tolerates missing samples), extractResourceSeries (native_metrics → timestamps + cpuPercent + memory converted to MB), buildFabricHistogram (bucketises fabric_commit durationMs into [0, 8, 16, 33, 50, 100, 250, ∞) matching 120/60/30/20/10-fps budgets, drops invalid durations), extractStartupPhases (startup events → freshest cold/warm/hot record per kind in canonical order). Four pure-SVG charts with no chart-lib dependency: FpsChart overlays JS + UI lines against 60/30-fps reference lines, MemoryCpuChart shows memory as an area with CPU line overlay, FabricHistogram colours buckets by frame budget, StartupWaterfall draws proportional phase segments with labels when wide enough. `Performance` splits into a query-aware container + pure `PerformanceView({events})` so tests render without QueryClient/ApiProvider. | ✅ 7 new (aggregate 5: FPS pick-and-sort, resource MB conversion, Fabric bucketing, Fabric invalid-drop, startup freshness + canonical order; Performance 2: all-empty states, populated-charts integration) — plan asked +4 | ✅ — `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test` 86/86 green in 2.84s across 20 suites, `npm run build` emits 263 KB JS + 29 KB CSS. SDK + server still green (1152 + 27). |
 | 101 | ANR Inspector (histogram + stack + screen + recurrence) | ⬜ | — | — | — |
 | 102 | Network Waterfall (per-session timeline + slow/errored highlight) | ⬜ | — | — | — |
-| 103 | Breadcrumb Timeline (visual last-100 actions) | ⬜ | — | — | — |
+| 103 | Breadcrumb Timeline (crash-embedded or session-backed, icon per category, last 100) | ✅ | See commit d0279ae — extract.ts + icons.ts + vertical-spine UI; container prefers selectedCrashFingerprint, falls back to selectedSessionId's recent events | ✅ 7 (extract 4 + panel 3) | ✅ — 116/116 vitest green |
 | 104 | AI Insights (fix success rate, MTTR, pattern hits) | ⬜ | — | — | — |
 | 105 | Alerts Console (rule editor + history + cooldown) | ⬜ | — | — | — |
 | 106 | DORA Metrics (MTTR/CFR/Deploy Freq/Lead Time) | ⬜ | — | — | — |
