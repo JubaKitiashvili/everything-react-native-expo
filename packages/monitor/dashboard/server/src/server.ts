@@ -252,6 +252,16 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      if (req.method === 'GET' && pathname === '/api/ready') {
+        // Readiness contract (Task 117.100): migrations applied + storage
+        // backend not busy. Returns 200 when ready, 503 when not — the
+        // status code is what Kubernetes / ECS / Railway / Render care
+        // about; the JSON body explains the reason for humans.
+        const report = store.readyCheck();
+        sendJson(res, report.ready ? 200 : 503, report);
+        return;
+      }
+
       if (req.method === 'GET' && pathname === '/api/events') {
         const events = store.listEvents(parseFilterFromUrl(requestUrl));
         sendJson(res, 200, { events, count: events.length });

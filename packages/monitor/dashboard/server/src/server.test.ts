@@ -190,3 +190,80 @@ describe('server bug report endpoints', () => {
     expect(list.reports[0]?.title).toBe('Edited title');
   });
 });
+
+describe('operational probes (Task 117.67 + 117.100)', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+  });
+
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('GET /api/health returns 200 with store selfCheck + uptime', async () => {
+    const response = await fetch(`${ctx.url}/api/health`);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      ok: boolean;
+      tables: string[];
+      uptimeSeconds: number;
+      ingest: unknown;
+    };
+    expect(body.ok).toBe(true);
+    expect(body.tables).toContain('events');
+    expect(body.tables).toContain('sessions');
+    expect(typeof body.uptimeSeconds).toBe('number');
+    // enableWebsocket:false in the harness, so ingest should be null.
+    expect(body.ingest).toBeNull();
+  });
+
+  test('GET /api/ready returns 200 with readyCheck report when migrations are applied', async () => {
+    const response = await fetch(`${ctx.url}/api/ready`);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      ready: boolean;
+      reason?: string;
+      migrationsApplied: number;
+    };
+    expect(body.ready).toBe(true);
+    expect(body.migrationsApplied).toBe(3);
+    expect(body.reason).toBeUndefined();
+  });
+
+  test('GET /api/ready returns 503 when migrations are pending', async () => {
+    // Close the shared harness store, then spin up a new server with a
+    // store that has had its _migrations rows wiped underneath it — that
+    // simulates "migrations pending" without our having to run the server
+    // with zero migrations (which would violate the schema).
+    await ctx.close();
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    // Manually delete rows from _migrations to simulate a partially-applied
+    // migration state. `readyCheck` compares against DEFAULT_MIGRATIONS.length.
+    store.raw.prepare('DELETE FROM _migrations').run();
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    const response = await fetch(`${url}/api/ready`);
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as {
+      ready: boolean;
+      reason?: string;
+      migrationsApplied: number;
+    };
+    expect(body.ready).toBe(false);
+    expect(body.reason).toMatch(/migrations pending/i);
+    expect(body.migrationsApplied).toBe(0);
+    await handle.close();
+  });
+});

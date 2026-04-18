@@ -893,6 +893,47 @@ export class DashboardStore implements IMonitorStore {
     }
     return { ok: true, tables: names };
   }
+
+  /**
+   * Readiness contract (Task 117.100): applied migration count must equal
+   * the default migration list, and in WAL mode we require the checkpoint
+   * to be current-enough that writes won't block. SQLite under WAL returns
+   * 3 counters from `wal_checkpoint(PASSIVE)` — `busy` / `log` / `checkpointed`
+   * — when `busy === 0` we know no active writer is holding the write lock.
+   */
+  readyCheck(): { ready: boolean; reason?: string; migrationsApplied: number } {
+    const migrationsApplied = (
+      this.db.prepare('SELECT COUNT(*) AS c FROM _migrations').get() as { c: number }
+    ).c;
+    if (migrationsApplied < DEFAULT_MIGRATIONS.length) {
+      return {
+        ready: false,
+        reason: `migrations pending (${migrationsApplied}/${DEFAULT_MIGRATIONS.length})`,
+        migrationsApplied,
+      };
+    }
+    // `wal_checkpoint(PASSIVE)` reports [busy, log, checkpointed] — only the
+    // busy flag matters for readiness. In non-WAL mode the pragma returns
+    // [0, -1, -1] which is equally "not-busy."
+    try {
+      const result = this.db.pragma('wal_checkpoint(PASSIVE)') as Array<{
+        busy: number;
+        log: number;
+        checkpointed: number;
+      }>;
+      const busy = result[0]?.busy ?? 0;
+      if (busy !== 0) {
+        return { ready: false, reason: 'WAL checkpoint busy', migrationsApplied };
+      }
+    } catch (err) {
+      return {
+        ready: false,
+        reason: `WAL probe failed: ${(err as Error).message}`,
+        migrationsApplied,
+      };
+    }
+    return { ready: true, migrationsApplied };
+  }
 }
 
 // ==== Row types + row→record mappers ===========================================

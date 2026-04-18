@@ -147,6 +147,20 @@ export interface IMonitorStore {
   /** Sanity probe used by the health endpoint. */
   selfCheck(): { ok: true; tables: string[] };
 
+  /**
+   * Readiness probe — used by `/api/ready` and K8s/ECS/Fly.io readiness
+   * checks. A store is "ready" iff:
+   *   - every migration in the default migration list is applied
+   *   - the storage backend is in a state where writes won't block
+   *     (SQLite: WAL checkpoint clean; Postgres: connection pool healthy)
+   *   - no pending initialization work remains
+   *
+   * Distinct from `/api/health` (liveness) — a process can be alive but
+   * still applying migrations on first boot, during which new requests
+   * should receive 503 until ready.
+   */
+  readyCheck(): { ready: boolean; reason?: string; migrationsApplied: number };
+
   /** Release resources. Idempotent. */
   close(): void;
 }
