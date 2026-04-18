@@ -53,6 +53,14 @@ export interface Migration {
 const here = dirname(fileURLToPath(import.meta.url));
 const SCHEMA_SQL = readFileSync(join(here, 'schema.sql'), 'utf8');
 
+const V3_SERVER_SETTINGS_SQL = `
+CREATE TABLE IF NOT EXISTS server_settings (
+  key        TEXT    PRIMARY KEY,
+  value      TEXT    NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+`;
+
 const V2_SYMBOL_FILES_SQL = `
 CREATE TABLE IF NOT EXISTS symbol_files (
   id            TEXT    PRIMARY KEY,
@@ -76,6 +84,7 @@ CREATE INDEX IF NOT EXISTS idx_symbol_files_signature
 export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 1, name: 'initial', up: SCHEMA_SQL },
   { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
+  { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
 ]);
 
 export function defaultDashboardDbPath(): string {
@@ -803,6 +812,61 @@ export class DashboardStore {
       )
       .get({ platform, bundleId, version }) as SymbolFileRow | undefined;
     return row ? rowToSymbolFile(row) : null;
+  }
+
+  // ------------------------------ Server settings ------------------------------
+
+  getSetting(key: string): string | null {
+    const row = this.db
+      .prepare('SELECT value FROM server_settings WHERE key = ?')
+      .get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  }
+
+  setSetting(key: string, value: string): void {
+    this.db
+      .prepare(
+        `INSERT INTO server_settings (key, value, updated_at)
+         VALUES (@key, @value, @ts)
+         ON CONFLICT(key) DO UPDATE SET
+           value      = excluded.value,
+           updated_at = excluded.updated_at`,
+      )
+      .run({ key, value, ts: Date.now() });
+  }
+
+  listSettings(): { key: string; value: string; updatedAt: number }[] {
+    const rows = this.db
+      .prepare('SELECT key, value, updated_at AS updatedAt FROM server_settings ORDER BY key')
+      .all() as { key: string; value: string; updatedAt: number }[];
+    return rows.slice();
+  }
+
+  /**
+   * Nuke every user-data table — events, sessions, crash groups, bug
+   * reports, alert rules + history, symbol files. Preserves the schema +
+   * migration bookkeeping + server_settings themselves so the next request
+   * keeps working. Returns a map of table → rowsDeleted.
+   */
+  resetAllUserData(): Record<string, number> {
+    const tables = [
+      'events',
+      'sessions',
+      'crash_groups',
+      'bug_reports',
+      'alert_rules',
+      'alert_history',
+      'symbol_files',
+    ];
+    const counts: Record<string, number> = {};
+    const run = this.db.transaction(() => {
+      for (const t of tables) {
+        const info = this.db.prepare(`DELETE FROM ${t}`).run();
+        counts[t] = Number(info.changes);
+      }
+    });
+    run();
+    return counts;
   }
 
   /** Sanity probe used by the health endpoint in server.ts. */

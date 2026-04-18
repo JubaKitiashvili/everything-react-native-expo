@@ -34,6 +34,21 @@ function generateSymbolId(): string {
   return `sym_${randomUUID()}`;
 }
 
+const DEFAULT_RETENTION_DAYS = 14;
+
+function maskToken(token: string | null): string | null {
+  if (!token) return null;
+  if (token.length <= 6) return '••••••';
+  return `${token.slice(0, 3)}••••${token.slice(-3)}`;
+}
+
+function coerceRetentionDays(raw: unknown): number | null {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  if (n < 1 || n > 3650) return null;
+  return Math.round(n);
+}
+
 interface SymbolUploadInput {
   platform?: unknown;
   bundleId?: unknown;
@@ -191,6 +206,33 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       ? null
       : new IngestWebSocketHandler({ store, ...(options.websocket ?? {}) });
 
+  const resolveRetentionDays = (): number => {
+    const raw = store.getSetting('retention_days');
+    return coerceRetentionDays(raw) ?? DEFAULT_RETENTION_DAYS;
+  };
+
+  const buildSettings = (): {
+    retentionDays: number;
+    port: number;
+    host: string;
+    wsTokenMasked: string | null;
+    wsTokenSet: boolean;
+    uptimeSeconds: number;
+  } => {
+    const address = server.address();
+    const listenPort =
+      typeof address === 'object' && address !== null ? address.port : port;
+    const wsToken = store.getSetting('ws_auth_token');
+    return {
+      retentionDays: resolveRetentionDays(),
+      port: listenPort,
+      host,
+      wsTokenMasked: maskToken(wsToken),
+      wsTokenSet: wsToken !== null,
+      uptimeSeconds: process.uptime(),
+    };
+  };
+
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? host}`);
     const pathname = requestUrl.pathname;
@@ -329,6 +371,49 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         }
         const deletedEvents = store.deleteEventsByUserId(userId);
         sendJson(res, 200, { ok: true, deletedEvents });
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/settings') {
+        sendJson(res, 200, { settings: buildSettings() });
+        return;
+      }
+
+      if (req.method === 'PATCH' && pathname === '/api/settings') {
+        void readJsonBody(req)
+          .then((body) => {
+            const patch = body as { retentionDays?: unknown };
+            if (!patch || typeof patch !== 'object') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            if (patch.retentionDays !== undefined) {
+              const days = coerceRetentionDays(patch.retentionDays);
+              if (days === null) {
+                sendJson(res, 400, { error: 'invalid_retention_days' });
+                return;
+              }
+              store.setSetting('retention_days', String(days));
+            }
+            sendJson(res, 200, { settings: buildSettings() });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/settings/rotate-token') {
+        const token = randomUUID().replace(/-/g, '');
+        store.setSetting('ws_auth_token', token);
+        sendJson(res, 200, { wsTokenMasked: maskToken(token), wsTokenSet: true });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/settings/reset') {
+        const counts = store.resetAllUserData();
+        sendJson(res, 200, { ok: true, deleted: counts });
         return;
       }
 

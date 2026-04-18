@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (21/25)
-**Active Task:** Task 113 — Settings (retention, theme, port, auth, reset)
-**Overall Progress:** 112/124 tasks (Phases 1a–5 ✅ · Phase 6 21/25 · Phase 7 0/8) · 1152 SDK tests + 178 dashboard-app tests + 37 dashboard-server tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (22/25)
+**Active Task:** Task 114 — Dashboard CLI (`npx @erne/monitor dashboard`)
+**Overall Progress:** 113/124 tasks (Phases 1a–5 ✅ · Phase 6 22/25 · Phase 7 0/8) · 1152 SDK tests + 181 dashboard-app tests + 37 dashboard-server tests passing
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 21/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 22/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -121,7 +121,7 @@
 | 110 | Symbolication Upload (dSYM + ProGuard) | ✅ | 2026-04-18 | v2 migration for symbol_files; 4 new REST endpoints; pure ProGuard resolver + panel with upload / history rollup / resolver preview. 1152 SDK + 169 app + 37 server tests green | — |
 | 111 | Replay Masker Config (PII rules + live preview) | ✅ | 2026-04-18 | Pure applyMaskRules + ReplayMasker panel w/ regex editor, secureTextEntry toggle, live demo preview. 1152 SDK + 175 app + 37 server tests | — |
 | 112 | Consent & Privacy (DSAR UI) | ✅ | 2026-04-18 | Store gains exportUserData + summariseUserData; 3 DSAR REST endpoints; ConsentPrivacy panel w/ lookup, export download, confirm-delete. 1152 SDK + 178 app + 37 server tests | — |
-| 113 | Settings (retention, theme, port, auth, reset) | ⬜ | — | — | — |
+| 113 | Settings (retention, theme, port, auth, reset) | ✅ | 2026-04-18 | v3 migration for server_settings kv; retention + rotate-token + reset endpoints; Settings panel w/ retention save, theme radio (zustand), ingest KVs, danger-zone confirm. 1152 SDK + 181 app + 37 server tests | — |
 
 ### 6.3 Integration
 

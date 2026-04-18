@@ -139,3 +139,17 @@ export interface UserDataExport {
   events: EventRecord[];
   exportedAt: number;
 }
+
+export interface DashboardSettings {
+  retentionDays: number;
+  port: number;
+  host: string;
+  wsTokenMasked: string | null;
+  wsTokenSet: boolean;
+  uptimeSeconds: number;
+}
+
+export interface DashboardResetResult {
+  ok: true;
+  deleted: Record<string, number>;
+}

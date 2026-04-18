@@ -124,6 +124,14 @@ describe('AlertsConsole (wired via QueryClient + ApiProvider)', () => {
         throw new Error('not used');
       }),
       deleteUserData: vi.fn(async () => ({ deletedEvents: 0 })),
+      fetchSettings: vi.fn(async () => {
+        throw new Error('not used');
+      }),
+      patchSettings: vi.fn(async () => {
+        throw new Error('not used');
+      }),
+      rotateWsToken: vi.fn(async () => ({ wsTokenMasked: null, wsTokenSet: false })),
+      resetDatabase: vi.fn(async () => ({ ok: true as const, deleted: {} })),
     };
   }
 

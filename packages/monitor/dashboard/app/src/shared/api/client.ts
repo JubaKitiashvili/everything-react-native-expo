@@ -2,6 +2,8 @@ import type {
   AlertRuleRecord,
   BugReportRecord,
   CrashGroupRecord,
+  DashboardResetResult,
+  DashboardSettings,
   EventListFilter,
   EventRecord,
   ResolvedFrame,
@@ -79,6 +81,10 @@ export interface DashboardApiClient {
   fetchUserSummary(userId: string): Promise<UserDataSummary>;
   exportUserData(userId: string): Promise<UserDataExport>;
   deleteUserData(userId: string): Promise<{ deletedEvents: number }>;
+  fetchSettings(): Promise<DashboardSettings>;
+  patchSettings(patch: { retentionDays?: number }): Promise<DashboardSettings>;
+  rotateWsToken(): Promise<{ wsTokenMasked: string | null; wsTokenSet: boolean }>;
+  resetDatabase(): Promise<DashboardResetResult>;
 }
 
 export interface CreateApiClientOptions {
@@ -250,6 +256,27 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
         'DELETE',
       );
       return { deletedEvents: response.deletedEvents };
+    },
+    async fetchSettings() {
+      const { settings } = await getJson<{ settings: DashboardSettings }>('/api/settings');
+      return settings;
+    },
+    async patchSettings(patch) {
+      const { settings } = await sendJson<{ settings: DashboardSettings }>(
+        '/api/settings',
+        'PATCH',
+        patch,
+      );
+      return settings;
+    },
+    async rotateWsToken() {
+      return sendJson<{ wsTokenMasked: string | null; wsTokenSet: boolean }>(
+        '/api/settings/rotate-token',
+        'POST',
+      );
+    },
+    async resetDatabase() {
+      return sendJson<DashboardResetResult>('/api/settings/reset', 'POST');
     },
   };
 }

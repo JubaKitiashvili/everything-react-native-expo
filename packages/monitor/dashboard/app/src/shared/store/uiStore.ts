@@ -3,6 +3,8 @@ import type { Severity } from '../api/types';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'closed' | 'error';
 
+export type ThemePreference = 'dark' | 'light' | 'system';
+
 export interface EventTypeFilter {
   crash: boolean;
   anr: boolean;
@@ -26,6 +28,7 @@ export interface UiStoreState {
   filters: UiFilters;
   realtimeStatus: RealtimeStatus;
   realtimeError: string | null;
+  theme: ThemePreference;
   setSelectedSession: (id: string | null) => void;
   setSelectedEvent: (id: string | null) => void;
   setSelectedCrashFingerprint: (fp: string | null) => void;
@@ -34,6 +37,7 @@ export interface UiStoreState {
   setSearch: (search: string) => void;
   resetFilters: () => void;
   setRealtimeStatus: (status: RealtimeStatus, error?: string | null) => void;
+  setTheme: (theme: ThemePreference) => void;
 }
 
 const DEFAULT_TYPE_FILTER: EventTypeFilter = {
@@ -74,6 +78,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
   },
   realtimeStatus: 'idle',
   realtimeError: null,
+  theme: 'system',
   setSelectedSession: (id) => set({ selectedSessionId: id }),
   setSelectedEvent: (id) => set({ selectedEventId: id }),
   setSelectedCrashFingerprint: (fp) => set({ selectedCrashFingerprint: fp }),
@@ -102,6 +107,7 @@ export const useUiStore = create<UiStoreState>((set) => ({
     }),
   setRealtimeStatus: (realtimeStatus, realtimeError = null) =>
     set({ realtimeStatus, realtimeError }),
+  setTheme: (theme) => set({ theme }),
 }));
 
 /**
@@ -121,6 +127,7 @@ export function resetUiStore(): void {
     },
     realtimeStatus: 'idle',
     realtimeError: null,
+    theme: 'system',
   });
 }
 
