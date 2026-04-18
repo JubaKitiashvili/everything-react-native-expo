@@ -8,6 +8,7 @@ import { NetworkWaterfall } from './panels/NetworkWaterfall';
 import { BreadcrumbTimeline } from './panels/BreadcrumbTimeline';
 import { AIInsights } from './panels/AIInsights';
 import { AlertsConsole } from './panels/AlertsConsole';
+import { DORA } from './panels/DORA';
 import styles from './App.module.css';
 
 export function App() {
@@ -43,6 +44,7 @@ export function App() {
         </section>
 
         <LiveFeed />
+        <DORA />
         <Performance />
         <AIInsights />
         <ANRInspector />
