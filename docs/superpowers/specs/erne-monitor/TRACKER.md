@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (12/25)
-**Active Task:** Task 104 — AI Insights (fix success rate, MTTR, pattern hits)
-**Overall Progress:** 103/124 tasks (Phases 1a–5 ✅ · Phase 6 12/25 · Phase 7 0/8) · 1152 SDK tests + 116 dashboard-app tests + 27 dashboard-server tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (13/25)
+**Active Task:** Task 105 — Alerts Console (rule editor + history + cooldown)
+**Overall Progress:** 104/124 tasks (Phases 1a–5 ✅ · Phase 6 13/25 · Phase 7 0/8) · 1152 SDK tests + 126 dashboard-app tests + 27 dashboard-server tests passing
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 12/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 13/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -112,7 +112,7 @@
 | 101 | ANR Inspector (histogram + stack + screen + recurrence) | ⬜ | — | — | — |
 | 102 | Network Waterfall (per-session timeline + slow/errored highlight) | ⬜ | — | — | — |
 | 103 | Breadcrumb Timeline (crash-embedded or session-backed, icon per category, last 100) | ✅ | See commit d0279ae — extract.ts + icons.ts + vertical-spine UI; container prefers selectedCrashFingerprint, falls back to selectedSessionId's recent events | ✅ 7 (extract 4 + panel 3) | ✅ — 116/116 vitest green |
-| 104 | AI Insights (fix success rate, MTTR, pattern hits) | ⬜ | — | — | — |
+| 104 | AI Insights (fix success rate + agent-vs-human MTTR + top pattern hits + confidence trend) | ✅ | dashboard/app/src/panels/AIInsights/{AIInsights.tsx, AIInsights.module.css, AIInsights.test.tsx, ConfidenceTrend.tsx+.module.css, PatternList.tsx+.module.css, aggregate.ts, aggregate.test.ts, index.ts}; modified src/App.tsx (wires AIInsights below Performance). Pure `aggregate.ts`: computeFixSuccessRate splits crash groups into resolved-with-AI / suggested-but-unresolved / no-suggestion and computes rate over AI-assisted cohort only (null when no AI groups exist); computeMttr approximates time-to-resolution as `lastSeen-firstSeen` for resolved groups, bucketed agent-vs-human by aiSuggestion presence; topPatternHits merges `pattern_match` events + `group.aiSuggestion.pattern`, counts + tracks average confidence, normalises 0–100 confidences to 0–1 via clampUnit, sorts by count then recency; extractConfidenceSeries pulls ai_suggestion + pattern_match confidence samples, sorts ascending. formatMttr chooses a human-readable unit (s/min/h/d); formatPercent rounds to integer %. ConfidenceTrend renders the sparkline with a dashed average reference; PatternList shows inline % tracks. Four-card grid: agent fix success (big %), MTTR agent vs human, top patterns, confidence trend. Container/view split for providerless tests. | ✅ 10 new (aggregate 8: success rate split + null case, MTTR cohorts + null case, pattern merge + 0–100 normalisation, confidence filter + sort, formatMttr tiers, formatPercent; AIInsights 2: empty placeholders across all cells, populated integration covering all four cards) — plan asked +4 | ✅ — `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test` 126/126 green in 4.00s across 28 suites, `npm run build` emits 291 KB JS + 45 KB CSS. Fixed duplicate aria-label (inner pattern list vs outer section) by renaming to "Pattern hits list". SDK + server still green. |
 | 105 | Alerts Console (rule editor + history + cooldown) | ⬜ | — | — | — |
 | 106 | DORA Metrics (MTTR/CFR/Deploy Freq/Lead Time) | ⬜ | — | — | — |
 | 107 | Bug Reports Inbox (shake-submitted) | ⬜ | — | — | — |
