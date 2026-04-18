@@ -7,6 +7,7 @@ import { ANRInspector } from './panels/ANRInspector';
 import { NetworkWaterfall } from './panels/NetworkWaterfall';
 import { BreadcrumbTimeline } from './panels/BreadcrumbTimeline';
 import { AIInsights } from './panels/AIInsights';
+import { AlertsConsole } from './panels/AlertsConsole';
 import styles from './App.module.css';
 
 export function App() {
@@ -48,6 +49,7 @@ export function App() {
         <NetworkWaterfall />
         <CrashExplorer />
         <BreadcrumbTimeline />
+        <AlertsConsole />
         <SessionReplay />
       </main>
     </div>

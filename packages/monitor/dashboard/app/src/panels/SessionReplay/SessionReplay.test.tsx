@@ -25,6 +25,11 @@ function makeApi(
     }),
     fetchCrashGroups: vi.fn(async () => []),
     fetchAlertRules: vi.fn(async () => []),
+    saveAlertRule: vi.fn(async () => {
+      throw new Error('not used');
+    }),
+    deleteAlertRule: vi.fn(async () => undefined),
+    fetchAlertHistory: vi.fn(async () => []),
     fetchBugReports: vi.fn(async () => []),
     ...overrides,
   };

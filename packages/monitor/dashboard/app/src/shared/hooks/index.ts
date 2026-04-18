@@ -11,4 +11,5 @@ export type { UseEventsOptions } from './useEvents';
 export { useSessions } from './useSessions';
 export { useCrashGroups } from './useCrashGroups';
 export { useAlerts } from './useAlerts';
+export { useAlertHistory, alertHistoryQueryKey } from './useAlertHistory';
 export { useBugReports } from './useBugReports';

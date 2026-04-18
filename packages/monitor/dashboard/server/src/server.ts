@@ -2,10 +2,57 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
 import type { EventListFilter } from './storage/types.js';
 import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
+
+interface AlertRuleInput {
+  id?: string;
+  name?: string;
+  metric?: string;
+  threshold?: number;
+  windowSeconds?: number;
+  channels?: unknown[];
+  cooldownSeconds?: number;
+  enabled?: boolean;
+  createdAt?: number;
+}
+
+function generateRuleId(): string {
+  return `rule_${randomUUID()}`;
+}
+
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    const MAX_BYTES = 128 * 1024;
+    req.on('data', (chunk: Buffer) => {
+      total += chunk.length;
+      if (total > MAX_BYTES) {
+        rejectBody(new Error('request body too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      const text = Buffer.concat(chunks).toString('utf8');
+      if (text.length === 0) {
+        resolveBody({});
+        return;
+      }
+      try {
+        resolveBody(JSON.parse(text) as unknown);
+      } catch (err) {
+        rejectBody(err as Error);
+      }
+    });
+    req.on('error', rejectBody);
+  });
+}
 
 export interface DashboardServerOptions {
   port?: number;
@@ -153,6 +200,61 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       if (req.method === 'GET' && pathname === '/api/alert-rules') {
         const rules = store.listAlertRules();
         sendJson(res, 200, { rules });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/alert-rules') {
+        void readJsonBody(req)
+          .then((body) => {
+            const rule = body as AlertRuleInput;
+            if (!rule || typeof rule !== 'object') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const now = Date.now();
+            const saved = {
+              id: rule.id ?? generateRuleId(),
+              name: String(rule.name ?? 'Unnamed rule'),
+              metric: String(rule.metric ?? 'crash_count'),
+              threshold: Number(rule.threshold ?? 0),
+              windowSeconds: Number(rule.windowSeconds ?? 60),
+              channels: Array.isArray(rule.channels)
+                ? rule.channels.filter((c): c is string => typeof c === 'string')
+                : [],
+              cooldownSeconds: Number(rule.cooldownSeconds ?? 300),
+              enabled: rule.enabled !== false,
+              createdAt: rule.createdAt ?? now,
+              updatedAt: now,
+            };
+            store.saveAlertRule(saved);
+            sendJson(res, 200, { rule: saved });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      if (req.method === 'DELETE' && pathname.startsWith('/api/alert-rules/')) {
+        const id = pathname.slice('/api/alert-rules/'.length);
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        store.deleteAlertRule(id);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/alert-history') {
+        const limitParam = requestUrl.searchParams.get('limit');
+        const ruleId = requestUrl.searchParams.get('ruleId');
+        const firings = store.listAlertHistory({
+          ...(ruleId ? { ruleId } : {}),
+          ...(limitParam ? { limit: Math.min(500, Number(limitParam)) } : {}),
+        });
+        sendJson(res, 200, { firings });
         return;
       }
 
