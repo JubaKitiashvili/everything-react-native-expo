@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (24/25)
-**Active Task:** Task 116 — Onboarding flow
-**Overall Progress:** 115/124 tasks (Phases 1a–5 ✅ · Phase 6 24/25 · Phase 7 0/8) · 1160 SDK tests + 182 dashboard-app (vitest) + 17 dashboard-app (playwright) + 42 dashboard-server tests passing
+**Current Phase:** Phase 7 — Launch (0/8)
+**Active Task:** Task 117 — npm publish prep
+**Overall Progress:** 116/124 tasks (Phases 1a–6 ✅ · Phase 7 0/8) · 1160 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 42 dashboard-server tests passing
 _2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing-id DELETE, resetAllUserData allowlist, query-key factory for settings, DeviceCard memo + useMemo, theme → localStorage, userId filename sanitise. +4 server store tests + 1 resolver R8 test + 1 uiStore setTheme test._
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
@@ -23,7 +23,7 @@ _2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 24/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -130,7 +130,7 @@ _2026-04-18 audit sweep after tasks 109–113: R8 mapping regex, 404s on missing
 |---|------|--------|---------------|-------|------------|
 | 114 | Dashboard CLI (`npx @erne/monitor dashboard`) | ✅ | 2026-04-18 | cli/dashboard.ts with injectable launcher/browser/signal deps; tsconfig.cli + finalize-cli script; `bin` entry = `erne-monitor`; verify-declaration-maps skips dist/cli. 8 new tests. 1160 SDK + 182 app + 42 server tests | — |
 | 115 | Playwright e2e (17 panels + reconnect + keyboard nav) | ✅ | 2026-04-18 | @playwright/test@1.59; tsconfig.e2e.json; start-server.mjs spins seeded store + serves built /public; 17 spec files, all 17 green in 7.4s on chromium | — |
-| 116 | Onboarding flow (first-time UX + sample data + quickstart) | ⬜ | — | — | — |
+| 116 | Onboarding flow (first-time UX + sample data + quickstart) | ✅ | 2026-04-18 | POST /api/demo/seed endpoint + seedDemoData helper; Onboarding panel auto-hides once sessionCount > 0; "Generate sample events" invalidates all queries. +3 tests. 1160 SDK + 185 app + 17 playwright + 42 server green. **Phase 6 DONE.** | — |
 
 ---
 

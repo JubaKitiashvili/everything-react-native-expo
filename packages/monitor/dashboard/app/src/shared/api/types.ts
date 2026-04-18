@@ -153,3 +153,15 @@ export interface DashboardResetResult {
   ok: true;
   deleted: Record<string, number>;
 }
+
+export interface DemoSeedResult {
+  ok: true;
+  seeded: {
+    sessions: number;
+    events: number;
+    crashGroups: number;
+    bugReports: number;
+    alertRules: number;
+    symbolFiles: number;
+  };
+}

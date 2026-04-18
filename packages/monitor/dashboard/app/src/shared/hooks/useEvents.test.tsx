@@ -57,6 +57,17 @@ function makeApi(overrides: Partial<DashboardApiClient> = {}): DashboardApiClien
     }),
     rotateWsToken: vi.fn(async () => ({ wsTokenMasked: null, wsTokenSet: false })),
     resetDatabase: vi.fn(async () => ({ ok: true as const, deleted: {} })),
+    generateSampleData: vi.fn(async () => ({
+      ok: true as const,
+      seeded: {
+        sessions: 0,
+        events: 0,
+        crashGroups: 0,
+        bugReports: 0,
+        alertRules: 0,
+        symbolFiles: 0,
+      },
+    })),
     ...overrides,
   };
 }

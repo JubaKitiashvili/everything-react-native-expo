@@ -16,6 +16,7 @@ import { Symbolication } from './panels/Symbolication';
 import { ReplayMasker } from './panels/ReplayMasker';
 import { ConsentPrivacy } from './panels/ConsentPrivacy';
 import { Settings } from './panels/Settings';
+import { Onboarding } from './panels/Onboarding';
 import styles from './App.module.css';
 
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
       </header>
 
       <main className={styles.main}>
+        <Onboarding />
         <section className={styles.tiles}>
           <Tile
             label="Crashes / 24h"

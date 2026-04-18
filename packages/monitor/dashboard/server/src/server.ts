@@ -4,6 +4,7 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
+import { seedDemoData } from './demo/seed.js';
 import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js';
 import type {
   EventListFilter,
@@ -418,6 +419,12 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       if (req.method === 'POST' && pathname === '/api/settings/reset') {
         const counts = store.resetAllUserData();
         sendJson(res, 200, { ok: true, deleted: counts });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/demo/seed') {
+        const counts = seedDemoData(store, Date.now());
+        sendJson(res, 200, { ok: true, seeded: counts });
         return;
       }
 

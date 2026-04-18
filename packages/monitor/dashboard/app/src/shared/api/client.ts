@@ -4,6 +4,7 @@ import type {
   CrashGroupRecord,
   DashboardResetResult,
   DashboardSettings,
+  DemoSeedResult,
   EventListFilter,
   EventRecord,
   ResolvedFrame,
@@ -85,6 +86,7 @@ export interface DashboardApiClient {
   patchSettings(patch: { retentionDays?: number }): Promise<DashboardSettings>;
   rotateWsToken(): Promise<{ wsTokenMasked: string | null; wsTokenSet: boolean }>;
   resetDatabase(): Promise<DashboardResetResult>;
+  generateSampleData(): Promise<DemoSeedResult>;
 }
 
 export interface CreateApiClientOptions {
@@ -277,6 +279,9 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
     },
     async resetDatabase() {
       return sendJson<DashboardResetResult>('/api/settings/reset', 'POST');
+    },
+    async generateSampleData() {
+      return sendJson<DemoSeedResult>('/api/demo/seed', 'POST');
     },
   };
 }
