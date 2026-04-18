@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-18
-**Current Phase:** Phase 6 — Dashboard v2 Production UI (19/25)
-**Active Task:** Task 111 — Replay Masker Config (PII rules + live preview)
-**Overall Progress:** 110/124 tasks (Phases 1a–5 ✅ · Phase 6 19/25 · Phase 7 0/8) · 1152 SDK tests + 169 dashboard-app tests + 37 dashboard-server tests passing
+**Current Phase:** Phase 6 — Dashboard v2 Production UI (20/25)
+**Active Task:** Task 112 — Consent & Privacy (DSAR UI)
+**Overall Progress:** 111/124 tasks (Phases 1a–5 ✅ · Phase 6 20/25 · Phase 7 0/8) · 1152 SDK tests + 175 dashboard-app tests + 37 dashboard-server tests passing
 **Plan:** See `PHASE-5-6-7-PLAN.md` (approved 2026-04-17)
 
 ---
@@ -22,7 +22,7 @@
 | 3 Backend | 9/9 | ✅ Done | production backend |
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
-| 6 Dashboard v2 | 19/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
+| 6 Dashboard v2 | 20/25 | 🛠 In progress | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
 | 7 Launch | 0/8 | ⬜ Blocked on 6 | npm + docs site + demo video + launch posts |
 
 ---
@@ -119,7 +119,7 @@
 | 108 | Pattern Library Browser (20 built-in + learned patterns + confidence decay + threshold slider) | ✅ | dashboard/app/src/panels/PatternLibrary/{PatternLibrary.tsx, PatternLibrary.module.css, PatternLibrary.test.tsx, PatternRow.tsx+.module.css, aggregate.ts, aggregate.test.ts, catalog.ts, index.ts}; modified src/App.tsx (wires PatternLibrary between AIInsights and ANRInspector). `catalog.ts` bakes in the 20 canonical React Native patterns across crash/perf/ux/a11y/lifecycle categories (cannot-read-property, unhandled-rejection, server-5xx, network-timeout, oversized-image, render-storm, wasted-activity-render, long-js-task, slow-fabric-commit, slow-suspense-fallback, memory-pressure, asyncstorage-pressure, rage-tap, dead-zone, frustration-scroll, keyboard-covers-input, missing-a11y-label, low-contrast, background-activity-leak, startup-long-native-init). `aggregate.ts`: buildPatternRows seeds from catalog, merges pattern_match events + group.aiSuggestion.pattern (IDs missing from catalog become learned rows), normalises 0–100 confidences to 0–1, applies recency decay (default 7-day half-life), sorts by matchCount then confidence then name. computeDecayedConfidence exported for future slider-driven half-life tuning. PatternLibraryView holds threshold + learned-only UI state; threshold slider hides matched rows below the bar (unmatched built-ins stay visible unless the user asks for learned-only). PatternRow renders category + learned pills, description, ×N matches, last-matched Timestamp, confidence bar with percent. | ✅ 8 new (aggregate 5: empty-catalog seed, merge + sort + decay check, learned detection, decay zero-case, decay half-life math; panel 3: all-built-ins render, threshold slider hides rows, learned-only checkbox filters) — plan asked +3 | ✅ — `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test` 157/157 green in 9.25s across 34 suites, `npm run build` emits 324 KB JS + 62 KB CSS. SDK + server still green. |
 | 109 | Device Switcher (multi-device sessions) | ✅ | 2026-04-18 | Device fingerprint rollup + card grid; clicking a session syncs uiStore.selectedSessionId. 1152 SDK + 164 app + 33 server tests green | — |
 | 110 | Symbolication Upload (dSYM + ProGuard) | ✅ | 2026-04-18 | v2 migration for symbol_files; 4 new REST endpoints; pure ProGuard resolver + panel with upload / history rollup / resolver preview. 1152 SDK + 169 app + 37 server tests green | — |
-| 111 | Replay Masker Config (PII rules + live preview) | ⬜ | — | — | — |
+| 111 | Replay Masker Config (PII rules + live preview) | ✅ | 2026-04-18 | Pure applyMaskRules + ReplayMasker panel w/ regex editor, secureTextEntry toggle, live demo preview. 1152 SDK + 175 app + 37 server tests | — |
 | 112 | Consent & Privacy (DSAR UI) | ⬜ | — | — | — |
 | 113 | Settings (retention, theme, port, auth, reset) | ⬜ | — | — | — |
 

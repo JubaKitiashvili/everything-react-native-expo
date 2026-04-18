@@ -13,6 +13,7 @@ import { BugReportsInbox } from './panels/BugReportsInbox';
 import { PatternLibrary } from './panels/PatternLibrary';
 import { DeviceSwitcher } from './panels/DeviceSwitcher';
 import { Symbolication } from './panels/Symbolication';
+import { ReplayMasker } from './panels/ReplayMasker';
 import styles from './App.module.css';
 
 export function App() {
@@ -61,6 +62,7 @@ export function App() {
         <AlertsConsole />
         <BugReportsInbox />
         <SessionReplay />
+        <ReplayMasker />
       </main>
     </div>
   );
