@@ -24,6 +24,12 @@ export { JSPlatformBridge } from './core/JSPlatformBridge';
 export type { JSPlatformBridgeDeps } from './core/JSPlatformBridge';
 export { SignalBus } from './core/SignalBus';
 export type { MonitorEventHandler } from './core/SignalBus';
+export { CrashLoopGuard, MemoryCrashLoopPersistence } from './core/CrashLoopGuard';
+export type {
+  CrashLoopState,
+  CrashLoopPersistence,
+  CrashLoopGuardOptions,
+} from './core/CrashLoopGuard';
 export {
   EventStore,
   MemoryEventStoreBackend,

@@ -4,6 +4,11 @@ import { defineMonitorConfig } from './Config';
 import { SignalBus } from './SignalBus';
 import { SessionManager, type AppStateLike } from './SessionManager';
 import {
+  CrashLoopGuard,
+  MemoryCrashLoopPersistence,
+  type CrashLoopPersistence,
+} from './CrashLoopGuard';
+import {
   EventStore,
   MemoryEventStoreBackend,
   type EventStoreBackend,
@@ -134,6 +139,19 @@ export interface MonitorRuntimeDeps {
    * Pass `null` to opt out entirely (useful for snapshots).
    */
   nativeModuleLoader?: NativeModuleLoader | null;
+  /**
+   * Task 117.47 — crash loop guard config. When omitted, the guard
+   * runs with an in-memory persistence (catches in-session loops,
+   * resets on relaunch). Production apps inject a backend that
+   * survives restarts (AsyncStorage / expo-file-system / native
+   * shared-prefs).
+   */
+  crashLoopPersistence?: CrashLoopPersistence | null;
+  crashLoop?: {
+    threshold?: number;
+    windowMs?: number;
+    resetAfterMs?: number;
+  };
 }
 
 export interface MonitorRuntime {
@@ -171,6 +189,7 @@ export interface MonitorRuntime {
   signalRouter: SignalRouter;
   terminalReporter: TerminalReporter;
   dashboardBridge: DashboardBridge | null;
+  crashLoopGuard: CrashLoopGuard;
   native: ErneMonitorNative;
   nativeCrashGateway: NativeCrashGateway;
   anrGateway: ANRGateway;
@@ -285,6 +304,28 @@ export async function createMonitorRuntime(
   const session = new SessionManager({
     appState: deps.appState,
   });
+
+  // Task 117.47 — crash loop guard. Hydrated BEFORE any collector runs
+  // so a previously-tripped guard can short-circuit startup. Tests opt
+  // out entirely by passing `crashLoopPersistence: null` so we don't
+  // cross-contaminate state via a module-level singleton.
+  const crashLoopPersistence =
+    deps.crashLoopPersistence === null
+      ? null
+      : (deps.crashLoopPersistence ?? new MemoryCrashLoopPersistence());
+  const crashLoopGuard = new CrashLoopGuard({
+    persistence: crashLoopPersistence ?? new MemoryCrashLoopPersistence(),
+    ...(deps.crashLoop?.threshold !== undefined
+      ? { threshold: deps.crashLoop.threshold }
+      : {}),
+    ...(deps.crashLoop?.windowMs !== undefined
+      ? { windowMs: deps.crashLoop.windowMs }
+      : {}),
+    ...(deps.crashLoop?.resetAfterMs !== undefined
+      ? { resetAfterMs: deps.crashLoop.resetAfterMs }
+      : {}),
+  });
+  await crashLoopGuard.hydrate();
 
   const sanitizer = new Sanitizer(deps.sanitizerOptions);
   const enricher = new Enricher({
@@ -714,6 +755,7 @@ export async function createMonitorRuntime(
     signalRouter,
     terminalReporter,
     dashboardBridge,
+    crashLoopGuard,
     native,
     nativeCrashGateway,
     anrGateway,
@@ -795,6 +837,26 @@ export async function createMonitorRuntime(
 }
 
 export function startMonitorRuntime(runtime: MonitorRuntime): void {
+  // Task 117.47 — honor a tripped crash loop guard. If the previous
+  // launches hit `threshold` crashes within `windowMs`, skip every
+  // collector and just announce the trip. The developer sees the
+  // `crash_loop_detected` event (via TerminalReporter + dashboard) and
+  // knows why monitoring is off. `reset()` via admin UI or a fresh
+  // install clears the trip.
+  if (runtime.crashLoopGuard.isTripped()) {
+    runtime.terminalReporter.start();
+    runtime.dashboardBridge?.start();
+    runtime.crashLoopGuard.announceTripped(
+      runtime.bus,
+      runtime.session.getCurrentSessionId(),
+    );
+    return;
+  }
+
+  // Keep the guard attached so a crash LATER in this session still
+  // increments the counter and can trip on the NEXT launch.
+  runtime.crashLoopGuard.attachToBus(runtime.bus);
+
   runtime.client.start();
   runtime.terminalReporter.start();
   runtime.dashboardBridge?.start();
