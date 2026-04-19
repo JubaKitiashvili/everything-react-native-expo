@@ -256,7 +256,11 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   const websocket =
     options.enableWebsocket === false
       ? null
-      : new IngestWebSocketHandler({ store, ...(options.websocket ?? {}) });
+      : new IngestWebSocketHandler({
+          store,
+          apiKey: requiredApiKey,
+          ...(options.websocket ?? {}),
+        });
 
   const resolveRetentionDays = (): number => {
     const raw = store.getSetting('retention_days');

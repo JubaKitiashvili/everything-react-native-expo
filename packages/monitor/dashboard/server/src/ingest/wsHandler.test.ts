@@ -38,6 +38,7 @@ function makeHandler(
     maxEventsPerWindow?: number;
     rateWindowMs?: number;
     maxMessageBytes?: number;
+    apiKey?: string | null;
   } = {},
 ): IngestWebSocketHandler {
   return new IngestWebSocketHandler({
@@ -361,5 +362,87 @@ describe('IngestWebSocketHandler', () => {
     expect(frame.message).toMatch(/too large/);
     queue.stop();
     sdk.close();
+  });
+});
+
+describe('subscribe API-key gate (Task 117.101)', () => {
+  function awaitHttpReject(ws: WebSocket): Promise<number> {
+    return new Promise((resolve, reject) => {
+      ws.once('unexpected-response', (_req, res) => {
+        resolve(res.statusCode ?? 0);
+      });
+      ws.once('open', () => reject(new Error('expected reject, got open')));
+      ws.once('error', () => {
+        /* ignore — unexpected-response already resolved */
+      });
+    });
+  }
+
+  test('no apiKey configured → subscribers connect freely (dev default)', async () => {
+    const ctx = await openServerWithHandler();
+    try {
+      const sub = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}`);
+      await waitOpen(sub);
+      sub.close();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('apiKey configured + no token → upgrade rejected with 401', async () => {
+    const ctx = await openServerWithHandler({ apiKey: 'secret-xyz' });
+    try {
+      const sub = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}`);
+      const status = await awaitHttpReject(sub);
+      expect(status).toBe(401);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('apiKey configured + wrong key → upgrade rejected with 401', async () => {
+    const ctx = await openServerWithHandler({ apiKey: 'secret-xyz' });
+    try {
+      const sub = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}?apiKey=wrong`);
+      const status = await awaitHttpReject(sub);
+      expect(status).toBe(401);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('apiKey configured + correct query param → connects successfully', async () => {
+    const ctx = await openServerWithHandler({ apiKey: 'secret-xyz' });
+    try {
+      const sub = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}?apiKey=secret-xyz`);
+      await waitOpen(sub);
+      sub.close();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('apiKey configured + correct Bearer header → connects successfully', async () => {
+    const ctx = await openServerWithHandler({ apiKey: 'secret-xyz' });
+    try {
+      const sub = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}`, {
+        headers: { authorization: 'Bearer secret-xyz' },
+      });
+      await waitOpen(sub);
+      sub.close();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('apiKey gate does NOT apply to /ws/ingest (SDKs have no dashboard key)', async () => {
+    const ctx = await openServerWithHandler({ apiKey: 'secret-xyz' });
+    try {
+      const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+      await waitOpen(sdk);
+      sdk.close();
+    } finally {
+      await ctx.close();
+    }
   });
 });

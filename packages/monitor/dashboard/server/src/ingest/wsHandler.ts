@@ -1,6 +1,6 @@
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { Server } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import type { IncomingMessage, Server } from 'node:http';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import type { DashboardStore } from '../storage/sqliteStore.js';
 import type { EventRecord, SessionRecord, Severity, CrashGroupRecord } from '../storage/types.js';
 import { computeFallbackFingerprint } from './fingerprint.js';
@@ -20,6 +20,19 @@ export type IngestWsHandlerOptions = {
   maxMessageBytes?: number;
   /** Logger hook; defaults to console on server-side errors only. */
   onError?: (err: Error, context: string) => void;
+  /**
+   * API key guarding `/ws/subscribe` (Task 117.101). When set, every
+   * subscriber must present the key as `?apiKey=<key>` (WebSocket API
+   * can't set arbitrary headers in browsers) or `Authorization: Bearer
+   * <key>` (Node/CLI clients). When null/undefined, no gate — matches
+   * the REST gate's dev-friendly default.
+   *
+   * The ingest path (`/ws/ingest`) is NOT gated by this key — SDKs in
+   * shipped apps don't have access to the operator's dashboard key.
+   * SDK-side auth uses the rotatable `ws_auth_token` setting and is
+   * gated by a separate task.
+   */
+  apiKey?: string | null;
 };
 
 type SdkMessage =
@@ -104,6 +117,7 @@ export class IngestWebSocketHandler {
   private readonly wss: WebSocketServer;
   private readonly subscribers = new Set<WebSocket>();
   private readonly sdkState = new WeakMap<WebSocket, SdkConnectionState>();
+  private readonly apiKey: string | null;
 
   readonly stats: IngestStats = { ingested: 0, rejected: 0, crashes: 0, broadcasts: 0 };
 
@@ -118,6 +132,7 @@ export class IngestWebSocketHandler {
       ((err, ctx) => {
         console.error(`[dashboard-server:${ctx}]`, err.message);
       });
+    this.apiKey = options.apiKey ?? null;
     this.wss = new WebSocketServer({ noServer: true });
   }
 
@@ -137,11 +152,33 @@ export class IngestWebSocketHandler {
         return;
       }
       if (url.pathname === SUBSCRIBE_PATH) {
+        // Task 117.101 — API-key gate on the live broadcast stream.
+        // Reject with 401 Upgrade rather than accept + close so the
+        // client knows the reason (a generic socket.destroy() looks
+        // like a transient network error).
+        if (this.apiKey && !this.authorizeSubscribe(req, url)) {
+          rejectUpgrade(socket, 401, 'unauthorized');
+          return;
+        }
         this.wss.handleUpgrade(req, socket, head, (ws) => this.onSubscribeConnection(ws));
         return;
       }
       socket.destroy();
     });
+  }
+
+  private authorizeSubscribe(req: IncomingMessage, url: URL): boolean {
+    if (!this.apiKey) return true;
+    const header = req.headers.authorization;
+    const fromHeader =
+      typeof header === 'string' ? /^Bearer\s+(.+)$/i.exec(header.trim())?.[1]?.trim() : undefined;
+    const fromQuery = url.searchParams.get('apiKey') ?? undefined;
+    const presented = fromHeader ?? fromQuery;
+    if (!presented) return false;
+    const a = Buffer.from(presented, 'utf8');
+    const b = Buffer.from(this.apiKey, 'utf8');
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
   }
 
   close(): void {
@@ -444,6 +481,24 @@ export class IngestWebSocketHandler {
       ws.send(JSON.stringify(msg));
     }
   }
+}
+
+function rejectUpgrade(
+  socket: { write: (data: string | Buffer) => boolean; destroy: () => void },
+  status: number,
+  statusText: string,
+): void {
+  const payload = JSON.stringify({ error: statusText });
+  const reason = status === 401 ? 'Unauthorized' : statusText;
+  socket.write(
+    `HTTP/1.1 ${status} ${reason}\r\n` +
+      'Content-Type: application/json; charset=utf-8\r\n' +
+      `Content-Length: ${Buffer.byteLength(payload)}\r\n` +
+      'Connection: close\r\n' +
+      '\r\n' +
+      payload,
+  );
+  socket.destroy();
 }
 
 function messageSize(raw: Buffer | ArrayBuffer | Buffer[]): number {
