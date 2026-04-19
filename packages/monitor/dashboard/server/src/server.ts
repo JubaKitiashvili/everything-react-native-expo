@@ -2,7 +2,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
 import { seedDemoData } from './demo/seed.js';
 import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js';
@@ -117,6 +117,22 @@ export interface DashboardServerOptions {
    * Ignored when `enableWebsocket === false`.
    */
   websocket?: Omit<IngestWsHandlerOptions, 'store'>;
+  /**
+   * API-key gate for `/api/*` endpoints (Task 117.61). When set, every
+   * non-public API call must present the key either as
+   * `Authorization: Bearer <key>` or `?apiKey=<key>`. When omitted, falls
+   * back to `process.env.ERNE_API_KEY`. When neither is set, no auth is
+   * enforced — the developer-friendly default for local dashboards.
+   *
+   * Public endpoints that bypass the gate (orchestrator probes must
+   * always succeed):
+   *   - GET /api/health    liveness
+   *   - GET /api/ready     readiness
+   *
+   * Static assets (the SPA bundle) are also public — they render the
+   * login shell that in turn presents the key.
+   */
+  apiKey?: string | null;
 }
 
 export interface DashboardServerHandle {
@@ -152,6 +168,31 @@ function defaultPublicDir(): string {
   // either way the static assets built by `dashboard/app` land in `../public/`.
   const here = fileURLToPath(import.meta.url);
   return resolve(here, '..', '..', '..', 'public');
+}
+
+/**
+ * Public API paths that bypass the API-key gate. Liveness and readiness
+ * probes MUST always respond or an orchestrator will mark the pod
+ * unhealthy and restart it on a key mismatch loop.
+ */
+const PUBLIC_API_PATHS = new Set(['/api/health', '/api/ready']);
+
+function constantTimeEquals(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+function extractApiKey(req: IncomingMessage, url: URL): string | null {
+  const header = req.headers.authorization;
+  if (typeof header === 'string') {
+    const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+    if (match?.[1]) return match[1].trim();
+  }
+  const query = url.searchParams.get('apiKey');
+  if (query && query.length > 0) return query;
+  return null;
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -202,6 +243,16 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   const store =
     options.store ?? new DashboardStore({ dbPath: options.dbPath ?? defaultDashboardDbPath() });
 
+  // Resolve the required API key once at startup. Explicit null disables
+  // the gate even when the env var is set (useful for tests and local
+  // reproductions of production incidents).
+  const requiredApiKey =
+    options.apiKey === null
+      ? null
+      : options.apiKey !== undefined
+        ? options.apiKey
+        : (process.env.ERNE_API_KEY ?? null);
+
   const websocket =
     options.enableWebsocket === false
       ? null
@@ -238,6 +289,21 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     const pathname = requestUrl.pathname;
 
     try {
+      // Task 117.61 — API-key gate. Enforced only when a key is
+      // configured, only on `/api/*` paths, and always skipped for
+      // liveness/readiness probes so orchestrators can reach them.
+      if (requiredApiKey && pathname.startsWith('/api/') && !PUBLIC_API_PATHS.has(pathname)) {
+        const presented = extractApiKey(req, requestUrl);
+        if (!presented) {
+          sendJson(res, 401, { error: 'missing_auth' });
+          return;
+        }
+        if (!constantTimeEquals(presented, requiredApiKey)) {
+          sendJson(res, 401, { error: 'unauthorized' });
+          return;
+        }
+      }
+
       if (req.method === 'GET' && pathname === '/api/health') {
         sendJson(res, 200, {
           ...store.selfCheck(),

@@ -267,3 +267,83 @@ describe('operational probes (Task 117.67 + 117.100)', () => {
     await handle.close();
   });
 });
+
+describe('API-key auth gate (Task 117.61)', () => {
+  async function openGuarded(apiKey: string): Promise<{
+    handle: DashboardServerHandle;
+    url: string;
+    close: () => Promise<void>;
+  }> {
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      apiKey,
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    return {
+      handle,
+      url: `http://127.0.0.1:${port}`,
+      close: () => handle.close(),
+    };
+  }
+
+  test('without a key, API endpoints remain open (dev default)', async () => {
+    const ctx = await openServer();
+    try {
+      const response = await fetch(`${ctx.url}/api/alert-rules`);
+      expect(response.status).toBe(200);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('with a key, /api/alert-rules requires auth', async () => {
+    const ctx = await openGuarded('secret-abc-123');
+    try {
+      const noAuth = await fetch(`${ctx.url}/api/alert-rules`);
+      expect(noAuth.status).toBe(401);
+      expect(((await noAuth.json()) as { error: string }).error).toBe('missing_auth');
+
+      const wrong = await fetch(`${ctx.url}/api/alert-rules`, {
+        headers: { authorization: 'Bearer wrong-key' },
+      });
+      expect(wrong.status).toBe(401);
+      expect(((await wrong.json()) as { error: string }).error).toBe('unauthorized');
+
+      const ok = await fetch(`${ctx.url}/api/alert-rules`, {
+        headers: { authorization: 'Bearer secret-abc-123' },
+      });
+      expect(ok.status).toBe(200);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('query param apiKey is accepted as a fallback', async () => {
+    const ctx = await openGuarded('secret-xyz');
+    try {
+      const ok = await fetch(`${ctx.url}/api/alert-rules?apiKey=secret-xyz`);
+      expect(ok.status).toBe(200);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('health + ready stay public even with a key configured', async () => {
+    const ctx = await openGuarded('secret-xyz');
+    try {
+      const health = await fetch(`${ctx.url}/api/health`);
+      expect(health.status).toBe(200);
+      const ready = await fetch(`${ctx.url}/api/ready`);
+      expect(ready.status).toBe(200);
+    } finally {
+      await ctx.close();
+    }
+  });
+});
