@@ -103,13 +103,32 @@ describe('DashboardStore — events', () => {
     expect(event?.payload).toEqual({ errors: ['a', 'b'], count: 2 });
   });
 
-  test('insertEventsBatch commits atomically (throwing aborts the whole batch)', () => {
+  test('insertEventsBatch collapses duplicate ids via INSERT OR IGNORE (Task 117.49)', () => {
     store = openInMemory();
-    const bad = makeEvent({ id: 'ok' });
-    const broken = makeEvent({ id: 'ok' }); // duplicate id but INSERT OR REPLACE makes it fine
-    store.insertEventsBatch([bad, broken]);
-    // REPLACE semantics means one row survives
+    const original = makeEvent({ id: 'ok', payload: { kept: true } });
+    const replay = makeEvent({ id: 'ok', payload: { kept: false } }); // retry with divergent payload
+    const result = store.insertEventsBatch([original, replay]);
+    expect(result.inserted).toBe(1);
+    expect(result.duplicates).toBe(1);
     expect(store.countEvents()).toBe(1);
+    // IGNORE semantics keep the first row — a late retry must not
+    // overwrite a valid event with a mutated replay.
+    const [row] = store.listEvents({ limit: 1 });
+    expect(row?.payload).toEqual({ kept: true });
+  });
+
+  test('insertEvent returns { inserted: false } on duplicate id', () => {
+    store = openInMemory();
+    expect(store.insertEvent(makeEvent({ id: 'x' })).inserted).toBe(true);
+    expect(store.insertEvent(makeEvent({ id: 'x' })).inserted).toBe(false);
+    expect(store.countEvents()).toBe(1);
+  });
+
+  test('hasEventId is true after insert, false otherwise', () => {
+    store = openInMemory();
+    expect(store.hasEventId('x')).toBe(false);
+    store.insertEvent(makeEvent({ id: 'x' }));
+    expect(store.hasEventId('x')).toBe(true);
   });
 
   test('listEvents filters by since/until/type/severity/session/user', () => {

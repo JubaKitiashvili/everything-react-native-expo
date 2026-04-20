@@ -1,6 +1,6 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { IncomingMessage, Server } from 'node:http';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { DashboardStore } from '../storage/sqliteStore.js';
 import type { EventRecord, SessionRecord, Severity, CrashGroupRecord } from '../storage/types.js';
 import { computeFallbackFingerprint } from './fingerprint.js';
@@ -84,6 +84,12 @@ export interface IngestStats {
   rejected: number;
   crashes: number;
   broadcasts: number;
+  /**
+   * Task 117.49 — count of events skipped because a row with the same
+   * id already existed. A retry flood should leave this growing while
+   * `ingested` stays flat.
+   */
+  deduplicated: number;
 }
 
 interface SdkConnectionState {
@@ -119,7 +125,13 @@ export class IngestWebSocketHandler {
   private readonly sdkState = new WeakMap<WebSocket, SdkConnectionState>();
   private readonly apiKey: string | null;
 
-  readonly stats: IngestStats = { ingested: 0, rejected: 0, crashes: 0, broadcasts: 0 };
+  readonly stats: IngestStats = {
+    ingested: 0,
+    rejected: 0,
+    crashes: 0,
+    broadcasts: 0,
+    deduplicated: 0,
+  };
 
   constructor(options: IngestWsHandlerOptions) {
     this.store = options.store;
@@ -356,8 +368,16 @@ export class IngestWebSocketHandler {
           ? computeFallbackFingerprint({ type: payload.type, severity, payload: body })
           : undefined;
 
+    // Task 117.49 — id must be stable across retries so the store's
+    // PK-based dedup can collapse them. Prefer the SDK-supplied id;
+    // otherwise derive a content hash so replaying the same payload
+    // yields the same row.
+    const id =
+      typeof payload.id === 'string' && payload.id.length > 0
+        ? payload.id
+        : deterministicEventId(payload.sessionId, payload.type, timestamp, body);
     const record: EventRecord = {
-      id: payload.id ?? randomUUID(),
+      id,
       type: payload.type,
       severity,
       sessionId: payload.sessionId,
@@ -373,7 +393,16 @@ export class IngestWebSocketHandler {
   }
 
   private persistAndBroadcast(event: EventRecord): void {
-    this.store.insertEvent(event);
+    const { inserted } = this.store.insertEvent(event);
+    if (!inserted) {
+      // Task 117.49 — duplicate id. The original row already bumped the
+      // session counter and fanned out to subscribers; re-doing any of
+      // that would double-count the event. Just record that we deduped
+      // and return — the ack path still completes so the SDK stops
+      // retrying.
+      this.stats.deduplicated += 1;
+      return;
+    }
     const isCrash = event.type === 'crash';
     this.store.bumpSessionCounters(event.sessionId, 1, isCrash ? 1 : 0);
     this.stats.ingested += 1;
@@ -604,18 +633,41 @@ function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
           ? 'warning'
           : 'info';
 
+    // Task 117.49 — deterministic id so the ingest dedup guard can
+    // collapse retries. The random-suffix id used here before made
+    // dedup impossible for the legacy protocol.
+    const finalPayload =
+      normalisedType === 'breadcrumb' ? { category: 'nav', ...payload } : payload;
     return {
       kind: 'event',
       event: {
-        id: `${sessionId}-${timestamp}-${Math.random().toString(36).slice(2, 8)}`,
+        id: deterministicEventId(sessionId, normalisedType, timestamp, finalPayload),
         type: normalisedType,
         severity,
         sessionId,
         timestamp,
-        payload: normalisedType === 'breadcrumb' ? { category: 'nav', ...payload } : payload,
+        payload: finalPayload,
       },
     };
   }
 
   return null;
+}
+
+/**
+ * Task 117.49 — derive a stable id from the event's content so two
+ * identical payloads (e.g., a client retry after the WS dropped) hash
+ * to the same id and collide on the events.id PK. Hash prefix is
+ * 16 hex chars — 2^64 address space is comfortably collision-free for
+ * a single tenant's event stream.
+ */
+function deterministicEventId(
+  sessionId: string,
+  type: string,
+  timestamp: number,
+  payload: unknown,
+): string {
+  const hash = createHash('sha1');
+  hash.update(`${sessionId}|${type}|${timestamp}|${JSON.stringify(payload ?? null)}`);
+  return `ev_${hash.digest('hex').slice(0, 16)}`;
 }

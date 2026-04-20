@@ -144,6 +144,7 @@ function expandIn(
 
 interface PreparedStatements {
   insertEvent: Statement;
+  hasEventId: Statement;
   getSession: Statement;
   upsertSession: Statement;
   endSession: Statement;
@@ -234,10 +235,16 @@ export class DashboardStore implements IMonitorStore {
   private prepare(): PreparedStatements {
     return {
       insertEvent: this.db.prepare(
-        `INSERT OR REPLACE INTO events
+        // Task 117.49 — idempotent insert. `OR IGNORE` keeps the original
+        // row when the id is already present so a retry flood produces
+        // zero duplicate rows, zero counter double-bumps, and zero
+        // duplicate broadcasts. Callers inspect `stmt.run().changes` to
+        // know whether the event was actually new.
+        `INSERT OR IGNORE INTO events
          (id, type, severity, session_id, fingerprint, timestamp, received_at, screen, platform, payload_json, user_id)
          VALUES (@id, @type, @severity, @sessionId, @fingerprint, @timestamp, @receivedAt, @screen, @platform, @payloadJson, @userId)`,
       ),
+      hasEventId: this.db.prepare('SELECT 1 FROM events WHERE id = ? LIMIT 1'),
       getSession: this.db.prepare('SELECT * FROM sessions WHERE id = ?'),
       upsertSession: this.db.prepare(
         `INSERT INTO sessions
@@ -342,8 +349,8 @@ export class DashboardStore implements IMonitorStore {
 
   // ------------------------------ Events ------------------------------
 
-  insertEvent(event: EventRecord): void {
-    this.statements.insertEvent.run({
+  insertEvent(event: EventRecord): { inserted: boolean } {
+    const result = this.statements.insertEvent.run({
       id: event.id,
       type: event.type,
       severity: event.severity,
@@ -356,13 +363,29 @@ export class DashboardStore implements IMonitorStore {
       payloadJson: JSON.stringify(event.payload),
       userId: event.userId ?? null,
     });
+    // Task 117.49 — `INSERT OR IGNORE` returns `changes=0` when the id
+    // collides with an existing row. Callers use this to increment the
+    // dedup stat and skip downstream side-effects (counter bump +
+    // broadcast).
+    return { inserted: result.changes > 0 };
   }
 
-  insertEventsBatch(events: EventRecord[]): void {
+  insertEventsBatch(events: EventRecord[]): { inserted: number; duplicates: number } {
+    let inserted = 0;
+    let duplicates = 0;
     const insertMany = this.db.transaction((batch: EventRecord[]) => {
-      for (const e of batch) this.insertEvent(e);
+      for (const e of batch) {
+        const res = this.insertEvent(e);
+        if (res.inserted) inserted += 1;
+        else duplicates += 1;
+      }
     });
     insertMany(events);
+    return { inserted, duplicates };
+  }
+
+  hasEventId(id: string): boolean {
+    return this.statements.hasEventId.get(id) !== undefined;
   }
 
   listEvents(filter: EventListFilter = {}): EventRecord[] {

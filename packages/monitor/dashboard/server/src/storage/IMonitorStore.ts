@@ -44,8 +44,17 @@ import type {
  */
 export interface IMonitorStore {
   // ------------------------------ Events ------------------------------
-  insertEvent(event: EventRecord): void;
-  insertEventsBatch(events: EventRecord[]): void;
+  /**
+   * Idempotent event insert. Returns `{ inserted: true }` when the row
+   * is new, `{ inserted: false }` when the id was already present — the
+   * ingest pipeline uses this to count duplicates (Task 117.49) and
+   * skip the downstream counter bump + broadcast for retries.
+   */
+  insertEvent(event: EventRecord): { inserted: boolean };
+  /** Batch equivalent — returns aggregate insert / duplicate counts. */
+  insertEventsBatch(events: EventRecord[]): { inserted: number; duplicates: number };
+  /** Fast PK probe used by the ingest dedup guard. */
+  hasEventId(id: string): boolean;
   listEvents(filter?: EventListFilter): EventRecord[];
   countEvents(filter?: EventListFilter): number;
 

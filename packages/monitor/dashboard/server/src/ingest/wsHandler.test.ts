@@ -446,3 +446,149 @@ describe('subscribe API-key gate (Task 117.101)', () => {
     }
   });
 });
+
+describe('ingest dedup (Task 117.49)', () => {
+  let ctx: Awaited<ReturnType<typeof openServerWithHandler>>;
+
+  beforeEach(async () => {
+    ctx = await openServerWithHandler({ now: () => 1_770_000_000_000 });
+  });
+
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('retry of the same event id collapses: one row, one broadcast, dedup counter bumped', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-a' } }));
+    await sdkQueue.next();
+
+    const dash = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}`);
+    const dashQueue = openMessageQueue(dash);
+    await waitOpen(dash);
+    await dashQueue.next(); // hello
+
+    const eventFrame = {
+      kind: 'event',
+      event: {
+        id: 'ev-stable-123',
+        type: 'custom',
+        severity: 'info',
+        sessionId: 'session-a',
+        timestamp: 1_770_000_000_100,
+        payload: { step: 'click' },
+      },
+    };
+    // Send the same event three times — simulating a reconnect-and-replay.
+    sdk.send(JSON.stringify(eventFrame));
+    sdk.send(JSON.stringify(eventFrame));
+    sdk.send(JSON.stringify(eventFrame));
+
+    // Only one broadcast should fan out to subscribers.
+    const first = JSON.parse(await dashQueue.next()) as { kind: string };
+    expect(first.kind).toBe('event');
+    await expect(dashQueue.next(100)).rejects.toThrow(/no message/);
+
+    expect(ctx.store.countEvents()).toBe(1);
+    expect(ctx.store.getSession('session-a')?.eventCount).toBe(1);
+    expect(ctx.handler.stats.ingested).toBe(1);
+    expect(ctx.handler.stats.deduplicated).toBe(2);
+
+    sdkQueue.stop();
+    dashQueue.stop();
+    sdk.close();
+    dash.close();
+  });
+
+  test('events with auto-generated ids dedup by deterministic content hash', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-a' } }));
+    await sdkQueue.next();
+
+    // No explicit id — the server derives one from sessionId/type/timestamp/payload.
+    // Sending the same content twice should collapse.
+    const frame = {
+      kind: 'event',
+      event: {
+        type: 'network',
+        severity: 'info',
+        sessionId: 'session-a',
+        timestamp: 1_770_000_000_100,
+        payload: { url: '/api/test', statusCode: 200 },
+      },
+    };
+    sdk.send(JSON.stringify(frame));
+    sdk.send(JSON.stringify(frame));
+    // Drain any error frames that might arrive; none expected here.
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(ctx.store.countEvents()).toBe(1);
+    expect(ctx.handler.stats.ingested).toBe(1);
+    expect(ctx.handler.stats.deduplicated).toBe(1);
+
+    sdkQueue.stop();
+    sdk.close();
+  });
+
+  test('batch replay produces zero duplicates at the storage layer', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-a' } }));
+    await sdkQueue.next();
+
+    const batch = {
+      kind: 'batch',
+      events: Array.from({ length: 10 }).map((_, i) => ({
+        id: `ev-batch-${i}`,
+        type: 'custom',
+        severity: 'info',
+        sessionId: 'session-a',
+        timestamp: 1_770_000_000_100 + i,
+        payload: { i },
+      })),
+    };
+    sdk.send(JSON.stringify(batch));
+    sdk.send(JSON.stringify(batch)); // retry flood
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(ctx.store.countEvents()).toBe(10);
+    expect(ctx.handler.stats.ingested).toBe(10);
+    expect(ctx.handler.stats.deduplicated).toBe(10);
+
+    sdkQueue.stop();
+    sdk.close();
+  });
+
+  test('store.hasEventId returns true for inserted rows, false for unknown ids', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-a' } }));
+    await sdkQueue.next();
+
+    sdk.send(
+      JSON.stringify({
+        kind: 'event',
+        event: {
+          id: 'ev-probe-1',
+          type: 'custom',
+          severity: 'info',
+          sessionId: 'session-a',
+          timestamp: 1_770_000_000_200,
+          payload: {},
+        },
+      }),
+    );
+    await new Promise((r) => setTimeout(r, 30));
+    expect(ctx.store.hasEventId('ev-probe-1')).toBe(true);
+    expect(ctx.store.hasEventId('ev-unseen')).toBe(false);
+
+    sdkQueue.stop();
+    sdk.close();
+  });
+});
