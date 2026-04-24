@@ -1,0 +1,51 @@
+{
+  "name": "@erne/monitor-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for the @erne/monitor dashboard. Exposes crash groups, events, sessions, bug reports, and alerts as MCP tools so Claude Desktop (and any other MCP-aware client) can query runtime telemetry directly.",
+  "license": "MIT",
+  "author": "Juba Kitiashvili",
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "bin": {
+    "erne-monitor-mcp": "./bin/erne-monitor-mcp.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./sanitize": {
+      "types": "./dist/sanitize.d.ts",
+      "default": "./dist/sanitize.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "typescript": "~5.9.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
