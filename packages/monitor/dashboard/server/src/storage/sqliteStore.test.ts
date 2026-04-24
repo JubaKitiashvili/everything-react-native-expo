@@ -446,3 +446,136 @@ describe('defaultDashboardDbPath', () => {
     expect(defaultDashboardDbPath()).toMatch(/\.erne\/monitor\/dashboard\.db$/);
   });
 });
+
+describe('DashboardStore — purgeOlderThan (Task 117.71)', () => {
+  let store: DashboardStore;
+  afterEach(() => store?.close());
+
+  test('deletes only events with timestamp strictly below cutoff', () => {
+    store = openInMemory();
+    store.upsertSession(makeSession({ id: 's1', startedAt: NOW - 100_000 }));
+    store.insertEvent(makeEvent({ id: 'old-1', sessionId: 's1', timestamp: NOW - 50_000 }));
+    store.insertEvent(makeEvent({ id: 'old-2', sessionId: 's1', timestamp: NOW - 40_000 }));
+    store.insertEvent(makeEvent({ id: 'boundary', sessionId: 's1', timestamp: NOW - 30_000 }));
+    store.insertEvent(makeEvent({ id: 'new-1', sessionId: 's1', timestamp: NOW - 10_000 }));
+
+    const result = store.purgeOlderThan(NOW - 30_000);
+
+    // `< cutoff` — the boundary row survives.
+    expect(result.events).toBe(2);
+    const remaining = store.listEvents().map((e) => e.id);
+    expect(remaining.sort()).toEqual(['boundary', 'new-1']);
+  });
+
+  test('drops sessions only when orphaned AND older than cutoff', () => {
+    store = openInMemory();
+    // Session A: old, events all purged → should drop.
+    store.upsertSession(makeSession({ id: 'sa', startedAt: NOW - 200_000 }));
+    store.insertEvent(makeEvent({ id: 'a1', sessionId: 'sa', timestamp: NOW - 180_000 }));
+    // Session B: old but still has a fresh event → session survives.
+    store.upsertSession(makeSession({ id: 'sb', startedAt: NOW - 200_000 }));
+    store.insertEvent(makeEvent({ id: 'b1', sessionId: 'sb', timestamp: NOW - 180_000 }));
+    store.insertEvent(makeEvent({ id: 'b2', sessionId: 'sb', timestamp: NOW - 10_000 }));
+    // Session C: recent, no telemetry yet → session survives.
+    store.upsertSession(makeSession({ id: 'sc', startedAt: NOW - 5_000 }));
+
+    const result = store.purgeOlderThan(NOW - 30_000);
+
+    expect(result.sessions).toBe(1);
+    const sessionIds = store.listSessions().map((s) => s.id).sort();
+    expect(sessionIds).toEqual(['sb', 'sc']);
+  });
+
+  test('purges bug_reports + alert_history by their own timestamp columns', () => {
+    store = openInMemory();
+    store.upsertSession(makeSession({ id: 's1' }));
+    store.insertBugReport({
+      id: 'bug-old',
+      sessionId: 's1',
+      submittedAt: NOW - 100_000,
+      status: 'new',
+    });
+    store.insertBugReport({
+      id: 'bug-new',
+      sessionId: 's1',
+      submittedAt: NOW - 1_000,
+      status: 'new',
+    });
+    store.insertAlertFiring({
+      id: 'fire-old',
+      ruleId: 'rule-1',
+      firedAt: NOW - 100_000,
+      metricValue: 1,
+      severity: 'error',
+    });
+    store.insertAlertFiring({
+      id: 'fire-new',
+      ruleId: 'rule-1',
+      firedAt: NOW - 1_000,
+      metricValue: 1,
+      severity: 'error',
+    });
+
+    const result = store.purgeOlderThan(NOW - 50_000);
+
+    expect(result.bugReports).toBe(1);
+    expect(result.alertHistory).toBe(1);
+    expect(store.listBugReports().map((b) => b.id)).toEqual(['bug-new']);
+    expect(store.listAlertHistory().map((h) => h.id)).toEqual(['fire-new']);
+  });
+
+  test('cutoff in the future removes nothing', () => {
+    store = openInMemory();
+    store.upsertSession(makeSession({ id: 's1' }));
+    store.insertEvent(makeEvent({ id: 'e1' }));
+    const result = store.purgeOlderThan(0);
+    expect(result).toEqual({ events: 0, sessions: 0, bugReports: 0, alertHistory: 0 });
+    expect(store.listEvents()).toHaveLength(1);
+    expect(store.listSessions()).toHaveLength(1);
+  });
+
+  test('preserves crash groups, symbol files, alert rules, and server_settings', () => {
+    store = openInMemory();
+    store.upsertCrashGroup({
+      fingerprint: 'fp-1',
+      message: 'boom',
+      firstSeen: NOW - 200_000,
+      lastSeen: NOW - 180_000,
+      eventCount: 3,
+      sessionCount: 1,
+      status: 'new',
+    });
+    store.saveSymbolFile({
+      id: 'sym-1',
+      platform: 'ios',
+      bundleId: 'com.acme',
+      version: '1.0',
+      filename: 'map.txt',
+      sizeBytes: 0,
+      uploadedAt: NOW - 200_000,
+      entryCount: 0,
+      uuid: null,
+      mappingText: null,
+    });
+    store.saveAlertRule({
+      id: 'rule-1',
+      name: 'crash spike',
+      metric: 'crash.count',
+      threshold: 1,
+      windowSeconds: 60,
+      channels: ['email'],
+      cooldownSeconds: 300,
+      enabled: true,
+      createdAt: NOW - 200_000,
+      updatedAt: NOW - 200_000,
+    });
+    store.setSetting('retention_days', '7');
+
+    store.purgeOlderThan(NOW);
+
+    expect(store.listCrashGroups()).toHaveLength(1);
+    expect(store.listSymbolFiles()).toHaveLength(1);
+    expect(store.listAlertRules()).toHaveLength(1);
+    expect(store.getSetting('retention_days')).toBe('7');
+  });
+});

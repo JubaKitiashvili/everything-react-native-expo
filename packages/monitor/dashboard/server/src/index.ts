@@ -30,3 +30,13 @@ export type {
   IngestStats,
 } from './ingest/wsHandler.js';
 export { computeFallbackFingerprint, normaliseStack, djb2 } from './ingest/fingerprint.js';
+export {
+  RetentionPurgeJob,
+  DEFAULT_RETENTION_DAYS,
+  DEFAULT_PURGE_INTERVAL_MS,
+} from './jobs/retention.js';
+export type {
+  RetentionPurgeJobOptions,
+  RetentionPurgeResult,
+  RetentionPurgeLogEntry,
+} from './jobs/retention.js';

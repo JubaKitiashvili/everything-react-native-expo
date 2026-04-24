@@ -142,6 +142,33 @@ export interface IMonitorStore {
   setSetting(key: string, value: string): void;
   listSettings(): { key: string; value: string; updatedAt: number }[];
 
+  // ------------------------------ Retention ------------------------------
+  /**
+   * Task 117.71 — retention purge. Deletes every time-series row older
+   * than `cutoff`:
+   *   - events:        `timestamp    < cutoff`
+   *   - bug_reports:   `submitted_at < cutoff`
+   *   - alert_history: `fired_at     < cutoff`
+   *   - sessions:      `started_at   < cutoff` AND no events reference them
+   *     after the events purge (so "active" sessions keep their shell even
+   *     when older than retention — they still have fresh telemetry).
+   *
+   * Crash groups are intentionally preserved: they're aggregate state and
+   * summarise what happened even after the underlying events vanish. Symbol
+   * files and alert rules are configuration, not telemetry. Settings and
+   * migration bookkeeping are never touched.
+   *
+   * Runs in a single transaction so a crash mid-purge leaves the DB in a
+   * consistent state. Returns per-table delete counts so the job can log
+   * what work it actually did.
+   */
+  purgeOlderThan(cutoff: number): {
+    events: number;
+    sessions: number;
+    bugReports: number;
+    alertHistory: number;
+  };
+
   // ------------------------------ Admin ------------------------------
   /**
    * Nuke every user-data table. Preserves migration bookkeeping and

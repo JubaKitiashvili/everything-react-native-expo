@@ -14,6 +14,8 @@ import type {
 } from './storage/types.js';
 import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
+import { RetentionPurgeJob } from './jobs/retention.js';
+import type { RetentionPurgeJobOptions } from './jobs/retention.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -133,6 +135,16 @@ export interface DashboardServerOptions {
    * login shell that in turn presents the key.
    */
   apiKey?: string | null;
+  /**
+   * Retention purge job (Task 117.71). Defaults: `enabled=true`,
+   * `intervalMs=1h`, `defaultDays=14`. Set `enabled: false` in tests
+   * that already own their own purge schedule, or to disable retention
+   * entirely. The job's `logger` / `onError` / `now` hooks are forwarded
+   * verbatim to the `RetentionPurgeJob` constructor.
+   */
+  retention?:
+    | false
+    | (Omit<RetentionPurgeJobOptions, 'store'> & { enabled?: boolean });
 }
 
 export interface DashboardServerHandle {
@@ -141,6 +153,12 @@ export interface DashboardServerHandle {
   port: number;
   host: string;
   websocket: IngestWebSocketHandler | null;
+  /**
+   * Retention purge job when enabled (Task 117.71). `null` when the
+   * caller explicitly disabled retention via `options.retention = false`
+   * or `{ enabled: false }`.
+   */
+  retentionJob: RetentionPurgeJob | null;
   close: () => Promise<void>;
   url: string;
 }
@@ -261,6 +279,19 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           apiKey: requiredApiKey,
           ...(options.websocket ?? {}),
         });
+
+  // Task 117.71 — retention purge scheduler. Default on; opt-out with
+  // `retention: false` or `{ enabled: false }`.
+  const retentionOption = options.retention;
+  const retentionJob =
+    retentionOption === false ||
+    (typeof retentionOption === 'object' && retentionOption?.enabled === false)
+      ? null
+      : new RetentionPurgeJob({
+          store,
+          ...(typeof retentionOption === 'object' ? retentionOption : {}),
+        });
+  retentionJob?.start();
 
   const resolveRetentionDays = (): number => {
     const raw = store.getSetting('retention_days');
@@ -693,9 +724,11 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     host,
     port,
     websocket,
+    retentionJob,
     url: `http://${host}:${port}`,
     close: () =>
       new Promise<void>((resolveClose) => {
+        retentionJob?.stop();
         websocket?.close();
         server.close(() => {
           store.close();

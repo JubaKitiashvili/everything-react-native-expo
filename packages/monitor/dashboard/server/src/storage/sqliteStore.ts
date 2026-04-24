@@ -879,6 +879,51 @@ export class DashboardStore implements IMonitorStore {
   }
 
   /**
+   * Task 117.71 — retention purge. Runs in one transaction so a crash
+   * mid-run leaves the DB consistent. Order matters: events must be
+   * deleted first so the session cleanup can use the post-purge event
+   * table to decide which sessions are now orphaned.
+   *
+   * Sessions are only deleted when they have BOTH `started_at < cutoff`
+   * AND zero remaining events after the event purge. That way a long-
+   * running session that has recent telemetry keeps its shell even when
+   * its `started_at` is older than retention.
+   */
+  purgeOlderThan(cutoff: number): {
+    events: number;
+    sessions: number;
+    bugReports: number;
+    alertHistory: number;
+  } {
+    const run = this.db.transaction((at: number) => {
+      const eventsInfo = this.db.prepare('DELETE FROM events WHERE timestamp < ?').run(at);
+      const bugReportsInfo = this.db
+        .prepare('DELETE FROM bug_reports WHERE submitted_at < ?')
+        .run(at);
+      const alertHistoryInfo = this.db
+        .prepare('DELETE FROM alert_history WHERE fired_at < ?')
+        .run(at);
+      // Only drop sessions whose events are all gone AND are themselves
+      // older than the cutoff. NOT IN (...) over the post-purge events
+      // table is fine here — the table has an index on session_id.
+      const sessionsInfo = this.db
+        .prepare(
+          `DELETE FROM sessions
+             WHERE started_at < ?
+               AND id NOT IN (SELECT DISTINCT session_id FROM events)`,
+        )
+        .run(at);
+      return {
+        events: Number(eventsInfo.changes),
+        sessions: Number(sessionsInfo.changes),
+        bugReports: Number(bugReportsInfo.changes),
+        alertHistory: Number(alertHistoryInfo.changes),
+      };
+    });
+    return run(cutoff);
+  }
+
+  /**
    * Nuke every user-data table — events, sessions, crash groups, bug
    * reports, alert rules + history, symbol files. Preserves the schema +
    * migration bookkeeping + server_settings themselves so the next request
