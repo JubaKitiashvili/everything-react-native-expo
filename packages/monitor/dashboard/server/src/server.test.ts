@@ -347,3 +347,61 @@ describe('API-key auth gate (Task 117.61)', () => {
     }
   });
 });
+
+describe('queue observability (Task 117.5)', () => {
+  test('GET /api/queue/stats returns null when WS is disabled', async () => {
+    const ctx = await openServer();
+    try {
+      const response = await fetch(`${ctx.url}/api/queue/stats`);
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { queue: unknown };
+      expect(body.queue).toBeNull();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('GET /api/queue/stats returns a QueueStats shape when WS is enabled', async () => {
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      // enableWebsocket defaults true — exercise the real path.
+      retention: false,
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+    try {
+      const response = await fetch(`${url}/api/queue/stats`);
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as {
+        queue: {
+          enqueued: number;
+          processed: number;
+          failed: number;
+          retried: number;
+          backpressured: number;
+          currentSize: number;
+          inFlight: number;
+          highWaterMark: number;
+        } | null;
+      };
+      expect(body.queue).toMatchObject({
+        enqueued: expect.any(Number),
+        processed: expect.any(Number),
+        failed: expect.any(Number),
+        retried: expect.any(Number),
+        backpressured: expect.any(Number),
+        currentSize: expect.any(Number),
+        inFlight: expect.any(Number),
+        highWaterMark: expect.any(Number),
+      });
+    } finally {
+      await handle.close();
+    }
+  });
+});

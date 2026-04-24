@@ -515,6 +515,18 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      // Task 117.5 — queue observability. Returns backpressure/retry/
+      // failed counts so operators can see when the ingest queue is
+      // under pressure. Only meaningful when the WS handler is attached.
+      if (req.method === 'GET' && pathname === '/api/queue/stats') {
+        if (!websocket) {
+          sendJson(res, 200, { queue: null });
+          return;
+        }
+        sendJson(res, 200, { queue: websocket.queueStats() });
+        return;
+      }
+
       if (req.method === 'POST' && pathname === '/api/settings/rotate-token') {
         const token = randomUUID().replace(/-/g, '');
         store.setSetting('ws_auth_token', token);
@@ -729,10 +741,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     close: () =>
       new Promise<void>((resolveClose) => {
         retentionJob?.stop();
-        websocket?.close();
-        server.close(() => {
-          store.close();
-          resolveClose();
+        // Task 117.5 — drain the ingest queue before closing the store
+        // so inflight events land. Fall back to the sync close path if
+        // the handler doesn't expose closeAsync (future adapters).
+        const drain = websocket?.closeAsync
+          ? websocket.closeAsync(5_000)
+          : Promise.resolve(websocket?.close());
+        void drain.finally(() => {
+          server.close(() => {
+            store.close();
+            resolveClose();
+          });
         });
       }),
   };

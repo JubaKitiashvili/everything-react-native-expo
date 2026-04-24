@@ -4,6 +4,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import type { DashboardStore } from '../storage/sqliteStore.js';
 import type { EventRecord, SessionRecord, Severity, CrashGroupRecord } from '../storage/types.js';
 import { computeFallbackFingerprint } from './fingerprint.js';
+import type { IQueue, QueueStats } from '../queue/IQueue.js';
+import { InMemoryQueue } from '../queue/in-memory-adapter.js';
 
 export const INGEST_PATH = '/ws/ingest';
 export const SUBSCRIBE_PATH = '/ws/subscribe';
@@ -33,6 +35,14 @@ export type IngestWsHandlerOptions = {
    * gated by a separate task.
    */
   apiKey?: string | null;
+  /**
+   * Task 117.5 — inject a custom queue implementation. When omitted,
+   * the handler constructs an `InMemoryQueue<EventRecord>` with
+   * concurrency=1 (FIFO to preserve per-session ordering), default
+   * retry, and a 10_000-item backpressure ceiling. A queue is always
+   * used; the ingest hot path is never fully synchronous.
+   */
+  queue?: IQueue<EventRecord>;
 };
 
 type SdkMessage =
@@ -90,6 +100,14 @@ export interface IngestStats {
    * `ingested` stays flat.
    */
   deduplicated: number;
+  /**
+   * Task 117.5 — events refused at enqueue time because the ingest
+   * queue was at its `maxSize`. Orthogonal to `rejected` (which counts
+   * malformed payloads and rate-limit violations). A non-zero value
+   * here means the dashboard is ingesting slower than the SDK fleet
+   * can deliver.
+   */
+  backpressured: number;
 }
 
 interface SdkConnectionState {
@@ -131,7 +149,17 @@ export class IngestWebSocketHandler {
     crashes: 0,
     broadcasts: 0,
     deduplicated: 0,
+    backpressured: 0,
   };
+
+  /**
+   * Task 117.5 — ingest queue. Events flow: WS frame → normalise →
+   * enqueue → worker runs `persistAndBroadcast` off the WS callback.
+   * Default is in-memory, FIFO, single-worker. Injection point is
+   * `options.queue` — swap in a persistent or distributed queue for
+   * multi-process deployments.
+   */
+  private readonly queue: IQueue<EventRecord>;
 
   constructor(options: IngestWsHandlerOptions) {
     this.store = options.store;
@@ -146,6 +174,32 @@ export class IngestWebSocketHandler {
       });
     this.apiKey = options.apiKey ?? null;
     this.wss = new WebSocketServer({ noServer: true });
+
+    this.queue = options.queue ?? new InMemoryQueue<EventRecord>();
+    this.queue.on('failed', ({ error }) => {
+      this.onError(error, 'ingest-queue-failed');
+    });
+    this.queue.start((event) => this.persistAndBroadcast(event));
+  }
+
+  /** Task 117.5 — queue stats for `/api/queue/stats` observability. */
+  queueStats(): QueueStats {
+    return this.queue.stats();
+  }
+
+  /**
+   * Task 117.5 — wait for the ingest queue to drain. Exposed for tests
+   * and graceful shutdown. Returns once every enqueued event has been
+   * processed (or dropped after retries).
+   */
+  async flush(timeoutMs = 5_000): Promise<void> {
+    const start = Date.now();
+    while (
+      (this.queue.stats().currentSize > 0 || this.queue.stats().inFlight > 0) &&
+      Date.now() - start < timeoutMs
+    ) {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    }
   }
 
   /** Attach the handler's upgrade router to a Node HTTP server. */
@@ -197,6 +251,23 @@ export class IngestWebSocketHandler {
     for (const ws of this.subscribers) ws.close();
     this.subscribers.clear();
     this.wss.close();
+    // Fire-and-forget the queue stop — we can't make `close()` async
+    // without cascading through the `DashboardServerHandle.close` API.
+    // The outer `createDashboardServer` awaits `closeAsync()` so we
+    // only lose straggling broadcasts; DB writes already persisted.
+    void this.queue.stop(1_000);
+  }
+
+  /**
+   * Graceful-shutdown variant used by `createDashboardServer`. Drains
+   * the queue with a timeout so inflight events still land before the
+   * store closes.
+   */
+  async closeAsync(drainTimeoutMs = 5_000): Promise<void> {
+    for (const ws of this.subscribers) ws.close();
+    this.subscribers.clear();
+    this.wss.close();
+    await this.queue.stop(drainTimeoutMs);
   }
 
   /** Number of currently-connected dashboard subscribers. */
@@ -315,7 +386,7 @@ export class IngestWebSocketHandler {
       this.sendTo(ws, { kind: 'error', message: 'invalid event' });
       return;
     }
-    this.persistAndBroadcast(normalised);
+    this.enqueueEvent(ws, normalised);
   }
 
   private handleBatch(ws: WebSocket, events: IngestEventPayload[] | undefined): void {
@@ -331,7 +402,23 @@ export class IngestWebSocketHandler {
         this.stats.rejected += 1;
         continue;
       }
-      this.persistAndBroadcast(normalised);
+      this.enqueueEvent(ws, normalised);
+    }
+  }
+
+  /**
+   * Task 117.5 — hand the event to the queue. When the queue rejects
+   * (backpressure), we tell the SDK so it can retry with backoff and
+   * bump the stat so operators see the pressure in the dashboard.
+   */
+  private enqueueEvent(ws: WebSocket, event: EventRecord): void {
+    const ack = this.queue.enqueue(event);
+    if (!ack.queued) {
+      this.stats.backpressured += 1;
+      this.sendTo(ws, {
+        kind: 'error',
+        message: ack.reason === 'closed' ? 'ingest closed' : 'backpressure',
+      });
     }
   }
 

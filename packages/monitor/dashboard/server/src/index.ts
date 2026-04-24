@@ -40,3 +40,19 @@ export type {
   RetentionPurgeResult,
   RetentionPurgeLogEntry,
 } from './jobs/retention.js';
+export { InMemoryQueue } from './queue/in-memory-adapter.js';
+export type { InMemoryQueueOptions } from './queue/in-memory-adapter.js';
+export {
+  BetterQueueAdapter,
+  createBetterQueueAdapter,
+} from './queue/better-queue-adapter.js';
+export type { BetterQueueAdapterOptions } from './queue/better-queue-adapter.js';
+export type {
+  IQueue,
+  EnqueueOptions,
+  EnqueueResult,
+  QueueStats,
+  QueueWorker,
+  QueueEventMap,
+  QueueEventName,
+} from './queue/IQueue.js';

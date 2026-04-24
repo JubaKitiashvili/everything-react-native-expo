@@ -592,3 +592,178 @@ describe('ingest dedup (Task 117.49)', () => {
     sdk.close();
   });
 });
+
+describe('ingest queue integration (Task 117.5)', () => {
+  let ctx: Awaited<ReturnType<typeof openServerWithHandler>>;
+
+  beforeEach(async () => {
+    ctx = await openServerWithHandler({ now: () => 1_770_000_000_000 });
+  });
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('ingest enqueue returns immediately even with a 1 MB replay payload', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'replay-session' } }));
+    await sdkQueue.next();
+
+    const dash = new WebSocket(`ws://127.0.0.1:${ctx.port}${SUBSCRIBE_PATH}`);
+    const dashQueue = openMessageQueue(dash);
+    await waitOpen(dash);
+    await dashQueue.next();
+
+    const bigFrames = 'x'.repeat(1 << 20); // 1 MiB of string payload
+    // Raise the handler's per-message cap for the one-off test.
+    ctx.handler['maxMessageBytes'] = 4 * 1024 * 1024;
+
+    const start = Date.now();
+    sdk.send(
+      JSON.stringify({
+        kind: 'event',
+        event: {
+          id: 'replay-big',
+          type: 'replay',
+          severity: 'info',
+          sessionId: 'replay-session',
+          timestamp: 1_770_000_000_000,
+          payload: { frames: bigFrames },
+        },
+      }),
+    );
+    const enqueueLatency = Date.now() - start;
+    // The WS send completed quickly — ingest is non-blocking by contract.
+    expect(enqueueLatency).toBeLessThan(500);
+
+    // The broadcast still reaches subscribers after the queue worker runs.
+    const broadcast = JSON.parse(await dashQueue.next(2_000)) as {
+      kind: string;
+      event: { id: string };
+    };
+    expect(broadcast.kind).toBe('event');
+    expect(broadcast.event.id).toBe('replay-big');
+    expect(ctx.store.hasEventId('replay-big')).toBe(true);
+
+    sdkQueue.stop();
+    dashQueue.stop();
+    sdk.close();
+    dash.close();
+  });
+
+  test('queueStats() exposes ingested counts once drained', async () => {
+    const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'stats-session' } }));
+    await sdkQueue.next();
+
+    for (let i = 0; i < 5; i++) {
+      sdk.send(
+        JSON.stringify({
+          kind: 'event',
+          event: {
+            id: `stat-${i}`,
+            type: 'custom',
+            severity: 'info',
+            sessionId: 'stats-session',
+            timestamp: 1_770_000_000_000 + i,
+            payload: { i },
+          },
+        }),
+      );
+    }
+
+    // Poll until the WS frames have landed and the queue has caught up
+    // — `flush()` on its own only drains what's already enqueued, not
+    // frames still in the socket buffer.
+    const deadline = Date.now() + 2_000;
+    while (ctx.handler.queueStats().enqueued < 5 && Date.now() < deadline) {
+      await new Promise<void>((r) => setTimeout(r, 10));
+    }
+    await ctx.handler.flush();
+    const stats = ctx.handler.queueStats();
+    expect(stats.enqueued).toBeGreaterThanOrEqual(5);
+    expect(stats.processed).toBeGreaterThanOrEqual(5);
+    expect(stats.currentSize).toBe(0);
+    expect(stats.inFlight).toBe(0);
+
+    sdkQueue.stop();
+    sdk.close();
+  });
+
+  test('backpressure is reported when the queue is saturated', async () => {
+    // Rebuild the handler with a tiny queue so the test can overflow it
+    // without sending thousands of events.
+    await ctx.close();
+    const { InMemoryQueue } = await import('../queue/in-memory-adapter.js');
+    const store = new (await import('../storage/sqliteStore.js')).DashboardStore({
+      dbPath: ':memory:',
+      skipProductionPragmas: true,
+    });
+    // Park the worker so depth actually grows past maxSize.
+    let release: (() => void) | null = null;
+    const parker = new Promise<void>((r) => {
+      release = r;
+    });
+    const queueImpl = new InMemoryQueue<import('../storage/types.js').EventRecord>({
+      maxSize: 2,
+    });
+    // Override: don't let the handler start its own worker — we install
+    // one that blocks indefinitely so the waiting list fills up.
+    const origStart = queueImpl.start.bind(queueImpl);
+    queueImpl.start = (): void => {
+      origStart(async () => {
+        await parker;
+      });
+    };
+    const handler = new (await import('./wsHandler.js')).IngestWebSocketHandler({
+      store,
+      onError: () => {},
+      queue: queueImpl,
+    });
+    const httpServer = (await import('node:http')).createServer();
+    handler.attach(httpServer);
+    await new Promise<void>((resolve) =>
+      httpServer.listen(0, '127.0.0.1', () => resolve()),
+    );
+    const address = httpServer.address() as import('node:net').AddressInfo;
+    const port = address.port;
+
+    const sdk = new WebSocket(`ws://127.0.0.1:${port}${INGEST_PATH}`);
+    const sdkQueue = openMessageQueue(sdk);
+    await waitOpen(sdk);
+    sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'bp-session' } }));
+    await sdkQueue.next();
+
+    for (let i = 0; i < 10; i++) {
+      sdk.send(
+        JSON.stringify({
+          kind: 'event',
+          event: {
+            id: `bp-${i}`,
+            type: 'custom',
+            severity: 'info',
+            sessionId: 'bp-session',
+            timestamp: 1_770_000_000_000 + i,
+            payload: { i },
+          },
+        }),
+      );
+    }
+    // Give the WS frames time to flow through the handler before
+    // asserting on the counter.
+    await new Promise<void>((r) => setTimeout(r, 50));
+    expect(handler.stats.backpressured).toBeGreaterThan(0);
+    expect(handler.queueStats().backpressured).toBeGreaterThan(0);
+
+    release?.();
+    sdkQueue.stop();
+    sdk.close();
+    // Close manually — we built this handler outside `openServerWithHandler`.
+    await handler.closeAsync(200);
+    await new Promise<void>((r) => httpServer.close(() => r()));
+    store.close();
+  });
+});
