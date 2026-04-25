@@ -14,6 +14,11 @@
  */
 
 import type { SymbolFileRecord, SymbolPlatform, SymbolResolveInput } from '../storage/types.js';
+import {
+  looksLikeHermesMap,
+  parseHermesMap,
+  resolveBytecodeFrame,
+} from './hermes/hermesMap.js';
 
 export interface ProGuardMember {
   /** Deobfuscated name (method name or field name). */
@@ -97,6 +102,17 @@ export interface ResolvedFrame {
     platform: SymbolPlatform;
     version: string;
   };
+  /**
+   * Task 117.3 — original (file, line, column) when the artefact was a
+   * Hermes / SourceMap v3 map and the input carried `line` + `column`.
+   * Absent for ProGuard or symbol-only resolutions.
+   */
+  origin?: {
+    file: string;
+    line: number;
+    column: number;
+    name?: string;
+  };
 }
 
 /**
@@ -113,6 +129,14 @@ export function resolveFrame(
 ): ResolvedFrame {
   if (!artefact) {
     return { input, resolved: false, symbol: input.symbol, note: 'no-mapping' };
+  }
+
+  // Task 117.3 — Hermes / SourceMap v3 path. Sniff by content rather
+  // than platform: an Expo SDK 54 build can ship a single hbc map
+  // that's valid for both iOS and Android targets, so the platform
+  // field on the artefact doesn't tell us whether it's Hermes.
+  if (artefact.mappingText !== null && looksLikeHermesMap(artefact.mappingText)) {
+    return resolveHermesFrame(input, artefact);
   }
 
   if (artefact.platform === 'ios' || artefact.mappingText === null) {
@@ -166,4 +190,78 @@ export function resolveFrame(
   }
 
   return { input, resolved: false, symbol, note: 'no-match', source };
+}
+
+/**
+ * Task 117.3 — Hermes / SourceMap v3 frame resolver.
+ *
+ * Three behaviours, depending on which fields the input carries:
+ *
+ * 1. `line` + `column` → look up in the parsed map, return original
+ *    `(file, line, column)` and the optional `name`.
+ * 2. `symbol` only (no coordinates) → echo back with a note explaining
+ *    that Hermes maps need bytecode coordinates.
+ * 3. No mapping in the artefact → `note: 'no-mapping'`.
+ */
+function resolveHermesFrame(
+  input: SymbolResolveInput,
+  artefact: SymbolFileRecord,
+): ResolvedFrame {
+  const source = {
+    fileId: artefact.id,
+    platform: artefact.platform,
+    version: artefact.version,
+  };
+  if (input.line === undefined || input.column === undefined) {
+    return {
+      input,
+      resolved: false,
+      symbol: input.symbol,
+      note: 'hermes-needs-coordinates',
+      source,
+    };
+  }
+
+  let parsed;
+  try {
+    // mappingText is guaranteed non-null at this point (the caller
+    // verified). Parsing throws on malformed JSON or version mismatch.
+    parsed = parseHermesMap(artefact.mappingText!);
+  } catch (err) {
+    return {
+      input,
+      resolved: false,
+      symbol: input.symbol,
+      note: `hermes-parse-failed:${(err as Error).message}`,
+      source,
+    };
+  }
+
+  const frame = resolveBytecodeFrame(parsed, input.line, input.column);
+  if (!frame || frame.source === null) {
+    return {
+      input,
+      resolved: false,
+      symbol: input.symbol,
+      note: 'no-match',
+      source,
+    };
+  }
+
+  const symbolText = frame.name
+    ? `${frame.name} (${frame.source}:${frame.sourceLine + 1}:${frame.sourceColumn + 1})`
+    : `${frame.source}:${frame.sourceLine + 1}:${frame.sourceColumn + 1}`;
+
+  return {
+    input,
+    resolved: true,
+    symbol: symbolText,
+    source,
+    origin: {
+      file: frame.source,
+      line: frame.sourceLine,
+      column: frame.sourceColumn,
+      ...(frame.name !== null ? { name: frame.name } : {}),
+    },
+  };
 }

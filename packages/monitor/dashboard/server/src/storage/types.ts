@@ -149,4 +149,13 @@ export interface SymbolResolveInput {
   version: string;
   /** Full symbol string, e.g. `a.b.c.d` (ProGuard) or a hex address (iOS). */
   symbol: string;
+  /**
+   * Optional generated `(line, column)` for Hermes / Metro source map
+   * resolution (Task 117.3). When the artefact's `mappingText` is a
+   * Hermes / SourceMap v3 JSON, the resolver uses these to find the
+   * original `(file, line, column)`. 1-indexed lines in stack traces
+   * should be converted to 0-indexed before sending.
+   */
+  line?: number;
+  column?: number;
 }

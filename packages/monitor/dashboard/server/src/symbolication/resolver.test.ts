@@ -122,3 +122,97 @@ describe('resolveFrame', () => {
     expect(frame.source?.fileId).toBe('sym-ios');
   });
 });
+
+// Task 117.3 — Hermes / SourceMap v3 path through resolveFrame.
+//
+// The fixture below is a tiny synthetic v3 map authored at test time —
+// no Sentry-CLI files included. Hand-encoding a single segment is the
+// simplest "Hermes-shaped" artefact we can author without bringing in
+// an external map producer. The full chain test lives in
+// hermesMap.test.ts; this test verifies the resolveFrame integration.
+describe('resolveFrame — Hermes', () => {
+  // mappings: one line, single segment at genCol=0 with all four
+  // deltas = 0 plus name index 0. Each `A` decodes to VLQ 0, so the
+  // segment is `(0, 0, 0, 0, 0)`: source 0, source line 0, source
+  // column 0, name 0. Hand-encoded — no Sentry-CLI files included.
+  const HERMES_MAP = JSON.stringify({
+    version: 3,
+    sources: ['src/Home.tsx'],
+    names: ['render'],
+    mappings: 'AAAAA',
+  });
+
+  function makeHermesRecord(): SymbolFileRecord {
+    return {
+      id: 'sym-hbc',
+      platform: 'ios',
+      bundleId: 'com.example.app',
+      version: '1.0.0',
+      filename: 'index.bundle.map',
+      sizeBytes: HERMES_MAP.length,
+      uploadedAt: 0,
+      entryCount: 0,
+      uuid: null,
+      mappingText: HERMES_MAP,
+    };
+  }
+
+  test('resolves bytecode coordinates to original (file, line, column, name)', () => {
+    const frame = resolveFrame(
+      {
+        platform: 'ios',
+        bundleId: 'com.example.app',
+        version: '1.0.0',
+        symbol: 'unknown',
+        line: 0,
+        column: 0,
+      },
+      makeHermesRecord(),
+    );
+    expect(frame.resolved).toBe(true);
+    expect(frame.origin).toEqual({
+      file: 'src/Home.tsx',
+      line: 0,
+      column: 0,
+      name: 'render',
+    });
+    // 0-indexed line/column → 1-indexed display.
+    expect(frame.symbol).toBe('render (src/Home.tsx:1:1)');
+  });
+
+  test('hermes map without coordinates flags hermes-needs-coordinates', () => {
+    const frame = resolveFrame(
+      {
+        platform: 'ios',
+        bundleId: 'com.example.app',
+        version: '1.0.0',
+        symbol: 'unknown',
+      },
+      makeHermesRecord(),
+    );
+    expect(frame.resolved).toBe(false);
+    expect(frame.note).toBe('hermes-needs-coordinates');
+  });
+
+  test('malformed Hermes JSON returns hermes-parse-failed', () => {
+    const broken: SymbolFileRecord = {
+      ...makeHermesRecord(),
+      // Looks Hermes-shaped enough that the sniffer routes here, but
+      // the JSON is truncated mid-`mappings` so JSON.parse throws.
+      mappingText: '{"version":3,"sources":[],"mappings":"AAA',
+    };
+    const frame = resolveFrame(
+      {
+        platform: 'ios',
+        bundleId: 'com.example.app',
+        version: '1.0.0',
+        symbol: 'unknown',
+        line: 0,
+        column: 0,
+      },
+      broken,
+    );
+    expect(frame.resolved).toBe(false);
+    expect(frame.note).toMatch(/^hermes-parse-failed:/);
+  });
+});

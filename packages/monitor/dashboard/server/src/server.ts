@@ -68,6 +68,9 @@ interface SymbolResolvePayload {
   version?: unknown;
   symbol?: unknown;
   fileId?: unknown;
+  /** Task 117.3 — Hermes / SourceMap v3 generated coordinates. */
+  line?: unknown;
+  column?: unknown;
 }
 
 function coerceSymbolPlatform(raw: unknown): SymbolPlatform | null {
@@ -644,6 +647,15 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
                 ? store.getSymbolFile(payload.fileId)
                 : store.findSymbolFile(platform, bundleId, version);
             const input: SymbolResolveInput = { platform, bundleId, version, symbol };
+            // Task 117.3 — forward optional Hermes coordinates. Both
+            // line and column must be finite integers — otherwise the
+            // resolver falls back to "no coordinates".
+            if (typeof payload.line === 'number' && Number.isFinite(payload.line)) {
+              input.line = payload.line;
+            }
+            if (typeof payload.column === 'number' && Number.isFinite(payload.column)) {
+              input.column = payload.column;
+            }
             sendJson(res, 200, { frame: resolveFrame(input, artefact) });
           })
           .catch((err: unknown) => {
