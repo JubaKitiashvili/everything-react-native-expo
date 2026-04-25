@@ -29,6 +29,7 @@ import {
   ConfidenceStore,
   InMemoryConfidenceStorage,
 } from '../dist/confidence.js';
+import { safeFormatError } from '../dist/validate.js';
 
 function required(name) {
   const value = process.env[name];
@@ -70,10 +71,6 @@ async function main() {
     llm,
     github,
     confidence,
-    repo: {
-      owner: required('ERNE_REPO_OWNER'),
-      name: required('ERNE_REPO_NAME'),
-    },
     dashboardUrl: optional('ERNE_DASHBOARD_LINK', optional('ERNE_DASHBOARD_URL', '')),
     minConfidence: Number.parseInt(optional('ERNE_MIN_CONFIDENCE', '50'), 10),
     maxFiles: Number.parseInt(optional('ERNE_MAX_FILES', '5'), 10),
@@ -85,6 +82,9 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('[erne-monitor-ai-fix-pr] fatal:', err);
+  // Redact tokens before stderr — CI log readers shouldn't be able to
+  // recover the GITHUB_TOKEN / ANTHROPIC_API_KEY just because Octokit
+  // happened to embed them in an error URL.
+  console.error('[erne-monitor-ai-fix-pr] fatal:', safeFormatError(err));
   process.exit(1);
 });

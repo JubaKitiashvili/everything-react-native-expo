@@ -111,6 +111,18 @@ export async function buildFixContext(
     limit: maxBreadcrumbs + 1,
   });
 
+  // 4. Symbolicate any frame that has line/column but no source file.
+  // Hermes / Metro emits raw bundle coordinates in some configurations;
+  // shipping those to Claude as `(line, column)` is useless without
+  // the file path. The dashboard's resolve API does the heavy lifting
+  // (Task 117.3). Best-effort: we never block the context build on a
+  // resolve failure.
+  const stack = await resolveStackBestEffort(
+    client,
+    extractStack(representative),
+    representative,
+  );
+
   return {
     fingerprint: group.fingerprint,
     message: extractMessage(group, representative),
@@ -120,13 +132,88 @@ export async function buildFixContext(
     sessionCount: group.sessionCount,
     ...(group.topScreen ? { topScreen: group.topScreen } : {}),
     representativeEventId: representative.id,
-    stack: extractStack(representative),
+    stack,
     breadcrumbs: extractBreadcrumbs(representative, breadcrumbEvents, maxBreadcrumbs),
     ...(representative.platform ? { platform: representative.platform } : {}),
     ...(extractAppVersion(representative)
       ? { appVersion: extractAppVersion(representative) as string }
       : {}),
   };
+}
+
+/**
+ * For each frame that looks unresolved (has line/column but no file,
+ * or file equals the bundle name), call the dashboard's resolve API.
+ * Failures are absorbed silently — context is still useful with raw
+ * frames, and we don't want a missing symbol map to block fix
+ * generation entirely.
+ *
+ * Resolution requires a `platform`, `bundleId`, and `version`. We
+ * pull the platform off the event and the version off the payload's
+ * `appVersion`. `bundleId` is harder — most SDKs surface it as
+ * `payload.bundleId`; if absent, we skip the resolve call.
+ */
+async function resolveStackBestEffort(
+  client: DashboardClient,
+  frames: ContextFrame[],
+  event: EventRecord,
+): Promise<ContextFrame[]> {
+  const platform = event.platform;
+  const appVersion = extractAppVersion(event);
+  const bundleId =
+    typeof (event.payload as { bundleId?: unknown }).bundleId === 'string'
+      ? ((event.payload as { bundleId: string }).bundleId)
+      : undefined;
+  if (
+    (platform !== 'ios' && platform !== 'android') ||
+    !appVersion ||
+    !bundleId
+  ) {
+    return frames;
+  }
+  const out: ContextFrame[] = [];
+  for (const f of frames) {
+    if (
+      f.line !== undefined &&
+      (!f.file || isBundleArtefact(f.file))
+    ) {
+      try {
+        const resolved = await client.resolveSymbol({
+          platform: platform as 'ios' | 'android',
+          bundleId,
+          version: appVersion,
+          symbol: f.symbol,
+          ...(f.line !== undefined ? { line: f.line } : {}),
+          ...(f.column !== undefined ? { column: f.column } : {}),
+        } as unknown as Parameters<DashboardClient['resolveSymbol']>[0]);
+        if (resolved.frame && resolved.frame.method) {
+          out.push({
+            symbol: resolved.frame.method ?? f.symbol,
+            ...(typeof resolved.frame.line === 'number'
+              ? { line: resolved.frame.line }
+              : {}),
+            ...(f.column !== undefined ? { column: f.column } : {}),
+            // ResolvedSymbolResult doesn't carry a file path on the
+            // frame — the symbol string carries it (`render
+            // (src/Home.tsx:1:1)`). Fall back to the original raw.
+            ...(f.raw ? { raw: f.raw } : {}),
+          });
+          continue;
+        }
+      } catch {
+        // Best-effort — fall through to the original frame.
+      }
+    }
+    out.push(f);
+  }
+  return out;
+}
+
+/** Heuristic — bundle paths look like `index.bundle`, `main.jsbundle`,
+ *  `index.android.bundle`, or end in `.hbc`. None of these are useful
+ *  to a code reviewer, so we treat them as "missing source". */
+function isBundleArtefact(path: string): boolean {
+  return /(\.bundle|\.jsbundle|\.hbc)$/.test(path);
 }
 
 function extractMessage(group: CrashGroupRecord, event: EventRecord): string {

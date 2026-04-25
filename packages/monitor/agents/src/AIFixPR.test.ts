@@ -63,6 +63,9 @@ function makeStubs(opts: {
   };
 
   const github = {
+    owner: 'o',
+    repo: 'r',
+    defaultBranch: 'main',
     openPR: vi.fn(async (input: OpenPRInput) => {
       if (opts.capturedPR) opts.capturedPR.value = input;
       return (
@@ -89,7 +92,6 @@ function makeOrchestrator(stubs: ReturnType<typeof makeStubs>, overrides: Partia
     llm: stubs.llm,
     github: stubs.github,
     confidence: stubs.confidence,
-    repo: { owner: 'o', name: 'r' },
     dashboardUrl: 'https://dash.example.com',
     now: () => NOW,
     ...overrides,
@@ -220,6 +222,78 @@ describe('AIFixPR.propose — skip paths', () => {
       expect(result.reason).toBe('confidence-too-low');
       expect(result.effectiveConfidence).toBeLessThan(50);
     }
+  });
+});
+
+describe('AIFixPR — audit follow-up gates', () => {
+  test('rejects path-traversal candidates with invalid-paths', async () => {
+    const stubs = makeStubs({
+      candidate: {
+        title: 't',
+        summary: 's',
+        files: [{ path: 'src/../../etc/passwd', mode: 'replace', content: 'x' }],
+        confidence: 95,
+        classification: 'null-check',
+        abstain: false,
+      },
+    });
+    const result = await makeOrchestrator(stubs).propose('fp-abcdef01');
+    expect(result.status).toBe('skipped');
+    if (result.status === 'skipped') {
+      expect(result.reason).toBe('invalid-paths');
+      expect(result.validationFailures?.[0]?.code).toBe('parent-traversal');
+    }
+  });
+
+  test('rejects denied-path candidates (workflow rewrite attempt)', async () => {
+    const stubs = makeStubs({
+      candidate: {
+        title: 't',
+        summary: 's',
+        files: [
+          { path: '.github/workflows/release.yml', mode: 'replace', content: '' },
+        ],
+        confidence: 95,
+        classification: 'null-check',
+        abstain: false,
+      },
+    });
+    const result = await makeOrchestrator(stubs).propose('fp-abcdef01');
+    expect(result.status).toBe('skipped');
+    if (result.status === 'skipped') {
+      expect(result.reason).toBe('invalid-paths');
+      expect(result.validationFailures?.[0]?.code).toBe('denied-path');
+    }
+  });
+
+  test('rejects oversize candidates with invalid-paths', async () => {
+    const stubs = makeStubs({
+      candidate: {
+        title: 't',
+        summary: 's',
+        files: [
+          { path: 'src/big.ts', mode: 'replace', content: 'x'.repeat(300_000) },
+        ],
+        confidence: 95,
+        classification: 'null-check',
+        abstain: false,
+      },
+    });
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    const result = await makeOrchestrator(stubs).propose('fp-abcdef01');
+    expect(result.status).toBe('skipped');
+    if (result.status === 'skipped') {
+      expect(result.reason).toBe('invalid-paths');
+      expect(result.validationFailures?.[0]?.code).toBe('file-too-large');
+    }
+  });
+
+  test('exposes repoOwner / repoName via the github adapter (no redundant prop)', async () => {
+    const stubs = makeStubs({});
+    const o = makeOrchestrator(stubs);
+    expect(o.repoOwner).toBe('o');
+    expect(o.repoName).toBe('r');
   });
 });
 

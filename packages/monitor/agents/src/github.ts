@@ -64,9 +64,9 @@ export interface OpenPRResult {
 }
 
 export class GitHubAdapter {
-  private readonly owner: string;
-  private readonly repo: string;
-  private readonly defaultBranch: string;
+  readonly owner: string;
+  readonly repo: string;
+  readonly defaultBranch: string;
   private readonly octokit: Octokit;
 
   constructor(options: GitHubAdapterOptions) {

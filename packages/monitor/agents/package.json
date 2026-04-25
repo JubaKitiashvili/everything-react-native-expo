@@ -30,6 +30,10 @@
     "./context": {
       "types": "./dist/context.d.ts",
       "default": "./dist/context.js"
+    },
+    "./validate": {
+      "types": "./dist/validate.d.ts",
+      "default": "./dist/validate.js"
     }
   },
   "files": [

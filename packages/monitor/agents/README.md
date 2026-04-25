@@ -112,6 +112,27 @@ back; sustained rejections starve out the bucket entirely.
 | `too-many-files`      | Edit count exceeded `ERNE_MAX_FILES`.                     |
 | `unsupported-mode`    | A `patch`-mode edit slipped through (only `replace` ships in v1). |
 | `confidence-too-low`  | Effective confidence below `ERNE_MIN_CONFIDENCE`.         |
+| `invalid-paths`       | Path traversal, dotfile / workflow / lockfile target, duplicate, empty path, oversized file, or oversized aggregate payload. The full failure list is on `result.validationFailures`. |
+
+## Safety hardening
+
+- **Path validation.** Every `path` is checked against a denylist
+  before any blob is created: `..` segments, absolute paths,
+  `.github/workflows/*`, `.git/*`, `.env*`, `.npmrc`, lock files,
+  `.pem`, `id_rsa`, etc. Operators extend the list via
+  `validation.extraDeniedPatterns`.
+- **Size caps.** 256 KiB per file, 1 MiB total. Larger candidates are
+  refused with `invalid-paths`.
+- **Prompt sanitisation.** Crash messages, breadcrumb messages, and
+  raw frame strings pass through `@erne/monitor-mcp/sanitize` before
+  reaching the prompt — ANSI escapes, zero-width characters, agent
+  XML tags, and "ignore previous instructions" patterns get scrubbed.
+- **Token redaction in logs.** Errors printed by the CLI run through
+  `safeFormatError`, which redacts `ghp_…`, `github_pat_…`,
+  `sk-ant-…`, Bearer headers, and URL-embedded `x-access-token` values.
+- **Hermes symbolication.** Frames with `(line, column)` but no source
+  file are passed through the dashboard's `/api/symbols/resolve`
+  endpoint before reaching the LLM (Task 117.3 underpins this).
 
 ## What's still ahead
 

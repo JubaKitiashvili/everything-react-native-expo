@@ -12,6 +12,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { Message } from '@anthropic-ai/sdk/resources/messages.js';
+import { sanitizeString } from '@erne/monitor-mcp/sanitize';
 import type { FixContext } from './context.js';
 
 /** A single file edit returned by the LLM. */
@@ -139,24 +140,40 @@ export class AnthropicLLM implements LLM {
 }
 
 /**
+ * Scrub one untrusted string before it lands in the prompt. Crash
+ * messages, breadcrumb messages, and raw frame strings are author
+ * by whatever code ran on a user's device — they're attacker-
+ * controlled. Reuse the MCP sanitizer to strip ANSI / control / zero-
+ * width / agent-tag / jailbreak patterns. Pure text in, pure text out.
+ */
+function safe(value: string): string {
+  return sanitizeString(value).text;
+}
+
+/**
  * Render a structured FixContext into a deterministic plaintext
  * payload Claude can consume. Deterministic ordering is critical for
  * prompt caching — same context → same prompt → cache hit.
+ *
+ * Every field that originated from the device is run through `safe()`
+ * before concatenation; identifiers (fingerprint, file paths, enums)
+ * pass through verbatim because they're authored server-side or by
+ * the build pipeline, not by attacker-controlled code.
  */
 export function renderContext(context: FixContext): string {
   const lines: string[] = [];
   lines.push(`Crash fingerprint: ${context.fingerprint}`);
-  lines.push(`Message: ${context.message}`);
+  lines.push(`Message: ${safe(context.message)}`);
   lines.push(`Event count: ${context.eventCount} (in ${context.sessionCount} sessions)`);
   lines.push(`First seen: ${new Date(context.firstSeen).toISOString()}`);
   lines.push(`Last seen: ${new Date(context.lastSeen).toISOString()}`);
-  if (context.platform) lines.push(`Platform: ${context.platform}`);
-  if (context.appVersion) lines.push(`App version: ${context.appVersion}`);
-  if (context.topScreen) lines.push(`Top screen: ${context.topScreen}`);
+  if (context.platform) lines.push(`Platform: ${safe(context.platform)}`);
+  if (context.appVersion) lines.push(`App version: ${safe(context.appVersion)}`);
+  if (context.topScreen) lines.push(`Top screen: ${safe(context.topScreen)}`);
 
   lines.push('', 'Stack:');
   for (const f of context.stack) {
-    let row = `  - ${f.symbol}`;
+    let row = `  - ${safe(f.symbol)}`;
     if (f.file) {
       row += ` (${f.file}`;
       if (f.line !== undefined) {
@@ -165,7 +182,7 @@ export function renderContext(context: FixContext): string {
       }
       row += ')';
     } else if (f.raw) {
-      row += `  [raw: ${f.raw}]`;
+      row += `  [raw: ${safe(f.raw)}]`;
     }
     lines.push(row);
   }
@@ -173,8 +190,8 @@ export function renderContext(context: FixContext): string {
   if (context.breadcrumbs.length > 0) {
     lines.push('', 'Breadcrumbs (relative ms before crash):');
     for (const b of context.breadcrumbs) {
-      let row = `  ${b.offsetMs.toString().padStart(7)}ms  [${b.severity}] ${b.type}`;
-      if (b.message) row += ` — ${b.message}`;
+      let row = `  ${b.offsetMs.toString().padStart(7)}ms  [${safe(b.severity)}] ${safe(b.type)}`;
+      if (b.message) row += ` — ${safe(b.message)}`;
       lines.push(row);
     }
   }

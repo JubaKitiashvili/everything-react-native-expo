@@ -15,6 +15,11 @@ import { buildFixContext, type FixContext } from './context.js';
 import type { LLM, FixCandidate } from './llm.js';
 import type { GitHubAdapter, OpenPRResult } from './github.js';
 import type { ConfidenceStore } from './confidence.js';
+import {
+  validateFileEdits,
+  type ValidatePathsOptions,
+  type ValidationFailure,
+} from './validate.js';
 import type { DashboardClient } from '@erne/monitor-mcp/client';
 
 export interface AIFixPROptions {
@@ -22,12 +27,6 @@ export interface AIFixPROptions {
   llm: LLM;
   github: GitHubAdapter;
   confidence: ConfidenceStore;
-  /**
-   * Repository the PR will land against — used in branch naming and
-   * the PR body backlink. The GitHubAdapter is already bound to its
-   * own owner/repo; this is purely for naming + audit display.
-   */
-  repo: { owner: string; name: string };
   /**
    * Public dashboard URL (e.g. `https://monitor.example.com`). Used in
    * the PR body so reviewers can click straight into the crash group.
@@ -53,6 +52,11 @@ export interface AIFixPROptions {
    * `['erne:auto-fix', 'erne:needs-review']`.
    */
   labels?: string[];
+  /**
+   * Path / size validation tuning forwarded to {@link validateFileEdits}.
+   * Repository-specific denylist patterns plug in here.
+   */
+  validation?: ValidatePathsOptions;
 }
 
 export type ProposeResult =
@@ -62,13 +66,7 @@ export type ProposeResult =
       candidate: FixCandidate;
       effectiveConfidence: number;
     }
-  | {
-      status: 'skipped';
-      reason: SkipReason;
-      detail?: string;
-      candidate?: FixCandidate;
-      effectiveConfidence?: number;
-    };
+  | SkipResult;
 
 export type SkipReason =
   | 'context-not-found'
@@ -76,7 +74,22 @@ export type SkipReason =
   | 'no-files'
   | 'too-many-files'
   | 'confidence-too-low'
-  | 'unsupported-mode';
+  | 'unsupported-mode'
+  | 'invalid-paths';
+
+export interface SkipResult {
+  status: 'skipped';
+  reason: SkipReason;
+  detail?: string;
+  candidate?: FixCandidate;
+  effectiveConfidence?: number;
+  /**
+   * Populated when `reason === 'invalid-paths'`: the structured list
+   * of failures from `validateFileEdits`. Lets operators see exactly
+   * which path was rejected and why.
+   */
+  validationFailures?: ValidationFailure[];
+}
 
 const DEFAULT_LABELS = ['erne:auto-fix', 'erne:needs-review'];
 const DEFAULT_MIN_CONFIDENCE = 50;
@@ -88,6 +101,7 @@ export class AIFixPR {
   private readonly maxFiles: number;
   private readonly labels: string[];
   private readonly now: () => number;
+  private readonly validation: ValidatePathsOptions;
 
   constructor(opts: AIFixPROptions) {
     this.opts = opts;
@@ -95,6 +109,17 @@ export class AIFixPR {
     this.maxFiles = opts.maxFiles ?? DEFAULT_MAX_FILES;
     this.labels = opts.labels ?? DEFAULT_LABELS;
     this.now = opts.now ?? Date.now;
+    this.validation = opts.validation ?? {};
+  }
+
+  /** Owner of the target repo — sourced from the GitHub adapter. */
+  get repoOwner(): string {
+    return this.opts.github.owner;
+  }
+
+  /** Name of the target repo — sourced from the GitHub adapter. */
+  get repoName(): string {
+    return this.opts.github.repo;
   }
 
   async propose(fingerprint: string): Promise<ProposeResult> {
@@ -132,6 +157,23 @@ export class AIFixPR {
         reason: 'unsupported-mode',
         detail: `mode=${unsupported.mode}`,
         candidate,
+      };
+    }
+
+    // Path + size validation. Audit follow-up — without this, the LLM
+    // could land a workflow rewrite, dotfile overwrite, or oversize
+    // payload before any human reviewed the diff.
+    const failures = validateFileEdits(candidate.files, this.validation);
+    if (failures.length > 0) {
+      return {
+        status: 'skipped',
+        reason: 'invalid-paths',
+        detail: failures
+          .slice(0, 3)
+          .map((f) => `${f.code}:${f.path}${f.detail ? ` (${f.detail})` : ''}`)
+          .join('; '),
+        candidate,
+        validationFailures: failures,
       };
     }
 
