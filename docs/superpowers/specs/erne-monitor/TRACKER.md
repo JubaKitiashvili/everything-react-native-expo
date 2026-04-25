@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-04-25
-**Current Phase:** Phase 7 — Launch (10/106)
-**Active Task:** Task 117.6 — AI Fix PR agent (Claude generates fixes + GitHub PR)
-**Overall Progress:** 126/222 tasks (Phases 1a–6 ✅ · Phase 7 10/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps) · 1174 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 129 dashboard-server tests + 40 mcp tests passing
+**Current Phase:** Phase 7 — Launch (11/106)
+**Active Task:** Task 117.80 — MCP prompt injection guard (adversarial red-team suite)
+**Overall Progress:** 127/222 tasks (Phases 1a–6 ✅ · Phase 7 11/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps + 117.6 AI Fix PR) · 1174 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 129 dashboard-server tests + 40 mcp tests + 27 ai-fix-pr tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -24,7 +24,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch (expanded) | 10/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
+| 7 Launch (expanded) | 11/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -164,7 +164,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 |---|------|--------|
 | 117.2 | ERNE MCP server (Vercel AI SDK primitives, 15+ tools across monitor/agents/skills/tasks) | ✅ |
 | 117.3 | Hermes source maps — fork `@sentry/react-native@5.x` MIT client utilities only | ✅ |
-| 117.6 | AI Fix PR agent (Claude → GitHub PR with fix suggestion) | ⬜ |
+| 117.6 | AI Fix PR agent (Claude → GitHub PR with fix suggestion) | ✅ |
 | 117.80 | MCP tool input sanitization (prompt injection guard) | ⬜ |
 | 117.81 | AI agent action audit trail (tools called, files considered, confidence, PR link) | ⬜ |
 | 117.91 | ERNE Benchmark Suite (standalone repo, reproducible vs competitors) | ⬜ |

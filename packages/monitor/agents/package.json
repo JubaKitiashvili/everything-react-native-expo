@@ -1,0 +1,60 @@
+{
+  "name": "@erne/monitor-ai-fix-pr",
+  "version": "0.1.0",
+  "description": "AI Fix PR agent for the @erne/monitor dashboard. Given a crash group, calls Claude to generate a candidate fix and opens a pull request via the GitHub API. Pairs confidence decay with merge / reject outcomes.",
+  "license": "MIT",
+  "author": "Juba Kitiashvili",
+  "type": "module",
+  "main": "dist/AIFixPR.js",
+  "types": "dist/AIFixPR.d.ts",
+  "bin": {
+    "erne-monitor-ai-fix-pr": "./bin/erne-monitor-ai-fix-pr.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/AIFixPR.d.ts",
+      "default": "./dist/AIFixPR.js"
+    },
+    "./llm": {
+      "types": "./dist/llm.d.ts",
+      "default": "./dist/llm.js"
+    },
+    "./github": {
+      "types": "./dist/github.d.ts",
+      "default": "./dist/github.js"
+    },
+    "./confidence": {
+      "types": "./dist/confidence.d.ts",
+      "default": "./dist/confidence.js"
+    },
+    "./context": {
+      "types": "./dist/context.d.ts",
+      "default": "./dist/context.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@octokit/rest": "^21.0.0",
+    "@erne/monitor-mcp": "file:../mcp"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "typescript": "~5.9.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
