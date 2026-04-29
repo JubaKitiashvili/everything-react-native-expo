@@ -65,7 +65,11 @@ describe('sanitizeString', () => {
   });
 
   test('truncates strings longer than MAX_FIELD_LENGTH', () => {
-    const long = 'x'.repeat(MAX_FIELD_LENGTH + 100);
+    // Use real-looking text instead of a single-char run — the
+    // opaque-blob redactor (Task 117.80) collapses long unbroken
+    // alnum runs first, so a `'x'.repeat(N)` payload would never
+    // reach the truncation step.
+    const long = 'lorem ipsum dolor sit amet '.repeat(500);
     const { text, redactions } = sanitizeString(long);
     expect(text.length).toBeLessThanOrEqual(MAX_FIELD_LENGTH + '…[truncated]'.length);
     expect(redactions).toContain('truncated');

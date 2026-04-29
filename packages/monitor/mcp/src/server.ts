@@ -12,7 +12,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { DashboardClient, type DashboardClientOptions } from './client.js';
-import { sanitizeString } from './sanitize.js';
+import { sanitizeString, sanitizeToolInput } from './sanitize.js';
 import { TOOL_CATALOGUE, type ToolDefinition } from './tools/index.js';
 
 export interface McpBootstrapOptions extends DashboardClientOptions {
@@ -68,8 +68,22 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
   >();
 
   for (const tool of catalogue) {
-    const toolHandler = async (args: Record<string, unknown>): Promise<unknown> =>
-      await tool.handler(args as never, client);
+    const toolHandler = async (args: Record<string, unknown>): Promise<unknown> => {
+      // Task 117.80 — defence-in-depth pass on Claude's args. Zod has
+      // already typechecked them, but `string()` doesn't reject zero-
+      // width / control / role-prefix payloads. If an identifier-
+      // shaped field carried tricks, we refuse to run instead of
+      // forwarding a half-cleaned id to the dashboard.
+      const cleaned = sanitizeToolInput(args);
+      if (cleaned.rejections.length > 0) {
+        throw new Error(
+          `tool input rejected: ${cleaned.rejections
+            .map((r) => `${r.key}=${r.reason}`)
+            .join(', ')}`,
+        );
+      }
+      return await tool.handler(cleaned.sanitized as never, client);
+    };
     handlerMap.set(tool.name, toolHandler);
 
     server.registerTool(
