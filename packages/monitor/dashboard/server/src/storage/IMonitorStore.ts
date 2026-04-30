@@ -21,6 +21,8 @@
 //     own migration list + runner.
 
 import type {
+  AiActionListFilter,
+  AiActionRecord,
   AlertFiringRecord,
   AlertHistoryListFilter,
   AlertRuleRecord,
@@ -142,6 +144,18 @@ export interface IMonitorStore {
   setSetting(key: string, value: string): void;
   listSettings(): { key: string; value: string; updatedAt: number }[];
 
+  // ------------------------------ AI action audit (Task 117.81) ------
+  /**
+   * Record one entry in the AI action audit trail. Idempotent on `id`
+   * — a retry that resends the same id is a silent no-op so failed
+   * REST writes can be safely re-attempted.
+   */
+  insertAiAction(record: AiActionRecord): { inserted: boolean };
+  /** List rows newest-first, filtered by the requested predicates. */
+  listAiActions(filter?: AiActionListFilter): AiActionRecord[];
+  /** Count rows matching the same filter — used by paginated views. */
+  countAiActions(filter?: AiActionListFilter): number;
+
   // ------------------------------ Retention ------------------------------
   /**
    * Task 117.71 — retention purge. Deletes every time-series row older
@@ -167,6 +181,7 @@ export interface IMonitorStore {
     sessions: number;
     bugReports: number;
     alertHistory: number;
+    aiActions: number;
   };
 
   // ------------------------------ Admin ------------------------------

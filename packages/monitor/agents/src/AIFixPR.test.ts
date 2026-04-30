@@ -43,10 +43,19 @@ function makeStubs(opts: {
   prResult?: OpenPRResult;
   capturedPR?: { value: OpenPRInput | null };
 }) {
+  const auditCalls: Array<Record<string, unknown>> = [];
   const dashboardClient = {
     listCrashGroups: async () => (opts.contextMissing ? [] : [baseGroup]),
     listEvents: async () => [baseEvent],
+    recordAiAction: async (record: Record<string, unknown>) => {
+      auditCalls.push(record);
+      return { inserted: true, record };
+    },
   } as never;
+  // Expose on the returned bag so tests can assert on emitted audit
+  // rows after `propose()` resolves.
+  (dashboardClient as unknown as { __auditCalls: Array<Record<string, unknown>> }).__auditCalls =
+    auditCalls;
 
   const candidate: FixCandidate = opts.candidate ?? {
     title: 'Fix it',
@@ -311,6 +320,7 @@ describe('AIFixPR — branch name', () => {
         { ...baseGroup, fingerprint: altFp },
       ],
       listEvents: async () => [{ ...baseEvent, fingerprint: altFp }],
+      recordAiAction: async () => ({ inserted: true, record: {} }),
     } as never;
     // Pre-train confidence so the proposal isn't gated out.
     await stubs.confidence.recordOutcome('null-check', 'merged');
@@ -318,5 +328,77 @@ describe('AIFixPR — branch name', () => {
     const orchestrator = makeOrchestrator(stubs);
     await orchestrator.propose(altFp);
     expect(captured.value?.branch).toMatch(/^erne\/fix\/fp-abc-d-/);
+  });
+});
+
+describe('AIFixPR — audit emission (Task 117.81)', () => {
+  function readAudit(stubs: ReturnType<typeof makeStubs>): Array<Record<string, unknown>> {
+    return (
+      (
+        stubs.dashboardClient as unknown as {
+          __auditCalls: Array<Record<string, unknown>>;
+        }
+      ).__auditCalls ?? []
+    );
+  }
+
+  test('emits one audit row per propose() — proposed path captures pr + files', async () => {
+    const stubs = makeStubs({});
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    const orchestrator = makeOrchestrator(stubs);
+    await orchestrator.propose('fp-abcdef01');
+    const rows = readAudit(stubs);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      fingerprint: 'fp-abcdef01',
+      outcome: 'proposed',
+      classification: 'null-check',
+      prUrl: 'https://github.com/o/r/pull/123',
+    });
+    expect(rows[0]?.filesConsidered).toEqual(['src/x.ts']);
+    expect(rows[0]?.toolsCalled).toEqual([
+      'list_crash_groups',
+      'list_events',
+      'open_pr',
+    ]);
+  });
+
+  test('skipped path encodes reason in outcome + metadata', async () => {
+    const stubs = makeStubs({
+      candidate: {
+        title: 't',
+        summary: 's',
+        files: [{ path: 'f.ts', mode: 'replace', content: '' }],
+        confidence: 80,
+        classification: 'fresh',
+        abstain: false,
+      },
+    });
+    const orchestrator = makeOrchestrator(stubs);
+    const result = await orchestrator.propose('fp-abcdef01');
+    expect(result.status).toBe('skipped');
+    const rows = readAudit(stubs);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.outcome).toBe('skipped:confidence-too-low');
+    expect((rows[0]?.metadata as { reason: string }).reason).toBe('confidence-too-low');
+  });
+
+  test('audit failure does not break propose()', async () => {
+    const stubs = makeStubs({});
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    // Patch the dashboard stub to throw on audit writes.
+    (stubs.dashboardClient as never as {
+      recordAiAction: (r: unknown) => Promise<unknown>;
+    }).recordAiAction = async () => {
+      throw new Error('audit down');
+    };
+    const orchestrator = makeOrchestrator(stubs);
+    const result = await orchestrator.propose('fp-abcdef01');
+    // PR still got opened — audit is best-effort.
+    expect(result.status).toBe('proposed');
   });
 });

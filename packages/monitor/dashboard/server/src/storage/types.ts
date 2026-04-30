@@ -159,3 +159,68 @@ export interface SymbolResolveInput {
   line?: number;
   column?: number;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// AI agent audit trail (Task 117.81)
+// ──────────────────────────────────────────────────────────────────
+//
+// Every action a Claude-driven agent takes through the dashboard
+// surface — proposing a fix PR, calling an MCP tool, recording an
+// outcome — gets one row in `ai_actions`. Operators query it for
+// "what did the agent do, when, with what confidence, against what
+// data" — the table is the auditable counterpart to the
+// confidence-decay store inside the agent itself.
+
+/** Outcome enum kept loose because future agents may add categories. */
+export type AiActionOutcome =
+  | 'proposed'
+  | 'merged'
+  | 'rejected'
+  | 'ignored'
+  | 'invoked'
+  | 'errored'
+  | (string & {});
+
+export interface AiActionRecord {
+  /** Stable id (uuid). The caller picks one so retries can dedupe. */
+  id: string;
+  /** ms timestamp when the action occurred. */
+  timestamp: number;
+  /** Short stable agent id (`ai-fix-pr`, `mcp-tool`, `mcp-server`). */
+  agent: string;
+  /** Action verb (`propose-fix`, `invoke-tool`, `record-outcome`). */
+  action: string;
+  /** Operator user id when known. */
+  user?: string;
+  /** Crash group fingerprint when the action targets a crash. */
+  fingerprint?: string;
+  /** Names of MCP tools called by the agent during this action. */
+  toolsCalled?: string[];
+  /** Repo-relative file paths the agent considered or edited. */
+  filesConsidered?: string[];
+  /** Self-reported confidence, 0..100. */
+  confidence?: number;
+  /** Decay-weighted effective confidence the gate ran on. */
+  effectiveConfidence?: number;
+  /** Classification bucket (matches AIFixPR's confidence buckets). */
+  classification?: string;
+  /** Final outcome for the action. */
+  outcome: AiActionOutcome;
+  /** PR URL when one was opened. */
+  prUrl?: string;
+  /** Sanitiser labels triggered while building / running the action. */
+  redactionLabels?: string[];
+  /** Free-form bag for agent-specific extras (skip detail, queue stats). */
+  metadata?: Record<string, unknown>;
+}
+
+export interface AiActionListFilter {
+  since?: number;
+  until?: number;
+  agent?: string;
+  action?: string;
+  fingerprint?: string;
+  outcome?: AiActionOutcome | AiActionOutcome[];
+  limit?: number;
+  offset?: number;
+}

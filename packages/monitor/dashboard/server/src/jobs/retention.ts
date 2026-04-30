@@ -72,6 +72,7 @@ export interface RetentionPurgeResult {
     sessions: number;
     bugReports: number;
     alertHistory: number;
+    aiActions: number;
   };
   /** Total rows removed — sum of `deleted`. */
   totalDeleted: number;
@@ -158,7 +159,11 @@ export class RetentionPurgeJob {
     const deleted = this.store.purgeOlderThan(cutoff);
     const durationMs = this.now() - started;
     const totalDeleted =
-      deleted.events + deleted.sessions + deleted.bugReports + deleted.alertHistory;
+      deleted.events +
+      deleted.sessions +
+      deleted.bugReports +
+      deleted.alertHistory +
+      deleted.aiActions;
     const result: RetentionPurgeResult = {
       ranAt,
       cutoff,

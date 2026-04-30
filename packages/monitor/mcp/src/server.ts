@@ -9,6 +9,7 @@
 // is the production entry that the CLI (`bin/erne-monitor-mcp.mjs`)
 // calls — it creates the server and connects it to stdio.
 
+import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { DashboardClient, type DashboardClientOptions } from './client.js';
@@ -27,6 +28,14 @@ export interface McpBootstrapOptions extends DashboardClientOptions {
   name?: string;
   /** Optional version shown to the MCP client. */
   version?: string;
+  /**
+   * Task 117.81 — emit one audit row per tool call. Off by default
+   * because local-dev sessions don't need the trail; enable in
+   * production / shared deployments. Set to `true` to use the same
+   * dashboard client the tools talk to, or pass an explicit client
+   * override here for separate-storage setups.
+   */
+  audit?: boolean | { client: DashboardClient };
 }
 
 export interface McpServerHandle {
@@ -67,6 +76,54 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
     (args: Record<string, unknown>) => Promise<unknown>
   >();
 
+  // Task 117.81 — resolve the audit client. `true` reuses the tool
+  // dashboard client; an explicit `{ client }` lets operators route
+  // audit writes to a separate destination (read replica, etc.).
+  const auditClient: DashboardClient | null =
+    options.audit === true
+      ? client
+      : typeof options.audit === 'object' && options.audit !== null
+        ? options.audit.client
+        : null;
+
+  /**
+   * Best-effort per-tool-call audit. Failures are swallowed because
+   * the audit trail is observational — a misbehaving log endpoint
+   * must not stop Claude from getting tool results. The `cleaned`
+   * argument carries the sanitiser redaction labels we surface as
+   * `redactionLabels` on the audit row.
+   */
+  async function emitToolAudit(
+    toolName: string,
+    cleaned: ReturnType<typeof sanitizeToolInput>,
+    outcome: 'invoked' | 'errored',
+    detail?: string,
+  ): Promise<void> {
+    if (!auditClient) return;
+    const labels = new Set<string>();
+    for (const r of cleaned.redactions) {
+      for (const l of r.labels) labels.add(l);
+    }
+    try {
+      await auditClient.recordAiAction({
+        id: randomUUID(),
+        timestamp: Date.now(),
+        agent: 'mcp-server',
+        action: `invoke-tool:${toolName}`,
+        outcome,
+        toolsCalled: [toolName],
+        ...(labels.size > 0 ? { redactionLabels: [...labels] } : {}),
+        ...(cleaned.rejections.length > 0
+          ? { metadata: { rejections: cleaned.rejections, ...(detail ? { detail } : {}) } }
+          : detail
+            ? { metadata: { detail } }
+            : {}),
+      });
+    } catch {
+      // Swallow — audit is best-effort.
+    }
+  }
+
   for (const tool of catalogue) {
     const toolHandler = async (args: Record<string, unknown>): Promise<unknown> => {
       // Task 117.80 — defence-in-depth pass on Claude's args. Zod has
@@ -76,13 +133,27 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
       // forwarding a half-cleaned id to the dashboard.
       const cleaned = sanitizeToolInput(args);
       if (cleaned.rejections.length > 0) {
-        throw new Error(
+        const err = new Error(
           `tool input rejected: ${cleaned.rejections
             .map((r) => `${r.key}=${r.reason}`)
             .join(', ')}`,
         );
+        await emitToolAudit(tool.name, cleaned, 'errored', err.message);
+        throw err;
       }
-      return await tool.handler(cleaned.sanitized as never, client);
+      try {
+        const result = await tool.handler(cleaned.sanitized as never, client);
+        await emitToolAudit(tool.name, cleaned, 'invoked');
+        return result;
+      } catch (err) {
+        await emitToolAudit(
+          tool.name,
+          cleaned,
+          'errored',
+          err instanceof Error ? err.message : String(err),
+        );
+        throw err;
+      }
     };
     handlerMap.set(tool.name, toolHandler);
 

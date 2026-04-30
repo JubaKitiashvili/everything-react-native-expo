@@ -406,6 +406,88 @@ export class DashboardClient {
     );
     return body.export;
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // Task 117.81 — AI agent action audit trail.
+  // ────────────────────────────────────────────────────────────────
+
+  /**
+   * Append a row to the audit trail. Idempotent on `id` — a retry
+   * resends the same payload and the second insert is silently
+   * ignored, matching the events-table dedup pattern.
+   */
+  async recordAiAction(
+    record: AiActionRecord,
+  ): Promise<{ inserted: boolean; record: AiActionRecord }> {
+    const body = await this.request<{
+      ok: true;
+      inserted: boolean;
+      record: AiActionRecord;
+    }>('POST', '/api/audit/ai-actions', record);
+    return { inserted: body.inserted, record: body.record };
+  }
+
+  /**
+   * Query the audit log. Same filter shape the dashboard server
+   * exposes; identical to listEvents-style time + tag filters.
+   */
+  async listAiActions(filter: AiActionListFilter = {}): Promise<{
+    rows: AiActionRecord[];
+    total: number;
+  }> {
+    const params: string[] = [];
+    if (filter.since !== undefined) params.push(`since=${filter.since}`);
+    if (filter.until !== undefined) params.push(`until=${filter.until}`);
+    if (filter.agent) params.push(`agent=${encodeURIComponent(filter.agent)}`);
+    if (filter.action) params.push(`action=${encodeURIComponent(filter.action)}`);
+    if (filter.fingerprint) params.push(`fingerprint=${encodeURIComponent(filter.fingerprint)}`);
+    if (filter.outcome !== undefined) {
+      const list = Array.isArray(filter.outcome) ? filter.outcome : [filter.outcome];
+      for (const o of list) params.push(`outcome=${encodeURIComponent(String(o))}`);
+    }
+    if (filter.limit !== undefined) {
+      params.push(`limit=${Math.min(1000, Math.max(1, filter.limit))}`);
+    }
+    if (filter.offset !== undefined) {
+      params.push(`offset=${Math.max(0, filter.offset)}`);
+    }
+    const suffix = params.length > 0 ? `?${params.join('&')}` : '';
+    return await this.request<{ rows: AiActionRecord[]; total: number }>(
+      'GET',
+      `/api/audit/ai-actions${suffix}`,
+    );
+  }
+}
+
+// Audit-trail types — local mirror of the dashboard-server shape so
+// the mcp package doesn't import the server package at build time.
+export interface AiActionRecord {
+  id: string;
+  timestamp: number;
+  agent: string;
+  action: string;
+  user?: string;
+  fingerprint?: string;
+  toolsCalled?: string[];
+  filesConsidered?: string[];
+  confidence?: number;
+  effectiveConfidence?: number;
+  classification?: string;
+  outcome: string;
+  prUrl?: string;
+  redactionLabels?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AiActionListFilter {
+  since?: number;
+  until?: number;
+  agent?: string;
+  action?: string;
+  fingerprint?: string;
+  outcome?: string | string[];
+  limit?: number;
+  offset?: number;
 }
 
 function buildEventQuery(filter: EventListFilter): string {

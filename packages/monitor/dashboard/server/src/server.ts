@@ -16,6 +16,11 @@ import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
 import { RetentionPurgeJob } from './jobs/retention.js';
 import type { RetentionPurgeJobOptions } from './jobs/retention.js';
+import {
+  listAiActions as auditListAiActions,
+  parseListFilter as parseAuditListFilter,
+  recordAiAction,
+} from './audit/aiActions.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -521,6 +526,34 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       // Task 117.5 — queue observability. Returns backpressure/retry/
       // failed counts so operators can see when the ingest queue is
       // under pressure. Only meaningful when the WS handler is attached.
+      // Task 117.81 — AI agent action audit trail.
+      if (req.method === 'GET' && pathname === '/api/audit/ai-actions') {
+        const filter = parseAuditListFilter(requestUrl.searchParams);
+        sendJson(res, 200, auditListAiActions(store, filter));
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/audit/ai-actions') {
+        void readJsonBody(req)
+          .then((body) => {
+            const result = recordAiAction(store, body);
+            if (!result.ok) {
+              sendJson(res, 400, { error: result.error, ...(result.detail ? { detail: result.detail } : {}) });
+              return;
+            }
+            sendJson(res, 200, {
+              ok: true,
+              inserted: result.inserted,
+              record: result.record,
+            });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
       if (req.method === 'GET' && pathname === '/api/queue/stats') {
         if (!websocket) {
           sendJson(res, 200, { queue: null });

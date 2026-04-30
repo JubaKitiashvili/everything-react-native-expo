@@ -228,7 +228,7 @@ describe('operational probes (Task 117.67 + 117.100)', () => {
       migrationsApplied: number;
     };
     expect(body.ready).toBe(true);
-    expect(body.migrationsApplied).toBe(3);
+    expect(body.migrationsApplied).toBe(4);
     expect(body.reason).toBeUndefined();
   });
 
@@ -403,5 +403,102 @@ describe('queue observability (Task 117.5)', () => {
     } finally {
       await handle.close();
     }
+  });
+});
+
+describe('AI agent action audit (Task 117.81)', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+  });
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('POST /api/audit/ai-actions writes a row, GET reads it back', async () => {
+    const post = await fetch(`${ctx.url}/api/audit/ai-actions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        id: 'act-rest-1',
+        agent: 'ai-fix-pr',
+        action: 'propose-fix',
+        outcome: 'proposed',
+        fingerprint: 'fp-rest',
+        confidence: 75,
+        prUrl: 'https://github.com/o/r/pull/1',
+        toolsCalled: ['list_crash_groups'],
+      }),
+    });
+    expect(post.status).toBe(200);
+    const postBody = (await post.json()) as { ok: boolean; inserted: boolean };
+    expect(postBody.ok).toBe(true);
+    expect(postBody.inserted).toBe(true);
+
+    const get = await fetch(`${ctx.url}/api/audit/ai-actions?fingerprint=fp-rest`);
+    expect(get.status).toBe(200);
+    const body = (await get.json()) as {
+      rows: Array<{ id: string; prUrl: string }>;
+      total: number;
+    };
+    expect(body.total).toBe(1);
+    expect(body.rows[0]?.id).toBe('act-rest-1');
+    expect(body.rows[0]?.prUrl).toBe('https://github.com/o/r/pull/1');
+  });
+
+  test('POST returns 400 on missing required fields', async () => {
+    const res = await fetch(`${ctx.url}/api/audit/ai-actions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ agent: 'a', action: 'b', outcome: 'c' }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('missing-id');
+  });
+
+  test('POST is idempotent on id', async () => {
+    const payload = JSON.stringify({
+      id: 'idempotent-1',
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+    });
+    const a = await fetch(`${ctx.url}/api/audit/ai-actions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: payload,
+    });
+    const b = await fetch(`${ctx.url}/api/audit/ai-actions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: payload,
+    });
+    const aBody = (await a.json()) as { inserted: boolean };
+    const bBody = (await b.json()) as { inserted: boolean };
+    expect(aBody.inserted).toBe(true);
+    expect(bBody.inserted).toBe(false);
+  });
+
+  test('GET supports filter combos (agent, outcome, since, limit)', async () => {
+    for (let i = 0; i < 5; i++) {
+      await fetch(`${ctx.url}/api/audit/ai-actions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: `combo-${i}`,
+          timestamp: 1_770_000_000_000 + i * 1000,
+          agent: i < 3 ? 'ai-fix-pr' : 'mcp-tool',
+          action: 'invoked',
+          outcome: i % 2 === 0 ? 'proposed' : 'errored',
+        }),
+      });
+    }
+    const res = await fetch(
+      `${ctx.url}/api/audit/ai-actions?agent=ai-fix-pr&outcome=proposed&limit=10`,
+    );
+    const body = (await res.json()) as { total: number };
+    expect(body.total).toBe(2);
   });
 });

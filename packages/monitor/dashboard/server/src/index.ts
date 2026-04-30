@@ -6,6 +6,9 @@ export {
 export type { DashboardStoreOptions, Migration } from './storage/sqliteStore.js';
 export type { IMonitorStore } from './storage/IMonitorStore.js';
 export type {
+  AiActionListFilter,
+  AiActionOutcome,
+  AiActionRecord,
   AlertFiringRecord,
   AlertHistoryListFilter,
   AlertRuleRecord,
@@ -20,6 +23,17 @@ export type {
   SessionRecord,
   Severity,
 } from './storage/types.js';
+export {
+  listAiActions,
+  parseListFilter as parseAiActionListFilter,
+  recordAiAction,
+} from './audit/aiActions.js';
+export type {
+  AiActionListResponse,
+  RecordAiActionFailure,
+  RecordAiActionInputError,
+  RecordAiActionResult,
+} from './audit/aiActions.js';
 export { createDashboardServer, startDashboardServer } from './server.js';
 export type { DashboardServerHandle, DashboardServerOptions } from './server.js';
 export { IngestWebSocketHandler, INGEST_PATH, SUBSCRIBE_PATH } from './ingest/wsHandler.js';

@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import type { IMonitorStore } from './IMonitorStore.js';
 import {
+  type AiActionListFilter,
+  type AiActionOutcome,
+  type AiActionRecord,
   type AlertFiringRecord,
   type AlertHistoryListFilter,
   type AlertRuleRecord,
@@ -82,10 +85,40 @@ CREATE INDEX IF NOT EXISTS idx_symbol_files_signature
   ON symbol_files (platform, bundle_id, version, uploaded_at DESC);
 `;
 
+const V4_AI_ACTIONS_SQL = `
+CREATE TABLE IF NOT EXISTS ai_actions (
+  id                      TEXT    PRIMARY KEY,
+  timestamp               INTEGER NOT NULL,
+  agent                   TEXT    NOT NULL,
+  action                  TEXT    NOT NULL,
+  user                    TEXT,
+  fingerprint             TEXT,
+  tools_called_json       TEXT,
+  files_considered_json   TEXT,
+  confidence              INTEGER,
+  effective_confidence    INTEGER,
+  classification          TEXT,
+  outcome                 TEXT    NOT NULL,
+  pr_url                  TEXT,
+  redaction_labels_json   TEXT,
+  metadata_json           TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_actions_timestamp
+  ON ai_actions (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_actions_agent
+  ON ai_actions (agent, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_actions_fingerprint
+  ON ai_actions (fingerprint, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_actions_outcome
+  ON ai_actions (outcome, timestamp DESC);
+`;
+
 export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 1, name: 'initial', up: SCHEMA_SQL },
   { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
+  { version: 4, name: 'ai_actions', up: V4_AI_ACTIONS_SQL },
 ]);
 
 const RESET_TABLES = [
@@ -96,6 +129,7 @@ const RESET_TABLES = [
   'alert_rules',
   'alert_history',
   'symbol_files',
+  'ai_actions',
 ] as const;
 
 const RESET_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(RESET_TABLES);
@@ -158,6 +192,7 @@ interface PreparedStatements {
   insertSymbolFile: Statement;
   deleteSymbolFile: Statement;
   getSymbolFileById: Statement;
+  insertAiAction: Statement;
 }
 
 /**
@@ -324,6 +359,20 @@ export class DashboardStore implements IMonitorStore {
       ),
       deleteSymbolFile: this.db.prepare('DELETE FROM symbol_files WHERE id = ?'),
       getSymbolFileById: this.db.prepare('SELECT * FROM symbol_files WHERE id = ?'),
+      // Task 117.81 — `INSERT OR IGNORE` matches the events idempotency
+      // pattern. A retried REST write produces the same id and gets
+      // collapsed silently.
+      insertAiAction: this.db.prepare(
+        `INSERT OR IGNORE INTO ai_actions
+         (id, timestamp, agent, action, user, fingerprint,
+          tools_called_json, files_considered_json,
+          confidence, effective_confidence, classification,
+          outcome, pr_url, redaction_labels_json, metadata_json)
+         VALUES (@id, @timestamp, @agent, @action, @user, @fingerprint,
+                 @toolsCalledJson, @filesConsideredJson,
+                 @confidence, @effectiveConfidence, @classification,
+                 @outcome, @prUrl, @redactionLabelsJson, @metadataJson)`,
+      ),
     };
   }
 
@@ -878,6 +927,51 @@ export class DashboardStore implements IMonitorStore {
     return rows.slice();
   }
 
+  // ------------------------------ AI action audit ------------------------------
+
+  insertAiAction(record: AiActionRecord): { inserted: boolean } {
+    const result = this.statements.insertAiAction.run({
+      id: record.id,
+      timestamp: record.timestamp,
+      agent: record.agent,
+      action: record.action,
+      user: record.user ?? null,
+      fingerprint: record.fingerprint ?? null,
+      toolsCalledJson: record.toolsCalled ? JSON.stringify(record.toolsCalled) : null,
+      filesConsideredJson: record.filesConsidered
+        ? JSON.stringify(record.filesConsidered)
+        : null,
+      confidence: record.confidence ?? null,
+      effectiveConfidence: record.effectiveConfidence ?? null,
+      classification: record.classification ?? null,
+      outcome: record.outcome,
+      prUrl: record.prUrl ?? null,
+      redactionLabelsJson: record.redactionLabels
+        ? JSON.stringify(record.redactionLabels)
+        : null,
+      metadataJson: record.metadata ? JSON.stringify(record.metadata) : null,
+    });
+    return { inserted: Number(result.changes) > 0 };
+  }
+
+  listAiActions(filter: AiActionListFilter = {}): AiActionRecord[] {
+    const { sql, params } = buildAiActionsQuery(filter);
+    const limit = filter.limit ?? 100;
+    const offset = filter.offset ?? 0;
+    const rows = this.db
+      .prepare(`SELECT * FROM ai_actions ${sql} ORDER BY timestamp DESC LIMIT @limit OFFSET @offset`)
+      .all({ ...params, limit, offset }) as AiActionRow[];
+    return rows.map(rowToAiAction);
+  }
+
+  countAiActions(filter: AiActionListFilter = {}): number {
+    const { sql, params } = buildAiActionsQuery(filter);
+    const row = this.db
+      .prepare(`SELECT COUNT(*) AS c FROM ai_actions ${sql}`)
+      .get(params) as { c: number };
+    return row.c;
+  }
+
   /**
    * Task 117.71 — retention purge. Runs in one transaction so a crash
    * mid-run leaves the DB consistent. Order matters: events must be
@@ -894,6 +988,7 @@ export class DashboardStore implements IMonitorStore {
     sessions: number;
     bugReports: number;
     alertHistory: number;
+    aiActions: number;
   } {
     const run = this.db.transaction((at: number) => {
       const eventsInfo = this.db.prepare('DELETE FROM events WHERE timestamp < ?').run(at);
@@ -902,6 +997,13 @@ export class DashboardStore implements IMonitorStore {
         .run(at);
       const alertHistoryInfo = this.db
         .prepare('DELETE FROM alert_history WHERE fired_at < ?')
+        .run(at);
+      // Task 117.81 — audit rows decay with the rest of telemetry. The
+      // confidence-bucket store inside the agent keeps long-term
+      // history; the per-action audit log is for incident response and
+      // doesn't need to live longer than retention_days.
+      const aiActionsInfo = this.db
+        .prepare('DELETE FROM ai_actions WHERE timestamp < ?')
         .run(at);
       // Only drop sessions whose events are all gone AND are themselves
       // older than the cutoff. NOT IN (...) over the post-purge events
@@ -918,6 +1020,7 @@ export class DashboardStore implements IMonitorStore {
         sessions: Number(sessionsInfo.changes),
         bugReports: Number(bugReportsInfo.changes),
         alertHistory: Number(alertHistoryInfo.changes),
+        aiActions: Number(aiActionsInfo.changes),
       };
     });
     return run(cutoff);
@@ -1204,5 +1307,95 @@ function rowToSymbolFile(row: SymbolFileRow): SymbolFileRecord {
     entryCount: row.entry_count,
     uuid: row.uuid,
     mappingText: row.mapping_text,
+  };
+}
+
+interface AiActionRow {
+  id: string;
+  timestamp: number;
+  agent: string;
+  action: string;
+  user: string | null;
+  fingerprint: string | null;
+  tools_called_json: string | null;
+  files_considered_json: string | null;
+  confidence: number | null;
+  effective_confidence: number | null;
+  classification: string | null;
+  outcome: string;
+  pr_url: string | null;
+  redaction_labels_json: string | null;
+  metadata_json: string | null;
+}
+
+function rowToAiAction(row: AiActionRow): AiActionRecord {
+  const rec: AiActionRecord = {
+    id: row.id,
+    timestamp: row.timestamp,
+    agent: row.agent,
+    action: row.action,
+    outcome: row.outcome as AiActionOutcome,
+  };
+  if (row.user !== null) rec.user = row.user;
+  if (row.fingerprint !== null) rec.fingerprint = row.fingerprint;
+  if (row.tools_called_json !== null) {
+    rec.toolsCalled = JSON.parse(row.tools_called_json) as string[];
+  }
+  if (row.files_considered_json !== null) {
+    rec.filesConsidered = JSON.parse(row.files_considered_json) as string[];
+  }
+  if (row.confidence !== null) rec.confidence = row.confidence;
+  if (row.effective_confidence !== null) rec.effectiveConfidence = row.effective_confidence;
+  if (row.classification !== null) rec.classification = row.classification;
+  if (row.pr_url !== null) rec.prUrl = row.pr_url;
+  if (row.redaction_labels_json !== null) {
+    rec.redactionLabels = JSON.parse(row.redaction_labels_json) as string[];
+  }
+  if (row.metadata_json !== null) {
+    rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
+  }
+  return rec;
+}
+
+function buildAiActionsQuery(filter: AiActionListFilter): {
+  sql: string;
+  params: Record<string, unknown>;
+} {
+  const clauses: string[] = [];
+  const params: Record<string, unknown> = {};
+  if (filter.since !== undefined) {
+    clauses.push('timestamp >= @since');
+    params.since = filter.since;
+  }
+  if (filter.until !== undefined) {
+    clauses.push('timestamp <= @until');
+    params.until = filter.until;
+  }
+  if (filter.agent !== undefined) {
+    clauses.push('agent = @agent');
+    params.agent = filter.agent;
+  }
+  if (filter.action !== undefined) {
+    clauses.push('action = @action');
+    params.action = filter.action;
+  }
+  if (filter.fingerprint !== undefined) {
+    clauses.push('fingerprint = @fingerprint');
+    params.fingerprint = filter.fingerprint;
+  }
+  if (filter.outcome !== undefined) {
+    const list: string[] = Array.isArray(filter.outcome)
+      ? filter.outcome.map((s) => String(s))
+      : [String(filter.outcome)];
+    const placeholders: string[] = [];
+    for (let i = 0; i < list.length; i++) {
+      placeholders.push(`@outcome${i}`);
+      params[`outcome${i}`] = list[i];
+    }
+    clauses.push(`outcome IN (${placeholders.join(', ')})`);
+  }
+  return {
+    sql: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '',
+    params,
   };
 }

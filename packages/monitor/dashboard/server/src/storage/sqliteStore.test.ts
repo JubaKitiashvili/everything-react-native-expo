@@ -529,7 +529,13 @@ describe('DashboardStore — purgeOlderThan (Task 117.71)', () => {
     store.upsertSession(makeSession({ id: 's1' }));
     store.insertEvent(makeEvent({ id: 'e1' }));
     const result = store.purgeOlderThan(0);
-    expect(result).toEqual({ events: 0, sessions: 0, bugReports: 0, alertHistory: 0 });
+    expect(result).toEqual({
+      events: 0,
+      sessions: 0,
+      bugReports: 0,
+      alertHistory: 0,
+      aiActions: 0,
+    });
     expect(store.listEvents()).toHaveLength(1);
     expect(store.listSessions()).toHaveLength(1);
   });
@@ -577,5 +583,103 @@ describe('DashboardStore — purgeOlderThan (Task 117.71)', () => {
     expect(store.listSymbolFiles()).toHaveLength(1);
     expect(store.listAlertRules()).toHaveLength(1);
     expect(store.getSetting('retention_days')).toBe('7');
+  });
+});
+
+describe('DashboardStore — AI action audit (Task 117.81)', () => {
+  let store: DashboardStore;
+  afterEach(() => store?.close());
+
+  test('inserts and lists rows newest-first', () => {
+    store = openInMemory();
+    store.insertAiAction({
+      id: 'act-1',
+      timestamp: NOW - 5000,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      fingerprint: 'fp-a',
+      outcome: 'proposed',
+      confidence: 80,
+      classification: 'null-check',
+      prUrl: 'https://github.com/o/r/pull/1',
+      filesConsidered: ['src/Home.tsx'],
+    });
+    store.insertAiAction({
+      id: 'act-2',
+      timestamp: NOW - 1000,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      fingerprint: 'fp-b',
+      outcome: 'skipped',
+      metadata: { reason: 'confidence-too-low' },
+    });
+    const rows = store.listAiActions();
+    expect(rows.map((r) => r.id)).toEqual(['act-2', 'act-1']);
+    expect(rows[0]?.metadata).toEqual({ reason: 'confidence-too-low' });
+    expect(rows[1]?.prUrl).toBe('https://github.com/o/r/pull/1');
+    expect(rows[1]?.filesConsidered).toEqual(['src/Home.tsx']);
+  });
+
+  test('insert is idempotent on id (returns inserted=false on retry)', () => {
+    store = openInMemory();
+    const r1 = store.insertAiAction({
+      id: 'act-x',
+      timestamp: NOW,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      outcome: 'proposed',
+    });
+    const r2 = store.insertAiAction({
+      id: 'act-x',
+      timestamp: NOW + 100,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      outcome: 'proposed',
+    });
+    expect(r1.inserted).toBe(true);
+    expect(r2.inserted).toBe(false);
+    expect(store.listAiActions()).toHaveLength(1);
+  });
+
+  test('filters by agent + outcome + fingerprint + time range', () => {
+    store = openInMemory();
+    for (let i = 0; i < 10; i++) {
+      store.insertAiAction({
+        id: `act-${i}`,
+        timestamp: NOW - i * 1000,
+        agent: i < 5 ? 'ai-fix-pr' : 'mcp-tool',
+        action: 'invoked',
+        fingerprint: i % 2 === 0 ? 'fp-a' : 'fp-b',
+        outcome: i % 3 === 0 ? 'errored' : 'invoked',
+      });
+    }
+    expect(store.listAiActions({ agent: 'ai-fix-pr' })).toHaveLength(5);
+    expect(store.listAiActions({ outcome: 'errored' })).toHaveLength(4);
+    expect(store.listAiActions({ outcome: ['errored', 'invoked'] })).toHaveLength(10);
+    expect(store.listAiActions({ fingerprint: 'fp-a' })).toHaveLength(5);
+    // since cutoff at NOW-3500 → entries 0..3 survive
+    expect(store.listAiActions({ since: NOW - 3500 })).toHaveLength(4);
+    expect(store.countAiActions({ agent: 'mcp-tool' })).toBe(5);
+  });
+
+  test('audit rows decay with retention purge', () => {
+    store = openInMemory();
+    store.insertAiAction({
+      id: 'old',
+      timestamp: NOW - 100_000,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      outcome: 'proposed',
+    });
+    store.insertAiAction({
+      id: 'new',
+      timestamp: NOW - 1000,
+      agent: 'ai-fix-pr',
+      action: 'propose-fix',
+      outcome: 'proposed',
+    });
+    const result = store.purgeOlderThan(NOW - 50_000);
+    expect(result.aiActions).toBe(1);
+    expect(store.listAiActions().map((r) => r.id)).toEqual(['new']);
   });
 });

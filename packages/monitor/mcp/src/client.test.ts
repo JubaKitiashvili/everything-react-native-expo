@@ -194,3 +194,64 @@ describe('DashboardClient — endpoint shapes', () => {
     expect(calls[0]).toContain('user%2F42%20with%20space/summary');
   });
 });
+
+describe('DashboardClient — audit trail (Task 117.81)', () => {
+  test('recordAiAction POSTs the JSON envelope and returns inserted', async () => {
+    let seenBody: string | null = null;
+    let seenUrl: string | null = null;
+    const fetchImpl = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      seenUrl = String(url);
+      seenBody = (init?.body as string) ?? null;
+      return okResponse({
+        ok: true,
+        inserted: true,
+        record: {
+          id: 'act-1',
+          timestamp: 1,
+          agent: 'a',
+          action: 'b',
+          outcome: 'c',
+        },
+      });
+    });
+    const client = new DashboardClient({
+      dashboardUrl: 'http://localhost',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const result = await client.recordAiAction({
+      id: 'act-1',
+      timestamp: 1,
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+    });
+    expect(seenUrl).toBe('http://localhost/api/audit/ai-actions');
+    expect(JSON.parse(seenBody!)).toMatchObject({ id: 'act-1', agent: 'a' });
+    expect(result.inserted).toBe(true);
+  });
+
+  test('listAiActions builds a query string from the filter shape', async () => {
+    const calls: string[] = [];
+    const fetchImpl = vi.fn(async (url: string | URL) => {
+      calls.push(String(url));
+      return okResponse({ rows: [], total: 0 });
+    });
+    const client = new DashboardClient({
+      dashboardUrl: 'http://localhost',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await client.listAiActions({
+      agent: 'ai-fix-pr',
+      outcome: ['proposed', 'errored'],
+      since: 1000,
+      limit: 50,
+      offset: 10,
+    });
+    expect(calls[0]).toContain('agent=ai-fix-pr');
+    expect(calls[0]).toContain('outcome=proposed');
+    expect(calls[0]).toContain('outcome=errored');
+    expect(calls[0]).toContain('since=1000');
+    expect(calls[0]).toContain('limit=50');
+    expect(calls[0]).toContain('offset=10');
+  });
+});
