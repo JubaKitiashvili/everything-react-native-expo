@@ -36,6 +36,12 @@ export interface McpBootstrapOptions extends DashboardClientOptions {
    * override here for separate-storage setups.
    */
   audit?: boolean | { client: DashboardClient };
+  /**
+   * Audit-fix follow-up: observability hook for failed audit writes.
+   * Mirrors AIFixPR's onAuditError. Without it, operators have no
+   * way to tell that audit emission silently degraded.
+   */
+  onAuditError?: (err: Error, toolName: string) => void;
 }
 
 export interface McpServerHandle {
@@ -119,8 +125,14 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
             ? { metadata: { detail } }
             : {}),
       });
-    } catch {
-      // Swallow — audit is best-effort.
+    } catch (err) {
+      // Audit is best-effort — surface through onAuditError so
+      // operators can route the failure to their log aggregator
+      // instead of letting it disappear.
+      options.onAuditError?.(
+        err instanceof Error ? err : new Error(String(err)),
+        toolName,
+      );
     }
   }
 

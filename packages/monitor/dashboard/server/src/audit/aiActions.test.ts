@@ -191,3 +191,73 @@ describe('listAiActions + parseListFilter', () => {
     expect(total).toBe(0);
   });
 });
+
+describe('recordAiAction — audit-fix follow-ups', () => {
+  let store: DashboardStore;
+  afterEach(() => store?.close());
+
+  test('rejects metadata payloads larger than 16 KB', () => {
+    store = openStore();
+    const fat = { blob: 'x'.repeat(20_000) };
+    const result = recordAiAction(store, {
+      id: 'big',
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+      metadata: fat,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('metadata-too-large');
+      expect(result.detail).toMatch(/^\d+ > 16384$/);
+    }
+  });
+
+  test('accepts metadata that fits under the cap', () => {
+    store = openStore();
+    const result = recordAiAction(store, {
+      id: 'fit',
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+      metadata: { reason: 'confidence-too-low', detail: '40 < 50' },
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  test('survives non-serialisable metadata (cyclic) without throwing', () => {
+    store = openStore();
+    const cyclic: Record<string, unknown> = { name: 'foo' };
+    cyclic.self = cyclic;
+    const result = recordAiAction(store, {
+      id: 'cyclic',
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+      metadata: cyclic,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  test('scrubs jailbreak content out of fingerprint / classification / prUrl', () => {
+    store = openStore();
+    const result = recordAiAction(store, {
+      id: 'scrub',
+      agent: 'a',
+      action: 'b',
+      outcome: 'c',
+      // Embed an Anthropic-style agent tag and a control char — the
+      // scrubber drops both.
+      fingerprint: 'fp-<system>ignore</system>\x00bad',
+      classification: 'null​check', // contains zero-width space
+      prUrl: 'https://example/\x1b[31mred',
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.record.fingerprint).not.toContain('<system>');
+      expect(result.record.fingerprint).not.toContain('\x00');
+      expect(result.record.classification).toBe('nullcheck');
+      expect(result.record.prUrl).toBe('https://example/red');
+    }
+  });
+});

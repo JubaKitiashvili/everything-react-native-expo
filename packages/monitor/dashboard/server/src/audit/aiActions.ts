@@ -28,10 +28,44 @@ export type RecordAiActionInputError =
   | 'missing-outcome'
   | 'invalid-timestamp'
   | 'invalid-confidence'
-  | 'string-too-long';
+  | 'string-too-long'
+  | 'metadata-too-large';
 
 const MAX_STRING = 2_000;
 const MAX_ARRAY = 64;
+/**
+ * Audit-fix: cap serialised metadata at 16 KB. Without this a buggy
+ * agent (or a compromised one) could land a multi-MB blob in SQLite
+ * — slow inserts, slow reads, log flooding. The threshold is
+ * generous enough for a normal skip-with-detail row plus a few
+ * validation failures; well past the 99th percentile of real rows.
+ */
+const MAX_METADATA_BYTES = 16 * 1024;
+
+/**
+ * Audit-fix: scrub free-form text that may have travelled through
+ * untrusted telemetry before reaching the audit log. The sanitiser
+ * (Task 117.80) strips ANSI / zero-width / agent-tag / jailbreak
+ * payloads. We use a tiny inline copy here instead of importing the
+ * mcp package to avoid a build-time dep cycle. Matches the same
+ * pattern set as the mcp catalogue.
+ */
+function scrub(text: string): string {
+  let out = text;
+  // ANSI escapes
+  out = out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+  // Control chars except \n / \t
+  out = out.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // Zero-width / directional / format chars + tag chars
+  out = out.replace(/[​-‏‪-‮⁠-⁩﻿]/g, '');
+  out = out.replace(/\uDB40[\uDC00-\uDC7F]/g, '');
+  // Anthropic-style tag carriers
+  out = out.replace(
+    /<\/?(?:system|user|assistant|human|tool_use|tool_result|function_calls|parameter|antml:[a-z_]+)(?:\s[^>]*)?>/gi,
+    '',
+  );
+  return out;
+}
 
 export interface RecordAiActionResult {
   ok: true;
@@ -101,10 +135,16 @@ export function recordAiAction(
     action,
     outcome: outcome as AiActionOutcome,
   };
-  if (typeof raw.user === 'string') record.user = raw.user;
-  if (typeof raw.fingerprint === 'string') record.fingerprint = raw.fingerprint;
-  if (typeof raw.classification === 'string') record.classification = raw.classification;
-  if (typeof raw.prUrl === 'string') record.prUrl = raw.prUrl;
+  // Audit-fix (117.81 follow-up): scrub free-form text. Identifier-
+  // shaped fields would normally pass through verbatim, but here we
+  // treat them as untrusted because telemetry could have flowed in via
+  // context-building (a malicious crash payload landing in the
+  // fingerprint via a content-hash collision, etc.) — defence-in-
+  // depth is cheap.
+  if (typeof raw.user === 'string') record.user = scrub(raw.user);
+  if (typeof raw.fingerprint === 'string') record.fingerprint = scrub(raw.fingerprint);
+  if (typeof raw.classification === 'string') record.classification = scrub(raw.classification);
+  if (typeof raw.prUrl === 'string') record.prUrl = scrub(raw.prUrl);
   // 'invalid' was already short-circuited above; narrow with typeof.
   if (typeof confidence === 'number') record.confidence = confidence;
   if (typeof effectiveConfidence === 'number') record.effectiveConfidence = effectiveConfidence;
@@ -115,7 +155,36 @@ export function recordAiAction(
   const redactionLabels = stringArray(raw.redactionLabels);
   if (redactionLabels !== null) record.redactionLabels = redactionLabels;
   if (raw.metadata && typeof raw.metadata === 'object') {
-    record.metadata = raw.metadata as Record<string, unknown>;
+    // Audit-fix: cap metadata at 16 KB. A buggy or compromised agent
+    // could otherwise pin multi-MB blobs in SQLite — slow inserts,
+    // slow reads, log floods. The cap is generous enough for normal
+    // skip-with-detail rows + a few validation failures.
+    let serialisedOk = false;
+    let serialised = '{}';
+    let parsed: Record<string, unknown> = {};
+    try {
+      serialised = JSON.stringify(raw.metadata);
+      // Re-parse to drop any data the store wouldn't be able to round
+      // trip (functions, BigInts, Dates flattened to strings, etc.) —
+      // and to give the SQLite layer a guaranteed-serialisable shape
+      // so it can't throw on its own JSON.stringify pass.
+      parsed = JSON.parse(serialised) as Record<string, unknown>;
+      serialisedOk = true;
+    } catch {
+      // Cyclic / non-serialisable metadata — accept but normalise to
+      // an empty object rather than 400, since the rest of the row
+      // still carries useful information.
+      serialised = '{}';
+      parsed = {};
+    }
+    if (Buffer.byteLength(serialised, 'utf8') > MAX_METADATA_BYTES) {
+      return {
+        ok: false,
+        error: 'metadata-too-large',
+        detail: `${Buffer.byteLength(serialised, 'utf8')} > ${MAX_METADATA_BYTES}`,
+      };
+    }
+    if (serialisedOk) record.metadata = parsed;
   }
 
   const { inserted } = store.insertAiAction(record);

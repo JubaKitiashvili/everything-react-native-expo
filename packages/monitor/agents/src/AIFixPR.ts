@@ -61,6 +61,16 @@ export interface AIFixPROptions {
    * Repository-specific denylist patterns plug in here.
    */
   validation?: ValidatePathsOptions;
+  /**
+   * Audit-fix follow-up: observability hook for failed audit writes.
+   * The agent treats audit emission as best-effort — primary work
+   * (opening the PR) finishes regardless. Without this hook
+   * operators see "no audit row" and can't tell whether the action
+   * never ran or whether the audit endpoint just returned 5xx. The
+   * default still swallows; pass a logger to surface failures to
+   * Sentry / Slack / stdout.
+   */
+  onAuditError?: (err: Error, record: AiActionRecord) => void;
 }
 
 export type ProposeResult =
@@ -130,11 +140,10 @@ export class AIFixPR {
     const result = await this.proposeInner(fingerprint);
     // Best-effort audit emission. A failed write must NOT change the
     // caller's view of `result` — the agent's primary job is to open
-    // PRs; audit is observational. Failures get logged via the
-    // optional onError hook so operators can surface them.
-    await this.emitAudit(fingerprint, result).catch(() => {
-      /* swallow */
-    });
+    // PRs; audit is observational. Failures route through
+    // `onAuditError` (when configured) so operators can surface them
+    // to Sentry / their log aggregator.
+    await this.emitAudit(fingerprint, result);
     return result;
   }
 
@@ -311,6 +320,13 @@ export class AIFixPR {
       baseRecord.metadata = metadata;
       baseRecord.toolsCalled = ['list_crash_groups', 'list_events'];
     }
-    await this.opts.dashboardClient.recordAiAction(baseRecord);
+    try {
+      await this.opts.dashboardClient.recordAiAction(baseRecord);
+    } catch (err) {
+      this.opts.onAuditError?.(
+        err instanceof Error ? err : new Error(String(err)),
+        baseRecord,
+      );
+    }
   }
 }

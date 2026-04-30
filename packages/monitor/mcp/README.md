@@ -111,6 +111,45 @@ A separate red-team test suite ships with Task 117.80; the code here is
 the foundation it iterates on. Please file an issue if you find a
 jailbreak pattern that slips through.
 
+## Audit trail (Task 117.81)
+
+Every tool call can optionally land one row in the dashboard's
+`ai_actions` table. Off by default — local-dev sessions don't need
+the trail. In production / shared deployments enable it
+programmatically:
+
+```ts
+import { createMcpServer } from '@erne/monitor-mcp';
+
+createMcpServer({
+  dashboardUrl: 'http://127.0.0.1:3333',
+  apiKey: process.env.ERNE_API_KEY,
+  audit: true,                           // emit one row per tool call
+  onAuditError: (err, toolName) => {     // surface write failures
+    sentry.captureException(err, { tags: { toolName } });
+  },
+});
+```
+
+Each row records: `agent: 'mcp-server'`, `action: 'invoke-tool:<name>'`,
+`outcome: 'invoked' | 'errored'`, the tool name, and any sanitiser
+labels triggered by Claude's args (so operators can see when Claude
+tried to smuggle a jailbreak through).
+
+Audit emission is best-effort; a misbehaving log endpoint never blocks
+Claude from getting tool results. Failures route through the
+`onAuditError` hook (when configured) instead of being silently
+swallowed.
+
+The dashboard server exposes the audit log through two endpoints:
+
+- `GET /api/audit/ai-actions?agent=mcp-server&since=...&limit=...` —
+  paged list, filterable by agent / action / fingerprint / outcome
+  (multi-value supported) / time range.
+- `POST /api/audit/ai-actions` — write one row. Idempotent on `id`.
+  The MCP server hits this through the dashboard client; you'd only
+  call it directly from a custom integration.
+
 ## Example interactions
 
 After connecting:

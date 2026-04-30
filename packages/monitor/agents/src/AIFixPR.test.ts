@@ -401,4 +401,23 @@ describe('AIFixPR — audit emission (Task 117.81)', () => {
     // PR still got opened — audit is best-effort.
     expect(result.status).toBe('proposed');
   });
+
+  test('onAuditError fires with the error + record on write failure', async () => {
+    const stubs = makeStubs({});
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    await stubs.confidence.recordOutcome('null-check', 'merged');
+    (stubs.dashboardClient as never as {
+      recordAiAction: (r: unknown) => Promise<unknown>;
+    }).recordAiAction = async () => {
+      throw new Error('audit endpoint down');
+    };
+    const observed: Array<{ err: Error; record: { agent: string } }> = [];
+    const orchestrator = makeOrchestrator(stubs, {
+      onAuditError: (err, record) => observed.push({ err, record }),
+    });
+    await orchestrator.propose('fp-abcdef01');
+    expect(observed).toHaveLength(1);
+    expect(observed[0]?.err.message).toBe('audit endpoint down');
+    expect(observed[0]?.record.agent).toBe('ai-fix-pr');
+  });
 });

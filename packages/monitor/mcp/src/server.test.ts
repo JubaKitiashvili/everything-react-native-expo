@@ -417,4 +417,21 @@ describe('createMcpServer — audit hook (Task 117.81)', () => {
     const result = await handle.invokeTool('get_health', {});
     expect(result).toBeDefined();
   });
+
+  test('onAuditError fires with err + tool name when emission throws', async () => {
+    const recordAiAction = vi.fn(async () => {
+      throw new Error('audit endpoint down');
+    });
+    const observed: Array<{ err: Error; toolName: string }> = [];
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient({ recordAiAction } as never as Partial<DashboardClient>),
+      audit: true,
+      onAuditError: (err, toolName) => observed.push({ err, toolName }),
+    });
+    await handle.invokeTool('get_health', {});
+    expect(observed).toHaveLength(1);
+    expect(observed[0]?.err.message).toBe('audit endpoint down');
+    expect(observed[0]?.toolName).toBe('get_health');
+  });
 });

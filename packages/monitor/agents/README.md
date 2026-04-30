@@ -134,6 +134,34 @@ back; sustained rejections starve out the bucket entirely.
   file are passed through the dashboard's `/api/symbols/resolve`
   endpoint before reaching the LLM (Task 117.3 underpins this).
 
+## Audit trail (Task 117.81)
+
+Every `propose()` call writes one row to the dashboard's
+`/api/audit/ai-actions` endpoint, regardless of outcome:
+
+| Path                | `outcome`                         | What's captured                                               |
+| ------------------- | --------------------------------- | ------------------------------------------------------------- |
+| Proposed (PR open)  | `proposed`                        | confidence, classification, prUrl, files-considered, tools   |
+| Skipped             | `skipped:<reason>`                | reason, detail, validationFailures (when invalid-paths)       |
+
+Audit emission is best-effort. If the dashboard endpoint is down the
+PR-opening primary job still completes — but operators usually want to
+know when their audit trail starts dropping rows. Pass `onAuditError`
+to surface failures to Sentry / Slack / your log aggregator:
+
+```ts
+new AIFixPR({
+  dashboardClient,
+  llm,
+  github,
+  confidence,
+  dashboardUrl: 'https://dash.example.com',
+  onAuditError: (err, record) => {
+    logger.warn({ err, record }, 'audit write failed');
+  },
+});
+```
+
 ## What's still ahead
 
 Several follow-up tasks build on this surface:
