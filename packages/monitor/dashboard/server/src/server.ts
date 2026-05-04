@@ -21,6 +21,8 @@ import {
   parseListFilter as parseAuditListFilter,
   recordAiAction,
 } from './audit/aiActions.js';
+import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
+import { AlertEvaluator } from './alerts/evaluator.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -153,6 +155,23 @@ export interface DashboardServerOptions {
   retention?:
     | false
     | (Omit<RetentionPurgeJobOptions, 'store'> & { enabled?: boolean });
+  /**
+   * Task 117.99 — alert evaluator + delivery configuration. Default:
+   * an `AlertEvaluator` runs in-process and a stock `AlertDelivery`
+   * uses the global `fetch`. Set `false` to disable evaluation entirely
+   * (rules will still persist but never fire — useful for tests). Pass
+   * `delivery` to inject a stub fetch / clock for unit tests.
+   */
+  alerts?:
+    | false
+    | {
+        enabled?: boolean;
+        delivery?: AlertDeliveryOptions;
+        /** Override the evaluator's clock — defaults to `Date.now`. */
+        now?: () => number;
+        /** Logger surface forwarded into both evaluator + delivery. */
+        onError?: (err: Error, context: { rule?: string; channel?: string }) => void;
+      };
 }
 
 export interface DashboardServerHandle {
@@ -167,6 +186,12 @@ export interface DashboardServerHandle {
    * or `{ enabled: false }`.
    */
   retentionJob: RetentionPurgeJob | null;
+  /**
+   * Task 117.99 — alert evaluator. `null` when disabled via
+   * `options.alerts = false`. Exposed so tests + the dashboard's
+   * test-fire button can call it directly without going through HTTP.
+   */
+  alertEvaluator: AlertEvaluator | null;
   close: () => Promise<void>;
   url: string;
 }
@@ -301,6 +326,36 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         });
   retentionJob?.start();
 
+  // Task 117.99 — alert evaluator + delivery. Default on; opt-out with
+  // `alerts: false` or `{ enabled: false }`. Constructed unconditionally
+  // when enabled so the test-fire endpoint works even without WS ingest.
+  const alertsOption = options.alerts;
+  const alertsDisabled =
+    alertsOption === false ||
+    (typeof alertsOption === 'object' && alertsOption?.enabled === false);
+  const alertConfig = typeof alertsOption === 'object' ? alertsOption : {};
+  let alertEvaluator: AlertEvaluator | null = null;
+  if (!alertsDisabled) {
+    const deliveryOptions: AlertDeliveryOptions = { ...(alertConfig.delivery ?? {}) };
+    if (alertConfig.onError && !deliveryOptions.onError) {
+      deliveryOptions.onError = (err, ctx) =>
+        alertConfig.onError?.(err, { channel: ctx.channel, rule: ctx.rule });
+    }
+    const delivery = new AlertDelivery(deliveryOptions);
+    const evaluatorOptions: ConstructorParameters<typeof AlertEvaluator>[0] = {
+      store,
+      delivery,
+    };
+    if (alertConfig.now) evaluatorOptions.now = alertConfig.now;
+    if (alertConfig.onError) {
+      evaluatorOptions.onError = (err, ctx) => alertConfig.onError?.(err, ctx);
+    }
+    alertEvaluator = new AlertEvaluator(evaluatorOptions);
+    if (websocket) {
+      websocket.setOnEventPersisted((event) => alertEvaluator?.onEvent(event));
+    }
+  }
+
   const resolveRetentionDays = (): number => {
     const raw = store.getSetting('retention_days');
     return coerceRetentionDays(raw) ?? DEFAULT_RETENTION_DAYS;
@@ -419,6 +474,9 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
               updatedAt: now,
             };
             store.saveAlertRule(saved);
+            // Task 117.99 — evaluator must see the new/updated rule
+            // before the next ingested event.
+            alertEvaluator?.reloadRules();
             sendJson(res, 200, { rule: saved });
           })
           .catch((err: unknown) => {
@@ -434,12 +492,57 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           sendJson(res, 400, { error: 'missing_id' });
           return;
         }
+        // Task 117.99 — `/api/alert-rules/:id/test-fire` lives under the
+        // same prefix; route it before the destroy path so the operator
+        // can fire-test a rule with a colon-y id without it being
+        // misinterpreted as a delete.
+        if (id.endsWith('/test-fire')) {
+          // Wrong verb (DELETE) for the test-fire path; surface a
+          // useful error rather than letting the delete swallow it.
+          sendJson(res, 405, { error: 'method_not_allowed' });
+          return;
+        }
         const deleted = store.deleteAlertRule(id);
         if (!deleted) {
           sendJson(res, 404, { error: 'not_found', id });
           return;
         }
+        alertEvaluator?.reloadRules();
         sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      // Task 117.99 — test-fire endpoint for the dashboard "Test fire"
+      // button. Persists a marker firing + dispatches via every
+      // configured channel. Returns the firing + per-channel delivery
+      // results so the dashboard can render success / failure inline.
+      if (
+        req.method === 'POST' &&
+        pathname.startsWith('/api/alert-rules/') &&
+        pathname.endsWith('/test-fire')
+      ) {
+        const id = pathname.slice('/api/alert-rules/'.length, -'/test-fire'.length);
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        if (!alertEvaluator) {
+          sendJson(res, 503, { error: 'alerts_disabled' });
+          return;
+        }
+        void alertEvaluator
+          .testFire(id)
+          .then((result) => {
+            if (!result) {
+              sendJson(res, 404, { error: 'not_found', id });
+              return;
+            }
+            sendJson(res, 200, { ok: true, ...result });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 500, { error: 'test_fire_failed', message });
+          });
         return;
       }
 
@@ -782,6 +885,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     port,
     websocket,
     retentionJob,
+    alertEvaluator,
     url: `http://${host}:${port}`,
     close: () =>
       new Promise<void>((resolveClose) => {

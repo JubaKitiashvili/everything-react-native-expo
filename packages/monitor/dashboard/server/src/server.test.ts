@@ -131,6 +131,239 @@ describe('server alert rule endpoints', () => {
   });
 });
 
+describe('alert evaluator wiring (Task 117.99)', () => {
+  test('POST /api/alert-rules/:id/test-fire dispatches via stub fetch and persists firing', async () => {
+    const fetchCalls: Array<{ url: string; body: unknown }> = [];
+    const stubFetch: typeof fetch = (async (input, init) => {
+      const url = typeof input === 'string' ? input : (input as URL).toString();
+      const body =
+        init && typeof init === 'object' && 'body' in init && typeof (init as { body?: unknown }).body === 'string'
+          ? JSON.parse((init as { body: string }).body)
+          : null;
+      fetchCalls.push({ url, body });
+      return new Response('', { status: 200 });
+    }) as typeof fetch;
+
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      alerts: { delivery: { fetch: stubFetch as never } },
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    const created = await fetch(`${url}/api/alert-rules`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Crash spike',
+        metric: 'crash_count',
+        threshold: 3,
+        windowSeconds: 60,
+        channels: ['webhook:https://example.com/erne'],
+        cooldownSeconds: 60,
+      }),
+    });
+    const ruleId = ((await created.json()) as { rule: { id: string } }).rule.id;
+
+    const fired = await fetch(`${url}/api/alert-rules/${ruleId}/test-fire`, { method: 'POST' });
+    expect(fired.status).toBe(200);
+    const body = (await fired.json()) as {
+      ok: boolean;
+      firing: { id: string; ruleId: string };
+      results: Array<{ ok: boolean; type: string; status: number }>;
+    };
+    expect(body.ok).toBe(true);
+    expect(body.firing.ruleId).toBe(ruleId);
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0]?.ok).toBe(true);
+    expect(body.results[0]?.type).toBe('webhook');
+    expect(fetchCalls).toHaveLength(1);
+    const persisted = store.listAlertHistory();
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0]?.payload).toEqual({ test: true, message: 'Test fire from dashboard' });
+
+    await handle.close();
+  });
+
+  test('POST /api/alert-rules/:id/test-fire returns 404 for unknown rule', async () => {
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store: new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true }),
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    const fired = await fetch(`${url}/api/alert-rules/nope/test-fire`, { method: 'POST' });
+    expect(fired.status).toBe(404);
+
+    await handle.close();
+  });
+
+  test('alerts: false disables evaluator + returns 503 on test-fire', async () => {
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store: new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true }),
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      alerts: false,
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    expect(handle.alertEvaluator).toBeNull();
+
+    await fetch(`${url}/api/alert-rules`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'noop',
+        metric: 'crash_count',
+        threshold: 1,
+        windowSeconds: 60,
+        channels: [],
+      }),
+    });
+    const list = (await (await fetch(`${url}/api/alert-rules`)).json()) as {
+      rules: Array<{ id: string }>;
+    };
+    const ruleId = list.rules[0]!.id;
+
+    const fired = await fetch(`${url}/api/alert-rules/${ruleId}/test-fire`, { method: 'POST' });
+    expect(fired.status).toBe(503);
+
+    await handle.close();
+  });
+
+  test('rule mutation reloads evaluator (new rule fires next test-fire request)', async () => {
+    const fetchCalls: string[] = [];
+    const stubFetch: typeof fetch = (async (input) => {
+      const u = typeof input === 'string' ? input : (input as URL).toString();
+      fetchCalls.push(u);
+      return new Response('', { status: 200 });
+    }) as typeof fetch;
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store: new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true }),
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      alerts: { delivery: { fetch: stubFetch as never } },
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    expect(handle.alertEvaluator?.ruleCount).toBe(0);
+
+    await fetch(`${url}/api/alert-rules`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'webhook-rule',
+        metric: 'crash_count',
+        threshold: 1,
+        windowSeconds: 60,
+        channels: ['webhook:https://example.com/erne'],
+      }),
+    });
+    expect(handle.alertEvaluator?.ruleCount).toBe(1);
+    const ruleId = (
+      (await (await fetch(`${url}/api/alert-rules`)).json()) as { rules: Array<{ id: string }> }
+    ).rules[0]!.id;
+
+    await fetch(`${url}/api/alert-rules/${ruleId}/test-fire`, { method: 'POST' });
+    expect(fetchCalls).toHaveLength(1);
+
+    // Delete drops the in-memory rule; subsequent test-fire 404s.
+    await fetch(`${url}/api/alert-rules/${ruleId}`, { method: 'DELETE' });
+    expect(handle.alertEvaluator?.ruleCount).toBe(0);
+    const after = await fetch(`${url}/api/alert-rules/${ruleId}/test-fire`, { method: 'POST' });
+    expect(after.status).toBe(404);
+
+    await handle.close();
+  });
+
+  test('persisted ingest event triggers evaluator and fires when threshold crossed', async () => {
+    const fetchCalls: Array<{ url: string }> = [];
+    const stubFetch: typeof fetch = (async (input) => {
+      const u = typeof input === 'string' ? input : (input as URL).toString();
+      fetchCalls.push({ url: u });
+      return new Response('', { status: 200 });
+    }) as typeof fetch;
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    store.upsertSession({ id: 's1', startedAt: 0, eventCount: 0, crashCount: 0 });
+    store.saveAlertRule({
+      id: 'rule-x',
+      name: 'Threshold',
+      metric: 'crash_count',
+      threshold: 2,
+      windowSeconds: 60,
+      channels: ['webhook:https://example.com/erne'],
+      cooldownSeconds: 60,
+      enabled: true,
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    // Pin both the evaluator clock and the event timestamps to the
+    // same instant so the rolling window never prunes the events
+    // before the threshold is checked.
+    const FROZEN = 1_770_000_000_000;
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+      alerts: { delivery: { fetch: stubFetch as never }, now: () => FROZEN },
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+
+    expect(handle.alertEvaluator?.ruleCount).toBe(1);
+
+    // Drive the evaluator directly — the WS handler is disabled in this
+    // harness, but the ingest hook flows through the same code path.
+    await handle.alertEvaluator!.onEvent({
+      id: 'e1',
+      type: 'crash',
+      severity: 'critical',
+      sessionId: 's1',
+      timestamp: FROZEN,
+      receivedAt: FROZEN,
+      payload: { message: 'boom' },
+    });
+    expect(fetchCalls).toHaveLength(0);
+    await handle.alertEvaluator!.onEvent({
+      id: 'e2',
+      type: 'crash',
+      severity: 'critical',
+      sessionId: 's1',
+      timestamp: FROZEN,
+      receivedAt: FROZEN,
+      payload: { message: 'boom' },
+    });
+    expect(fetchCalls).toHaveLength(1);
+    expect(store.listAlertHistory()).toHaveLength(1);
+
+    await handle.close();
+  });
+});
+
 describe('server bug report endpoints', () => {
   let ctx: Awaited<ReturnType<typeof openServer>>;
 

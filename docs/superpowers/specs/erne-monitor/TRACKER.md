@@ -2,10 +2,10 @@
 
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
-**Last updated:** 2026-04-30
-**Current Phase:** Phase 7 — Launch (13/106)
-**Active Task:** Task 117.99 — Alert evaluator + webhook delivery
-**Overall Progress:** 129/222 tasks (Phases 1a–6 ✅ · Phase 7 13/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps + 117.6 AI Fix PR + 117.80 MCP injection guard + 117.81 AI action audit) · 1174 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 148 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests passing
+**Last updated:** 2026-05-04
+**Current Phase:** Phase 7 — Launch (14/106)
+**Active Task:** Task 117.91 — ERNE Benchmark Suite (next up)
+**Overall Progress:** 130/222 tasks (Phases 1a–6 ✅ · Phase 7 14/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps + 117.6 AI Fix PR + 117.80 MCP injection guard + 117.81 AI action audit + 117.99 Alert evaluator) · 1174 SDK tests + 185 dashboard-app (vitest) + 17 dashboard-app (playwright) + 184 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -168,7 +168,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.80 | MCP tool input sanitization (prompt injection guard) | ✅ |
 | 117.81 | AI agent action audit trail (tools called, files considered, confidence, PR link) | ✅ |
 | 117.91 | ERNE Benchmark Suite (standalone repo, reproducible vs competitors) | ⬜ |
-| 117.99 | Alert evaluator + webhook delivery (rules currently store config but fire nothing) | ⬜ |
+| 117.99 | Alert evaluator + webhook delivery (rules currently store config but fire nothing) | ✅ |
 | 117.102 | Design partner cohort (3-5 real apps, weekly async Loom check-ins) | ⬜ |
 
 ### Milestone 2 — Observability depth + docs parallel (Weeks 10-13)

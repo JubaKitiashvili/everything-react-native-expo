@@ -43,6 +43,14 @@ export type IngestWsHandlerOptions = {
    * used; the ingest hot path is never fully synchronous.
    */
   queue?: IQueue<EventRecord>;
+  /**
+   * Task 117.99 — invoked synchronously inside the queue worker after
+   * an event is persisted (i.e. only when `inserted=true`). Used by
+   * the alert evaluator to count metric events into rule windows.
+   * Errors from the hook are caught and surfaced via `onError` so a
+   * misbehaving downstream never blocks ingest.
+   */
+  onEventPersisted?: (event: EventRecord) => void | Promise<void>;
 };
 
 type SdkMessage =
@@ -160,6 +168,7 @@ export class IngestWebSocketHandler {
    * multi-process deployments.
    */
   private readonly queue: IQueue<EventRecord>;
+  private readonly onEventPersisted: ((event: EventRecord) => void | Promise<void>) | null;
 
   constructor(options: IngestWsHandlerOptions) {
     this.store = options.store;
@@ -179,7 +188,19 @@ export class IngestWebSocketHandler {
     this.queue.on('failed', ({ error }) => {
       this.onError(error, 'ingest-queue-failed');
     });
+    this.onEventPersisted = options.onEventPersisted ?? null;
     this.queue.start((event) => this.persistAndBroadcast(event));
+  }
+
+  /**
+   * Task 117.99 — replace the persisted-event hook at runtime. Used by
+   * `createDashboardServer` so the evaluator can be constructed after
+   * the handler (avoiding a circular construction order).
+   */
+  setOnEventPersisted(hook: ((event: EventRecord) => void | Promise<void>) | null): void {
+    // Cast away `readonly` for this single, controlled mutation so the
+    // common case (hook locked in at construction) remains immutable.
+    (this as unknown as { onEventPersisted: typeof hook }).onEventPersisted = hook;
   }
 
   /** Task 117.5 — queue stats for `/api/queue/stats` observability. */
@@ -479,7 +500,7 @@ export class IngestWebSocketHandler {
     return record;
   }
 
-  private persistAndBroadcast(event: EventRecord): void {
+  private async persistAndBroadcast(event: EventRecord): Promise<void> {
     const { inserted } = this.store.insertEvent(event);
     if (!inserted) {
       // Task 117.49 — duplicate id. The original row already bumped the
@@ -503,6 +524,16 @@ export class IngestWebSocketHandler {
     this.broadcast({ kind: 'event', event });
     if (group) {
       this.broadcast({ kind: 'crash-group-update', group });
+    }
+
+    // Task 117.99 — alert evaluator hook. Errors here are isolated from
+    // ingest so a webhook timeout never wedges the queue.
+    if (this.onEventPersisted) {
+      try {
+        await this.onEventPersisted(event);
+      } catch (err) {
+        this.onError(err instanceof Error ? err : new Error(String(err)), 'event-persisted-hook');
+      }
     }
   }
 
