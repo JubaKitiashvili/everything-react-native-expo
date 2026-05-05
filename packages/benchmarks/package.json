@@ -1,0 +1,39 @@
+{
+  "name": "@erne/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reproducible benchmark suite comparing @erne/monitor against Sentry, measure.sh, and Bitdrift across install time, bundle overhead, crash capture latency, and symbolication accuracy. Future home: github.com/ernedev/erne-benchmarks (Task 117.91).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "erne-benchmarks": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "bench": "tsx src/cli.ts run",
+    "bench:dry": "tsx src/cli.ts run --dry-run"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.19.17",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

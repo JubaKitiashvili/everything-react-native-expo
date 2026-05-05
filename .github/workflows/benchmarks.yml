@@ -1,0 +1,108 @@
+name: benchmarks / suite
+
+# Task 117.91 — Reproducible benchmark suite for @erne/monitor vs
+# Sentry / measure.sh / Bitdrift. PRs run lint + typecheck + tests +
+# `bench:dry` (no network). The full suite (including `install_time`
+# which hits the public npm registry) runs nightly on `main` so the
+# numbers stay current without slowing PRs.
+
+on:
+  pull_request:
+    paths:
+      - 'packages/benchmarks/**'
+      - '.github/workflows/benchmarks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/benchmarks/**'
+  schedule:
+    # 06:00 UTC nightly — full suite with install_time enabled.
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  pr:
+    name: benchmark harness CI
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: packages/benchmarks
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/benchmarks/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Dry-run benchmark suite
+        run: npm run bench:dry -- --out=results.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmarks-dry-run
+          path: packages/benchmarks/results.md
+          if-no-files-found: ignore
+          retention-days: 30
+
+  nightly:
+    name: benchmark suite nightly
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: packages/benchmarks
+    env:
+      RUNNER_IMAGE: ${{ runner.os }}-${{ runner.arch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/benchmarks/package-lock.json
+
+      - name: Install benchmarks
+        run: npm ci --no-audit --no-fund
+
+      - name: Build @erne/monitor (sibling)
+        working-directory: packages/monitor
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Run full benchmark suite
+        run: npm run bench -- --out=results.md --json --out=results.json
+        # Two --out flags is intentional: bench captures the LAST one,
+        # so this writes JSON. We separately render markdown below.
+
+      - name: Render Markdown report
+        run: npm run bench -- --out=results.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmarks-nightly
+          path: |
+            packages/benchmarks/results.md
+            packages/benchmarks/results.json
+          if-no-files-found: ignore
+          retention-days: 90
