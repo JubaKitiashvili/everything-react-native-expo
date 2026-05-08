@@ -27,3 +27,21 @@ export type { TimestampFormat } from './Timestamp/formatTimestamp';
 
 export { FilterBar } from './FilterBar/FilterBar';
 export type { FilterBarProps } from './FilterBar/FilterBar';
+
+export { HistogramCDF } from './HistogramCDF/HistogramCDF';
+export type { HistogramCDFProps } from './HistogramCDF/HistogramCDF';
+export {
+  computeHistogram,
+  computeCdf,
+  percentile,
+} from './HistogramCDF/computeHistogram';
+export type {
+  HistogramBucket,
+  HistogramResult,
+  ComputeHistogramOptions,
+} from './HistogramCDF/computeHistogram';
+export { detectBimodal } from './HistogramCDF/detectBimodal';
+export type {
+  DetectBimodalOptions,
+  DetectBimodalResult,
+} from './HistogramCDF/detectBimodal';
