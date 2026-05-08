@@ -1,19 +1,25 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Panel } from '../../shared/ui/Panel/Panel';
 import { Timestamp } from '../../shared/ui/Timestamp/Timestamp';
 import { useEvents } from '../../shared/hooks/useEvents';
 import type { EventRecord } from '../../shared/api/types';
 import {
   bucketByDuration,
+  extractAnrInstances,
   extractAnrs,
+  findInstance,
   formatDuration,
+  groupByFingerprint,
   recurrenceBins,
   topScreens,
+  type AnrInstance,
   type AnrRecord,
 } from './aggregate';
 import { DurationHistogram } from './DurationHistogram';
 import { RecurrenceTimeline } from './RecurrenceTimeline';
 import { TopScreens } from './TopScreens';
+import { ANRList } from './ANRList';
+import { ANRDetail } from './ANRDetail';
 import styles from './ANRInspector.module.css';
 
 export interface ANRInspectorProps {
@@ -52,12 +58,47 @@ function ANRInspectorContainer({ now }: { now?: number }) {
 }
 
 function ANRInspectorView({ events, now }: { events: EventRecord[]; now?: number }) {
+  // Records (existing API) drive the legacy aggregate widgets so the
+  // tests that count "Worst recent" / offenders keep working byte-for-
+  // byte. Instances (Task 117.22) carry the full stack + fingerprint
+  // for the new list / detail views.
   const records = useMemo(() => extractAnrs(events), [events]);
+  const instances = useMemo(() => extractAnrInstances(events), [events]);
   const buckets = useMemo(() => bucketByDuration(records), [records]);
   const offenders = useMemo(() => topScreens(records), [records]);
   const bins = useMemo(() => recurrenceBins(records), [records]);
 
   const worst = records.find((r) => r.durationMs >= 10_000) ?? records[0] ?? null;
+
+  // Selection state for the multi-page split. When react-router 7 lands
+  // (Task 117.1) this becomes a URL param; for now it's local state so
+  // the overview / detail flow still works in the existing single-panel
+  // shell.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId !== null ? findInstance(instances, selectedId) : null;
+  const recurrence = useMemo<AnrInstance[]>(() => {
+    if (!selected) return [];
+    const clusters = groupByFingerprint(instances);
+    const cluster = clusters.find((c) => c.fingerprint === selected.fingerprint);
+    return cluster ? cluster.instances : [];
+  }, [instances, selected]);
+
+  if (selected) {
+    return (
+      <Panel
+        title="ANR Inspector"
+        description={`Detail view: ${selected.screen ?? 'unknown screen'} · ${formatDuration(selected.durationMs)}`}
+      >
+        <ANRDetail
+          instance={selected}
+          recurrence={recurrence}
+          onBack={() => setSelectedId(null)}
+          onSelectInstance={setSelectedId}
+          {...(now !== undefined ? { now } : {})}
+        />
+      </Panel>
+    );
+  }
 
   return (
     <Panel
@@ -83,6 +124,14 @@ function ANRInspectorView({ events, now }: { events: EventRecord[]; now?: number
           {worst ? <WorstBanner record={worst} /> : null}
         </section>
       </div>
+      <section className={styles.listSection} aria-label="All ANR instances">
+        <h3 className={styles.listSubhead}>All ANRs</h3>
+        <ANRList
+          instances={instances}
+          onSelect={setSelectedId}
+          {...(now !== undefined ? { now } : {})}
+        />
+      </section>
     </Panel>
   );
 }

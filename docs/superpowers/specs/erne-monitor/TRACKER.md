@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (16/106)
-**Active Task:** Task 117.22 — ANR Inspector multi-page (next code task in M2)
-**Overall Progress:** 132/222 tasks (Phases 1a–6 ✅ · Phase 7 16/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps + 117.6 AI Fix PR + 117.80 MCP injection guard + 117.81 AI action audit + 117.99 Alert evaluator + 117.91 Benchmark Suite + 117.16 HistogramCDF) · 1174 SDK tests + 213 dashboard-app (vitest) + 17 dashboard-app (playwright) + 184 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests + 46 benchmarks tests passing
+**Current Phase:** Phase 7 — Launch (17/106)
+**Active Task:** Task 117.23 — Error Taps frustration panel (next code task in M2)
+**Overall Progress:** 133/222 tasks (Phases 1a–6 ✅ · Phase 7 17/106 — 117.4 StorageAdapter + 117.67/117.100 health/ready + 117.61 REST API-key gate + 117.101 WS subscribe gate + 117.47 CrashLoopGuard + 117.49 Ingest dedup + 117.71 Retention purge + 117.5 Queue abstraction + 117.2 MCP server + 117.3 Hermes source maps + 117.6 AI Fix PR + 117.80 MCP injection guard + 117.81 AI action audit + 117.99 Alert evaluator + 117.91 Benchmark Suite + 117.16 HistogramCDF + 117.22 ANR Inspector multi-page) · 1174 SDK tests + 231 dashboard-app (vitest) + 17 dashboard-app (playwright) + 184 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -180,7 +180,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.12 | User Journeys panel (Sankey flow + crash/ANR overlay per screen) | ⬜ |
 | 117.13 | Trace waterfall panel (collapsible span tree + attributes + checkpoints) | ⬜ |
 | 117.16 | Latency histograms with CDF (bimodal distribution detection) | ✅ |
-| 117.22 | ANR Inspector multi-page (overview + list + detail) | ⬜ |
+| 117.22 | ANR Inspector multi-page (overview + list + detail) | ✅ |
 | 117.23 | Error Taps frustration panel ("this button causes errors for 12% of users") | ⬜ |
 | 117.38 | Docs site (Starlight/Astro, parallel authoring starts here) | ⬜ |
 

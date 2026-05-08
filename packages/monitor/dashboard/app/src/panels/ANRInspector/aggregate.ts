@@ -9,6 +9,27 @@ export interface AnrRecord {
   sessionId: string;
 }
 
+/**
+ * Detail-page-shaped ANR record. Same identity + summary fields as
+ * AnrRecord, plus the full stack split into trimmed frames + a stable
+ * fingerprint so the detail view can group "this is the same ANR I've
+ * seen before" together. Kept as a separate type so the existing
+ * aggregate components don't suddenly grow extra fields they never
+ * read.
+ */
+export interface AnrInstance extends AnrRecord {
+  /** Stack frames in arrival order. Empty array for native ANRs. */
+  stackFrames: string[];
+  /**
+   * Best-effort fingerprint of the head frames so two ANRs from the
+   * same code path collapse together on the detail page's recurrence
+   * widget. Stable across sessions; opaque to callers.
+   */
+  fingerprint: string;
+  /** Optional kind tag from the SDK (`anr` vs `native_anr`). */
+  kind: 'anr' | 'native_anr';
+}
+
 export interface AnrBucket {
   label: string;
   minMs: number;
@@ -138,6 +159,87 @@ export function recurrenceBins(
   return bins;
 }
 
+/**
+ * Detail-page variant of `extractAnrs`. Same filter + ordering rules,
+ * but each row carries the full stack frames + a stable fingerprint
+ * the detail view uses to surface "same ANR seen before" recurrences.
+ */
+export function extractAnrInstances(events: EventRecord[]): AnrInstance[] {
+  const out: AnrInstance[] = [];
+  for (const event of events) {
+    if (!isAnrEvent(event)) continue;
+    const payload = event.payload as { durationMs?: unknown; stack?: unknown };
+    const durationMs = typeof payload.durationMs === 'number' ? payload.durationMs : null;
+    if (durationMs === null || !Number.isFinite(durationMs) || durationMs <= 0) continue;
+    const stack = typeof payload.stack === 'string' ? payload.stack : '';
+    const stackFrames = splitStackFrames(stack);
+    const stackHead = stackHeadOf(stack) || '<native ANR>';
+    out.push({
+      id: event.id,
+      timestamp: event.timestamp,
+      durationMs,
+      stackHead,
+      screen: event.screen ?? null,
+      sessionId: event.sessionId,
+      stackFrames,
+      fingerprint: fingerprintFromFrames(stackFrames, stackHead),
+      kind: event.type === 'native_anr' ? 'native_anr' : 'anr',
+    });
+  }
+  return out.sort((a, b) => b.timestamp - a.timestamp);
+}
+
+/**
+ * Look up one instance by id. Linear scan — the list is small (REST
+ * caps at 500). Returns `null` when the id is unknown so callers can
+ * render a "not found" view instead of throwing.
+ */
+export function findInstance(
+  instances: readonly AnrInstance[],
+  id: string,
+): AnrInstance | null {
+  return instances.find((i) => i.id === id) ?? null;
+}
+
+/**
+ * Group instances by fingerprint, returning each cluster newest-first
+ * and the cluster list sorted by count descending. Used by the detail
+ * page's recurrence widget + the overview's "patterns" hint.
+ */
+export interface AnrCluster {
+  fingerprint: string;
+  representativeStackHead: string;
+  instances: AnrInstance[];
+  longestMs: number;
+}
+
+export function groupByFingerprint(instances: readonly AnrInstance[]): AnrCluster[] {
+  const map = new Map<string, AnrCluster>();
+  for (const instance of instances) {
+    const existing = map.get(instance.fingerprint);
+    if (existing) {
+      existing.instances.push(instance);
+      if (instance.durationMs > existing.longestMs) existing.longestMs = instance.durationMs;
+    } else {
+      map.set(instance.fingerprint, {
+        fingerprint: instance.fingerprint,
+        representativeStackHead: instance.stackHead,
+        instances: [instance],
+        longestMs: instance.durationMs,
+      });
+    }
+  }
+  for (const cluster of map.values()) {
+    cluster.instances.sort((a, b) => b.timestamp - a.timestamp);
+  }
+  return [...map.values()].sort((a, b) => {
+    if (b.instances.length !== a.instances.length) {
+      return b.instances.length - a.instances.length;
+    }
+    return b.longestMs - a.longestMs;
+  });
+}
+
 export function formatDuration(durationMs: number): string {
   if (durationMs < 1_000) return `${durationMs} ms`;
   if (durationMs < 10_000) return `${(durationMs / 1_000).toFixed(1)} s`;
@@ -158,4 +260,38 @@ function stackHeadOf(stack: string): string {
   if (lines.length === 0) return '';
   const firstFrame = lines.find((line) => line.startsWith('at '));
   return firstFrame ?? lines[0]!;
+}
+
+/**
+ * Split a stack string into trimmed non-empty frames in arrival order.
+ * The first non-`at ` line (if any) is preserved as the leading
+ * "Error: …" header so the detail view can render it distinctly.
+ */
+function splitStackFrames(stack: string): string[] {
+  if (!stack) return [];
+  return stack
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+/**
+ * Stable fingerprint built from the top-3 `at …` frames (or the head
+ * line for native ANRs). Strips line + column numbers so a one-line
+ * code shift doesn't fork the recurrence cluster.
+ */
+function fingerprintFromFrames(frames: readonly string[], stackHead: string): string {
+  const candidate = frames.length > 0 ? frames : [stackHead];
+  const head = candidate
+    .filter((line) => line.startsWith('at ') || line === stackHead)
+    .slice(0, 3)
+    .map(stripFrameCoords)
+    .join('|');
+  if (head.length > 0) return head;
+  // Native ANRs have no JS frames; fall back to the head string itself.
+  return stripFrameCoords(stackHead || 'unknown-anr');
+}
+
+function stripFrameCoords(line: string): string {
+  return line.replace(/:\d+(:\d+)?\)?\s*$/, '').replace(/\s+/g, ' ').trim();
 }

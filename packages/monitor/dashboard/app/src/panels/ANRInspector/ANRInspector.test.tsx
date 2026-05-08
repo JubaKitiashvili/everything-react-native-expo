@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { EventRecord } from '../../shared/api/types';
 import { ANRInspector } from './ANRInspector';
 
@@ -59,5 +59,26 @@ describe('ANRInspector panel', () => {
     // Worst-recent banner highlights the 25-second ANR.
     const banner = screen.getByRole('note', { name: /worst recent ANR/i });
     expect(banner).toHaveTextContent('25 s');
+  });
+
+  test('clicking a list row opens the detail view; back returns to overview', () => {
+    const events = [
+      anr('a', NOW - 60_000, 4_800, 'Home'),
+      anr('b', NOW - 30_000, 15_000, 'Settings', 'Error\n    at hot (Hot.tsx:1:1)'),
+    ];
+    render(<ANRInspector events={events} now={NOW} />);
+
+    // Overview shows the list.
+    const listRow = screen.getByLabelText(/Open ANR from Settings, 15 s/);
+    fireEvent.click(listRow);
+
+    // Detail view is rendered.
+    expect(screen.getByLabelText(/^ANR detail$/)).toBeInTheDocument();
+    expect(screen.getByText(/Stack at ANR time/i)).toBeInTheDocument();
+
+    // Back button returns to overview.
+    fireEvent.click(screen.getByLabelText(/Back to ANR list/));
+    expect(screen.queryByLabelText(/^ANR detail$/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^ANR list$/)).toBeInTheDocument();
   });
 });
