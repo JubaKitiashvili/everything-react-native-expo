@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (18/106)
-**Active Task:** Task 117.4 — PostgreSQL StorageAdapter (closes M0 alongside the still-pending 117.1 dashboard rewrite)
-**Overall Progress:** 134/222 tasks (Phases 1a–6 ✅ · Phase 7 18/106 — 117.5/47/49/61/67/71/100/101 M0 · 117.2/3/6/80/81/91/99 M1 · 117.16/22/23 M2) · 1174 SDK tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 184 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests + 46 benchmarks tests passing
+**Current Phase:** Phase 7 — Launch (20/106)
+**Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
+**Overall Progress:** 136/222 tasks (Phases 1a–6 ✅ · Phase 7 20/106 — 117.4/5/47/49/61/67/71/100/101 M0 (M0 closed except 117.1 router rewrite) · 117.2/3/6/80/81/91/99 M1 · 117.16/22/23 M2) · 1174 SDK tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 212 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -148,7 +148,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.1 | Dashboard REWRITE (7 purpose-built pages, react-router 7, not migration) | ⬜ |
-| 117.4 | StorageAdapter interface + SQLite + PostgreSQL adapters | ⬜ |
+| 117.4 | StorageAdapter interface + SQLite + PostgreSQL adapters | ✅ |
 | 117.5 | Message queue abstraction (`better-queue` default, pluggable) | ✅ |
 | 117.47 | Crash loop guard (native persistent counter, self-disable after 3 in 5s) | ✅ |
 | 117.49 | Ingest deduplication (event UUID, server-side idempotency) | ✅ |
