@@ -116,6 +116,100 @@ describe('TokenBucketRateLimiter', () => {
     }
     expect(allowed).toBe(100); // only the burst capacity at t=0
   });
+
+  // ── Eviction / bounded memory (Task 117.64 DoS hardening) ──
+  test('sweep evicts buckets idle long enough to be fully refilled', () => {
+    // capacity 4 / refillPerSec 2 → full refill takes 4/2 = 2s = 2000ms.
+    const limiter = new TokenBucketRateLimiter({ capacity: 4, refillPerSec: 2 });
+    limiter.tryConsume('idle', 0); // lastRefill = 0
+    limiter.tryConsume('active', 1_900); // lastRefill = 1900
+    expect(limiter.size).toBe(2);
+
+    // At t=2000, 'idle' has been untouched for exactly fullRefillMs → evicted.
+    // 'active' is only 100ms old → retained.
+    const evicted = limiter.sweep(2_000);
+    expect(evicted).toBe(1);
+    expect(limiter.size).toBe(1);
+    expect(limiter.peek('active', 2_000)).toBeLessThanOrEqual(4);
+    // An evicted-then-fresh idle bucket behaves identically to never-seen:
+    expect(limiter.peek('idle', 2_000)).toBe(4);
+  });
+
+  test('sweep is a no-op when no bucket has fully refilled yet', () => {
+    const limiter = new TokenBucketRateLimiter({ capacity: 4, refillPerSec: 2 });
+    limiter.tryConsume('a', 0);
+    limiter.tryConsume('b', 0);
+    // Half the full-refill interval → nothing evictable.
+    expect(limiter.sweep(1_000)).toBe(0);
+    expect(limiter.size).toBe(2);
+  });
+
+  test('memory stays bounded under a flood of distinct keys (maxBuckets cap)', () => {
+    const limiter = new TokenBucketRateLimiter({
+      capacity: 2,
+      refillPerSec: 2, // full refill in 1000ms
+      maxBuckets: 10,
+    });
+    // 10_000 distinct attacker keys, all at the same instant → no key is
+    // ever idle long enough to sweep, so the oldest-by-lastRefill fallback
+    // keeps the Map clamped at the cap.
+    for (let i = 0; i < 10_000; i++) {
+      limiter.tryConsume(`attacker-${i}`, 0);
+    }
+    expect(limiter.size).toBeLessThanOrEqual(10);
+  });
+
+  test('flood of idle keys is reclaimed via sweep, retaining an active key', () => {
+    const limiter = new TokenBucketRateLimiter({
+      capacity: 2,
+      refillPerSec: 2, // full refill in 1000ms
+      maxBuckets: 100,
+    });
+    // A legitimate, continuously-active tenant.
+    limiter.tryConsume('legit', 0);
+    // A burst of throwaway keys at t=0 — by the time more arrive at t=2000
+    // they're all fully refilled and get swept when the cap is crossed.
+    for (let i = 0; i < 99; i++) limiter.tryConsume(`throwaway-${i}`, 0);
+    expect(limiter.size).toBe(100); // 'legit' + 99 throwaways, at cap
+
+    // 'legit' stays active across the window so it never becomes evictable.
+    for (let t = 100; t <= 2_000; t += 100) limiter.tryConsume('legit', t);
+
+    // A fresh key at t=2000 crosses the cap → sweep reclaims the now-idle
+    // throwaways; the active 'legit' bucket survives.
+    limiter.tryConsume('fresh', 2_000);
+    expect(limiter.size).toBeLessThan(100);
+    // 'legit' has been spending tokens recently, so its bucket is still live
+    // (peek returns its actual count, not the never-seen full capacity proxy).
+    expect(limiter.peek('legit', 2_000)).toBeLessThanOrEqual(2);
+  });
+
+  test('existing keys never trigger eviction even at the cap', () => {
+    const limiter = new TokenBucketRateLimiter({
+      capacity: 5,
+      refillPerSec: 5,
+      maxBuckets: 2,
+    });
+    limiter.tryConsume('a', 0);
+    limiter.tryConsume('b', 0);
+    expect(limiter.size).toBe(2);
+    // Re-consuming an existing key must not evict the other.
+    limiter.tryConsume('a', 0);
+    expect(limiter.size).toBe(2);
+    expect(limiter.peek('b', 0)).toBe(4); // 'b' untouched: 5 - 1 spent
+  });
+
+  test('rejects invalid maxBuckets', () => {
+    expect(
+      () => new TokenBucketRateLimiter({ capacity: 1, refillPerSec: 1, maxBuckets: 0 }),
+    ).toThrow(/maxBuckets/);
+    expect(
+      () => new TokenBucketRateLimiter({ capacity: 1, refillPerSec: 1, maxBuckets: -5 }),
+    ).toThrow(/maxBuckets/);
+    expect(
+      () => new TokenBucketRateLimiter({ capacity: 1, refillPerSec: 1, maxBuckets: Infinity }),
+    ).toThrow(/maxBuckets/);
+  });
 });
 
 describe('deriveTenantKey', () => {

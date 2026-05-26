@@ -17,6 +17,8 @@ import type {
 import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
 import { mapLogs, mapMetrics, mapTraces } from './ingest/otlp.js';
+import { TokenBucketRateLimiter } from './ingest/rateLimiter.js';
+import type { RateLimiterConfig } from './ingest/rateLimiter.js';
 import type { EventRecord } from './storage/types.js';
 import { RetentionPurgeJob } from './jobs/retention.js';
 import type { RetentionPurgeJobOptions } from './jobs/retention.js';
@@ -288,6 +290,21 @@ export interface DashboardServerOptions {
    * `createRedisCache`) to share a cache across processes.
    */
   cache?: ICache | false;
+  /**
+   * OTLP `/v1/{traces,logs,metrics}` ingest controls. These routes are
+   * UNauthenticated by OTLP convention (collectors export without the
+   * dashboard's operator key), so an open flood is otherwise free. Default:
+   * an IP-keyed token-bucket limiter (capacity 600 burst, sustained 300
+   * req/sec/IP) returns HTTP 429 + `Retry-After` and inserts nothing when an
+   * IP exceeds its budget. Set `rateLimit: false` to disable (e.g. behind a
+   * proxy that already throttles), or pass a `RateLimiterConfig` to tune.
+   * `now` is injectable for deterministic tests.
+   */
+  otlp?: {
+    rateLimit?: RateLimiterConfig | false;
+    /** Clock override for the OTLP limiter — defaults to `Date.now`. */
+    now?: () => number;
+  };
 }
 
 export interface DashboardServerHandle {
@@ -470,6 +487,21 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   const invalidateCrashGroupsCache = (): void => {
     if (cache) void cache.del(CRASH_GROUPS_CACHE_KEY);
   };
+
+  // M2 — IP-keyed rate limiter for the UNauthenticated OTLP `/v1/*` ingest
+  // routes. There's no SDK key on these (OTel collectors export without the
+  // operator key), so we key by client IP. Default budget is generous —
+  // collectors batch hundreds of spans per request — but a single abusive IP
+  // is capped, returns 429 + `Retry-After`, and inserts nothing. `false`
+  // disables it. The clock is injectable so route tests are deterministic.
+  const otlpRateLimitOption = options.otlp?.rateLimit;
+  const otlpNow = options.otlp?.now ?? (() => Date.now());
+  const otlpLimiter =
+    otlpRateLimitOption === false
+      ? null
+      : new TokenBucketRateLimiter(
+          otlpRateLimitOption ?? { capacity: 600, refillPerSec: 300 },
+        );
 
   // Resolve the required API key once at startup. Explicit null disables
   // the gate even when the env var is set (useful for tests and local
@@ -1675,6 +1707,35 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         req.method === 'POST' &&
         (pathname === '/v1/traces' || pathname === '/v1/logs' || pathname === '/v1/metrics')
       ) {
+        // M2 — these routes are unauthenticated, so guard the flood with an
+        // IP-keyed token bucket BEFORE reading the body. An over-limit IP
+        // gets HTTP 429 + a `Retry-After` hint and nothing is parsed or
+        // inserted, so a single abuser can't drain CPU/IO for everyone else.
+        if (otlpLimiter) {
+          const ip = clientIp(req) ?? 'anon';
+          const decision = otlpLimiter.tryConsume(`ip:${ip}`, otlpNow());
+          if (!decision.allowed) {
+            // `Retry-After` is whole seconds per RFC 9110; round the ms hint
+            // up to at least 1s so a polite exporter actually backs off.
+            const retryAfterSec = Math.max(
+              1,
+              Math.ceil((decision.retryAfterMs ?? 1000) / 1000),
+            );
+            applyBaseSecurityHeaders(res);
+            res.writeHead(429, {
+              'content-type': 'application/json; charset=utf-8',
+              'retry-after': String(retryAfterSec),
+              'cache-control': 'no-store',
+            });
+            res.end(
+              JSON.stringify({
+                error: 'rate_limited',
+                retryAfterMs: decision.retryAfterMs,
+              }),
+            );
+            return;
+          }
+        }
         // OTLP exporters batch many spans/logs/points per request — allow
         // a generous body cap (4 MiB) well above the default JSON limit.
         void readJsonBody(req, 4 * 1024 * 1024)
@@ -1683,10 +1744,13 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
             if (pathname === '/v1/traces') records = mapTraces(body);
             else if (pathname === '/v1/logs') records = mapLogs(body);
             else records = mapMetrics(body);
-            let accepted = 0;
-            for (const record of records) {
-              if (store.insertEvent(record).inserted) accepted += 1;
-            }
+            // M2 — insert the whole batch in ONE transaction. A bad record
+            // can't 500 the request or leave a partial write: the mapper
+            // already produced well-formed `EventRecord`s, and the
+            // transaction is atomic across the set (`INSERT OR IGNORE`
+            // dedups by id, so duplicates are silently skipped, not errors).
+            const { inserted } = store.insertEventsBatch(records);
+            const accepted = inserted;
             // OTLP success shape: an empty `partialSuccess` signals full
             // acceptance. We surface our accepted count alongside it for
             // observability without breaking the contract.

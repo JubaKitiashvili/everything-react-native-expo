@@ -251,7 +251,7 @@ export function severityFromNumber(
   severityText?: string,
 ): Severity {
   if (typeof severityNumber === 'number' && Number.isFinite(severityNumber)) {
-    if (severityNumber >= 21) return 'critical';
+    // 17–20 ERROR and 21–24 FATAL both map to our coarse `critical` rung.
     if (severityNumber >= 17) return 'critical';
     if (severityNumber >= 13) return 'warning';
     if (severityNumber >= 5) return 'info';

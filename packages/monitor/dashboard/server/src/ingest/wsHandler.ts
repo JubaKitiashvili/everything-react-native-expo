@@ -406,7 +406,15 @@ export class IngestWebSocketHandler {
 
     ws.on('message', (raw) => this.handleIngestMessage(ws, raw));
     ws.on('error', (err) => this.onError(err, 'ingest-ws'));
-    ws.on('close', () => this.sdkState.delete(ws));
+    ws.on('close', () => {
+      this.sdkState.delete(ws);
+      // Task 117.64 (hardening) — socket close is the natural cadence to
+      // prune the tenant-bucket Map without a background timer. A flood that
+      // cycles a fresh tenant key per connection opens *and closes* many
+      // sockets, so sweeping idle (fully-refilled) buckets here keeps memory
+      // bounded exactly when it matters. Deterministic: time is injected.
+      this.tenantLimiter?.sweep(this.now());
+    });
   }
 
   private handleIngestMessage(ws: WebSocket, raw: Buffer | ArrayBuffer | Buffer[]): void {

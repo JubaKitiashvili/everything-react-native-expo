@@ -45,6 +45,16 @@ export interface RateLimiterConfig {
    * a positive finite number.
    */
   refillPerSec: number;
+  /**
+   * Hard upper bound on the number of distinct tenant buckets held in
+   * memory. Without this an attacker presenting a fresh tenant key per
+   * connection grows the backing Map without bound (a DoS). When a
+   * `tryConsume` for a *new* key would cross this cap, the limiter first
+   * sweeps fully-refilled (idle) buckets; if still at the cap it evicts the
+   * oldest-by-`lastRefill` bucket to make room. Must be a positive finite
+   * integer when set; defaults to {@link DEFAULT_MAX_BUCKETS}.
+   */
+  maxBuckets?: number;
 }
 
 /** Default ingest limits: 100-event burst, sustained 50 events/sec/tenant. */
@@ -52,6 +62,13 @@ export const DEFAULT_RATE_LIMITER_CONFIG: Readonly<RateLimiterConfig> = Object.f
   capacity: 100,
   refillPerSec: 50,
 });
+
+/**
+ * Default ceiling on distinct tenant buckets. Large enough to comfortably
+ * hold every legitimate tenant of a single dashboard, small enough that the
+ * Map's footprint stays bounded under a key-cycling flood.
+ */
+export const DEFAULT_MAX_BUCKETS = 50_000;
 
 interface Bucket {
   /** Fractional tokens currently available. */
@@ -68,6 +85,14 @@ interface Bucket {
 export class TokenBucketRateLimiter {
   private readonly capacity: number;
   private readonly refillPerSec: number;
+  private readonly maxBuckets: number;
+  /**
+   * Milliseconds after which an *untouched* bucket has refilled back to full
+   * capacity and is therefore indistinguishable from a never-seen tenant —
+   * the precise moment it becomes safe to evict with zero observable effect.
+   * Derived once from `capacity / refillPerSec` (seconds → ms).
+   */
+  private readonly fullRefillMs: number;
   private readonly buckets = new Map<string, Bucket>();
 
   constructor(config: RateLimiterConfig = DEFAULT_RATE_LIMITER_CONFIG) {
@@ -79,8 +104,14 @@ export class TokenBucketRateLimiter {
         `rate limiter refillPerSec must be a positive number, got ${config.refillPerSec}`,
       );
     }
+    const maxBuckets = config.maxBuckets ?? DEFAULT_MAX_BUCKETS;
+    if (!(maxBuckets > 0) || !Number.isFinite(maxBuckets)) {
+      throw new Error(`rate limiter maxBuckets must be a positive number, got ${maxBuckets}`);
+    }
     this.capacity = config.capacity;
     this.refillPerSec = config.refillPerSec;
+    this.maxBuckets = Math.floor(maxBuckets);
+    this.fullRefillMs = (this.capacity / this.refillPerSec) * 1000;
   }
 
   /**
@@ -88,8 +119,17 @@ export class TokenBucketRateLimiter {
    * bucket lazily for the elapsed interval first. When a token is available
    * it is spent and `allowed` is true; otherwise `allowed` is false and
    * `retryAfterMs` reports the wait until the next token.
+   *
+   * Before creating a bucket for a *previously unseen* key, this enforces
+   * the {@link maxBuckets} cap so the backing Map can't grow without bound
+   * under a flood of distinct keys: it first sweeps fully-refilled (idle)
+   * buckets, then — if still at the cap — evicts the single oldest-by-
+   * `lastRefill` bucket. Existing keys never trigger eviction.
    */
   tryConsume(key: string, now: number): RateLimitDecision {
+    if (!this.buckets.has(key) && this.buckets.size >= this.maxBuckets) {
+      this.evictForNewKey(now);
+    }
     const bucket = this.refill(key, now);
     if (bucket.tokens >= 1) {
       bucket.tokens -= 1;
@@ -100,6 +140,46 @@ export class TokenBucketRateLimiter {
     const deficit = 1 - bucket.tokens;
     const retryAfterMs = Math.ceil((deficit / this.refillPerSec) * 1000);
     return { allowed: false, remaining: 0, retryAfterMs };
+  }
+
+  /**
+   * Prune every bucket that has been idle long enough to have refilled to
+   * full capacity at time `now` — such a bucket is byte-for-byte equivalent
+   * to a fresh one, so dropping it is observably a no-op (the tenant would
+   * get a full burst either way). Returns the number of buckets evicted.
+   *
+   * Deterministic (time injected, no wall-clock read) and timer-free: call
+   * it opportunistically (e.g. on a socket close or a cheap cadence) to keep
+   * memory bounded without a background interval on the hot path.
+   */
+  sweep(now: number): number {
+    let evicted = 0;
+    for (const [key, bucket] of this.buckets) {
+      if (now - bucket.lastRefill >= this.fullRefillMs) {
+        this.buckets.delete(key);
+        evicted += 1;
+      }
+    }
+    return evicted;
+  }
+
+  /**
+   * Make room for a new key while at the cap. First sweep fully-refilled
+   * buckets (free + observably safe); if that frees nothing, fall back to
+   * evicting the oldest-by-`lastRefill` bucket — the one closest to being
+   * idle and least likely to be mid-burst.
+   */
+  private evictForNewKey(now: number): void {
+    if (this.sweep(now) > 0) return;
+    let oldestKey: string | undefined;
+    let oldestRefill = Infinity;
+    for (const [key, bucket] of this.buckets) {
+      if (bucket.lastRefill < oldestRefill) {
+        oldestRefill = bucket.lastRefill;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey !== undefined) this.buckets.delete(oldestKey);
   }
 
   /**
