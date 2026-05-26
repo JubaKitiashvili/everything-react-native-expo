@@ -8,7 +8,7 @@ import {
 
 let seq = 0;
 
-/** Build a stored flat `type: 'rsc'` event record (defensive fallback shape). */
+/** Build a canonical `type: 'rsc'` event record (fields flattened into payload). */
 function rsc(payload: RscEventPayload): EventRecord {
   seq += 1;
   return {
@@ -19,20 +19,6 @@ function rsc(payload: RscEventPayload): EventRecord {
     timestamp: 1_770_000_000_000 + seq,
     receivedAt: 1_770_000_000_000 + seq,
     payload: payload as unknown as Record<string, unknown>,
-  };
-}
-
-/** Build the REAL stored shape: a `type: 'custom'` envelope `{ name: 'rsc', attributes }`. */
-function rscCustom(payload: RscEventPayload): EventRecord {
-  seq += 1;
-  return {
-    id: `rsc-${seq}`,
-    type: 'custom',
-    severity: 'info',
-    sessionId: 's1',
-    timestamp: 1_770_000_000_000 + seq,
-    receivedAt: 1_770_000_000_000 + seq,
-    payload: { name: 'rsc', attributes: payload } as unknown as Record<string, unknown>,
   };
 }
 
@@ -59,10 +45,10 @@ describe('aggregateRscBoundaries', () => {
     expect(aggregateRscBoundaries(events).boundaries).toEqual([]);
   });
 
-  test('reads the real custom-envelope shape (type custom, payload.name === rsc)', () => {
+  test('reads the canonical flat shape (type rsc, fields on payload)', () => {
     const summary = aggregateRscBoundaries([
-      rscCustom({ kind: 'server-render', routePath: '/feed', serverRenderTimeMs: 120 }),
-      rscCustom({ kind: 'payload', routePath: '/feed', payloadSizeBytes: 2048 }),
+      rsc({ kind: 'server-render', routePath: '/feed', serverRenderTimeMs: 120 }),
+      rsc({ kind: 'payload', routePath: '/feed', payloadSizeBytes: 2048 }),
     ]);
     expect(summary.routeCount).toBe(1);
     expect(summary.boundaries[0]?.route).toBe('/feed');
@@ -70,7 +56,7 @@ describe('aggregateRscBoundaries', () => {
     expect(summary.boundaries[0]?.maxPayloadBytes).toBe(2048);
   });
 
-  test('ignores custom events that are not rsc envelopes', () => {
+  test('ignores custom events (no longer the canonical RSC shape)', () => {
     const event: EventRecord = {
       id: 'c1',
       type: 'custom',
@@ -78,7 +64,7 @@ describe('aggregateRscBoundaries', () => {
       sessionId: 's1',
       timestamp: 1,
       receivedAt: 1,
-      payload: { name: 'other', attributes: { kind: 'server-render', routePath: '/x' } },
+      payload: { name: 'rsc', attributes: { kind: 'server-render', routePath: '/x' } },
     };
     expect(aggregateRscBoundaries([event]).boundaries).toEqual([]);
   });

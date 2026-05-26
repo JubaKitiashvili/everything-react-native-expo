@@ -2,13 +2,11 @@
  * Pure transform: fold RSC monitoring events into a per-route summary.
  *
  * The SDK's `RSCCollector` (packages/monitor/src/collectors/RSCCollector.ts)
- * emits one event per RSC lifecycle moment, keyed by `routePath`. It emits a
- * `{ type: 'custom', data: { name: 'rsc', attributes: RSCEventData } }`
- * envelope, which the server stores as an `EventRecord` of `type: 'custom'`
- * with `payload = { name: 'rsc', attributes: RSCEventData }`. So we match
- * custom events whose `payload.name === 'rsc'` and read `payload.attributes`.
- * (A flat `type: 'rsc'` record with the attributes directly in `payload` is
- * also accepted, in case the ingest path normalises it in future.)
+ * emits one event per RSC lifecycle moment, keyed by `routePath`. The server
+ * ingest promotes these into a canonical `EventRecord` of `type: 'rsc'` with
+ * the RSC fields flattened directly into `payload` (kind / routePath /
+ * serverRenderTimeMs / ...). So we match `event.type === 'rsc'` and read the
+ * fields straight off `event.payload`, exactly like every other panel.
  *
  * RSC data is per-route, not hierarchical, so a "boundary" here is a route
  * path. We aggregate every event for a route into one row: server-render
@@ -206,23 +204,14 @@ function compareBoundaries(a: RscBoundarySummary, b: RscBoundarySummary): number
 }
 
 /**
- * Pull the RSC attributes out of a stored event, or null if it isn't one.
- * Real shape: `type: 'custom'`, `payload = { name: 'rsc', attributes }`.
- * Fallback: a flat `type: 'rsc'` record whose `payload` is the attributes.
+ * Pull the RSC fields out of a stored event, or null if it isn't one.
+ * Canonical shape: `type: 'rsc'` with the fields flattened into `payload`.
  */
 function extractRscPayload(event: EventRecord): RscEventPayload | null {
+  if (event.type !== 'rsc') return null;
   const payload = event.payload as Record<string, unknown> | undefined;
   if (!payload || typeof payload !== 'object') return null;
-
-  if (event.type === 'custom' && payload.name === 'rsc') {
-    const attributes = payload.attributes;
-    if (attributes && typeof attributes === 'object') {
-      return attributes as RscEventPayload;
-    }
-    return null;
-  }
-  if (event.type === 'rsc') return payload as unknown as RscEventPayload;
-  return null;
+  return payload as unknown as RscEventPayload;
 }
 
 function mean(values: readonly number[]): number {
