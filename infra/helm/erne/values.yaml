@@ -1,0 +1,118 @@
+# Default values for the erne-monitor chart.
+
+replicaCount: 1
+
+image:
+  # Override with your registry/image:tag. No public image is published yet —
+  # build from infra/docker/Dockerfile and push to your own registry.
+  repository: ghcr.io/your-org/erne-monitor
+  tag: "" # defaults to Chart.appVersion when empty
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Container listen port. The probes and Service target this.
+containerPort: 3333
+
+# --- Application env -------------------------------------------------------
+# Non-secret config. Secrets (API key, webhook secret, DATABASE_URL,
+# REDIS_URL) go through `secret` below and are injected via secretKeyRef.
+env:
+  HOST: "0.0.0.0"
+  PORT: "3333"
+  ERNE_DB_PATH: "/data/dashboard.db"
+  # Expose /metrics without the API key (e.g. for an in-cluster Prometheus).
+  ERNE_METRICS_PUBLIC: "false"
+
+# Secret values. When `create: true`, a Secret is rendered from these and
+# wired into the Deployment via secretKeyRef. Leave a value empty to skip
+# injecting that env var. To use a pre-existing Secret instead, set
+# `create: false` and `existingSecret: <name>` (keys must match the names
+# below).
+secret:
+  create: true
+  existingSecret: ""
+  # Gate /api/* and /metrics. Empty → no auth (local/trusted networks only).
+  erneApiKey: ""
+  # HMAC secret for outbound generic alert webhooks (X-ERNE-Signature).
+  erneWebhookSecret: ""
+  # Reserved — Postgres DSN. The async Postgres store is not yet wired into
+  # the server build; setting this currently falls back to SQLite (see
+  # infra/README.md). Kept here so the contract is stable for when it lands.
+  databaseUrl: ""
+  # ioredis connection string to enable the read-cache.
+  redisUrl: ""
+
+# --- Persistence (SQLite data dir) -----------------------------------------
+# Mounted at ERNE_DB_PATH's parent (/data). REQUIRED for SQLite durability;
+# with replicaCount > 1 you MUST move to Postgres (SQLite + RWO PVC cannot be
+# shared across pods).
+persistence:
+  enabled: true
+  # Reuse an existing PVC instead of creating one.
+  existingClaim: ""
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  mountPath: /data
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: erne-monitor.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Probes hit the un-gated readiness/liveness endpoints (Task 117.100).
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+# Run as the image's non-root `node` user (uid 1000).
+podSecurityContext:
+  fsGroup: 1000
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}

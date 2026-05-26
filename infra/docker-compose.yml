@@ -1,0 +1,94 @@
+# @erne/monitor — self-hosted dashboard.
+#
+# Default (no profile): SQLite-only single container. Good for ≤ ~20 concurrent
+# dashboard users (see infra/README.md "Sizing").
+#
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# Optional backends are gated behind compose profiles so they stay off by
+# default:
+#
+#   # add managed Postgres (for > ~20 concurrent users):
+#   docker compose -f infra/docker-compose.yml --profile postgres up -d
+#
+#   # add Redis read-cache (hot-path GETs):
+#   docker compose -f infra/docker-compose.yml --profile redis up -d
+#
+#   # both:
+#   docker compose -f infra/docker-compose.yml --profile postgres --profile redis up -d
+#
+# Build context is the repo root so the Dockerfile can reach packages/.
+
+name: erne-monitor
+
+services:
+  dashboard:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+    image: erne-monitor:local
+    restart: unless-stopped
+    ports:
+      - "${ERNE_PORT:-3333}:3333"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3333
+      ERNE_DB_PATH: /data/dashboard.db
+      # Auth gate for /api/* and /metrics. Leave unset for local-only no-auth.
+      ERNE_API_KEY: ${ERNE_API_KEY:-}
+      # HMAC secret for outbound generic alert webhooks (X-ERNE-Signature).
+      ERNE_WEBHOOK_SECRET: ${ERNE_WEBHOOK_SECRET:-}
+      # Expose /metrics without the API key inside the compose network.
+      ERNE_METRICS_PUBLIC: ${ERNE_METRICS_PUBLIC:-false}
+      # Set by the redis profile via the override below; harmless when empty.
+      REDIS_URL: ${REDIS_URL:-}
+      # Reserved — see Dockerfile/entrypoint note. Set by the postgres profile.
+      DATABASE_URL: ${DATABASE_URL:-}
+    volumes:
+      - erne-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3333/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # --- Optional Postgres backend (profile: postgres) -----------------------
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erne}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erne}
+      POSTGRES_DB: ${POSTGRES_DB:-erne_monitor}
+    volumes:
+      - erne-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erne} -d ${POSTGRES_DB:-erne_monitor}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Optional Redis read-cache (profile: redis) --------------------------
+  redis:
+    profiles: ["redis"]
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    volumes:
+      - erne-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  erne-data:
+  erne-postgres:
+  erne-redis:

@@ -1,0 +1,168 @@
+name: ERNE Init Matrix
+
+# Cross-platform smoke test for the ERNE init + doctor flow against a range of
+# Expo SDK versions and workflow types (managed vs bare), across the three
+# GitHub-hosted runner OSes.
+#
+# Matrix sizing rationale
+# -----------------------
+# A full cross-product would be 4 SDKs x 2 workflows x 3 OSes = 24 cells, and
+# macOS minutes bill 10x while Windows bills 2x. That is wasteful for what is
+# fundamentally a Node/CLI smoke test (no native compilation happens here).
+# Instead we use an explicit `include` list:
+#
+#   * ubuntu-latest: the FULL grid (SDK 52/53/54/55 x managed/bare) — 8 cells.
+#     Ubuntu is cheapest and catches the vast majority of init/doctor logic
+#     regressions, which are OS-independent JS.
+#   * macos-latest + windows-latest: one REPRESENTATIVE cell each — the latest
+#     SDK (55) on the managed workflow. These exist to catch OS-specific path,
+#     shell, and line-ending bugs in the CLI, not to re-test every SDK.
+#
+# Total: 10 cells. Adjust the `include` list to widen coverage if an
+# OS-specific SDK bug ever surfaces.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "bin/**"
+      - "lib/**"
+      - "scripts/**"
+      - ".github/workflows/init-matrix.yml"
+  schedule:
+    # Weekly drift check (Expo templates move under us).
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  init-doctor:
+    name: SDK ${{ matrix.sdk }} · ${{ matrix.workflow }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # A failure in any single cell should not abort the whole grid — we want
+    # to see every combination's result on a regression.
+    continue-on-error: ${{ matrix.experimental == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # --- ubuntu: full SDK x workflow grid -------------------------
+          - { os: ubuntu-latest, sdk: "52", workflow: managed }
+          - { os: ubuntu-latest, sdk: "52", workflow: bare }
+          - { os: ubuntu-latest, sdk: "53", workflow: managed }
+          - { os: ubuntu-latest, sdk: "53", workflow: bare }
+          - { os: ubuntu-latest, sdk: "54", workflow: managed }
+          - { os: ubuntu-latest, sdk: "54", workflow: bare }
+          - { os: ubuntu-latest, sdk: "55", workflow: managed }
+          - { os: ubuntu-latest, sdk: "55", workflow: bare }
+          # --- macOS + Windows: one representative cell each ------------
+          - { os: macos-latest, sdk: "55", workflow: managed }
+          - { os: windows-latest, sdk: "55", workflow: managed }
+
+    steps:
+      - name: Checkout ERNE
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Install ERNE's own deps so `bin/cli.js` (the `erne` CLI) and `lib/*`
+      # resolve. `--ignore-scripts` keeps it fast and avoids native builds —
+      # mirrors ci.yml.
+      - name: Install ERNE
+        run: npm install --ignore-scripts
+
+      # ---------------------------------------------------------------------
+      # Scaffold a throwaway Expo app for this matrix cell.
+      #
+      # `create-expo-app` pins the Expo SDK via the template tag. The "bare"
+      # workflow is approximated by additionally running `expo prebuild`, which
+      # generates the native ios/android projects (the defining trait of a bare
+      # app). Prebuild can require platform SDKs/tooling that GitHub runners do
+      # not all have, so it is allowed to soft-fail (see step guard) — the init
+      # + doctor assertions below do not depend on native folders existing.
+      # ---------------------------------------------------------------------
+      - name: Scaffold Expo SDK ${{ matrix.sdk }} app (${{ matrix.workflow }})
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_DIR="erne-init-test-app"
+          # Template tag maps to the requested SDK major. `--no-install` keeps
+          # the scaffold quick; ERNE's init/doctor do not need node_modules.
+          npx --yes create-expo-app@latest "$APP_DIR" \
+            --template "blank@sdk-${{ matrix.sdk }}" \
+            --no-install \
+            || npx --yes create-expo-app@latest "$APP_DIR" --no-install
+          echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+
+      # Bare workflow only: generate native projects. This needs real platform
+      # tooling, so it is MOCKED/soft-guarded — a failure here is expected on
+      # runners without the Android SDK / Xcode and must NOT fail the cell.
+      - name: Prebuild native projects (bare only — soft, may need a device/SDK)
+        if: ${{ matrix.workflow == 'bare' }}
+        continue-on-error: true
+        working-directory: ${{ env.APP_DIR }}
+        shell: bash
+        run: |
+          # MOCKED: real `expo prebuild` requires Android SDK / Xcode that the
+          # hosted runner may lack. We attempt it but never block on it.
+          npx --yes expo prebuild --no-install || \
+            echo "::notice::prebuild skipped/failed — native tooling not present (expected in CI)"
+
+      # ---------------------------------------------------------------------
+      # Run ERNE init against the scaffolded app, non-interactively.
+      #
+      # Documented invocation (CLAUDE.md / bin/cli.js): `erne init --yes`.
+      # We invoke the repo's CLI directly via an absolute path so we are
+      # testing THIS checkout, not a published version. `--no-mcp` keeps the
+      # run hermetic (no MCP server probing in CI).
+      # ---------------------------------------------------------------------
+      - name: Run erne init (non-interactive)
+        working-directory: ${{ env.APP_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node "$GITHUB_WORKSPACE/bin/cli.js" init --yes --no-mcp --profile standard
+
+      - name: Assert ERNE init artifacts exist
+        working-directory: ${{ env.APP_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # init must produce the agent harness config. CLAUDE.md is the
+          # canonical, OS-independent artifact.
+          test -f CLAUDE.md || { echo "::error::CLAUDE.md not created by erne init"; exit 1; }
+          test -d .claude || { echo "::error::.claude/ not created by erne init"; exit 1; }
+          echo "init artifacts present"
+
+      # ---------------------------------------------------------------------
+      # Run ERNE doctor and assert a clean exit.
+      #
+      # NOTE: `erne doctor` (lib/doctor) may still be under construction in
+      # parallel. The intended published invocation is `npx erne doctor`; here
+      # we run the in-repo CLI. If doctor is incomplete it is allowed to be a
+      # soft signal rather than a hard gate via `continue-on-error` on this
+      # step only — flip to a hard assertion once doctor is finalized.
+      # ---------------------------------------------------------------------
+      - name: Run erne doctor
+        id: doctor
+        continue-on-error: true
+        working-directory: ${{ env.APP_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Intended end-state: `npx erne doctor` exits 0 on a healthy project.
+          node "$GITHUB_WORKSPACE/bin/cli.js" doctor
+
+      - name: Report doctor result
+        shell: bash
+        run: |
+          if [ "${{ steps.doctor.outcome }}" = "success" ]; then
+            echo "::notice::erne doctor passed for SDK ${{ matrix.sdk }} / ${{ matrix.workflow }} / ${{ matrix.os }}"
+          else
+            echo "::warning::erne doctor did not pass (doctor may still be in development) — see logs"
+          fi

@@ -1,0 +1,49 @@
+# Render Blueprint — one-click deploy of the @erne/monitor dashboard.
+# https://render.com/docs/blueprint-spec
+#
+# Default: single Docker web service with SQLite on a persistent disk.
+# A managed Redis instance is included (commented) for the read-cache.
+# For > ~20 concurrent users move to a managed Postgres (see infra/README.md).
+
+services:
+  - type: web
+    name: erne-monitor
+    runtime: docker
+    dockerfilePath: ./infra/docker/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /api/health
+    autoDeploy: false
+    # Persistent disk for the SQLite database. Mounted at /data so it matches
+    # ERNE_DB_PATH below.
+    disk:
+      name: erne-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "3333"
+      - key: ERNE_DB_PATH
+        value: /data/dashboard.db
+      # Generate a strong key in the Render dashboard, or use `generateValue`.
+      - key: ERNE_API_KEY
+        sync: false
+      - key: ERNE_WEBHOOK_SECRET
+        sync: false
+      - key: ERNE_METRICS_PUBLIC
+        value: "false"
+      # Uncomment and wire to the keyvalue service below to enable the cache.
+      # - key: REDIS_URL
+      #   fromService:
+      #     name: erne-redis
+      #     type: keyvalue
+      #     property: connectionString
+
+# Optional managed Redis. Uncomment the block above and this service to enable.
+# services additionally support type: keyvalue (Render Key Value / Redis).
+#  - type: keyvalue
+#    name: erne-redis
+#    plan: starter
+#    ipAllowList: []

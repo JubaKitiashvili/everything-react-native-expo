@@ -1,0 +1,307 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  @erne/monitor self-hosted dashboard — ECS Fargate service with an EFS volume
+  for SQLite persistence, fronted by an Application Load Balancer. Build and
+  push the image from infra/docker/Dockerfile to ECR (or any registry) and pass
+  its URI as the ImageUri parameter.
+
+  Sizing note: SQLite suits ~20 concurrent dashboard users. Beyond that, run
+  Amazon RDS for PostgreSQL and set the DatabaseUrl parameter once the async
+  Postgres store is wired into the server (see infra/README.md). The EFS volume
+  here exists purely for SQLite durability and shared access across tasks.
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: Full container image URI (e.g. <acct>.dkr.ecr.<region>.amazonaws.com/erne-monitor:latest).
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for the service, ALB, and EFS mount targets.
+  PublicSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Two+ subnets for the ALB and Fargate tasks (and EFS mount targets).
+  ApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: ERNE_API_KEY — gate for /api/* and /metrics. Empty disables auth.
+  WebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: ERNE_WEBHOOK_SECRET — HMAC for outbound alert webhooks.
+  DatabaseUrl:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Reserved Postgres DSN. Falls back to SQLite until the async store is wired in.
+  RedisUrl:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: ioredis connection string to enable the read-cache.
+  DesiredCount:
+    Type: Number
+    Default: 1
+    Description: Number of Fargate tasks. Keep at 1 with SQLite (shared write across tasks is unsafe).
+
+Conditions:
+  HasApiKey: !Not [!Equals [!Ref ApiKey, ""]]
+  HasWebhookSecret: !Not [!Equals [!Ref WebhookSecret, ""]]
+  HasDatabaseUrl: !Not [!Equals [!Ref DatabaseUrl, ""]]
+  HasRedisUrl: !Not [!Equals [!Ref RedisUrl, ""]]
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${AWS::StackName}-erne-monitor"
+      RetentionInDays: 14
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${AWS::StackName}-erne"
+
+  # --- Security groups -----------------------------------------------------
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: erne-monitor ALB ingress
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: erne-monitor task ingress from ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3333
+          ToPort: 3333
+          SourceSecurityGroupId: !Ref AlbSecurityGroup
+
+  EfsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: erne-monitor EFS access from tasks
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref ServiceSecurityGroup
+
+  # --- EFS for SQLite persistence ------------------------------------------
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      PerformanceMode: generalPurpose
+      FileSystemTags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-erne-data"
+
+  MountTarget0:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Select [0, !Ref PublicSubnetIds]
+      SecurityGroups:
+        - !Ref EfsSecurityGroup
+
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Select [1, !Ref PublicSubnetIds]
+      SecurityGroups:
+        - !Ref EfsSecurityGroup
+
+  AccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystem
+      PosixUser:
+        # Matches the image's non-root `node` user (uid/gid 1000).
+        Uid: 1000
+        Gid: 1000
+      RootDirectory:
+        Path: /erne-monitor
+        CreationInfo:
+          OwnerUid: 1000
+          OwnerGid: 1000
+          Permissions: "0755"
+
+  # --- IAM -----------------------------------------------------------------
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+
+  # --- Task definition -----------------------------------------------------
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${AWS::StackName}-erne-monitor"
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Volumes:
+        - Name: erne-data
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref FileSystem
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref AccessPoint
+              IAM: DISABLED
+      ContainerDefinitions:
+        - Name: erne-monitor
+          Image: !Ref ImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3333
+              Protocol: tcp
+          MountPoints:
+            - SourceVolume: erne-data
+              ContainerPath: /data
+          Environment:
+            - Name: HOST
+              Value: 0.0.0.0
+            - Name: PORT
+              Value: "3333"
+            - Name: ERNE_DB_PATH
+              Value: /data/dashboard.db
+            - !If
+              - HasApiKey
+              - Name: ERNE_API_KEY
+                Value: !Ref ApiKey
+              - !Ref AWS::NoValue
+            - !If
+              - HasWebhookSecret
+              - Name: ERNE_WEBHOOK_SECRET
+                Value: !Ref WebhookSecret
+              - !Ref AWS::NoValue
+            - !If
+              - HasDatabaseUrl
+              - Name: DATABASE_URL
+                Value: !Ref DatabaseUrl
+              - !Ref AWS::NoValue
+            - !If
+              - HasRedisUrl
+              - Name: REDIS_URL
+                Value: !Ref RedisUrl
+              - !Ref AWS::NoValue
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: erne-monitor
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - "node -e \"fetch('http://127.0.0.1:3333/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 20
+
+  # --- Load balancer -------------------------------------------------------
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Subnets: !Ref PublicSubnetIds
+      SecurityGroups:
+        - !Ref AlbSecurityGroup
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VpcId
+      Port: 3333
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /api/ready
+      HealthCheckIntervalSeconds: 15
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  # --- ECS service ---------------------------------------------------------
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Listener
+      - MountTarget0
+      - MountTarget1
+    Properties:
+      Cluster: !Ref Cluster
+      LaunchType: FARGATE
+      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref TaskDefinition
+      # SQLite + EFS: a rolling deploy with two tasks writing the same DB file
+      # risks corruption. Keep DesiredCount=1 and replace one-at-a-time.
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnetIds
+          SecurityGroups:
+            - !Ref ServiceSecurityGroup
+      LoadBalancers:
+        - ContainerName: erne-monitor
+          ContainerPort: 3333
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  DashboardUrl:
+    Description: Public URL of the dashboard (behind the ALB).
+    Value: !Sub "http://${LoadBalancer.DNSName}"
+  ClusterName:
+    Value: !Ref Cluster
+  FileSystemId:
+    Value: !Ref FileSystem
