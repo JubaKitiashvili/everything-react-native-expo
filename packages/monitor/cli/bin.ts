@@ -3,6 +3,7 @@
 //   `npx @erne/monitor init [--dry-run]`
 //   `npx @erne/monitor dashboard [--port <n>] [--host <h>] [--db <path>] [--open]`
 //   `npx @erne/monitor scan [path] [--json]`
+//   `npx @erne/monitor discover [path] [--json]`
 //   `npx @erne/monitor doctor [path] [--ping [url]]`
 //   `npx @erne/monitor size [path] [--history <p>] [--no-gzip] [--json]`
 //   `npx @erne/monitor monitor live [--url <u>] [--api-key <k>] [--no-color]`
@@ -10,6 +11,7 @@
 import { runInit } from './init';
 import { runDashboardCommand } from './dashboard';
 import { runScanCommand } from './scan';
+import { runDiscoverCommand } from './discoverProject';
 import { runDoctorCommand } from './doctor';
 import { runSizeCommand } from './size';
 import { runLiveCommand } from './live';
@@ -48,6 +50,11 @@ async function main(): Promise<void> {
     process.exit(exitCode);
   }
 
+  if (command === 'discover') {
+    const exitCode = runDiscoverCommand(rest);
+    process.exit(exitCode);
+  }
+
   if (command === 'doctor') {
     const exitCode = await runDoctorCommand(rest);
     process.exit(exitCode);
@@ -74,7 +81,7 @@ async function main(): Promise<void> {
   console.error(
     '@erne/monitor: unknown command "' +
       command +
-      '". Supported: init [--dry-run] | dashboard [flags] | scan [path] | doctor [path] | size [path] | monitor live [flags]',
+      '". Supported: init [--dry-run] | dashboard [flags] | scan [path] | discover [path] | doctor [path] | size [path] | monitor live [flags]',
   );
   process.exit(1);
 }
