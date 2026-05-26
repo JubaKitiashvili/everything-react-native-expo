@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (20/106)
+**Current Phase:** Phase 7 — Launch (33/106)
 **Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
-**Overall Progress:** 136/222 tasks (Phases 1a–6 ✅ · Phase 7 20/106 — 117.4/5/47/49/61/67/71/100/101 M0 (M0 closed except 117.1 router rewrite) · 117.2/3/6/80/81/91/99 M1 · 117.16/22/23 M2) · 1174 SDK tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 212 dashboard-server tests + 91 mcp tests + 57 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 149/222 tasks (Phases 1a–6 ✅ · Phase 7 33/106 — 117.4/5/47/49/61/67/71/100/101 M0 (closed except 117.1 router rewrite) · 117.2/3/6/80/81/91/99 M1 · 117.16/22/23 M2 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance) · 1222 SDK tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 263 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -24,7 +24,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch (expanded) | 13/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
+| 7 Launch (expanded) | 33/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -209,11 +209,11 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
 | 117.56 | CCPA compliance (Do Not Sell signal, CA-specific disclosures) | ⬜ |
 | 117.57 | Transitive dependency privacy manifest audit (App Store compliance) | ⬜ |
-| 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ⬜ |
-| 117.60 | SECURITY.md + responsible disclosure policy | ⬜ |
+| 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ✅ |
+| 117.60 | SECURITY.md + responsible disclosure policy | ✅ |
 | 117.64 | Per-tenant ingest rate limiting | ⬜ |
 | 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ⬜ |
-| 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ⬜ |
+| 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ✅ |
 | 117.103 | DPA template + subprocessor list (enterprise prerequisite) | ⬜ |
 
 ### Milestone 5 — Launch artifacts + iconic moves (Weeks 24-30, 34 with buffer)
@@ -244,10 +244,10 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.24 | React 19 Actions instrumentation | ⬜ |
-| 117.27 | Deep link instrumentation | ⬜ |
-| 117.28 | Background fetch lifecycle capture | ⬜ |
+| 117.27 | Deep link instrumentation | ✅ |
+| 117.28 | Background fetch lifecycle capture | ✅ |
 | 117.29 | App size tracking + bundle diff per build | ⬜ |
-| 117.30 | Custom dimensions / user properties for slicing | ⬜ |
+| 117.30 | Custom dimensions / user properties for slicing | ✅ |
 | 117.31 | Offline event queue with resumable uploads | ⬜ |
 | 117.32 | JS+native temporal correlation timeline (honest rename from "causal graph") | ⬜ |
 
@@ -263,9 +263,9 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
 | 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ⬜ |
 | 117.62 | SDK key rotation + revocation endpoint | ⬜ |
-| 117.63 | Webhook HMAC signature (X-ERNE-Signature header) | ⬜ |
-| 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ⬜ |
-| 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ⬜ |
+| 117.63 | Webhook HMAC signature (X-ERNE-Signature header) | ✅ |
+| 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ✅ |
+| 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ✅ |
 | 117.69 | Structured server logging (JSON, correlation IDs) | ⬜ |
 | 117.70 | Backup/restore CLI commands (dump + restore across storage adapters) | ⬜ |
 | 117.72 | SDK version telemetry + upgrade nag (dashboard badge if outdated) | ⬜ |
@@ -275,13 +275,13 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.76 | Jest matchers for @erne/monitor/testing | ⬜ |
 | 117.78 | Widget + Live Activity crash capture (App Extension forwarding) | ⬜ |
 | 117.79 | mDNS/Bonjour LAN auto-discovery (device finds dashboard without IP config) | ⬜ |
-| 117.82 | MCP tool permission tiers (read-only vs write-capable, per-tool confirmation) | ⬜ |
+| 117.82 | MCP tool permission tiers (read-only vs write-capable, per-tool confirmation) | ✅ |
 | 117.83 | Common frame extraction (shared stack frame across error group) | ⬜ |
 | 117.84 | Dashboard WCAG 2.1 AA audit (axe-core in Playwright) | ⬜ |
 | 117.86 | OSS → Cloud migration guide + data export format spec | ⬜ |
-| 117.87 | Public roadmap (GitHub Projects board + ROADMAP.md) | ⬜ |
-| 117.88 | GitHub issue templates + triage guidelines | ⬜ |
-| 117.89 | Changesets / release-please automation | ⬜ |
+| 117.87 | Public roadmap (GitHub Projects board + ROADMAP.md) | ✅ |
+| 117.88 | GitHub issue templates + triage guidelines | ✅ |
+| 117.89 | Changesets / release-please automation | ✅ |
 | 117.90 | Discord server (channels: help/showcase/releases/contributing) | ⬜ |
 
 ### Cut from Phase 7 (deferred to Phase 8+)
