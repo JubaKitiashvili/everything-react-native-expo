@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DashboardStore, DEFAULT_MIGRATIONS, defaultDashboardDbPath } from './sqliteStore.js';
-import type { EventRecord, NotificationRecord, SessionRecord } from './types.js';
+import type { AuditLogRecord, EventRecord, NotificationRecord, SessionRecord } from './types.js';
 
 function openInMemory(): DashboardStore {
   return new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
@@ -705,7 +705,7 @@ describe('DashboardStore — notifications (Task 117.19)', () => {
     expect(store.selfCheck().tables).toContain('notifications');
     expect(store.listAppliedMigrations()).toHaveLength(DEFAULT_MIGRATIONS.length);
     // Sanity: v5 is the notifications migration.
-    expect(DEFAULT_MIGRATIONS.at(-1)?.name).toBe('notifications');
+    expect(DEFAULT_MIGRATIONS.find((m) => m.version === 5)?.name).toBe('notifications');
   });
 
   test('insert + list newest-first, round-tripping optional fields', () => {
@@ -755,5 +755,106 @@ describe('DashboardStore — notifications (Task 117.19)', () => {
     store.insertNotification(makeNotification({ id: 'fresh', createdAt: NOW - 1000 }));
     store.purgeOlderThan(NOW - 50_000);
     expect(store.listNotifications().map((n) => n.id)).toEqual(['fresh']);
+  });
+});
+
+describe('DashboardStore — operator audit log (Task 117.65)', () => {
+  let store: DashboardStore;
+  afterEach(() => store?.close());
+
+  function makeAudit(partial: Partial<AuditLogRecord> = {}): AuditLogRecord {
+    return {
+      id: partial.id ?? `aud-${Math.random().toString(36).slice(2)}`,
+      timestamp: partial.timestamp ?? NOW,
+      actor: partial.actor ?? 'operator-1',
+      action: partial.action ?? 'config-change',
+      ...partial,
+    };
+  }
+
+  test('creates the audit_log table at the latest migration', () => {
+    store = openInMemory();
+    expect(store.selfCheck().tables).toContain('audit_log');
+    expect(DEFAULT_MIGRATIONS.at(-1)?.name).toBe('audit_log');
+  });
+
+  test('record + list newest-first, round-tripping optional fields', () => {
+    store = openInMemory();
+    store.recordAuditLog(
+      makeAudit({
+        id: 'a1',
+        timestamp: NOW - 2000,
+        action: 'export',
+        targetType: 'user',
+        targetId: 'user-42',
+        ip: '203.0.113.7',
+        metadata: { sessions: 3, events: 120 },
+      }),
+    );
+    store.recordAuditLog(makeAudit({ id: 'a2', timestamp: NOW - 1000, action: 'delete' }));
+    const rows = store.listAuditLogs();
+    expect(rows.map((r) => r.id)).toEqual(['a2', 'a1']);
+    const a1 = rows.find((r) => r.id === 'a1');
+    expect(a1?.targetType).toBe('user');
+    expect(a1?.targetId).toBe('user-42');
+    expect(a1?.ip).toBe('203.0.113.7');
+    expect(a1?.metadata).toEqual({ sessions: 3, events: 120 });
+  });
+
+  test('record is idempotent on id (returns inserted=false on retry)', () => {
+    store = openInMemory();
+    const r1 = store.recordAuditLog(makeAudit({ id: 'dup' }));
+    const r2 = store.recordAuditLog(makeAudit({ id: 'dup', action: 'delete' }));
+    expect(r1.inserted).toBe(true);
+    expect(r2.inserted).toBe(false);
+    expect(store.listAuditLogs()).toHaveLength(1);
+  });
+
+  test('filters by action + actor + target + time range; counts match', () => {
+    store = openInMemory();
+    for (let i = 0; i < 10; i++) {
+      store.recordAuditLog(
+        makeAudit({
+          id: `e${i}`,
+          timestamp: NOW - i * 1000,
+          actor: i < 5 ? 'alice' : 'bob',
+          action: i % 2 === 0 ? 'export' : 'delete',
+          targetType: 'user',
+          targetId: i % 3 === 0 ? 'user-a' : 'user-b',
+        }),
+      );
+    }
+    expect(store.listAuditLogs({ actor: 'alice' })).toHaveLength(5);
+    expect(store.listAuditLogs({ action: 'export' })).toHaveLength(5);
+    expect(store.listAuditLogs({ action: ['export', 'delete'] })).toHaveLength(10);
+    expect(store.listAuditLogs({ targetType: 'user', targetId: 'user-a' })).toHaveLength(4);
+    // since cutoff at NOW-3500 → entries 0..3 survive
+    expect(store.listAuditLogs({ since: NOW - 3500 })).toHaveLength(4);
+    expect(store.countAuditLogs({ actor: 'bob' })).toBe(5);
+  });
+
+  test('pagination via limit + offset', () => {
+    store = openInMemory();
+    for (let i = 0; i < 5; i++) {
+      store.recordAuditLog(makeAudit({ id: `p${i}`, timestamp: NOW - i }));
+    }
+    expect(store.listAuditLogs({ limit: 2 }).map((r) => r.id)).toEqual(['p0', 'p1']);
+    expect(store.listAuditLogs({ limit: 2, offset: 2 }).map((r) => r.id)).toEqual(['p2', 'p3']);
+  });
+
+  test('audit rows decay with the retention purge', () => {
+    store = openInMemory();
+    store.recordAuditLog(makeAudit({ id: 'old', timestamp: NOW - 100_000 }));
+    store.recordAuditLog(makeAudit({ id: 'fresh', timestamp: NOW - 1000 }));
+    store.purgeOlderThan(NOW - 50_000);
+    expect(store.listAuditLogs().map((r) => r.id)).toEqual(['fresh']);
+  });
+
+  test('resetAllUserData wipes the audit log too', () => {
+    store = openInMemory();
+    store.recordAuditLog(makeAudit({ id: 'x' }));
+    expect(store.listAuditLogs()).toHaveLength(1);
+    store.resetAllUserData();
+    expect(store.listAuditLogs()).toHaveLength(0);
   });
 });

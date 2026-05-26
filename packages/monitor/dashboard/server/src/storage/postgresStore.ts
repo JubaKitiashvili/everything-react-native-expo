@@ -34,6 +34,9 @@ import {
   type AlertFiringRecord,
   type AlertHistoryListFilter,
   type AlertRuleRecord,
+  type AuditLogAction,
+  type AuditLogListFilter,
+  type AuditLogRecord,
   type BugReportListFilter,
   type BugReportRecord,
   type BugReportStatus,
@@ -660,6 +663,45 @@ export class PostgresStore implements IMonitorStoreAsync {
     return Number(result.rows[0]?.count ?? 0);
   }
 
+  // ------------------------------ Operator audit log (Task 117.65) ------------------------------
+
+  async recordAuditLog(record: AuditLogRecord): Promise<{ inserted: boolean }> {
+    const result = await this.client.query(
+      `INSERT INTO audit_log
+        (id, timestamp, actor, action, target_type, target_id, ip, metadata_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        record.id,
+        record.timestamp,
+        record.actor,
+        record.action,
+        record.targetType ?? null,
+        record.targetId ?? null,
+        record.ip ?? null,
+        record.metadata ? JSON.stringify(record.metadata) : null,
+      ],
+    );
+    return { inserted: (result.rowCount ?? 0) > 0 };
+  }
+
+  async listAuditLogs(filter: AuditLogListFilter = {}): Promise<AuditLogRecord[]> {
+    const builder = new SqlBuilder('SELECT * FROM audit_log');
+    applyAuditLogFilter(builder, filter);
+    builder.orderBy('timestamp DESC');
+    builder.limit(filter.limit ?? 100);
+    if (filter.offset !== undefined) builder.offset(filter.offset);
+    const result = await this.client.query<AuditLogRow>(builder.text(), builder.params());
+    return result.rows.map(rowToAuditLog);
+  }
+
+  async countAuditLogs(filter: AuditLogListFilter = {}): Promise<number> {
+    const builder = new SqlBuilder('SELECT COUNT(*)::int AS count FROM audit_log');
+    applyAuditLogFilter(builder, filter);
+    const result = await this.client.query<{ count: number }>(builder.text(), builder.params());
+    return Number(result.rows[0]?.count ?? 0);
+  }
+
   // ------------------------------ Notifications (Task 117.19) ------------------------------
 
   async insertNotification(record: NotificationRecord): Promise<{ inserted: boolean }> {
@@ -728,6 +770,8 @@ export class PostgresStore implements IMonitorStoreAsync {
       // Task 117.19 — in-app notifications decay with telemetry. Not
       // surfaced in the return shape (kept stable for the interface).
       await tx.query('DELETE FROM notifications WHERE created_at < $1', [cutoff]);
+      // Task 117.65 — operator audit rows decay with telemetry too.
+      await tx.query('DELETE FROM audit_log WHERE timestamp < $1', [cutoff]);
       const sessions = (
         await tx.query(
           `DELETE FROM sessions s
@@ -888,6 +932,18 @@ function applyAiActionFilter(builder: SqlBuilder, filter: AiActionListFilter): v
   if (filter.outcome !== undefined) {
     const outcomes = Array.isArray(filter.outcome) ? filter.outcome : [filter.outcome];
     builder.in('outcome', outcomes);
+  }
+}
+
+function applyAuditLogFilter(builder: SqlBuilder, filter: AuditLogListFilter): void {
+  if (filter.since !== undefined) builder.where('timestamp >= ?', filter.since);
+  if (filter.until !== undefined) builder.where('timestamp <= ?', filter.until);
+  if (filter.actor !== undefined) builder.where('actor = ?', filter.actor);
+  if (filter.targetType !== undefined) builder.where('target_type = ?', filter.targetType);
+  if (filter.targetId !== undefined) builder.where('target_id = ?', filter.targetId);
+  if (filter.action !== undefined) {
+    const actions = Array.isArray(filter.action) ? filter.action : [filter.action];
+    builder.in('action', actions);
   }
 }
 
@@ -1182,6 +1238,33 @@ function rowToAiAction(row: AiActionRow): AiActionRecord {
   if (row.redaction_labels_json !== null) {
     rec.redactionLabels = JSON.parse(row.redaction_labels_json) as string[];
   }
+  if (row.metadata_json !== null) {
+    rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
+  }
+  return rec;
+}
+
+interface AuditLogRow extends Record<string, unknown> {
+  id: string;
+  timestamp: string | number;
+  actor: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  ip: string | null;
+  metadata_json: string | null;
+}
+
+function rowToAuditLog(row: AuditLogRow): AuditLogRecord {
+  const rec: AuditLogRecord = {
+    id: row.id,
+    timestamp: Number(row.timestamp),
+    actor: row.actor,
+    action: row.action as AuditLogAction,
+  };
+  if (row.target_type !== null) rec.targetType = row.target_type;
+  if (row.target_id !== null) rec.targetId = row.target_id;
+  if (row.ip !== null) rec.ip = row.ip;
   if (row.metadata_json !== null) {
     rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
   }

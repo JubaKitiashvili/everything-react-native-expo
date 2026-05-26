@@ -23,6 +23,11 @@ import {
   parseListFilter as parseAuditListFilter,
   recordAiAction,
 } from './audit/aiActions.js';
+import {
+  listAuditLogs,
+  parseListFilter as parseAuditLogListFilter,
+  recordAuditEvent,
+} from './audit/auditLog.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -339,6 +344,23 @@ function extractApiKey(req: IncomingMessage, url: URL): string | null {
   const query = url.searchParams.get('apiKey');
   if (query && query.length > 0) return query;
   return null;
+}
+
+/**
+ * Best-effort client IP for the audit log. Honours `x-forwarded-for`
+ * (first hop) when present — the dashboard typically sits behind a
+ * reverse proxy — and falls back to the socket's remote address. Never
+ * throws; returns undefined when nothing is resolvable.
+ */
+function clientIp(req: IncomingMessage): string | undefined {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    const first = forwarded.split(',')[0]?.trim();
+    if (first) return first;
+  } else if (Array.isArray(forwarded) && forwarded[0]) {
+    return forwarded[0];
+  }
+  return req.socket.remoteAddress ?? undefined;
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -1020,7 +1042,22 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           sendJson(res, 400, { error: 'missing_user_id' });
           return;
         }
-        sendJson(res, 200, { export: store.exportUserData(userId) });
+        const exported = store.exportUserData(userId);
+        recordAuditEvent(
+          store,
+          {
+            action: 'export',
+            targetType: 'user',
+            targetId: userId,
+            ip: clientIp(req),
+            metadata: {
+              sessions: exported.sessions.length,
+              events: exported.events.length,
+            },
+          },
+          reqLogger,
+        );
+        sendJson(res, 200, { export: exported });
         return;
       }
 
@@ -1031,6 +1068,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           return;
         }
         const deletedEvents = store.deleteEventsByUserId(userId);
+        recordAuditEvent(
+          store,
+          {
+            action: 'delete',
+            targetType: 'user',
+            targetId: userId,
+            ip: clientIp(req),
+            metadata: { deletedEvents },
+          },
+          reqLogger,
+        );
         sendJson(res, 200, { ok: true, deletedEvents });
         return;
       }
@@ -1055,6 +1103,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
                 return;
               }
               store.setSetting('retention_days', String(days));
+              recordAuditEvent(
+                store,
+                {
+                  action: 'config-change',
+                  targetType: 'settings',
+                  targetId: 'retention_days',
+                  ip: clientIp(req),
+                  metadata: { retentionDays: days },
+                },
+                reqLogger,
+              );
             }
             sendJson(res, 200, { settings: buildSettings() });
           })
@@ -1072,6 +1131,15 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       if (req.method === 'GET' && pathname === '/api/audit/ai-actions') {
         const filter = parseAuditListFilter(requestUrl.searchParams);
         sendJson(res, 200, auditListAiActions(store, filter));
+        return;
+      }
+
+      // Task 117.65 — operator audit log. Returns the same
+      // `{ rows, total }` envelope as the ai-actions list, filtered by
+      // since/until/action/actor/targetType/targetId/limit/offset.
+      if (req.method === 'GET' && pathname === '/api/audit') {
+        const filter = parseAuditLogListFilter(requestUrl.searchParams);
+        sendJson(res, 200, listAuditLogs(store, filter));
         return;
       }
 
@@ -1108,12 +1176,34 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       if (req.method === 'POST' && pathname === '/api/settings/rotate-token') {
         const token = randomUUID().replace(/-/g, '');
         store.setSetting('ws_auth_token', token);
+        recordAuditEvent(
+          store,
+          {
+            action: 'config-change',
+            targetType: 'settings',
+            targetId: 'ws_auth_token',
+            ip: clientIp(req),
+            // Never log the token itself — only that it was rotated.
+            metadata: { rotated: true },
+          },
+          reqLogger,
+        );
         sendJson(res, 200, { wsTokenMasked: maskToken(token), wsTokenSet: true });
         return;
       }
 
       if (req.method === 'POST' && pathname === '/api/settings/reset') {
         const counts = store.resetAllUserData();
+        recordAuditEvent(
+          store,
+          {
+            action: 'delete',
+            targetType: 'all-user-data',
+            ip: clientIp(req),
+            metadata: { deleted: counts },
+          },
+          reqLogger,
+        );
         sendJson(res, 200, { ok: true, deleted: counts });
         return;
       }

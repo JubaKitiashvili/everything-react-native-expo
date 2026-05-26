@@ -551,8 +551,8 @@ describe('operational probes (Task 117.67 + 117.100)', () => {
       migrationsApplied: number;
     };
     expect(body.ready).toBe(true);
-    // Task 117.19 bumped the default migration list to 5 (notifications).
-    expect(body.migrationsApplied).toBe(5);
+    // Task 117.65 bumped the default migration list to 6 (audit_log).
+    expect(body.migrationsApplied).toBe(6);
     expect(body.reason).toBeUndefined();
   });
 
@@ -958,5 +958,108 @@ describe('GET /api/crash-groups/:fingerprint/common-frames (Task 117.83)', () =>
     const body = (await res.json()) as { stackCount: number; commonPrefix: string[] };
     expect(body.stackCount).toBe(1);
     expect(body.commonPrefix).toEqual(['a', 'DIFFERENT']);
+  });
+});
+
+describe('operator audit log (Task 117.65)', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+  });
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('DELETE /api/users/:id records a delete audit row visible via GET /api/audit', async () => {
+    // Seed one event so the delete has something to remove.
+    ctx.store.insertEvent({
+      id: 'aud-evt-1',
+      type: 'custom',
+      severity: 'info',
+      sessionId: 's-aud',
+      timestamp: 1,
+      receivedAt: 1,
+      payload: {},
+      userId: 'user-77',
+    });
+
+    const del = await fetch(`${ctx.url}/api/users/user-77`, { method: 'DELETE' });
+    expect(del.status).toBe(200);
+
+    const get = await fetch(`${ctx.url}/api/audit?action=delete`);
+    expect(get.status).toBe(200);
+    const body = (await get.json()) as {
+      rows: Array<{ action: string; targetType: string; targetId: string; metadata?: unknown }>;
+      total: number;
+    };
+    expect(body.total).toBe(1);
+    expect(body.rows[0]?.action).toBe('delete');
+    expect(body.rows[0]?.targetType).toBe('user');
+    expect(body.rows[0]?.targetId).toBe('user-77');
+    expect(body.rows[0]?.metadata).toEqual({ deletedEvents: 1 });
+  });
+
+  test('GET /api/users/:id/export records an export audit row', async () => {
+    await fetch(`${ctx.url}/api/users/user-99/export`);
+    const get = await fetch(`${ctx.url}/api/audit?action=export&targetId=user-99`);
+    const body = (await get.json()) as { rows: Array<{ action: string }>; total: number };
+    expect(body.total).toBe(1);
+    expect(body.rows[0]?.action).toBe('export');
+  });
+
+  test('PATCH /api/settings records a config-change audit row', async () => {
+    const patch = await fetch(`${ctx.url}/api/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ retentionDays: 30 }),
+    });
+    expect(patch.status).toBe(200);
+
+    const get = await fetch(`${ctx.url}/api/audit?action=config-change`);
+    const body = (await get.json()) as {
+      rows: Array<{ action: string; targetId: string; metadata?: { retentionDays?: number } }>;
+      total: number;
+    };
+    expect(body.total).toBe(1);
+    expect(body.rows[0]?.targetId).toBe('retention_days');
+    expect(body.rows[0]?.metadata?.retentionDays).toBe(30);
+  });
+
+  test('POST /api/settings/reset records a delete row AFTER the wipe (survives reset)', async () => {
+    // A pre-existing audit row should be wiped; the reset's own row should survive.
+    ctx.store.recordAuditLog({
+      id: 'pre-reset',
+      timestamp: 1,
+      actor: 'someone',
+      action: 'config-change',
+    });
+    const reset = await fetch(`${ctx.url}/api/settings/reset`, { method: 'POST' });
+    expect(reset.status).toBe(200);
+
+    const get = await fetch(`${ctx.url}/api/audit`);
+    const body = (await get.json()) as {
+      rows: Array<{ id: string; action: string; targetType: string }>;
+      total: number;
+    };
+    expect(body.total).toBe(1);
+    expect(body.rows[0]?.id).not.toBe('pre-reset');
+    expect(body.rows[0]?.action).toBe('delete');
+    expect(body.rows[0]?.targetType).toBe('all-user-data');
+  });
+
+  test('GET /api/audit filters by actor + supports limit', async () => {
+    for (let i = 0; i < 4; i++) {
+      ctx.store.recordAuditLog({
+        id: `f${i}`,
+        timestamp: 1_770_000_000_000 + i,
+        actor: i < 2 ? 'alice' : 'bob',
+        action: 'login',
+      });
+    }
+    const get = await fetch(`${ctx.url}/api/audit?actor=alice&limit=10`);
+    const body = (await get.json()) as { total: number; rows: Array<{ actor: string }> };
+    expect(body.total).toBe(2);
+    expect(body.rows.every((r) => r.actor === 'alice')).toBe(true);
   });
 });

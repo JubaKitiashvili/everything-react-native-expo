@@ -261,3 +261,54 @@ export interface AiActionListFilter {
   limit?: number;
   offset?: number;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Operator audit log (Task 117.65)
+// ──────────────────────────────────────────────────────────────────
+//
+// Distinct from `ai_actions` (what the agent did): `audit_log` records
+// what an *operator* did to the dashboard — exporting a data subject's
+// data, deleting it (DSAR), changing config, signing in/out. Every
+// state-mutating control-plane action lands one row so an incident
+// responder can answer "who changed what, when, from where". Recording
+// is best-effort: a failed audit write must never break the underlying
+// request.
+
+/** Action verb kept loose so callers can add categories without a migration. */
+export type AuditLogAction =
+  | 'export'
+  | 'delete'
+  | 'config-change'
+  | 'login'
+  | 'logout'
+  | (string & {});
+
+export interface AuditLogRecord {
+  /** Stable id (uuid). The caller picks one so retries can dedupe. */
+  id: string;
+  /** ms timestamp when the action occurred. */
+  timestamp: number;
+  /** Operator / actor id when known (falls back to 'anonymous'). */
+  actor: string;
+  /** Action verb — see `AuditLogAction`. */
+  action: AuditLogAction;
+  /** Category of the thing acted on (`user`, `settings`, `ws-token`, ...). */
+  targetType?: string;
+  /** Id of the thing acted on (a user id, a setting key, ...). */
+  targetId?: string;
+  /** Client IP the request arrived from, when resolvable. */
+  ip?: string;
+  /** Free-form bag for action-specific extras (counts, patch keys). */
+  metadata?: Record<string, unknown>;
+}
+
+export interface AuditLogListFilter {
+  since?: number;
+  until?: number;
+  action?: AuditLogAction | AuditLogAction[];
+  actor?: string;
+  targetType?: string;
+  targetId?: string;
+  limit?: number;
+  offset?: number;
+}

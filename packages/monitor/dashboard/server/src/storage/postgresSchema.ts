@@ -196,6 +196,27 @@ CREATE INDEX IF NOT EXISTS idx_notifications_read
   ON notifications (read, created_at DESC);
 `;
 
+// Task 117.65 — operator audit log. Mirrors the SQLite v6 migration.
+const V6_AUDIT_LOG_SQL = `
+CREATE TABLE IF NOT EXISTS audit_log (
+  id            TEXT     PRIMARY KEY,
+  timestamp     BIGINT   NOT NULL,
+  actor         TEXT     NOT NULL,
+  action        TEXT     NOT NULL,
+  target_type   TEXT,
+  target_id     TEXT,
+  ip            TEXT,
+  metadata_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp
+  ON audit_log (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action
+  ON audit_log (action, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor
+  ON audit_log (actor, timestamp DESC);
+`;
+
 const MIGRATION_BOOKKEEPING_SQL = `
 CREATE TABLE IF NOT EXISTS _migrations (
   version    INTEGER PRIMARY KEY,
@@ -211,6 +232,7 @@ export const POSTGRES_DEFAULT_MIGRATIONS: readonly PostgresMigration[] = Object.
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
   { version: 4, name: 'ai_actions', up: V4_AI_ACTIONS_SQL },
   { version: 5, name: 'notifications', up: V5_NOTIFICATIONS_SQL },
+  { version: 6, name: 'audit_log', up: V6_AUDIT_LOG_SQL },
 ]);
 
 export const POSTGRES_BOOKKEEPING_SQL = MIGRATION_BOOKKEEPING_SQL;
@@ -230,4 +252,5 @@ export const POSTGRES_RESET_TABLES = [
   'symbol_files',
   'ai_actions',
   'notifications',
+  'audit_log',
 ] as const;

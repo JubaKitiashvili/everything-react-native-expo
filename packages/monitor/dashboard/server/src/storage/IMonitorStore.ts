@@ -26,6 +26,8 @@ import type {
   AlertFiringRecord,
   AlertHistoryListFilter,
   AlertRuleRecord,
+  AuditLogListFilter,
+  AuditLogRecord,
   BugReportListFilter,
   BugReportRecord,
   CrashGroupListFilter,
@@ -157,6 +159,20 @@ export interface IMonitorStore {
   listAiActions(filter?: AiActionListFilter): AiActionRecord[];
   /** Count rows matching the same filter — used by paginated views. */
   countAiActions(filter?: AiActionListFilter): number;
+
+  // ------------------------------ Operator audit log (Task 117.65) ---
+  /**
+   * Record one entry in the operator audit log (export / delete /
+   * config-change / login / logout). Idempotent on `id` — a retry that
+   * resends the same id is a silent no-op. Recording is best-effort at
+   * the call site: an audit-write failure must never break the
+   * underlying request.
+   */
+  recordAuditLog(record: AuditLogRecord): { inserted: boolean };
+  /** List rows newest-first, filtered by the requested predicates. */
+  listAuditLogs(filter?: AuditLogListFilter): AuditLogRecord[];
+  /** Count rows matching the same filter — used by paginated views. */
+  countAuditLogs(filter?: AuditLogListFilter): number;
 
   // ------------------------------ Notifications (Task 117.19) --------
   /**

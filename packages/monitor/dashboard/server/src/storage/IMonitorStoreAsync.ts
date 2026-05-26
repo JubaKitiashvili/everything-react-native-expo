@@ -26,6 +26,8 @@ import type {
   AlertFiringRecord,
   AlertHistoryListFilter,
   AlertRuleRecord,
+  AuditLogListFilter,
+  AuditLogRecord,
   BugReportListFilter,
   BugReportRecord,
   CrashGroupListFilter,
@@ -114,6 +116,11 @@ export interface IMonitorStoreAsync {
   insertAiAction(record: AiActionRecord): Promise<{ inserted: boolean }>;
   listAiActions(filter?: AiActionListFilter): Promise<AiActionRecord[]>;
   countAiActions(filter?: AiActionListFilter): Promise<number>;
+
+  // ------------------------------ Operator audit log (Task 117.65) ------------------------------
+  recordAuditLog(record: AuditLogRecord): Promise<{ inserted: boolean }>;
+  listAuditLogs(filter?: AuditLogListFilter): Promise<AuditLogRecord[]>;
+  countAuditLogs(filter?: AuditLogListFilter): Promise<number>;
 
   // ------------------------------ Notifications (Task 117.19) ------------------------------
   insertNotification(record: NotificationRecord): Promise<{ inserted: boolean }>;

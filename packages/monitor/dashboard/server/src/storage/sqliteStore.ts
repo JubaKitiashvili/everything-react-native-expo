@@ -11,6 +11,9 @@ import {
   type AiActionOutcome,
   type AiActionRecord,
   type AlertFiringRecord,
+  type AuditLogAction,
+  type AuditLogListFilter,
+  type AuditLogRecord,
   type AlertHistoryListFilter,
   type AlertRuleRecord,
   type BugReportListFilter,
@@ -137,12 +140,36 @@ CREATE INDEX IF NOT EXISTS idx_notifications_read
   ON notifications (read, created_at DESC);
 `;
 
+// Task 117.65 — operator audit log. One row per state-mutating
+// control-plane action (export / delete / config-change / login /
+// logout). Mirrors the ai_actions table style.
+const V6_AUDIT_LOG_SQL = `
+CREATE TABLE IF NOT EXISTS audit_log (
+  id            TEXT    PRIMARY KEY,
+  timestamp     INTEGER NOT NULL,
+  actor         TEXT    NOT NULL,
+  action        TEXT    NOT NULL,
+  target_type   TEXT,
+  target_id     TEXT,
+  ip            TEXT,
+  metadata_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp
+  ON audit_log (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action
+  ON audit_log (action, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor
+  ON audit_log (actor, timestamp DESC);
+`;
+
 export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 1, name: 'initial', up: SCHEMA_SQL },
   { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
   { version: 4, name: 'ai_actions', up: V4_AI_ACTIONS_SQL },
   { version: 5, name: 'notifications', up: V5_NOTIFICATIONS_SQL },
+  { version: 6, name: 'audit_log', up: V6_AUDIT_LOG_SQL },
 ]);
 
 const RESET_TABLES = [
@@ -155,6 +182,7 @@ const RESET_TABLES = [
   'symbol_files',
   'ai_actions',
   'notifications',
+  'audit_log',
 ] as const;
 
 const RESET_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(RESET_TABLES);
@@ -174,6 +202,7 @@ const BACKUP_TABLES = [
   'symbol_files',
   'ai_actions',
   'notifications',
+  'audit_log',
   'server_settings',
 ] as const;
 
@@ -190,6 +219,21 @@ function ensureParentDir(path: string): void {
 
 function checksum(text: string): string {
   return createHash('sha256').update(text).digest('hex');
+}
+
+/**
+ * Serialise an object column defensively. A cyclic or otherwise
+ * non-serialisable metadata bag would make `JSON.stringify` throw and
+ * abort the insert — for the audit log that means losing the record of
+ * an action *because of* the action's own payload, the worst possible
+ * failure mode. Fall back to `'{}'` so the row still lands.
+ */
+function safeJsonStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? '{}';
+  } catch {
+    return '{}';
+  }
 }
 
 function hasColumn(db: Db, table: string, column: string): boolean {
@@ -238,6 +282,7 @@ interface PreparedStatements {
   deleteSymbolFile: Statement;
   getSymbolFileById: Statement;
   insertAiAction: Statement;
+  insertAuditLog: Statement;
   insertNotification: Statement;
   markNotificationRead: Statement;
 }
@@ -419,6 +464,14 @@ export class DashboardStore implements IMonitorStore {
                  @toolsCalledJson, @filesConsideredJson,
                  @confidence, @effectiveConfidence, @classification,
                  @outcome, @prUrl, @redactionLabelsJson, @metadataJson)`,
+      ),
+      // Task 117.65 — `INSERT OR IGNORE` matches the ai_actions
+      // idempotency pattern. A retried operator action carrying the same
+      // id collapses silently rather than double-logging.
+      insertAuditLog: this.db.prepare(
+        `INSERT OR IGNORE INTO audit_log
+         (id, timestamp, actor, action, target_type, target_id, ip, metadata_json)
+         VALUES (@id, @timestamp, @actor, @action, @targetType, @targetId, @ip, @metadataJson)`,
       ),
       // Task 117.19 — `INSERT OR IGNORE` so a retried in-app delivery
       // with the same notification id is a silent no-op.
@@ -1029,6 +1082,43 @@ export class DashboardStore implements IMonitorStore {
     return row.c;
   }
 
+  // ------------------------------ Operator audit log (Task 117.65) ------
+
+  recordAuditLog(record: AuditLogRecord): { inserted: boolean } {
+    const result = this.statements.insertAuditLog.run({
+      id: record.id,
+      timestamp: record.timestamp,
+      actor: record.actor,
+      action: record.action,
+      targetType: record.targetType ?? null,
+      targetId: record.targetId ?? null,
+      ip: record.ip ?? null,
+      // Pre-serialise so a cyclic / non-serialisable metadata bag can't
+      // throw inside better-sqlite3's own bind pass. The audit helper
+      // already normalises this, but the store stays defensive.
+      metadataJson: record.metadata ? safeJsonStringify(record.metadata) : null,
+    });
+    return { inserted: Number(result.changes) > 0 };
+  }
+
+  listAuditLogs(filter: AuditLogListFilter = {}): AuditLogRecord[] {
+    const { sql, params } = buildAuditLogQuery(filter);
+    const limit = filter.limit ?? 100;
+    const offset = filter.offset ?? 0;
+    const rows = this.db
+      .prepare(`SELECT * FROM audit_log ${sql} ORDER BY timestamp DESC LIMIT @limit OFFSET @offset`)
+      .all({ ...params, limit, offset }) as AuditLogRow[];
+    return rows.map(rowToAuditLog);
+  }
+
+  countAuditLogs(filter: AuditLogListFilter = {}): number {
+    const { sql, params } = buildAuditLogQuery(filter);
+    const row = this.db
+      .prepare(`SELECT COUNT(*) AS c FROM audit_log ${sql}`)
+      .get(params) as { c: number };
+    return row.c;
+  }
+
   // ------------------------------ Notifications (Task 117.19) ------
 
   insertNotification(record: NotificationRecord): { inserted: boolean } {
@@ -1116,6 +1206,11 @@ export class DashboardStore implements IMonitorStore {
       // Not surfaced in the return shape (kept stable for the IMonitorStore
       // contract); the dashboard inbox is ephemeral by design.
       this.db.prepare('DELETE FROM notifications WHERE created_at < ?').run(at);
+      // Task 117.65 — operator audit rows decay with retention. Like
+      // notifications, not surfaced in the return shape (contract stays
+      // stable). For longer-lived compliance retention, ship audit rows
+      // off-box via the backup tooling before the purge window elapses.
+      this.db.prepare('DELETE FROM audit_log WHERE timestamp < ?').run(at);
       // Only drop sessions whose events are all gone AND are themselves
       // older than the cutoff. NOT IN (...) over the post-purge events
       // table is fine here — the table has an index on session_id.
@@ -1606,6 +1701,76 @@ function buildAiActionsQuery(filter: AiActionListFilter): {
       params[`outcome${i}`] = list[i];
     }
     clauses.push(`outcome IN (${placeholders.join(', ')})`);
+  }
+  return {
+    sql: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '',
+    params,
+  };
+}
+
+interface AuditLogRow {
+  id: string;
+  timestamp: number;
+  actor: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  ip: string | null;
+  metadata_json: string | null;
+}
+
+function rowToAuditLog(row: AuditLogRow): AuditLogRecord {
+  const rec: AuditLogRecord = {
+    id: row.id,
+    timestamp: row.timestamp,
+    actor: row.actor,
+    action: row.action as AuditLogAction,
+  };
+  if (row.target_type !== null) rec.targetType = row.target_type;
+  if (row.target_id !== null) rec.targetId = row.target_id;
+  if (row.ip !== null) rec.ip = row.ip;
+  if (row.metadata_json !== null) {
+    rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
+  }
+  return rec;
+}
+
+function buildAuditLogQuery(filter: AuditLogListFilter): {
+  sql: string;
+  params: Record<string, unknown>;
+} {
+  const clauses: string[] = [];
+  const params: Record<string, unknown> = {};
+  if (filter.since !== undefined) {
+    clauses.push('timestamp >= @since');
+    params.since = filter.since;
+  }
+  if (filter.until !== undefined) {
+    clauses.push('timestamp <= @until');
+    params.until = filter.until;
+  }
+  if (filter.actor !== undefined) {
+    clauses.push('actor = @actor');
+    params.actor = filter.actor;
+  }
+  if (filter.targetType !== undefined) {
+    clauses.push('target_type = @targetType');
+    params.targetType = filter.targetType;
+  }
+  if (filter.targetId !== undefined) {
+    clauses.push('target_id = @targetId');
+    params.targetId = filter.targetId;
+  }
+  if (filter.action !== undefined) {
+    const list: string[] = Array.isArray(filter.action)
+      ? filter.action.map((s) => String(s))
+      : [String(filter.action)];
+    const placeholders: string[] = [];
+    for (let i = 0; i < list.length; i++) {
+      placeholders.push(`@action${i}`);
+      params[`action${i}`] = list[i];
+    }
+    clauses.push(`action IN (${placeholders.join(', ')})`);
   }
   return {
     sql: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '',
