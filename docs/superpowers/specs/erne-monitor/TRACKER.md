@@ -2,10 +2,10 @@
 
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
-**Last updated:** 2026-05-26
-**Current Phase:** Phase 7 — Launch (58/106)
+**Last updated:** 2026-05-27
+**Current Phase:** Phase 7 — Launch (62/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 174/222 tasks (Phases 1a–6 ✅ · Phase 7 58/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 318 dashboard-app (vitest) + 27 dashboard-app (playwright e2e) + 378 dashboard-server tests + 131 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 178/222 tasks (Phases 1a–6 ✅ · Phase 7 62/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1003 SDK-src tests + 329 dashboard-app (vitest) + 28 dashboard-app (playwright e2e) + 398 dashboard-server tests + 168 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -191,12 +191,12 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.9 | WebLLM local AI (browser WASM, zero external install) + server-side fallback | ⬜ |
 | 117.10 | Terminal-first UX (`erne monitor live` TUI + `erne doctor`) | ✅ |
 | 117.14 | Global search (Cmd-K across crashes/sessions/users/traces/agents/skills/tasks/docs) | ⬜ |
-| 117.15 | User-centric view `/monitor/users/:id` | ⬜ |
+| 117.15 | User-centric view `/users/:id` (sessions + crash/ANR KPIs + activity) | ✅ |
 | 117.21 | Screenshot annotation canvas + shake-to-report accelerometer wiring | ⬜ |
 | 117.25 | Suspense telemetry with stall detection | ⬜ |
 | 117.26 | RSC boundary panel (we have collector, surface to dashboard) | ⬜ |
 | 117.94 | `erne scan` static analysis CLI (scan consumer's app before install) | ✅ |
-| 117.95 | Privacy-provable SDK test suite (adversarial tests, CI badge) | ⬜ |
+| 117.95 | Privacy-provable SDK test suite (adversarial redteam; closed 3 real PII leaks) — 🟡 CI badge pending | ✅ |
 
 ### Milestone 4 — Enterprise + OTel moat (Weeks 19-23)
 
@@ -211,7 +211,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.57 | Transitive dependency privacy manifest audit (App Store compliance) | ⬜ |
 | 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ✅ |
 | 117.60 | SECURITY.md + responsible disclosure policy | ✅ |
-| 117.64 | Per-tenant ingest rate limiting | ⬜ |
+| 117.64 | Per-tenant ingest rate limiting | ✅ |
 | 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ✅ |
 | 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ✅ |
 | 117.103 | DPA template + subprocessor list (enterprise prerequisite) | ⬜ |
@@ -258,7 +258,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.50 | ClickHouse materialized views (crash-free rate, latency percentiles, user impact) — deferred Phase 8 if slip | ⬜ |
 | 117.51 | Caching layer (Redis/Valkey: rate limiting, session dedup, hot-path query cache) | ✅ |
 | 117.52 | Brownfield RN support (SDK init from native host, cross-boundary session continuity) | ⬜ |
-| 117.53 | AST-based auto-discovery (ts-morph scan of routes/navigation/API clients) | ⬜ |
+| 117.53 | AST-based auto-discovery (TS compiler API scan of routes/navigation/API clients; `discover` cli cmd) | ✅ |
 | 117.54 | Copy-as-AI-context button on crash/error detail panels | ✅ |
 | 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
 | 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ✅ |
