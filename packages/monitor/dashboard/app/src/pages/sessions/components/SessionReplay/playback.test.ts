@@ -50,6 +50,40 @@ describe('extractReplayFrames', () => {
     expect(frames[0]?.masks).toHaveLength(1);
     expect(frames[0]?.screen).toBe('Home');
   });
+
+  test('normalizes a captured hierarchy payload into the frame, leaving it undefined otherwise', () => {
+    const events: EventRecord[] = [
+      {
+        id: 'with-tree',
+        type: 'replay_frame',
+        severity: 'info',
+        sessionId: 's1',
+        timestamp: 1_000,
+        receivedAt: 1_010,
+        payload: {
+          image: 'data:image/png;base64,AAA',
+          hierarchy: {
+            id: 'root',
+            kind: 'container',
+            children: [{ id: 'pw', kind: 'input', masked: true }],
+          },
+        },
+      },
+      {
+        id: 'no-tree',
+        type: 'replay_frame',
+        severity: 'info',
+        sessionId: 's1',
+        timestamp: 2_000,
+        receivedAt: 2_010,
+        payload: { image: 'data:image/png;base64,BBB' },
+      },
+    ];
+    const frames = extractReplayFrames(events);
+    expect(frames[0]?.hierarchy?.id).toBe('root');
+    expect(frames[0]?.hierarchy?.children[0]?.masked).toBe(true);
+    expect(frames[1]?.hierarchy).toBeUndefined();
+  });
 });
 
 describe('selectFrame', () => {

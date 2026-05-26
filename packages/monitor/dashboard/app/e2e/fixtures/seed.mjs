@@ -145,6 +145,26 @@ export function seedFixtures(store, now) {
           'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyIiBoZWlnaHQ9IjIiPjxyZWN0IHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiM3MEU4QTQiLz48L3N2Zz4=',
         screen: 'FeedScreen',
         masks: [{ x: 20, y: 40, width: 180, height: 20, reason: 'secure-text-entry' }],
+        // Captured (already-masked) UI hierarchy for this frame (Task 117.7).
+        hierarchy: {
+          id: 'screen-root',
+          kind: 'container',
+          role: 'FeedScreen',
+          masked: false,
+          children: [
+            { id: 'header', kind: 'text', text: 'Your Feed', masked: false, children: [] },
+            {
+              id: 'list',
+              kind: 'container',
+              role: 'FlatList',
+              masked: false,
+              children: [
+                { id: 'item-0', kind: 'text', text: 'Welcome back', masked: false, children: [] },
+                { id: 'cardholder', kind: 'input', text: '[REDACTED]', masked: true, children: [] },
+              ],
+            },
+          ],
+        },
       },
       userId,
     },

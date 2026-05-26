@@ -1,10 +1,12 @@
 import type { EventRecord } from '@/shared/api/types';
+import { normalizeHierarchy, type HierarchyNode } from './hierarchy';
 
 /**
  * A single visual snapshot the SDK captured for session replay. The dashboard
  * receives these as regular events with `type === 'replay_frame'`; the payload
- * contains the rendered image (data URL or remote URL), the screen name, and
- * any regions the ReplayMasker flagged as PII.
+ * contains the rendered image (data URL or remote URL), the screen name, any
+ * regions the ReplayMasker flagged as PII, and (optionally) the captured UI
+ * view hierarchy for that moment.
  */
 export interface ReplayFrame {
   id: string;
@@ -12,6 +14,8 @@ export interface ReplayFrame {
   image?: string;
   screen?: string;
   masks?: ReplayMask[];
+  /** Captured read-only UI view tree for this frame, when the SDK sent one. */
+  hierarchy?: HierarchyNode;
 }
 
 export interface ReplayMask {
@@ -36,6 +40,7 @@ export function extractReplayFrames(events: EventRecord[]): ReplayFrame[] {
       image?: unknown;
       screen?: unknown;
       masks?: unknown;
+      hierarchy?: unknown;
     };
     const frame: ReplayFrame = { id: event.id, timestamp: event.timestamp };
     if (typeof payload.image === 'string') frame.image = payload.image;
@@ -45,6 +50,8 @@ export function extractReplayFrames(events: EventRecord[]): ReplayFrame[] {
     } else if (event.screen !== undefined) {
       frame.screen = event.screen;
     }
+    const hierarchy = normalizeHierarchy(payload.hierarchy);
+    if (hierarchy) frame.hierarchy = hierarchy;
     out.push(frame);
   }
   return out.sort((a, b) => a.timestamp - b.timestamp);

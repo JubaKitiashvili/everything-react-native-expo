@@ -214,4 +214,26 @@ describe('ReplayViewer playback controls', () => {
     await userEvent.click(fourX);
     expect(fourX).toHaveAttribute('aria-pressed', 'true');
   });
+
+  test('renders the captured UI hierarchy for the active frame', () => {
+    const frames = [
+      {
+        id: 'f1',
+        timestamp: 0,
+        image: 'data:image/png;base64,A',
+        hierarchy: {
+          id: 'root',
+          kind: 'container' as const,
+          masked: false,
+          children: [
+            { id: 'pw', kind: 'input' as const, text: '••••', masked: true, children: [] },
+          ],
+        },
+      },
+    ];
+    render(<ReplayViewer frames={frames} events={[]} />);
+    const tree = screen.getByRole('list', { name: /captured ui hierarchy/i });
+    const pw = tree.querySelector('[data-node-id="pw"]') as HTMLElement | null;
+    expect(pw?.dataset.masked).toBe('true');
+  });
 });

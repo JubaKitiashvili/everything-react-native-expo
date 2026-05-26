@@ -9,6 +9,7 @@ import {
   type ReplayFrame,
   type ReplayMask,
 } from './playback';
+import { UIHierarchy } from './UIHierarchy';
 import styles from './ReplayViewer.module.css';
 
 export interface ReplayViewerProps {
@@ -117,6 +118,8 @@ export function ReplayViewer({ frames, events, now, clock = DEFAULT_CLOCK }: Rep
           </div>
         ) : null}
       </div>
+
+      {activeFrame ? <UIHierarchy {...(activeFrame.hierarchy ? { hierarchy: activeFrame.hierarchy } : {})} /> : null}
 
       <div className={styles.timeline}>
         <div className={styles.markers} aria-hidden="true">
