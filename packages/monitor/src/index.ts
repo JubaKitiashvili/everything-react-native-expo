@@ -272,6 +272,30 @@ export type {
   DimensionValue,
   CustomDimensionsOptions,
 } from './core/CustomDimensions';
+// Task 117.31 — Offline event queue with resumable uploads
+export {
+  OfflineQueue,
+  MemoryOfflineStorage,
+  OFFLINE_QUEUE_DEFAULTS,
+} from './core/OfflineQueue';
+export type {
+  OfflineStorage,
+  OfflineQueueStats,
+  OfflineQueueOptions,
+  OfflineSend,
+} from './core/OfflineQueue';
+// Task 117.32 — JS + native temporal correlation timeline
+export {
+  buildTimeline,
+  correlate,
+  TEMPORAL_CORRELATION_DEFAULTS,
+} from './core/TemporalCorrelation';
+export type {
+  TimelineOrigin,
+  TemporalEvent,
+  TimelineEntry,
+  CorrelationLink,
+} from './core/TemporalCorrelation';
 // Task 117.77 — EAS Update / OTA version tagging
 export { getOtaContext, withOtaContext } from './core/ota';
 export type { OtaContext, ExpoUpdatesLike } from './core/ota';
