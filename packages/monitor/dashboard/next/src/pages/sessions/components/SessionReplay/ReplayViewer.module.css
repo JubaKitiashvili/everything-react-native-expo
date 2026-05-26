@@ -1,0 +1,206 @@
+.viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.stage {
+  position: relative;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frameImage {
+  max-width: 100%;
+  max-height: 480px;
+  display: block;
+}
+
+.frameFallback {
+  padding: var(--space-10);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.mask {
+  position: absolute;
+  background: rgba(120, 130, 150, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  mix-blend-mode: luminosity;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  pointer-events: none;
+}
+
+.eventChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 11, 13, 0.88);
+  border: 1px solid var(--color-border-default);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  max-width: 100%;
+}
+
+.eventMessage {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.markers {
+  position: relative;
+  height: 10px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--color-brand-mint) 40%, transparent);
+}
+
+.marker {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 2px;
+  background: var(--color-severity-muted);
+  border-radius: 1px;
+}
+
+.marker[data-severity='critical'] {
+  background: var(--color-severity-critical);
+}
+
+.marker[data-severity='warning'] {
+  background: var(--color-severity-warning);
+}
+
+.marker[data-severity='info'] {
+  background: var(--color-severity-info);
+}
+
+.marker[data-severity='success'] {
+  background: var(--color-severity-success);
+}
+
+.scrubber {
+  width: 100%;
+  accent-color: var(--color-brand-mint);
+}
+
+.timelineLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.currentTime {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.playButton {
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-brand-mint);
+  color: var(--color-bg-base);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.playButton:focus-visible {
+  outline: 2px solid var(--color-brand-mint);
+  outline-offset: 2px;
+}
+
+.speedGroup {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--color-bg-elevated);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.speedButton {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.speedActive {
+  background: var(--color-bg-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.toggleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-10);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
