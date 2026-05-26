@@ -20,7 +20,8 @@
   /* Text */
   --color-text-primary: #f3f4f6;
   --color-text-secondary: #9ca3af;
-  --color-text-tertiary: #6b7280;
+  /* WCAG 2.1 AA: lifted from #6b7280 (3.85:1 on surface) to >=5.6:1 on every surface. */
+  --color-text-tertiary: #8f96a1;
   --color-text-disabled: #4b5563;
 
   /* Brand */
@@ -28,16 +29,18 @@
   --color-brand-mint-subtle: rgba(90, 240, 177, 0.16);
 
   /* Severity */
-  --color-severity-critical: #ff5a5f;
-  --color-severity-critical-subtle: rgba(255, 90, 95, 0.16);
+  /* WCAG 2.1 AA: lifted from #ff5a5f so pill text clears 4.5:1 on the elevated surface. */
+  --color-severity-critical: #ff7378;
+  --color-severity-critical-subtle: rgba(255, 115, 120, 0.16);
   --color-severity-warning: #fbbf24;
   --color-severity-warning-subtle: rgba(251, 191, 36, 0.16);
   --color-severity-info: #60a5fa;
   --color-severity-info-subtle: rgba(96, 165, 250, 0.16);
   --color-severity-success: #5af0b1;
   --color-severity-success-subtle: rgba(90, 240, 177, 0.16);
-  --color-severity-muted: #6b7280;
-  --color-severity-muted-subtle: rgba(107, 114, 128, 0.16);
+  /* WCAG 2.1 AA: lifted from #6b7280 so muted text + pill text clear 4.5:1. */
+  --color-severity-muted: #8f96a1;
+  --color-severity-muted-subtle: rgba(143, 150, 161, 0.16);
 
   /* Spacing */
   --space-0: 0;

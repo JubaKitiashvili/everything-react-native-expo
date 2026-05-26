@@ -24,7 +24,8 @@ export const colors = {
   text: {
     primary: '#f3f4f6',
     secondary: '#9ca3af',
-    tertiary: '#6b7280',
+    // WCAG 2.1 AA: lifted from #6b7280 (3.85:1 on surface) to >=5.6:1 on every surface.
+    tertiary: '#8f96a1',
     disabled: '#4b5563',
   },
   brand: {
@@ -32,16 +33,18 @@ export const colors = {
     mintSubtle: 'rgba(90, 240, 177, 0.16)',
   },
   severity: {
-    critical: '#ff5a5f',
-    criticalSubtle: 'rgba(255, 90, 95, 0.16)',
+    // WCAG 2.1 AA: lifted from #ff5a5f so pill text clears 4.5:1 on the elevated surface.
+    critical: '#ff7378',
+    criticalSubtle: 'rgba(255, 115, 120, 0.16)',
     warning: '#fbbf24',
     warningSubtle: 'rgba(251, 191, 36, 0.16)',
     info: '#60a5fa',
     infoSubtle: 'rgba(96, 165, 250, 0.16)',
     success: '#5af0b1',
     successSubtle: 'rgba(90, 240, 177, 0.16)',
-    muted: '#6b7280',
-    mutedSubtle: 'rgba(107, 114, 128, 0.16)',
+    // WCAG 2.1 AA: lifted from #6b7280 so muted text + pill text clear 4.5:1.
+    muted: '#8f96a1',
+    mutedSubtle: 'rgba(143, 150, 161, 0.16)',
   },
 } as const;
 

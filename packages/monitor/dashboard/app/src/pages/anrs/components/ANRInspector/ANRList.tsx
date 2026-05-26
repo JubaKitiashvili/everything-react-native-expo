@@ -115,31 +115,31 @@ export function ANRList({ instances, onSelect, now }: ANRListProps) {
               <tr>
                 <th
                   scope="col"
-                  className={`${styles.head} ${styles.headSortable}`}
-                  onClick={() => setSortKey('timestamp')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') setSortKey('timestamp');
-                  }}
-                  role="button"
-                  tabIndex={0}
+                  className={styles.head}
                   aria-sort={sortKey === 'timestamp' ? 'descending' : 'none'}
                 >
-                  When{' '}
-                  {sortKey === 'timestamp' ? <span className={styles.sortIcon}>▼</span> : null}
+                  <button
+                    type="button"
+                    className={styles.headSortable}
+                    onClick={() => setSortKey('timestamp')}
+                  >
+                    When{' '}
+                    {sortKey === 'timestamp' ? <span className={styles.sortIcon}>▼</span> : null}
+                  </button>
                 </th>
                 <th
                   scope="col"
-                  className={`${styles.head} ${styles.headSortable}`}
-                  onClick={() => setSortKey('duration')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') setSortKey('duration');
-                  }}
-                  role="button"
-                  tabIndex={0}
+                  className={styles.head}
                   aria-sort={sortKey === 'duration' ? 'descending' : 'none'}
                 >
-                  Duration{' '}
-                  {sortKey === 'duration' ? <span className={styles.sortIcon}>▼</span> : null}
+                  <button
+                    type="button"
+                    className={styles.headSortable}
+                    onClick={() => setSortKey('duration')}
+                  >
+                    Duration{' '}
+                    {sortKey === 'duration' ? <span className={styles.sortIcon}>▼</span> : null}
+                  </button>
                 </th>
                 <th scope="col" className={styles.head}>
                   Screen

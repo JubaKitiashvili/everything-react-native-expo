@@ -199,7 +199,7 @@ function SettingsView({ settings, onPatchSettings, onRotateToken, onReset }: Set
 
         <section aria-label="Ingest" className={styles.cell}>
           <h3 className={styles.subhead}>WS ingest</h3>
-          <div className={styles.kv}>
+          <dl className={styles.kv}>
             <div>
               <dt>Port</dt>
               <dd className={styles.mono}>{settings?.port ?? '—'}</dd>
@@ -223,7 +223,7 @@ function SettingsView({ settings, onPatchSettings, onRotateToken, onReset }: Set
               <dt>Uptime</dt>
               <dd className={styles.mono}>{uptimeLabel}</dd>
             </div>
-          </div>
+          </dl>
           <div className={styles.row}>
             <button
               type="button"

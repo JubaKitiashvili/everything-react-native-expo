@@ -66,7 +66,9 @@
 }
 
 .muted {
-  color: var(--color-text-disabled);
+  /* WCAG 2.1 AA: this is real content ("never matched"), so use the readable
+     tertiary token (>=4.5:1) rather than the disabled token (2.46:1). */
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 
