@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useUiStore } from '@/shared/store/uiStore';
 import { SessionReplay } from './components/SessionReplay';
 import { DeviceSwitcher } from './components/DeviceSwitcher';
+import { UserJourneys } from './components/UserJourneys';
 import styles from './SessionsPage.module.css';
 
 /**
@@ -22,6 +23,7 @@ export function SessionsPage() {
   return (
     <div className={styles.page}>
       <SessionReplay />
+      <UserJourneys />
       <DeviceSwitcher />
     </div>
   );

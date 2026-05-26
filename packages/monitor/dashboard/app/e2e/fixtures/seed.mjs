@@ -148,6 +148,88 @@ export function seedFixtures(store, now) {
       },
       userId,
     },
+    // Hermes CPU profile — folded stack samples for the flamegraph (Task 117.8).
+    {
+      id: 'evt-profile-1',
+      type: 'profile',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 57_000,
+      receivedAt: now - 57_000,
+      screen: 'FeedScreen',
+      platform: 'ios',
+      payload: {
+        samples: [
+          { frames: ['App.render', 'FeedScreen.render', 'FeedList.render'], weight: 42 },
+          { frames: ['App.render', 'FeedScreen.render', 'FeedList.render', 'FeedItem.render'], weight: 30 },
+          { frames: ['App.render', 'FeedScreen.render', 'FeedHeader.render'], weight: 12 },
+          { frames: ['App.render', 'TabBar.render'], weight: 8 },
+        ],
+      },
+      userId,
+    },
+    // Distributed trace — span tree for the trace waterfall (Task 117.13).
+    {
+      id: 'evt-trace-1',
+      type: 'trace',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 56_500,
+      receivedAt: now - 56_500,
+      screen: 'FeedScreen',
+      platform: 'ios',
+      payload: {
+        traceId: 'trace-coldstart',
+        name: 'AppStartup',
+        spans: [
+          {
+            id: 'root',
+            name: 'AppStartup',
+            startMs: 0,
+            durationMs: 1240,
+            attributes: { phase: 'cold' },
+            checkpoints: [{ label: 'first-frame', atMs: 900 }],
+          },
+          { id: 'js-init', name: 'JS bundle eval', startMs: 20, durationMs: 480, parentId: 'root' },
+          {
+            id: 'fetch-feed',
+            name: 'GET /v2/feed',
+            startMs: 520,
+            durationMs: 420,
+            parentId: 'root',
+            attributes: { url: 'https://api.example.com/v2/feed', status: 200 },
+          },
+          { id: 'parse-feed', name: 'parse response', startMs: 950, durationMs: 60, parentId: 'fetch-feed' },
+          { id: 'render-feed', name: 'FeedScreen render', startMs: 1010, durationMs: 210, parentId: 'root' },
+        ],
+      },
+      userId,
+    },
+    // Navigation breadcrumbs across distinct screens → User Journeys transitions (Task 117.12).
+    {
+      id: 'evt-nav-home',
+      type: 'breadcrumb',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 59_000,
+      receivedAt: now - 59_000,
+      screen: 'HomeScreen',
+      platform: 'ios',
+      payload: { category: 'nav', message: 'Navigated to /home' },
+      userId,
+    },
+    {
+      id: 'evt-nav-item',
+      type: 'breadcrumb',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 47_000,
+      receivedAt: now - 47_000,
+      screen: 'ItemDetailScreen',
+      platform: 'ios',
+      payload: { category: 'nav', message: 'Navigated to /item/42' },
+      userId,
+    },
   ];
   for (const event of events) store.insertEvent(event);
 
