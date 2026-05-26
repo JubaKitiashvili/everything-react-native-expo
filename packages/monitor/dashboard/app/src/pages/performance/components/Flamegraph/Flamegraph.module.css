@@ -1,0 +1,51 @@
+.scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  padding: var(--space-2);
+}
+
+.canvas {
+  position: relative;
+  /* Width is widened past 100% via inline style so deep/narrow frames stay
+     legible; the parent .scroll provides horizontal panning. */
+  min-width: 100%;
+}
+
+.frame {
+  position: absolute;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-bg-base);
+  padding: 0 var(--space-1);
+  overflow: hidden;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-bg-base);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.placeholder,
+.error,
+.empty {
+  padding: var(--space-10);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.error {
+  color: var(--color-severity-critical);
+}
