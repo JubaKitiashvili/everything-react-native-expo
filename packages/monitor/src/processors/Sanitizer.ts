@@ -7,6 +7,11 @@ export interface SanitizerOptions {
   extraHeaders?: readonly string[];
   /** Extra query parameter names to redact (case-insensitive). */
   extraQueryParams?: readonly string[];
+  /**
+   * Extra object-key names whose value is always treated as a secret and
+   * fully redacted, regardless of value shape (case-insensitive).
+   */
+  extraSensitiveKeys?: readonly string[];
   /** Replacement token — defaults to '[REDACTED]'. */
   placeholder?: string;
 }
@@ -20,6 +25,42 @@ const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 // (415) 555-1212, +44 20 7946 0958. Deliberately loose to catch PII.
 const PHONE_RE =
   /(?:\+?\d{1,3}[ .-]?)?\(?\d{2,4}\)?[ .-]?\d{2,4}[ .-]?\d{2,4}(?:[ .-]?\d{2,4})?/g;
+
+// US Social Security Numbers — `123-45-6789`. Anchored on word boundaries
+// so it doesn't swallow longer digit runs. Runs BEFORE the phone sweep.
+const SSN_RE = /\b\d{3}-\d{2}-\d{4}\b/g;
+
+// Credit-card candidates — 13–19 digits, optionally grouped by single
+// spaces or hyphens (e.g. `4111 1111 1111 1111`, `4111-1111-1111-1111`,
+// `4111111111111111`). The match is only redacted when the digits pass a
+// Luhn check (validateLuhn below), which keeps us from clobbering unrelated
+// long numbers (order ids, timestamps). Runs BEFORE the phone sweep so the
+// FULL number is replaced rather than a partial slice.
+const CREDIT_CARD_RE = /\b(?:\d[ -]?){13,19}\b/g;
+
+// Bearer / OAuth tokens carried inline in free text, e.g.
+// `Authorization: Bearer abc.def.ghi`. The phone sweep can't see these
+// (they're alphanumeric), so we catch the whole `Bearer <token>` span.
+const BEARER_TOKEN_RE = /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi;
+
+// High-entropy secret tokens with recognisable provider prefixes:
+//   - Stripe: sk_live_…, sk_test_…, pk_live_…, rk_…
+//   - GitHub: ghp_…, gho_…, ghs_…, ghr_…, github_pat_…
+//   - Slack:  xoxb-…, xoxp-…, xoxa-…
+//   - Google: AIza…
+//   - AWS:    AKIA…  (access key id)
+//   - JWTs:   three base64url segments separated by dots
+// These shapes never appear in benign telemetry, so redacting the whole
+// token is safe and high-value.
+const SECRET_TOKEN_RES: readonly RegExp[] = [
+  /\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{8,}\b/g,
+  /\b(?:ghp|gho|ghs|ghr|github_pat)_[A-Za-z0-9_]{8,}\b/g,
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,
+  /\bAIza[A-Za-z0-9_-]{20,}\b/g,
+  /\bAKIA[A-Z0-9]{16}\b/g,
+  // JWT — header.payload.signature, base64url segments.
+  /\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b/g,
+];
 
 const DEFAULT_SENSITIVE_HEADERS: readonly string[] = [
   'authorization',
@@ -40,6 +81,61 @@ const DEFAULT_SENSITIVE_QUERY_KEYS: readonly string[] = [
   'refresh_token',
 ];
 
+// Object-key names whose VALUE is always a secret/credential, regardless of
+// the value's shape. The Sanitizer's pattern sweep only catches secrets it
+// can recognise by content; these key names let us redact opaque values
+// (e.g. `password: 'hunter2'`) that no content pattern would flag.
+const DEFAULT_SENSITIVE_KEYS: readonly string[] = [
+  'password',
+  'passwd',
+  'pwd',
+  'secret',
+  'authorization',
+  'auth',
+  'token',
+  'access_token',
+  'accesstoken',
+  'refresh_token',
+  'refreshtoken',
+  'api_key',
+  'apikey',
+  'apisecret',
+  'api_secret',
+  'client_secret',
+  'clientsecret',
+  'private_key',
+  'privatekey',
+  'session_token',
+  'sessiontoken',
+  'credit_card',
+  'creditcard',
+  'card_number',
+  'cardnumber',
+  'cvv',
+  'ssn',
+];
+
+/**
+ * Luhn checksum — used to confirm a digit run is a plausible payment-card
+ * number before redacting it as one. Keeps the credit-card sweep from
+ * clobbering unrelated 13–19 digit identifiers.
+ */
+function passesLuhn(digits: string): boolean {
+  let sum = 0;
+  let double = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = digits.charCodeAt(i) - 48; // '0' = 48
+    if (d < 0 || d > 9) return false;
+    if (double) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    double = !double;
+  }
+  return sum % 10 === 0;
+}
+
 /**
  * Sanitizer strips PII from events before they land on the EventStore or
  * are shipped to any transport. Runs as a pure function — callers pipe
@@ -50,6 +146,7 @@ export class Sanitizer {
   private readonly extraPatterns: readonly RegExp[];
   private readonly sensitiveHeaders: Set<string>;
   private readonly sensitiveQueryKeys: Set<string>;
+  private readonly sensitiveKeys: Set<string>;
 
   constructor(options: SanitizerOptions = {}) {
     this.placeholder = options.placeholder ?? DEFAULT_PLACEHOLDER;
@@ -63,6 +160,12 @@ export class Sanitizer {
       [
         ...DEFAULT_SENSITIVE_QUERY_KEYS,
         ...(options.extraQueryParams ?? []),
+      ].map((k) => k.toLowerCase()),
+    );
+    this.sensitiveKeys = new Set(
+      [
+        ...DEFAULT_SENSITIVE_KEYS,
+        ...(options.extraSensitiveKeys ?? []),
       ].map((k) => k.toLowerCase()),
     );
   }
@@ -81,6 +184,23 @@ export class Sanitizer {
    */
   sanitizeString(value: string): string {
     let out = value.replace(EMAIL_RE, this.placeholder);
+
+    // Structured-PII passes run BEFORE the loose phone sweep so the whole
+    // token/number is replaced rather than a partial digit slice.
+    out = out.replace(SSN_RE, this.placeholder);
+    out = out.replace(CREDIT_CARD_RE, (match) => {
+      const digits = match.replace(/\D/g, '');
+      // 13–19 digits AND a valid Luhn checksum → treat as a card number.
+      if (digits.length >= 13 && digits.length <= 19 && passesLuhn(digits)) {
+        return this.placeholder;
+      }
+      return match;
+    });
+    out = out.replace(BEARER_TOKEN_RE, this.placeholder);
+    for (const re of SECRET_TOKEN_RES) {
+      out = out.replace(re, this.placeholder);
+    }
+
     out = out.replace(PHONE_RE, (match) => {
       // Only redact matches that contain enough digits to look like a
       // phone number. This avoids redacting timestamps or ids that slip
@@ -148,8 +268,16 @@ export class Sanitizer {
     const obj = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
-      if (k.toLowerCase() === 'headers' && v && typeof v === 'object') {
+      const lowerKey = k.toLowerCase();
+      if (lowerKey === 'headers' && v && typeof v === 'object') {
         out[k] = this.sanitizeHeaders(v as Record<string, unknown>);
+        continue;
+      }
+      // Key-name redaction: any value under a known credential key name is
+      // fully redacted regardless of shape (string, number, nested object).
+      // Skip null/undefined so the "preserve null/undefined" contract holds.
+      if (this.sensitiveKeys.has(lowerKey) && v !== null && v !== undefined) {
+        out[k] = this.placeholder;
         continue;
       }
       out[k] = this.sanitizeValue(v, keyPath ? `${keyPath}.${k}` : k);
