@@ -816,13 +816,39 @@ function toText(raw: Buffer | ArrayBuffer | Buffer[]): string {
 }
 
 /**
+ * Canonical event-name → server event-type mapping for `custom` events.
+ *
+ * A `custom` MonitorEvent carries its real identity in `data.name`. Most
+ * names pass through unchanged and become the EventRecord `type` directly
+ * (e.g. `rsc`, `native_metrics`) — the dashboard panels key off these
+ * top-level types. Only the entries here are renamed; everything else is
+ * forwarded verbatim so a new SDK custom event lights up its panel without
+ * a server change.
+ */
+const NAME_MAP: Readonly<Record<string, string>> = {
+  // Hermes profile capture is surfaced to the dashboard as a `profile` event.
+  hermes_profile_captured: 'profile',
+};
+
+/**
+ * Canonical envelope-type → server event-type mapping for non-`custom`
+ * events. Kept deliberately narrow: `navigation` renders as a `breadcrumb`
+ * and `render` as a `performance` sample; `crash`, `network`, and any other
+ * envelope type pass through unchanged.
+ */
+const TYPE_MAP: Readonly<Record<string, string>> = {
+  navigation: 'breadcrumb',
+  render: 'performance',
+};
+
+/**
  * Accept legacy `{type: 'monitor:hello' | 'monitor:event'}` frames from the
  * SDK's DashboardBridge (Phase 4 protocol) and return a translated
  * `{kind: ...}` envelope so the rest of the pipeline doesn't care which
  * version of the SDK connected. Returns null when the frame is already in
  * the new protocol (or cannot be interpreted).
  */
-function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
+export function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
   if (!raw || typeof raw !== 'object') return null;
   const frame = raw as { type?: unknown; clientId?: unknown; event?: unknown };
   if (typeof frame.type !== 'string') return null;
@@ -849,13 +875,20 @@ function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
   }
 
   if (frame.type === 'monitor:event') {
+    // The SDK's DashboardBridge ships the raw MonitorEvent:
+    //   { type, timestamp, wallTime, sessionId, data }
+    // where `data` carries the event-specific fields flat (for `custom`
+    // events `data = { name, attributes }`). The canonical contract flattens
+    // `data` into the EventRecord `payload` and resolves the EventRecord
+    // `type` — promoting `data.name` for custom events — so the dashboard
+    // panels (which read a flat payload keyed by top-level type) get data.
     const ev = frame.event as
       | {
           type?: string;
           sessionId?: string;
           timestamp?: number;
           wallTime?: number;
-          [key: string]: unknown;
+          data?: unknown;
         }
       | undefined;
     if (!ev || typeof ev.type !== 'string') return null;
@@ -870,47 +903,48 @@ function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
     // Retain the SDK's original sessionId inside payload for debugging.
     const originalSessionId = typeof ev.sessionId === 'string' ? ev.sessionId : undefined;
     const timestamp = typeof ev.timestamp === 'number' ? ev.timestamp : now();
-    // Strip envelope fields from the payload — they've already been promoted
-    // to top-level SdkMessage keys above. The remaining keys are the actual
-    // event-specific payload.
-    const payload: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(ev)) {
-      if (key === 'type' || key === 'sessionId' || key === 'timestamp' || key === 'wallTime') {
-        continue;
-      }
-      payload[key] = value;
+
+    const data = ev.data;
+    const customName =
+      ev.type === 'custom' && isRecord(data) && typeof data.name === 'string'
+        ? data.name
+        : undefined;
+
+    // Canonical type + payload resolution:
+    //   custom (named) → NAME_MAP[name] ?? name, payload = data.attributes
+    //   else           → TYPE_MAP[type] ?? type,  payload = data
+    let normalisedType: string;
+    let payload: Record<string, unknown>;
+    if (customName !== undefined) {
+      normalisedType = NAME_MAP[customName] ?? customName;
+      const attributes = (data as { attributes?: unknown }).attributes;
+      payload = isRecord(attributes) ? { ...attributes } : {};
+    } else {
+      normalisedType = TYPE_MAP[ev.type] ?? ev.type;
+      payload = isRecord(data) ? { ...data } : {};
     }
-    const { type } = ev;
+
     if (originalSessionId) payload.__sdkSessionId = originalSessionId;
 
-    // Legacy type → server event-type mapping. Kept deliberately narrow —
-    // the schema codegen already documents every SDK event kind and we
-    // only forward the ones the dashboard panels render.
-    const normalisedType =
-      type === 'crash'
-        ? 'crash'
-        : type === 'network'
-          ? 'network'
-          : type === 'navigation'
-            ? 'breadcrumb'
-            : type === 'render'
-              ? 'performance'
-              : type === 'custom'
-                ? 'custom'
-                : type;
-
+    // After flattening, network fields sit at the TOP of payload — so the
+    // 5xx promotion reads `payload.statusCode` (the NetworkCollector's data
+    // field name, confirmed against the collector). A breadcrumb keeps the
+    // `category: 'nav'` default unless the SDK already set one.
     const severity: 'critical' | 'warning' | 'info' =
       normalisedType === 'crash'
         ? 'critical'
-        : type === 'network' && typeof payload.statusCode === 'number' && payload.statusCode >= 500
+        : ev.type === 'network' &&
+            typeof payload.statusCode === 'number' &&
+            payload.statusCode >= 500
           ? 'warning'
           : 'info';
+
+    const finalPayload =
+      normalisedType === 'breadcrumb' ? { category: 'nav', ...payload } : payload;
 
     // Task 117.49 — deterministic id so the ingest dedup guard can
     // collapse retries. The random-suffix id used here before made
     // dedup impossible for the legacy protocol.
-    const finalPayload =
-      normalisedType === 'breadcrumb' ? { category: 'nav', ...payload } : payload;
     return {
       kind: 'event',
       event: {
@@ -925,6 +959,11 @@ function translateLegacyFrame(raw: unknown, now: () => number): unknown | null {
   }
 
   return null;
+}
+
+/** Narrow an unknown to a non-null, non-array object. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**
