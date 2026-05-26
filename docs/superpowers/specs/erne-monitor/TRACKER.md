@@ -7,7 +7,7 @@
 **Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
 **Overall Progress:** 167/222 tasks (Phases 1a–6 ✅ · Phase 7 51/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 356 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
-**Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
+**Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
 ---
 
@@ -147,7 +147,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 
 | # | Task | Status |
 |---|------|--------|
-| 117.1 | Dashboard REWRITE (7 purpose-built pages, react-router 7, not migration) | ⬜ |
+| 117.1 | Dashboard REWRITE (7 purpose-built pages, react-router 7, not migration) — plan: `DASHBOARD-REWRITE-117.1.md` | ⬜ |
 | 117.4 | StorageAdapter interface + SQLite + PostgreSQL adapters | ✅ |
 | 117.5 | Message queue abstraction (`better-queue` default, pluggable) | ✅ |
 | 117.47 | Crash loop guard (native persistent counter, self-disable after 3 in 5s) | ✅ |
