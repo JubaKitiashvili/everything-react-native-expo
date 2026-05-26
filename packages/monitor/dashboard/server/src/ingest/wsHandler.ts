@@ -4,6 +4,12 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import type { DashboardStore } from '../storage/sqliteStore.js';
 import type { EventRecord, SessionRecord, Severity, CrashGroupRecord } from '../storage/types.js';
 import { computeFallbackFingerprint } from './fingerprint.js';
+import {
+  DEFAULT_RATE_LIMITER_CONFIG,
+  TokenBucketRateLimiter,
+  deriveTenantKey,
+  type RateLimiterConfig,
+} from './rateLimiter.js';
 import type { IQueue, QueueStats } from '../queue/IQueue.js';
 import { InMemoryQueue } from '../queue/in-memory-adapter.js';
 
@@ -18,6 +24,22 @@ export type IngestWsHandlerOptions = {
   maxEventsPerWindow?: number;
   /** Rate-window size in ms. Default 1000ms. */
   rateWindowMs?: number;
+  /**
+   * Task 117.64 — per-tenant ingest rate limiting. The connection-level
+   * `maxEventsPerWindow` guard protects a single socket; this limiter
+   * protects the dashboard from a single noisy tenant fanning a flood
+   * across many connections. Keyed by the SDK/API key the connection
+   * carries (`?apiKey=` / `?ws_auth_token=` / `Authorization: Bearer`),
+   * falling back to client IP — so one app can never starve ingest for
+   * the rest of the fleet.
+   *
+   * A token bucket: `capacity` is the largest burst accepted after an idle
+   * period; `refillPerSec` is the sustained per-tenant rate. Defaults
+   * (`DEFAULT_RATE_LIMITER_CONFIG`): 100-event burst, 50 events/sec/tenant.
+   * Set `tenantRateLimit: false` to disable per-tenant limiting entirely
+   * (the per-connection guard still applies).
+   */
+  tenantRateLimit?: RateLimiterConfig | false;
   /** Max bytes per incoming WS message. Default 256 KB. */
   maxMessageBytes?: number;
   /** Logger hook; defaults to console on server-side errors only. */
@@ -63,7 +85,18 @@ type DashboardMessage =
   | { kind: 'hello'; serverTime: number }
   | { kind: 'event'; event: EventRecord }
   | { kind: 'crash-group-update'; group: CrashGroupRecord }
-  | { kind: 'error'; message: string };
+  | {
+      kind: 'error';
+      message: string;
+      /**
+       * Task 117.64 — machine-readable error category. Currently only
+       * `rate-limited` (tenant exceeded its ingest rate); omitted for
+       * generic/malformed-payload errors so existing frames are unchanged.
+       */
+      reason?: 'rate-limited';
+      /** Task 117.64 — ms until the tenant may retry, on rate-limit errors. */
+      retryAfterMs?: number;
+    };
 
 export interface IngestSessionPayload {
   id: string;
@@ -116,12 +149,27 @@ export interface IngestStats {
    * can deliver.
    */
   backpressured: number;
+  /**
+   * Task 117.64 — events dropped because the originating tenant exceeded
+   * its per-tenant ingest rate limit. Subset of `rejected` (these also
+   * bump `rejected`), broken out so operators can distinguish abusive
+   * tenants from malformed payloads. A growing value here points at one
+   * noisy app rather than a server-side problem.
+   */
+  tenantRateLimited: number;
 }
 
 interface SdkConnectionState {
   sessionId?: string;
   windowStart: number;
   inWindow: number;
+  /**
+   * Task 117.64 — opaque tenant key derived once on connect (SDK key or
+   * client IP). Pinned per-connection so the limiter aggregates every
+   * socket from the same tenant into one bucket. `undefined` when
+   * per-tenant limiting is disabled.
+   */
+  tenantKey?: string;
 }
 
 /**
@@ -151,6 +199,12 @@ export class IngestWebSocketHandler {
   private readonly sdkState = new WeakMap<WebSocket, SdkConnectionState>();
   private readonly apiKey: string | null;
 
+  /**
+   * Task 117.64 — per-tenant token-bucket limiter. `null` when disabled
+   * via `tenantRateLimit: false`.
+   */
+  private readonly tenantLimiter: TokenBucketRateLimiter | null;
+
   readonly stats: IngestStats = {
     ingested: 0,
     rejected: 0,
@@ -158,6 +212,7 @@ export class IngestWebSocketHandler {
     broadcasts: 0,
     deduplicated: 0,
     backpressured: 0,
+    tenantRateLimited: 0,
   };
 
   /**
@@ -182,6 +237,13 @@ export class IngestWebSocketHandler {
         console.error(`[dashboard-server:${ctx}]`, err.message);
       });
     this.apiKey = options.apiKey ?? null;
+    // Task 117.64 — construct the per-tenant limiter unless explicitly
+    // disabled. `undefined` → defaults; a config object → those limits;
+    // `false` → no per-tenant limiting (connection guard still applies).
+    this.tenantLimiter =
+      options.tenantRateLimit === false
+        ? null
+        : new TokenBucketRateLimiter(options.tenantRateLimit ?? DEFAULT_RATE_LIMITER_CONFIG);
     this.wss = new WebSocketServer({ noServer: true });
 
     this.queue = options.queue ?? new InMemoryQueue<EventRecord>();
@@ -235,7 +297,7 @@ export class IngestWebSocketHandler {
       // sniffs the first message to decide whether it's the new
       // `{kind: ...}` protocol or the legacy `{type: 'monitor:...'}` frame.
       if (url.pathname === INGEST_PATH || url.pathname === '/') {
-        this.wss.handleUpgrade(req, socket, head, (ws) => this.onIngestConnection(ws));
+        this.wss.handleUpgrade(req, socket, head, (ws) => this.onIngestConnection(ws, req, url));
         return;
       }
       if (url.pathname === SUBSCRIBE_PATH) {
@@ -298,8 +360,13 @@ export class IngestWebSocketHandler {
 
   // ------------------------------ SDK side ------------------------------
 
-  private onIngestConnection(ws: WebSocket): void {
-    this.sdkState.set(ws, { windowStart: this.now(), inWindow: 0 });
+  private onIngestConnection(ws: WebSocket, req: IncomingMessage, url: URL): void {
+    const state: SdkConnectionState = { windowStart: this.now(), inWindow: 0 };
+    // Task 117.64 — pin the tenant key for the lifetime of this socket so
+    // every event the connection sends draws from the same bucket. Derived
+    // once on connect; deriving per-event would re-parse the URL needlessly.
+    if (this.tenantLimiter) state.tenantKey = deriveTenantKey(req, url);
+    this.sdkState.set(ws, state);
 
     ws.on('message', (raw) => this.handleIngestMessage(ws, raw));
     ws.on('error', (err) => this.onError(err, 'ingest-ws'));
@@ -400,6 +467,7 @@ export class IngestWebSocketHandler {
   }
 
   private handleEvent(ws: WebSocket, payload: IngestEventPayload | undefined): void {
+    if (!this.checkTenantRate(ws)) return;
     if (!this.checkRate(ws)) return;
     const normalised = this.normaliseEvent(payload);
     if (!normalised) {
@@ -417,6 +485,7 @@ export class IngestWebSocketHandler {
       return;
     }
     for (const payload of events) {
+      if (!this.checkTenantRate(ws)) return;
       if (!this.checkRate(ws)) return;
       const normalised = this.normaliseEvent(payload);
       if (!normalised) {
@@ -585,6 +654,31 @@ export class IngestWebSocketHandler {
       return result;
     }
     return canonical ?? group;
+  }
+
+  /**
+   * Task 117.64 — per-tenant rate gate. Spends one token from the
+   * connection's tenant bucket. Over-limit events are dropped with a
+   * structured `rate-limited` error frame carrying a `retryAfterMs` hint
+   * (a 429-equivalent for the WS transport) — the offending tenant's
+   * bucket is the only state touched, so other tenants are unaffected and
+   * the server never crashes. Returns true when the event may proceed.
+   */
+  private checkTenantRate(ws: WebSocket): boolean {
+    if (!this.tenantLimiter) return true;
+    const state = this.sdkState.get(ws);
+    if (!state || state.tenantKey === undefined) return true;
+    const decision = this.tenantLimiter.tryConsume(state.tenantKey, this.now());
+    if (decision.allowed) return true;
+    this.stats.rejected += 1;
+    this.stats.tenantRateLimited += 1;
+    this.sendTo(ws, {
+      kind: 'error',
+      message: 'tenant rate limit exceeded',
+      reason: 'rate-limited',
+      ...(decision.retryAfterMs !== undefined ? { retryAfterMs: decision.retryAfterMs } : {}),
+    });
+    return false;
   }
 
   private checkRate(ws: WebSocket): boolean {

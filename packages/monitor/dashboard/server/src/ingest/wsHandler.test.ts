@@ -5,6 +5,7 @@ import { WebSocket } from 'ws';
 import { DashboardStore } from '../storage/sqliteStore.js';
 import type { EventRecord } from '../storage/types.js';
 import { INGEST_PATH, IngestWebSocketHandler, SUBSCRIBE_PATH } from './wsHandler.js';
+import type { RateLimiterConfig } from './rateLimiter.js';
 
 async function openServerWithHandler(options: Parameters<typeof makeHandler>[1] = {}): Promise<{
   httpServer: Server;
@@ -40,6 +41,7 @@ function makeHandler(
     rateWindowMs?: number;
     maxMessageBytes?: number;
     apiKey?: string | null;
+    tenantRateLimit?: RateLimiterConfig | false;
   } = {},
 ): IngestWebSocketHandler {
   return new IngestWebSocketHandler({
@@ -766,5 +768,161 @@ describe('ingest queue integration (Task 117.5)', () => {
     await handler.closeAsync(200);
     await new Promise<void>((r) => httpServer.close(() => r()));
     store.close();
+  });
+});
+
+describe('per-tenant ingest rate limiting (Task 117.64)', () => {
+  // A frozen clock so refill never kicks in during the test — every event
+  // lands at the same instant, exercising the burst-capacity boundary
+  // deterministically with no real timers.
+  const FROZEN = 1_770_000_000_000;
+
+  async function sendEvents(
+    sdk: WebSocket,
+    sessionId: string,
+    count: number,
+    idPrefix: string,
+  ): Promise<void> {
+    for (let i = 0; i < count; i++) {
+      sdk.send(
+        JSON.stringify({
+          kind: 'event',
+          event: {
+            id: `${idPrefix}-${i}`,
+            type: 'custom',
+            severity: 'info',
+            sessionId,
+            timestamp: FROZEN + i,
+            payload: { i },
+          },
+        }),
+      );
+    }
+  }
+
+  test('an over-limit tenant is rejected while another tenant is unaffected', async () => {
+    // capacity=3, no refill within the frozen window → each tenant gets at
+    // most 3 accepted events.
+    const ctx = await openServerWithHandler({
+      now: () => FROZEN,
+      tenantRateLimit: { capacity: 3, refillPerSec: 1 },
+    });
+    try {
+      // Tenant A and tenant B distinguished by their SDK key on the ingest URL.
+      const sdkA = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}?apiKey=tenant-A`);
+      const sdkB = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}?apiKey=tenant-B`);
+      const queueA = openMessageQueue(sdkA);
+      const queueB = openMessageQueue(sdkB);
+      await Promise.all([waitOpen(sdkA), waitOpen(sdkB)]);
+
+      sdkA.send(JSON.stringify({ kind: 'hello', session: { id: 'session-A' } }));
+      sdkB.send(JSON.stringify({ kind: 'hello', session: { id: 'session-B' } }));
+      await Promise.all([queueA.next(), queueB.next()]);
+
+      // Tenant A floods 10 events — only 3 should be accepted, 7 rate-limited.
+      await sendEvents(sdkA, 'session-A', 10, 'a');
+      // Tenant B sends 3 — all within its own fresh bucket.
+      await sendEvents(sdkB, 'session-B', 3, 'b');
+
+      // Let the WS frames flow + the queue drain.
+      await new Promise((r) => setTimeout(r, 80));
+      await ctx.handler.flush();
+
+      // Tenant B's events all landed; tenant A capped at the burst capacity.
+      expect(ctx.store.getSession('session-B')?.eventCount).toBe(3);
+      expect(ctx.store.getSession('session-A')?.eventCount).toBe(3);
+      // 7 of A's events tripped the per-tenant limiter.
+      expect(ctx.handler.stats.tenantRateLimited).toBe(7);
+      expect(ctx.handler.stats.rejected).toBeGreaterThanOrEqual(7);
+
+      // The first rate-limited frame back to A carries the structured reason.
+      const frames: string[] = [];
+      // Drain whatever A buffered — among them at least one rate-limit error.
+      for (let i = 0; i < 7; i++) {
+        try {
+          frames.push(await queueA.next(200));
+        } catch {
+          break;
+        }
+      }
+      const rateLimited = frames
+        .map((f) => JSON.parse(f) as { kind: string; reason?: string; retryAfterMs?: number })
+        .find((m) => m.kind === 'error' && m.reason === 'rate-limited');
+      expect(rateLimited).toBeDefined();
+      expect(rateLimited?.retryAfterMs).toBeGreaterThan(0);
+
+      queueA.stop();
+      queueB.stop();
+      sdkA.close();
+      sdkB.close();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('tokens refill over time so a throttled tenant recovers (injected clock)', async () => {
+    let clock = FROZEN;
+    const ctx = await openServerWithHandler({
+      now: () => clock,
+      // capacity 2, 10/sec → one token every 100ms.
+      tenantRateLimit: { capacity: 2, refillPerSec: 10 },
+    });
+    try {
+      const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}?apiKey=tenant-C`);
+      const queue = openMessageQueue(sdk);
+      await waitOpen(sdk);
+      sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-C' } }));
+      await queue.next();
+
+      // Drain the burst.
+      await sendEvents(sdk, 'session-C', 5, 'c1');
+      await new Promise((r) => setTimeout(r, 50));
+      await ctx.handler.flush();
+      expect(ctx.store.getSession('session-C')?.eventCount).toBe(2);
+      expect(ctx.handler.stats.tenantRateLimited).toBe(3);
+
+      // Advance the injected clock by 200ms → two tokens refilled.
+      clock = FROZEN + 200;
+      await sendEvents(sdk, 'session-C', 5, 'c2');
+      await new Promise((r) => setTimeout(r, 50));
+      await ctx.handler.flush();
+      // Two more accepted after refill; the rest rejected again.
+      expect(ctx.store.getSession('session-C')?.eventCount).toBe(4);
+      expect(ctx.handler.stats.tenantRateLimited).toBe(6);
+
+      queue.stop();
+      sdk.close();
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test('tenantRateLimit: false disables per-tenant limiting (connection guard still applies)', async () => {
+    const ctx = await openServerWithHandler({
+      now: () => FROZEN,
+      tenantRateLimit: false,
+      // Large per-connection window so nothing else throttles here.
+      maxEventsPerWindow: 1_000,
+      rateWindowMs: 60_000,
+    });
+    try {
+      const sdk = new WebSocket(`ws://127.0.0.1:${ctx.port}${INGEST_PATH}?apiKey=tenant-D`);
+      const queue = openMessageQueue(sdk);
+      await waitOpen(sdk);
+      sdk.send(JSON.stringify({ kind: 'hello', session: { id: 'session-D' } }));
+      await queue.next();
+
+      await sendEvents(sdk, 'session-D', 50, 'd');
+      await new Promise((r) => setTimeout(r, 80));
+      await ctx.handler.flush();
+
+      expect(ctx.store.getSession('session-D')?.eventCount).toBe(50);
+      expect(ctx.handler.stats.tenantRateLimited).toBe(0);
+
+      queue.stop();
+      sdk.close();
+    } finally {
+      await ctx.close();
+    }
   });
 });

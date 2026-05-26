@@ -641,6 +641,13 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         'Total ingest events skipped as duplicates.',
         ingest.deduplicated,
       );
+      // Task 117.64 — events dropped because a tenant exceeded its
+      // per-tenant ingest rate limit (subset of rejected).
+      registry.observeCounter(
+        'erne_ingest_tenant_rate_limited_total',
+        'Total ingest events dropped due to per-tenant rate limiting.',
+        ingest.tenantRateLimited,
+      );
       registry.observeGauge(
         'erne_subscribers',
         'Current number of dashboard subscriber connections.',
