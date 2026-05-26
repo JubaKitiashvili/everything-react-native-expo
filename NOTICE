@@ -1,0 +1,28 @@
+ERNE — Everything React Native & Expo
+Copyright (c) 2026 ERNE Contributors
+
+This product includes the ERNE harness and the @erne/monitor Runtime
+Intelligence SDK and dashboard, which are licensed under the MIT License.
+See the LICENSE file for the full text.
+
+----------------------------------------------------------------------
+
+Third-Party Software
+
+This product depends on third-party packages distributed via npm. Those
+packages are not part of ERNE and remain the property of their respective
+copyright holders. Each retains its own license and copyright notice, which
+continue to govern its use; nothing in this NOTICE or in ERNE's MIT License
+alters those terms.
+
+A machine-readable inventory of bundled production dependencies and their
+licenses can be regenerated at any time with:
+
+    npx license-checker --production --json
+
+ERNE's CI enforces that all production dependencies use OSI-approved,
+permissive licenses via scripts/check-licenses.js. The current allowlist is
+documented in that script.
+
+If you believe a dependency's license is mis-attributed or incompatible,
+please open an issue or contact the maintainers.

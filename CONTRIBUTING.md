@@ -193,6 +193,26 @@ node --test tests/cli.test.js  # single file
 - Test the behavior, not the implementation
 - For agents and commands (Markdown files), validation runs via `npm run validate`
 
+## License Audit
+
+Production dependencies must use OSI-approved, permissive licenses (no copyleft) so the project can stay under MIT. This is enforced in CI by the `license-audit` job, which runs:
+
+```bash
+npm run license-audit   # node scripts/check-licenses.js
+```
+
+The script shells out to `license-checker` and fails if any production dependency falls outside the allowlist. The allowlist lives as a documented constant (`ALLOWED_LICENSES`) in `scripts/check-licenses.js`. To allow a new license, add its SPDX id there **and** note it in `NOTICE`.
+
+## Releasing
+
+Releases are automated with [Changesets](https://github.com/changesets/changesets).
+
+1. **Add a changeset with your change.** Any PR with a user-facing change should run `npm run changeset`, pick the bump type, and commit the generated `.changeset/*.md` file.
+2. **Version PR.** On merge to `main`, the `Release` workflow (`.github/workflows/release.yml`) opens or updates a "Version Packages" PR that bumps versions and updates changelogs (`npm run version`).
+3. **Publish.** Merging the Version Packages PR triggers `npm run release`, which publishes to npm — **only if the `NPM_TOKEN` repository secret is set** (otherwise the publish step is skipped, not failed).
+
+See `.changeset/README.md` for the day-to-day workflow.
+
 ## Pull Request Process
 
 ### Branch Naming
@@ -218,6 +238,10 @@ refactor/extract-detection-logic
 - **Test coverage** — New functionality has tests
 - **No hardcoded secrets** — Environment variables for all sensitive values
 - **Agent quality** — Personality is distinct, metrics are quantifiable, memory integration is present
+
+## Security
+
+Found a vulnerability? **Do not open a public issue.** Report it privately following our [Security Policy](SECURITY.md) — via a [GitHub Security Advisory](https://github.com/JubaKitiashvili/everything-react-native-expo/security/advisories/new) or by emailing security@erne.dev. We follow a 90-day coordinated disclosure process and credit reporters in the resulting advisory.
 
 ## License
 

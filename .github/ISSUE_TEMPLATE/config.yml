@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & Ideas (GitHub Discussions)
+    url: https://github.com/JubaKitiashvili/everything-react-native-expo/discussions
+    about: Ask questions, share setups, and discuss ideas before filing an issue.
+  - name: 🔒 Report a Security Vulnerability
+    url: https://github.com/JubaKitiashvili/everything-react-native-expo/security/policy
+    about: Do NOT open a public issue for security problems. Use our private disclosure process.
