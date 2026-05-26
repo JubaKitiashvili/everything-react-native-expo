@@ -42,6 +42,8 @@ import {
   type CrashGroupStatus,
   type EventListFilter,
   type EventRecord,
+  type NotificationListFilter,
+  type NotificationRecord,
   type SessionRecord,
   type Severity,
   type SymbolFileListFilter,
@@ -658,6 +660,53 @@ export class PostgresStore implements IMonitorStoreAsync {
     return Number(result.rows[0]?.count ?? 0);
   }
 
+  // ------------------------------ Notifications (Task 117.19) ------------------------------
+
+  async insertNotification(record: NotificationRecord): Promise<{ inserted: boolean }> {
+    const result = await this.client.query(
+      `INSERT INTO notifications
+        (id, created_at, severity, title, body, rule_id, firing_id, read, metadata_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        record.id,
+        record.createdAt,
+        record.severity,
+        record.title,
+        record.body,
+        record.ruleId ?? null,
+        record.firingId ?? null,
+        record.read,
+        record.metadata ? JSON.stringify(record.metadata) : null,
+      ],
+    );
+    return { inserted: (result.rowCount ?? 0) > 0 };
+  }
+
+  async listNotifications(filter: NotificationListFilter = {}): Promise<NotificationRecord[]> {
+    const builder = new SqlBuilder('SELECT * FROM notifications');
+    if (filter.unreadOnly) builder.where('read = ?', false);
+    if (filter.since !== undefined) builder.where('created_at >= ?', filter.since);
+    builder.orderBy('created_at DESC');
+    builder.limit(filter.limit ?? 100);
+    const result = await this.client.query<NotificationRow>(builder.text(), builder.params());
+    return result.rows.map(rowToNotification);
+  }
+
+  async markNotificationRead(id: string): Promise<boolean> {
+    const result = await this.client.query('UPDATE notifications SET read = TRUE WHERE id = $1', [
+      id,
+    ]);
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async countUnreadNotifications(): Promise<number> {
+    const result = await this.client.query<{ count: number }>(
+      'SELECT COUNT(*)::int AS count FROM notifications WHERE read = FALSE',
+    );
+    return Number(result.rows[0]?.count ?? 0);
+  }
+
   // ------------------------------ Retention ------------------------------
 
   async purgeOlderThan(cutoff: number): Promise<{
@@ -676,6 +725,9 @@ export class PostgresStore implements IMonitorStoreAsync {
         .rowCount ?? 0;
       const aiActions = (await tx.query('DELETE FROM ai_actions WHERE timestamp < $1', [cutoff]))
         .rowCount ?? 0;
+      // Task 117.19 — in-app notifications decay with telemetry. Not
+      // surfaced in the return shape (kept stable for the interface).
+      await tx.query('DELETE FROM notifications WHERE created_at < $1', [cutoff]);
       const sessions = (
         await tx.query(
           `DELETE FROM sessions s
@@ -1026,6 +1078,35 @@ function rowToAlertFiring(row: AlertFiringRow): AlertFiringRecord {
   };
   if (row.payload_json !== null) {
     rec.payload = JSON.parse(row.payload_json) as Record<string, unknown>;
+  }
+  return rec;
+}
+
+interface NotificationRow extends Record<string, unknown> {
+  id: string;
+  created_at: string | number;
+  severity: string;
+  title: string;
+  body: string;
+  rule_id: string | null;
+  firing_id: string | null;
+  read: boolean;
+  metadata_json: string | null;
+}
+
+function rowToNotification(row: NotificationRow): NotificationRecord {
+  const rec: NotificationRecord = {
+    id: row.id,
+    createdAt: Number(row.created_at),
+    severity: row.severity as Severity,
+    title: row.title,
+    body: row.body,
+    read: Boolean(row.read),
+  };
+  if (row.rule_id !== null) rec.ruleId = row.rule_id;
+  if (row.firing_id !== null) rec.firingId = row.firing_id;
+  if (row.metadata_json !== null) {
+    rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
   }
   return rec;
 }

@@ -112,6 +112,43 @@ export interface AlertHistoryListFilter {
   limit?: number;
 }
 
+// ──────────────────────────────────────────────────────────────────
+// In-app notifications (Task 117.19)
+// ──────────────────────────────────────────────────────────────────
+//
+// The `in-app` alert channel persists one row per firing here. The
+// dashboard polls `GET /api/notifications` to render an inbox/bell and
+// marks rows read via `POST /api/notifications/:id/read`. Rows decay
+// with the rest of telemetry under the retention purge (`created_at`).
+
+export interface NotificationRecord {
+  /** Stable id (uuid). */
+  id: string;
+  /** ms timestamp the notification was created. */
+  createdAt: number;
+  /** Dashboard severity, mirrors the firing's severity. */
+  severity: Severity;
+  /** Short title — typically the rule name. */
+  title: string;
+  /** Human-readable body line (the firing summary). */
+  body: string;
+  /** Originating alert rule id, when the source was an alert firing. */
+  ruleId?: string;
+  /** Originating alert firing id, when the source was an alert firing. */
+  firingId?: string;
+  /** 0 = unread, 1 = read. */
+  read: boolean;
+  /** Free-form extras (test flag, metric snapshot). */
+  metadata?: Record<string, unknown>;
+}
+
+export interface NotificationListFilter {
+  /** When true, only return unread rows. */
+  unreadOnly?: boolean;
+  since?: number;
+  limit?: number;
+}
+
 export type SymbolPlatform = 'ios' | 'android';
 
 /**

@@ -20,9 +20,40 @@ export type {
   CrashGroupStatus,
   EventListFilter,
   EventRecord,
+  NotificationListFilter,
+  NotificationRecord,
   SessionRecord,
   Severity,
 } from './storage/types.js';
+export {
+  AlertDelivery,
+  LogMailer,
+} from './alerts/delivery.js';
+export type {
+  AlertDeliveryOptions,
+  FetchLike,
+  NotificationSink,
+} from './alerts/delivery.js';
+export { AlertEvaluator } from './alerts/evaluator.js';
+export type { AlertEvaluatorOptions, TestFireResult } from './alerts/evaluator.js';
+export {
+  defaultSummary,
+  opsgeniePriority,
+  pagerDutySeverity,
+  parseChannel,
+  severityForMetric,
+  OPSGENIE_ALERTS_URL,
+  PAGERDUTY_EVENTS_URL,
+} from './alerts/types.js';
+export type {
+  AlertChannelTransport,
+  AlertChannelType,
+  AlertDeliveryPayload,
+  AlertDeliveryResult,
+  AlertMetric,
+  Mailer,
+  ParsedAlertChannel,
+} from './alerts/types.js';
 export {
   listAiActions,
   parseListFilter as parseAiActionListFilter,

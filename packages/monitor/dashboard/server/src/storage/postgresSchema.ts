@@ -175,6 +175,27 @@ CREATE INDEX IF NOT EXISTS idx_ai_actions_outcome
   ON ai_actions (outcome, timestamp DESC);
 `;
 
+// Task 117.19 — in-app notification rows persisted by the `in-app`
+// alert channel. Mirrors the SQLite v5 migration.
+const V5_NOTIFICATIONS_SQL = `
+CREATE TABLE IF NOT EXISTS notifications (
+  id            TEXT     PRIMARY KEY,
+  created_at    BIGINT   NOT NULL,
+  severity      TEXT     NOT NULL,
+  title         TEXT     NOT NULL,
+  body          TEXT     NOT NULL,
+  rule_id       TEXT,
+  firing_id     TEXT,
+  read          BOOLEAN  NOT NULL DEFAULT FALSE,
+  metadata_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_created
+  ON notifications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_read
+  ON notifications (read, created_at DESC);
+`;
+
 const MIGRATION_BOOKKEEPING_SQL = `
 CREATE TABLE IF NOT EXISTS _migrations (
   version    INTEGER PRIMARY KEY,
@@ -189,6 +210,7 @@ export const POSTGRES_DEFAULT_MIGRATIONS: readonly PostgresMigration[] = Object.
   { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
   { version: 4, name: 'ai_actions', up: V4_AI_ACTIONS_SQL },
+  { version: 5, name: 'notifications', up: V5_NOTIFICATIONS_SQL },
 ]);
 
 export const POSTGRES_BOOKKEEPING_SQL = MIGRATION_BOOKKEEPING_SQL;
@@ -207,4 +229,5 @@ export const POSTGRES_RESET_TABLES = [
   'alert_history',
   'symbol_files',
   'ai_actions',
+  'notifications',
 ] as const;

@@ -9,6 +9,7 @@ import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js'
 import type {
   CrashGroupStatus,
   EventListFilter,
+  NotificationListFilter,
   SymbolFileRecord,
   SymbolPlatform,
   SymbolResolveInput,
@@ -487,6 +488,14 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       deliveryOptions.onError = (err, ctx) =>
         alertConfig.onError?.(err, { channel: ctx.channel, rule: ctx.rule });
     }
+    // Task 117.19 — back the `in-app` channel with the store unless the
+    // caller already injected a sink (tests do). Persists one row per
+    // firing that the dashboard reads via `GET /api/notifications`.
+    if (deliveryOptions.notificationSink === undefined) {
+      deliveryOptions.notificationSink = (notification) => {
+        store.insertNotification(notification);
+      };
+    }
     const delivery = new AlertDelivery(deliveryOptions);
     const evaluatorOptions: ConstructorParameters<typeof AlertEvaluator>[0] = {
       store,
@@ -943,6 +952,47 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           ...(limitParam ? { limit: Math.min(500, Number(limitParam)) } : {}),
         });
         sendJson(res, 200, { firings });
+        return;
+      }
+
+      // Task 117.19 — in-app notifications inbox. `GET /api/notifications`
+      // lists rows (newest-first, optional `?unread=1` + `?limit=`) plus an
+      // `unread` count for the bell badge.
+      if (req.method === 'GET' && pathname === '/api/notifications') {
+        const limitParam = requestUrl.searchParams.get('limit');
+        const unread = requestUrl.searchParams.get('unread');
+        const filter: NotificationListFilter = {
+          ...(unread === '1' || unread === 'true' ? { unreadOnly: true } : {}),
+          ...(limitParam ? { limit: Math.min(500, Math.max(1, Number(limitParam) || 100)) } : {}),
+        };
+        const notifications = store.listNotifications(filter);
+        sendJson(res, 200, {
+          notifications,
+          unread: store.countUnreadNotifications(),
+        });
+        return;
+      }
+
+      // Task 117.19 — mark one notification read. `:id` may contain a
+      // colon-y uuid; slice off the `/read` suffix to recover it.
+      if (
+        req.method === 'POST' &&
+        pathname.startsWith('/api/notifications/') &&
+        pathname.endsWith('/read')
+      ) {
+        const id = decodeURIComponent(
+          pathname.slice('/api/notifications/'.length, -'/read'.length),
+        );
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        const ok = store.markNotificationRead(id);
+        if (!ok) {
+          sendJson(res, 404, { error: 'not_found', id });
+          return;
+        }
+        sendJson(res, 200, { ok: true, unread: store.countUnreadNotifications() });
         return;
       }
 

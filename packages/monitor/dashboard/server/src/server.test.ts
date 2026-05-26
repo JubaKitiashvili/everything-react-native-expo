@@ -364,6 +364,96 @@ describe('alert evaluator wiring (Task 117.99)', () => {
   });
 });
 
+describe('in-app notifications endpoints (Task 117.19)', () => {
+  test('in-app channel persists a row; GET /api/notifications + mark read', async () => {
+    const store = new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store,
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    const created = await fetch(`${url}/api/alert-rules`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Crash spike',
+        metric: 'crash_count',
+        threshold: 1,
+        windowSeconds: 60,
+        channels: ['in-app'],
+        cooldownSeconds: 60,
+      }),
+    });
+    const ruleId = ((await created.json()) as { rule: { id: string } }).rule.id;
+
+    const fired = await fetch(`${url}/api/alert-rules/${ruleId}/test-fire`, { method: 'POST' });
+    const firedBody = (await fired.json()) as {
+      results: Array<{ ok: boolean; type: string }>;
+    };
+    expect(firedBody.results[0]?.ok).toBe(true);
+    expect(firedBody.results[0]?.type).toBe('in-app');
+
+    // Inbox lists the persisted row + unread count.
+    const inbox = await fetch(`${url}/api/notifications`);
+    expect(inbox.status).toBe(200);
+    const inboxBody = (await inbox.json()) as {
+      notifications: Array<{ id: string; title: string; read: boolean; ruleId?: string }>;
+      unread: number;
+    };
+    expect(inboxBody.notifications).toHaveLength(1);
+    expect(inboxBody.unread).toBe(1);
+    expect(inboxBody.notifications[0]?.title).toContain('[TEST]');
+    expect(inboxBody.notifications[0]?.ruleId).toBe(ruleId);
+    const notifId = inboxBody.notifications[0]!.id;
+
+    // unread filter shows it, then marking read clears it.
+    expect(
+      (
+        (await (await fetch(`${url}/api/notifications?unread=1`)).json()) as {
+          notifications: unknown[];
+        }
+      ).notifications,
+    ).toHaveLength(1);
+
+    const read = await fetch(`${url}/api/notifications/${notifId}/read`, { method: 'POST' });
+    expect(read.status).toBe(200);
+    expect(((await read.json()) as { unread: number }).unread).toBe(0);
+
+    const afterUnread = (await (
+      await fetch(`${url}/api/notifications?unread=1`)
+    ).json()) as { notifications: unknown[] };
+    expect(afterUnread.notifications).toHaveLength(0);
+
+    await handle.close();
+  });
+
+  test('POST /api/notifications/:id/read 404s an unknown id', async () => {
+    const handle = createDashboardServer({
+      host: '127.0.0.1',
+      port: 0,
+      store: new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true }),
+      enableWebsocket: false,
+      publicDir: '/tmp/erne-monitor-nonexistent',
+    });
+    await new Promise<void>((resolve) => handle.server.listen(0, '127.0.0.1', () => resolve()));
+    const address = handle.server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+    const url = `http://127.0.0.1:${port}`;
+
+    const res = await fetch(`${url}/api/notifications/does-not-exist/read`, { method: 'POST' });
+    expect(res.status).toBe(404);
+
+    await handle.close();
+  });
+});
+
 describe('server bug report endpoints', () => {
   let ctx: Awaited<ReturnType<typeof openServer>>;
 
@@ -461,7 +551,8 @@ describe('operational probes (Task 117.67 + 117.100)', () => {
       migrationsApplied: number;
     };
     expect(body.ready).toBe(true);
-    expect(body.migrationsApplied).toBe(4);
+    // Task 117.19 bumped the default migration list to 5 (notifications).
+    expect(body.migrationsApplied).toBe(5);
     expect(body.reason).toBeUndefined();
   });
 

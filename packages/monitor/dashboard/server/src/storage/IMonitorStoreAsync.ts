@@ -33,6 +33,8 @@ import type {
   CrashGroupStatus,
   EventListFilter,
   EventRecord,
+  NotificationListFilter,
+  NotificationRecord,
   SessionRecord,
   SymbolFileListFilter,
   SymbolFileRecord,
@@ -112,6 +114,12 @@ export interface IMonitorStoreAsync {
   insertAiAction(record: AiActionRecord): Promise<{ inserted: boolean }>;
   listAiActions(filter?: AiActionListFilter): Promise<AiActionRecord[]>;
   countAiActions(filter?: AiActionListFilter): Promise<number>;
+
+  // ------------------------------ Notifications (Task 117.19) ------------------------------
+  insertNotification(record: NotificationRecord): Promise<{ inserted: boolean }>;
+  listNotifications(filter?: NotificationListFilter): Promise<NotificationRecord[]>;
+  markNotificationRead(id: string): Promise<boolean>;
+  countUnreadNotifications(): Promise<number>;
 
   // ------------------------------ Retention ------------------------------
   purgeOlderThan(cutoff: number): Promise<{

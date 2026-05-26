@@ -33,6 +33,8 @@ import type {
   CrashGroupStatus,
   EventListFilter,
   EventRecord,
+  NotificationListFilter,
+  NotificationRecord,
   SessionRecord,
   SymbolFileListFilter,
   SymbolFileRecord,
@@ -155,6 +157,20 @@ export interface IMonitorStore {
   listAiActions(filter?: AiActionListFilter): AiActionRecord[];
   /** Count rows matching the same filter — used by paginated views. */
   countAiActions(filter?: AiActionListFilter): number;
+
+  // ------------------------------ Notifications (Task 117.19) --------
+  /**
+   * Persist one in-app notification row (written by the `in-app` alert
+   * channel). Idempotent on `id` — a retried delivery with the same id
+   * is a silent no-op, so a re-fire can't duplicate the inbox entry.
+   */
+  insertNotification(record: NotificationRecord): { inserted: boolean };
+  /** List notifications newest-first, optionally unread-only. */
+  listNotifications(filter?: NotificationListFilter): NotificationRecord[];
+  /** Mark one notification read. Returns true if a row matched. */
+  markNotificationRead(id: string): boolean;
+  /** Count unread rows — used by the dashboard's notification badge. */
+  countUnreadNotifications(): number;
 
   // ------------------------------ Retention ------------------------------
   /**

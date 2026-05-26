@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DashboardStore, DEFAULT_MIGRATIONS, defaultDashboardDbPath } from './sqliteStore.js';
-import type { EventRecord, SessionRecord } from './types.js';
+import type { EventRecord, NotificationRecord, SessionRecord } from './types.js';
 
 function openInMemory(): DashboardStore {
   return new DashboardStore({ dbPath: ':memory:', skipProductionPragmas: true });
@@ -681,5 +681,79 @@ describe('DashboardStore — AI action audit (Task 117.81)', () => {
     const result = store.purgeOlderThan(NOW - 50_000);
     expect(result.aiActions).toBe(1);
     expect(store.listAiActions().map((r) => r.id)).toEqual(['new']);
+  });
+});
+
+describe('DashboardStore — notifications (Task 117.19)', () => {
+  let store: DashboardStore;
+  afterEach(() => store?.close());
+
+  function makeNotification(partial: Partial<NotificationRecord> = {}): NotificationRecord {
+    return {
+      id: partial.id ?? `notif-${Math.random().toString(36).slice(2)}`,
+      createdAt: partial.createdAt ?? NOW,
+      severity: partial.severity ?? 'critical',
+      title: partial.title ?? 'Crash spike',
+      body: partial.body ?? 'Crash spike: crash_count = 7 >= 5 in 300s',
+      read: partial.read ?? false,
+      ...partial,
+    };
+  }
+
+  test('creates the notifications table and bumps the migration count', () => {
+    store = openInMemory();
+    expect(store.selfCheck().tables).toContain('notifications');
+    expect(store.listAppliedMigrations()).toHaveLength(DEFAULT_MIGRATIONS.length);
+    // Sanity: v5 is the notifications migration.
+    expect(DEFAULT_MIGRATIONS.at(-1)?.name).toBe('notifications');
+  });
+
+  test('insert + list newest-first, round-tripping optional fields', () => {
+    store = openInMemory();
+    store.insertNotification(
+      makeNotification({ id: 'n1', createdAt: NOW - 2000, ruleId: 'r1', firingId: 'f1', metadata: { test: true } }),
+    );
+    store.insertNotification(makeNotification({ id: 'n2', createdAt: NOW - 1000 }));
+    const list = store.listNotifications();
+    expect(list.map((n) => n.id)).toEqual(['n2', 'n1']);
+    const n1 = list.find((n) => n.id === 'n1');
+    expect(n1?.ruleId).toBe('r1');
+    expect(n1?.firingId).toBe('f1');
+    expect(n1?.metadata).toEqual({ test: true });
+    expect(n1?.read).toBe(false);
+  });
+
+  test('insert is idempotent on id', () => {
+    store = openInMemory();
+    expect(store.insertNotification(makeNotification({ id: 'dup' })).inserted).toBe(true);
+    expect(store.insertNotification(makeNotification({ id: 'dup' })).inserted).toBe(false);
+    expect(store.listNotifications()).toHaveLength(1);
+  });
+
+  test('unreadOnly filter + markNotificationRead + countUnread', () => {
+    store = openInMemory();
+    store.insertNotification(makeNotification({ id: 'a' }));
+    store.insertNotification(makeNotification({ id: 'b' }));
+    expect(store.countUnreadNotifications()).toBe(2);
+    expect(store.markNotificationRead('a')).toBe(true);
+    expect(store.markNotificationRead('missing')).toBe(false);
+    expect(store.countUnreadNotifications()).toBe(1);
+    expect(store.listNotifications({ unreadOnly: true }).map((n) => n.id)).toEqual(['b']);
+  });
+
+  test('limit caps the result set', () => {
+    store = openInMemory();
+    for (let i = 0; i < 5; i++) {
+      store.insertNotification(makeNotification({ id: `n${i}`, createdAt: NOW - i }));
+    }
+    expect(store.listNotifications({ limit: 2 })).toHaveLength(2);
+  });
+
+  test('notifications decay with the retention purge', () => {
+    store = openInMemory();
+    store.insertNotification(makeNotification({ id: 'old', createdAt: NOW - 100_000 }));
+    store.insertNotification(makeNotification({ id: 'fresh', createdAt: NOW - 1000 }));
+    store.purgeOlderThan(NOW - 50_000);
+    expect(store.listNotifications().map((n) => n.id)).toEqual(['fresh']);
   });
 });

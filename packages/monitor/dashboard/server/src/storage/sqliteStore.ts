@@ -21,6 +21,8 @@ import {
   type CrashGroupStatus,
   type EventListFilter,
   type EventRecord,
+  type NotificationListFilter,
+  type NotificationRecord,
   type SessionRecord,
   type Severity,
   type SymbolFileListFilter,
@@ -114,11 +116,33 @@ CREATE INDEX IF NOT EXISTS idx_ai_actions_outcome
   ON ai_actions (outcome, timestamp DESC);
 `;
 
+// Task 117.19 — in-app notification rows persisted by the `in-app`
+// alert channel. The dashboard polls these for its notification inbox.
+const V5_NOTIFICATIONS_SQL = `
+CREATE TABLE IF NOT EXISTS notifications (
+  id            TEXT    PRIMARY KEY,
+  created_at    INTEGER NOT NULL,
+  severity      TEXT    NOT NULL,
+  title         TEXT    NOT NULL,
+  body          TEXT    NOT NULL,
+  rule_id       TEXT,
+  firing_id     TEXT,
+  read          INTEGER NOT NULL DEFAULT 0,
+  metadata_json TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_created
+  ON notifications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_read
+  ON notifications (read, created_at DESC);
+`;
+
 export const DEFAULT_MIGRATIONS: readonly Migration[] = Object.freeze([
   { version: 1, name: 'initial', up: SCHEMA_SQL },
   { version: 2, name: 'symbol_files', up: V2_SYMBOL_FILES_SQL },
   { version: 3, name: 'server_settings', up: V3_SERVER_SETTINGS_SQL },
   { version: 4, name: 'ai_actions', up: V4_AI_ACTIONS_SQL },
+  { version: 5, name: 'notifications', up: V5_NOTIFICATIONS_SQL },
 ]);
 
 const RESET_TABLES = [
@@ -130,6 +154,7 @@ const RESET_TABLES = [
   'alert_history',
   'symbol_files',
   'ai_actions',
+  'notifications',
 ] as const;
 
 const RESET_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(RESET_TABLES);
@@ -148,6 +173,7 @@ const BACKUP_TABLES = [
   'alert_history',
   'symbol_files',
   'ai_actions',
+  'notifications',
   'server_settings',
 ] as const;
 
@@ -212,6 +238,8 @@ interface PreparedStatements {
   deleteSymbolFile: Statement;
   getSymbolFileById: Statement;
   insertAiAction: Statement;
+  insertNotification: Statement;
+  markNotificationRead: Statement;
 }
 
 /**
@@ -391,6 +419,16 @@ export class DashboardStore implements IMonitorStore {
                  @toolsCalledJson, @filesConsideredJson,
                  @confidence, @effectiveConfidence, @classification,
                  @outcome, @prUrl, @redactionLabelsJson, @metadataJson)`,
+      ),
+      // Task 117.19 — `INSERT OR IGNORE` so a retried in-app delivery
+      // with the same notification id is a silent no-op.
+      insertNotification: this.db.prepare(
+        `INSERT OR IGNORE INTO notifications
+         (id, created_at, severity, title, body, rule_id, firing_id, read, metadata_json)
+         VALUES (@id, @createdAt, @severity, @title, @body, @ruleId, @firingId, @read, @metadataJson)`,
+      ),
+      markNotificationRead: this.db.prepare(
+        'UPDATE notifications SET read = 1 WHERE id = ?',
       ),
     };
   }
@@ -991,6 +1029,56 @@ export class DashboardStore implements IMonitorStore {
     return row.c;
   }
 
+  // ------------------------------ Notifications (Task 117.19) ------
+
+  insertNotification(record: NotificationRecord): { inserted: boolean } {
+    const result = this.statements.insertNotification.run({
+      id: record.id,
+      createdAt: record.createdAt,
+      severity: record.severity,
+      title: record.title,
+      body: record.body,
+      ruleId: record.ruleId ?? null,
+      firingId: record.firingId ?? null,
+      read: record.read ? 1 : 0,
+      metadataJson: record.metadata ? JSON.stringify(record.metadata) : null,
+    });
+    return { inserted: Number(result.changes) > 0 };
+  }
+
+  listNotifications(filter: NotificationListFilter = {}): NotificationRecord[] {
+    const clauses: string[] = [];
+    const params: Record<string, unknown> = {};
+    if (filter.unreadOnly) {
+      clauses.push('read = 0');
+    }
+    if (filter.since !== undefined) {
+      clauses.push('created_at >= @since');
+      params.since = filter.since;
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const limit = filter.limit ?? 100;
+    params.limit = limit;
+    const rows = this.db
+      .prepare(`SELECT * FROM notifications ${where} ORDER BY created_at DESC LIMIT @limit`)
+      .all(params) as NotificationRow[];
+    return rows.map(rowToNotification);
+  }
+
+  /** Mark one notification read. Returns true if a row matched. */
+  markNotificationRead(id: string): boolean {
+    const info = this.statements.markNotificationRead.run(id);
+    return Number(info.changes) > 0;
+  }
+
+  /** Count unread notifications — used by the dashboard's bell badge. */
+  countUnreadNotifications(): number {
+    const row = this.db
+      .prepare('SELECT COUNT(*) AS c FROM notifications WHERE read = 0')
+      .get() as { c: number };
+    return row.c;
+  }
+
   /**
    * Task 117.71 — retention purge. Runs in one transaction so a crash
    * mid-run leaves the DB consistent. Order matters: events must be
@@ -1024,6 +1112,10 @@ export class DashboardStore implements IMonitorStore {
       const aiActionsInfo = this.db
         .prepare('DELETE FROM ai_actions WHERE timestamp < ?')
         .run(at);
+      // Task 117.19 — in-app notifications decay with telemetry too.
+      // Not surfaced in the return shape (kept stable for the IMonitorStore
+      // contract); the dashboard inbox is ephemeral by design.
+      this.db.prepare('DELETE FROM notifications WHERE created_at < ?').run(at);
       // Only drop sessions whose events are all gone AND are themselves
       // older than the cutoff. NOT IN (...) over the post-purge events
       // table is fine here — the table has an index on session_id.
@@ -1370,6 +1462,35 @@ function rowToAlertFiring(row: AlertFiringRow): AlertFiringRecord {
   };
   if (row.payload_json !== null) {
     rec.payload = JSON.parse(row.payload_json) as Record<string, unknown>;
+  }
+  return rec;
+}
+
+interface NotificationRow {
+  id: string;
+  created_at: number;
+  severity: string;
+  title: string;
+  body: string;
+  rule_id: string | null;
+  firing_id: string | null;
+  read: number;
+  metadata_json: string | null;
+}
+
+function rowToNotification(row: NotificationRow): NotificationRecord {
+  const rec: NotificationRecord = {
+    id: row.id,
+    createdAt: row.created_at,
+    severity: row.severity as Severity,
+    title: row.title,
+    body: row.body,
+    read: row.read === 1,
+  };
+  if (row.rule_id !== null) rec.ruleId = row.rule_id;
+  if (row.firing_id !== null) rec.firingId = row.firing_id;
+  if (row.metadata_json !== null) {
+    rec.metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
   }
   return rec;
 }
