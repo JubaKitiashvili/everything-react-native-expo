@@ -73,6 +73,30 @@ export type {
   RetentionPurgeResult,
   RetentionPurgeLogEntry,
 } from './jobs/retention.js';
+export {
+  backupStore,
+  restoreStore,
+  parseBackupFile,
+  runBackupCli,
+  BACKUP_FORMAT_VERSION,
+} from './backup/backup.js';
+export type {
+  BackupFile,
+  BackupResult,
+  RestoreMode,
+  RestoreResult,
+  BackupCliResult,
+} from './backup/backup.js';
+export {
+  extractCommonFrames,
+  crashGroupCommonFrames,
+  framesFromPayload,
+  splitStackString,
+} from './analysis/commonFrames.js';
+export type {
+  CommonFramesResult,
+  CrashGroupCommonFrames,
+} from './analysis/commonFrames.js';
 export { InMemoryQueue } from './queue/in-memory-adapter.js';
 export type { InMemoryQueueOptions } from './queue/in-memory-adapter.js';
 export {

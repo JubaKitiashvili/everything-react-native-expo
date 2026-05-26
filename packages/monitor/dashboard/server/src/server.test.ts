@@ -790,3 +790,82 @@ describe('crash-group status mutation (Task 117.82 follow-up)', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('GET /api/crash-groups/:fingerprint/common-frames (Task 117.83)', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+  });
+
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('returns the common prefix and intersection of event stacks', async () => {
+    const base = { type: 'crash', severity: 'critical' as const, sessionId: 's1' };
+    ctx.store.insertEvent({
+      ...base,
+      id: 'cf1',
+      fingerprint: 'fp-common',
+      timestamp: 1,
+      receivedAt: 1,
+      payload: { stack: 'TypeError\n    at A (A.tsx:1)\n    at B (B.tsx:2)' },
+    });
+    ctx.store.insertEvent({
+      ...base,
+      id: 'cf2',
+      fingerprint: 'fp-common',
+      timestamp: 2,
+      receivedAt: 2,
+      payload: { stack: 'TypeError\n    at A (A.tsx:1)\n    at C (C.tsx:9)' },
+    });
+
+    const res = await fetch(`${ctx.url}/api/crash-groups/fp-common/common-frames`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      fingerprint: string;
+      stackCount: number;
+      commonPrefix: string[];
+      commonFrames: string[];
+    };
+    expect(body.fingerprint).toBe('fp-common');
+    expect(body.stackCount).toBe(2);
+    expect(body.commonPrefix).toEqual(['TypeError', 'at A (A.tsx:1)']);
+    expect(body.commonFrames).toEqual(['TypeError', 'at A (A.tsx:1)']);
+  });
+
+  test('unknown fingerprint returns an empty result (200)', async () => {
+    const res = await fetch(`${ctx.url}/api/crash-groups/unknown-fp/common-frames`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { stackCount: number; commonPrefix: string[] };
+    expect(body.stackCount).toBe(0);
+    expect(body.commonPrefix).toEqual([]);
+  });
+
+  test('honours the limit query param', async () => {
+    const base = { type: 'crash', severity: 'critical' as const, sessionId: 's1' };
+    ctx.store.insertEvent({
+      ...base,
+      id: 'lim1',
+      fingerprint: 'fp-lim',
+      timestamp: 1,
+      receivedAt: 1,
+      payload: { stack: 'a\nb' },
+    });
+    ctx.store.insertEvent({
+      ...base,
+      id: 'lim2',
+      fingerprint: 'fp-lim',
+      timestamp: 2,
+      receivedAt: 2,
+      payload: { stack: 'a\nDIFFERENT' },
+    });
+
+    // limit=1 → only the newest event (timestamp 2), single-stack analysis.
+    const res = await fetch(`${ctx.url}/api/crash-groups/fp-lim/common-frames?limit=1`);
+    const body = (await res.json()) as { stackCount: number; commonPrefix: string[] };
+    expect(body.stackCount).toBe(1);
+    expect(body.commonPrefix).toEqual(['a', 'DIFFERENT']);
+  });
+});

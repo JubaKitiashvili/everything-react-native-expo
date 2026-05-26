@@ -184,6 +184,34 @@ export interface IMonitorStore {
     aiActions: number;
   };
 
+  // ------------------------------ Backup / restore (Task 117.70) ------
+  /**
+   * Dump every user-data table as raw rows keyed by table name. The rows
+   * are the adapter's native column shape (snake_case for SQLite) so a
+   * round-trip through `importTable` is lossless. Used by `backupStore`
+   * (src/backup/backup.ts) to serialise the whole DB to a versioned JSON
+   * file. Tables covered: events, sessions, crash_groups, bug_reports,
+   * alert_rules, alert_history, symbol_files, ai_actions, server_settings.
+   *
+   * Migration bookkeeping (`_migrations`) is intentionally excluded — a
+   * restore target applies its own migration list on open.
+   */
+  exportAllTables(): Record<string, Array<Record<string, unknown>>>;
+
+  /**
+   * Insert raw rows back into a named table. `mode: 'replace'` uses an
+   * upsert (INSERT OR REPLACE) so an existing row is overwritten;
+   * `mode: 'merge'` (default) uses INSERT OR IGNORE so existing rows are
+   * preserved and only new ids are added — making a re-run idempotent.
+   * Returns the number of rows actually written. Guards the table name
+   * against an allowlist before interpolating it into SQL.
+   */
+  importTable(
+    table: string,
+    rows: Array<Record<string, unknown>>,
+    mode?: 'merge' | 'replace',
+  ): number;
+
   // ------------------------------ Admin ------------------------------
   /**
    * Nuke every user-data table. Preserves migration bookkeeping and

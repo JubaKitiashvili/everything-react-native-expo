@@ -30,6 +30,7 @@ import {
   resolveCsp,
 } from './security/headers.js';
 import { PrometheusRegistry, PROMETHEUS_CONTENT_TYPE } from './metrics/prometheus.js';
+import { crashGroupCommonFrames } from './analysis/commonFrames.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -705,6 +706,33 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
             const message = err instanceof Error ? err.message : String(err);
             sendJson(res, 400, { error: 'invalid_json', message });
           });
+        return;
+      }
+
+      // Task 117.83 — common frame extraction for a crash group. Returns
+      // the shared leading call-site prefix + the set of frames present in
+      // every recent event stack. Path:
+      //   GET /api/crash-groups/:fingerprint/common-frames
+      if (
+        req.method === 'GET' &&
+        pathname.startsWith('/api/crash-groups/') &&
+        pathname.endsWith('/common-frames')
+      ) {
+        const fingerprint = decodeURIComponent(
+          pathname.slice('/api/crash-groups/'.length, -'/common-frames'.length),
+        );
+        if (!fingerprint) {
+          sendJson(res, 400, { error: 'missing_fingerprint' });
+          return;
+        }
+        const limitParam = requestUrl.searchParams.get('limit');
+        const limit =
+          limitParam !== null ? Math.min(1000, Math.max(1, Number(limitParam))) : undefined;
+        const result =
+          limit !== undefined
+            ? crashGroupCommonFrames(store, fingerprint, limit)
+            : crashGroupCommonFrames(store, fingerprint);
+        sendJson(res, 200, result);
         return;
       }
 

@@ -134,6 +134,25 @@ const RESET_TABLES = [
 
 const RESET_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(RESET_TABLES);
 
+/**
+ * Task 117.70 — tables serialised by the backup/restore tooling. Same set
+ * as `RESET_TABLES` plus `server_settings` (config that an operator wants
+ * carried across a restore — retention window, ws auth token, ...).
+ */
+const BACKUP_TABLES = [
+  'events',
+  'sessions',
+  'crash_groups',
+  'bug_reports',
+  'alert_rules',
+  'alert_history',
+  'symbol_files',
+  'ai_actions',
+  'server_settings',
+] as const;
+
+const BACKUP_TABLES_ALLOWED: ReadonlySet<string> = new Set<string>(BACKUP_TABLES);
+
 export function defaultDashboardDbPath(): string {
   return join(homedir(), '.erne', 'monitor', 'dashboard.db');
 }
@@ -1024,6 +1043,79 @@ export class DashboardStore implements IMonitorStore {
       };
     });
     return run(cutoff);
+  }
+
+  /**
+   * Task 117.70 — dump every backup table as raw rows. Returned rows are
+   * the native SQLite column shape (snake_case). `_migrations` is excluded:
+   * the restore target applies its own migration list on open.
+   */
+  exportAllTables(): Record<string, Array<Record<string, unknown>>> {
+    const out: Record<string, Array<Record<string, unknown>>> = {};
+    for (const table of BACKUP_TABLES) {
+      if (!BACKUP_TABLES_ALLOWED.has(table)) {
+        throw new Error(`[dashboard-store] exportAllTables: unknown table ${table}`);
+      }
+      out[table] = this.db.prepare(`SELECT * FROM ${table}`).all() as Array<
+        Record<string, unknown>
+      >;
+    }
+    return out;
+  }
+
+  /**
+   * Task 117.70 — insert raw rows into a named table. `replace` overwrites
+   * existing rows by primary key; `merge` (default) only adds rows whose id
+   * is new, so a re-run is idempotent. Returns rows actually written.
+   *
+   * The column list is read from the live row objects, intersected with the
+   * table's real columns (so an old backup with a dropped column still
+   * restores, and a forged extra key can't inject SQL). The table name is
+   * guarded against the backup allowlist before interpolation.
+   */
+  importTable(
+    table: string,
+    rows: Array<Record<string, unknown>>,
+    mode: 'merge' | 'replace' = 'merge',
+  ): number {
+    if (!BACKUP_TABLES_ALLOWED.has(table)) {
+      throw new Error(`[dashboard-store] importTable: unknown table ${table}`);
+    }
+    if (rows.length === 0) return 0;
+    const validColumns = new Set<string>(
+      (this.db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map(
+        (r) => r.name,
+      ),
+    );
+    const verb = mode === 'replace' ? 'INSERT OR REPLACE' : 'INSERT OR IGNORE';
+    let written = 0;
+    const run = this.db.transaction((batch: Array<Record<string, unknown>>) => {
+      for (const row of batch) {
+        const columns = Object.keys(row).filter((c) => validColumns.has(c));
+        if (columns.length === 0) continue;
+        const placeholders = columns.map((c) => `@${c}`).join(', ');
+        const params: Record<string, unknown> = {};
+        for (const c of columns) {
+          const value = row[c];
+          // better-sqlite3 only binds primitives + null — coerce any
+          // nested object/array (shouldn't happen for native rows) to JSON.
+          params[c] =
+            value === null || value === undefined
+              ? null
+              : typeof value === 'object'
+                ? JSON.stringify(value)
+                : value;
+        }
+        const info = this.db
+          .prepare(
+            `${verb} INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
+          )
+          .run(params);
+        written += Number(info.changes);
+      }
+    });
+    run(rows);
+    return written;
   }
 
   /**
