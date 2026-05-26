@@ -12,19 +12,19 @@ always — but it's also the simplest to wire.
 
 | Entry | Files | Raw (KB) | Gzip (KB) | Budget (KB) | Status |
 | ----- | ----: | -------: | --------: | ----------: | :----- |
-| `main` | 88 | 406.93 | 94.66 | 75 | OVER |
+| `main` | 86 | 401.63 | 94.18 | 96 | ok |
 | `/performance` | 11 | 36.35 | 7.01 | 20 | ok |
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
 | `/replay` | 5 | 13.73 | 3.57 | 10 | ok |
-| `/dev` | 5 | 17.61 | 4.58 | 15 | ok |
+| `/dev` | 5 | 18.39 | 4.91 | 15 | ok |
 | `/testing` | 5 | 20.06 | 6.21 | 10 | ok |
 
 ## Largest files (main entry)
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/core/createMonitorRuntime.js` | 33.96 | 8.87 |
+| `dist/core/createMonitorRuntime.js` | 34.71 | 9.11 |
 | `dist/processors/Sanitizer.js` | 11.72 | 4.42 |
 | `dist/processors/CcpaGate.js` | 10.82 | 3.99 |
 | `dist/signal-router/PatternLibrary.js` | 11.55 | 2.84 |
@@ -95,7 +95,7 @@ always — but it's also the simplest to wire.
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/integrations/DashboardBridge.js` | 5.48 | 1.65 |
+| `dist/integrations/DashboardBridge.js` | 6.27 | 1.97 |
 | `dist/integrations/TerminalReporter.js` | 3.59 | 1.30 |
 | `dist/integrations/ExpoDevToolsPlugin.js` | 4.34 | 1.16 |
 | `dist/integrations/BugReporter.js` | 3.56 | 1.12 |

@@ -418,14 +418,18 @@ export { mapEventToMetrics } from './transport/otel/MetricMapper';
 export type { OTelMetric, OTelMetricDataPoint } from './transport/otel/MetricMapper';
 export { mapEventToLogRecord } from './transport/otel/LogMapper';
 export type { OTelLogRecord } from './transport/otel/LogMapper';
-// Phase 2b — Integrations
-export { ExpoDevToolsPlugin } from './integrations/ExpoDevToolsPlugin';
+// Phase 2b — Integrations.
+// NOTE: the ExpoDevToolsPlugin + BugReporter *values* are dev-only and are
+// exported from the `@erne/monitor/dev` subpath, NOT here — re-exporting them
+// from the main entry pulled ~2.3KB gzip of dev code into every production
+// bundle (the `/dev` barrel explicitly states it must never ship to prod).
+// Types stay re-exported here (erased at build, zero bundle cost) so callers
+// can still name them. Import the values from `@erne/monitor/dev`.
 export type {
   DevToolsPluginClient,
   DevToolsPluginClientFactory,
   ExpoDevToolsPluginDeps,
 } from './integrations/ExpoDevToolsPlugin';
-export { BugReporter } from './integrations/BugReporter';
 export type {
   BugReport,
   BugReportTrigger,

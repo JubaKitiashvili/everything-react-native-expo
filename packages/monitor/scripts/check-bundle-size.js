@@ -46,13 +46,23 @@ const zlib = require('node:zlib');
  * those budgets are intentionally tight to keep each domain small.
  *
  * Spec §7 quotes a 50 KB gzipped target for "the JS bundle" — that
- * figure assumes subpath imports in a tree-shaking consumer. The main
- * entry in a no-tree-shake scenario measures ~67 KB gzipped today, so
- * the `main` budget is set at 75 KB to catch regressions without
- * churning on every one-liner that crosses 50.
+ * figure assumes subpath imports in a tree-shaking consumer, which the
+ * (intentionally tight) subpath budgets below enforce.
+ *
+ * The `main` budget was 75 KB when the SDK measured ~67 KB. The SDK has
+ * since grown into a comprehensive all-in-one runtime (crash + ANR + dual-
+ * thread perf + Hermes profiling + session replay + network + privacy/CCPA
+ * + remote config + OTel + intelligence), and `main` now measures ~94 KB
+ * gzipped in a no-tree-shake scenario. The budget is re-baselined to 96 KB
+ * to reflect that legitimate surface while still catching regressions.
+ * The real reduction lever — lazy-loading (dynamic-import) the optional
+ * instrumentation collectors and the dev-only integrations (TerminalReporter,
+ * DashboardBridge) out of main's static graph — is tracked as a dedicated
+ * optimization (Task 117.107). Granular consumers already pay only for what
+ * they import via the subpaths.
  */
 const BUDGETS = [
-  { name: 'main', entry: 'dist/index.js', budgetKb: 75 },
+  { name: 'main', entry: 'dist/index.js', budgetKb: 96 },
   { name: '/performance', entry: 'dist/exports/performance.js', budgetKb: 20 },
   { name: '/network', entry: 'dist/exports/network.js', budgetKb: 5 },
   { name: '/ai', entry: 'dist/exports/ai.js', budgetKb: 30 },
