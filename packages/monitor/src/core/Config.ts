@@ -223,6 +223,12 @@ export function defineMonitorConfig(
   if (typeof merged.consent.replay !== 'boolean') {
     throw new Error('[monitor] config.consent.replay must be a boolean');
   }
+  if (
+    merged.consent.doNotSell !== undefined &&
+    typeof merged.consent.doNotSell !== 'boolean'
+  ) {
+    throw new Error('[monitor] config.consent.doNotSell must be a boolean');
+  }
 
   if (typeof merged.ai.crashExplainer !== 'boolean') {
     throw new Error('[monitor] config.ai.crashExplainer must be a boolean');

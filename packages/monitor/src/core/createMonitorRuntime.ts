@@ -35,6 +35,11 @@ import {
   type ConsentStore,
 } from '../processors/ConsentGate';
 import {
+  CcpaGate,
+  type CcpaDisclosure,
+  type CcpaStore,
+} from '../processors/CcpaGate';
+import {
   CrashCollector,
   type ErrorUtilsLike,
   type RejectionTrackerLike,
@@ -135,6 +140,15 @@ export interface MonitorRuntimeDeps {
   consentStore?: ConsentStore;
   /** Initial consent state; defaults to config.consent. */
   initialConsent?: ConsentState;
+  /**
+   * Task 117.56 — optional persistent store for the CCPA Do-Not-Sell signal.
+   */
+  ccpaStore?: CcpaStore;
+  /**
+   * Task 117.56 — initial Do-Not-Sell value. Overrides `config.consent.doNotSell`
+   * when provided; otherwise defaults to that config field (false when unset).
+   */
+  initialDoNotSell?: boolean;
   /** Dashboard runtime endpoint. When set, enables DashboardBridge. */
   dashboardUrl?: string;
   /** Injectable WebSocket constructor for tests. */
@@ -188,6 +202,7 @@ export interface MonitorRuntime {
   sampler: AdaptiveSampler;
   burstThrottle: BurstThrottle;
   consentGate: ConsentGate;
+  ccpaGate: CcpaGate;
   collectors: {
     crash: CrashCollector;
     network: NetworkCollector;
@@ -238,6 +253,24 @@ export interface MonitorRuntime {
   setUserProperties: (props: Record<string, DimensionValue>) => number;
   leaveBreadcrumb: (crumb: Omit<Breadcrumb, 'timestamp'>) => void;
   setConsent: (partial: Partial<ConsentState>) => Promise<void>;
+  /**
+   * Task 117.56 — set the California CCPA/CPRA "Do Not Sell My Personal
+   * Information" signal. When true, every outbound event has its
+   * cross-context identifiers (user id, device model/locale) and
+   * profiling/tracking data (custom dimensions, custom event attributes)
+   * stripped before it reaches the store / transport. Persisted via the
+   * optional `ccpaStore`. Operational telemetry (crashes, performance,
+   * network timings) continues to flow.
+   */
+  setDoNotSell: (value: boolean) => Promise<void>;
+  /** Task 117.56 — read the current Do-Not-Sell signal. */
+  getDoNotSell: () => boolean;
+  /**
+   * Task 117.56 — structured CA-specific disclosure (data categories,
+   * purposes, "we do not sell" statement) for the host app to surface in
+   * its privacy UI. Reflects the current Do-Not-Sell state.
+   */
+  getCcpaDisclosure: () => CcpaDisclosure;
   /**
    * Attaches an opaque user identifier to every subsequently-enriched
    * event. Pass `null` on logout to detach. Enables GDPR DSAR export /
@@ -392,6 +425,16 @@ export async function createMonitorRuntime(
   });
   await consentGate.hydrate();
 
+  // Task 117.56 — CCPA "Do Not Sell" signal. Initialized from the explicit
+  // dep, then config.consent.doNotSell (default-on opt-in), then false.
+  // Hydrated from the optional store so a previously-set opt-out survives
+  // relaunch.
+  const ccpaGate = new CcpaGate({
+    doNotSell: deps.initialDoNotSell ?? config.consent.doNotSell ?? false,
+    store: deps.ccpaStore,
+  });
+  await ccpaGate.hydrate();
+
   // Current screen tracker — declared early so collectors that want to
   // attach screen context (FrameDropCollector, ANRGateway, future
   // BugReporter) can read it via a lazy getter. It's updated by the
@@ -458,7 +501,12 @@ export async function createMonitorRuntime(
     const fingerprinted =
       event.type === 'crash' ? fingerprinter.annotate(event) : event;
     const sanitized = sanitizer.sanitize(fingerprinted);
-    const enriched: EnrichedEvent = enricher.enrich(sanitized);
+    const enrichedRaw: EnrichedEvent = enricher.enrich(sanitized);
+    // Task 117.56 — CCPA Do-Not-Sell gate. Runs on the ENRICHED event so it
+    // can strip the identifiers that the Enricher attaches in the context
+    // envelope (userId, device model/locale) plus profiling dimensions and
+    // custom-event attributes. No-op when the signal is off.
+    const enriched: EnrichedEvent = ccpaGate.process(enrichedRaw);
     stats.lastEvent = enriched;
     void store
       .insert(enriched, event.type === 'crash' ? 'critical' : 'normal')
@@ -786,6 +834,7 @@ export async function createMonitorRuntime(
     sampler,
     burstThrottle,
     consentGate,
+    ccpaGate,
     collectors: {
       crash,
       network,
@@ -828,6 +877,9 @@ export async function createMonitorRuntime(
     setUserProperties: (props) => customDimensions.setUserProperties(props),
     leaveBreadcrumb: (crumb) => breadcrumb.leave(crumb),
     setConsent: (partial) => consentGate.setConsent(partial),
+    setDoNotSell: (value) => ccpaGate.setDoNotSell(value),
+    getDoNotSell: () => ccpaGate.isDoNotSell(),
+    getCcpaDisclosure: () => ccpaGate.disclosure(),
     setUserId: (userId) => enricher.setUserId(userId),
     getUserId: () => enricher.getUserId(),
     exportUserData: async (userId, options) => {

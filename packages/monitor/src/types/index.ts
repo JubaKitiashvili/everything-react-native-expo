@@ -28,6 +28,14 @@ export interface MonitorConfig {
     readonly crashes: boolean;
     readonly analytics: boolean;
     readonly replay: boolean;
+    /**
+     * Task 117.56 — California CCPA/CPRA "Do Not Sell My Personal
+     * Information" signal. When true, the SDK strips cross-context
+     * identifiers and profiling/tracking data from outbound events. Optional
+     * and absent by default (treated as false / collect-as-normal); set it
+     * here to opt a deployment into default-on.
+     */
+    readonly doNotSell?: boolean;
   };
   readonly ai: {
     readonly crashExplainer: boolean;

@@ -63,6 +63,15 @@ export type {
   ConsentStore,
   ConsentGateOptions,
 } from './processors/ConsentGate';
+// Task 117.56 — CCPA Do-Not-Sell signal + CA disclosure
+export { CcpaGate, applyDoNotSell } from './processors/CcpaGate';
+export type {
+  CcpaState,
+  CcpaStore,
+  CcpaGateOptions,
+  CcpaDataCategory,
+  CcpaDisclosure,
+} from './processors/CcpaGate';
 export { TerminalReporter } from './integrations/TerminalReporter';
 export type {
   TerminalReporterOptions,

@@ -205,6 +205,112 @@ describe('createMonitorRuntime', () => {
     await runtime.shutdown();
   });
 
+  describe('CCPA Do-Not-Sell gate (Task 117.56)', () => {
+    /** Reads the enriched (pipeline) copy of the last custom event in the store. */
+    async function drainEnrichedCustom(runtime: Awaited<ReturnType<typeof bootFresh>>) {
+      const drained = await runtime.store.drainAll(20);
+      const customEvents = drained.filter((e) => e.type === 'custom');
+      return customEvents.find(
+        (e) => (e as unknown as { context?: unknown }).context !== undefined,
+      );
+    }
+
+    it('exposes the gate and defaults Do-Not-Sell to OFF', async () => {
+      const runtime = await bootFresh();
+      expect(runtime.ccpaGate).toBeDefined();
+      expect(runtime.getDoNotSell()).toBe(false);
+      await runtime.shutdown();
+    });
+
+    it('OFF: identifiers + dimensions + attributes flow into the store', async () => {
+      const runtime = await bootFresh();
+      startMonitorRuntime(runtime);
+      runtime.setUserId('user-ccpa-1');
+      runtime.setDimension('plan', 'enterprise');
+      runtime.trackEvent('cta_clicked', { variant: 'blue-button' });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const enriched = await drainEnrichedCustom(runtime);
+      expect(enriched).toBeDefined();
+      expect((enriched as unknown as { context: { userId: string | null } }).context.userId).toBe(
+        'user-ccpa-1',
+      );
+      const dims = (enriched as unknown as { dimensions?: Record<string, unknown> }).dimensions;
+      expect(dims?.plan).toBe('enterprise');
+      const attrs = (enriched!.data as { attributes: Record<string, unknown> }).attributes;
+      expect(attrs.variant).toBe('blue-button');
+      await runtime.shutdown();
+    });
+
+    it('ON: gate strips identifiers + dimensions + attributes from the stored payload', async () => {
+      const runtime = await bootFresh();
+      startMonitorRuntime(runtime);
+      runtime.setUserId('user-ccpa-2');
+      runtime.setDimension('cohort', 'beta-7');
+      await runtime.setDoNotSell(true);
+      expect(runtime.getDoNotSell()).toBe(true);
+
+      runtime.trackEvent('cta_clicked', { variant: 'red-button' });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const enriched = await drainEnrichedCustom(runtime);
+      expect(enriched).toBeDefined();
+      const ctx = (enriched as unknown as {
+        context: { userId: string | null; device: { model: string; locale: string } };
+        dimensions?: unknown;
+      });
+      expect(ctx.context.userId).toBeNull();
+      expect(ctx.context.device.model).toBe('[REDACTED]');
+      expect(ctx.context.device.locale).toBe('[REDACTED]');
+      expect(ctx.dimensions).toBeUndefined();
+      const attrs = (enriched!.data as { attributes: Record<string, unknown> }).attributes;
+      expect(attrs.variant).toBe('[REDACTED]');
+
+      // Provable wire assertion: the serialized stored payload carries no
+      // identifiers / tracking values.
+      const wire = JSON.stringify(enriched);
+      expect(wire).not.toContain('user-ccpa-2');
+      expect(wire).not.toContain('beta-7');
+      expect(wire).not.toContain('red-button');
+      await runtime.shutdown();
+    });
+
+    it('config.consent.doNotSell defaults the signal on at boot', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        { consent: { doNotSell: true } },
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      expect(runtime.getDoNotSell()).toBe(true);
+      await runtime.shutdown();
+    });
+
+    it('getCcpaDisclosure returns CA disclosure metadata reflecting live state', async () => {
+      const runtime = await bootFresh();
+      const off = runtime.getCcpaDisclosure();
+      expect(off.jurisdiction).toBe('US-CA');
+      expect(off.doNotSellEnabled).toBe(false);
+      expect(off.categories.length).toBeGreaterThanOrEqual(3);
+
+      await runtime.setDoNotSell(true);
+      expect(runtime.getCcpaDisclosure().doNotSellEnabled).toBe(true);
+      await runtime.shutdown();
+    });
+  });
+
   it('trackScreenView proxies to NavigationCollector', async () => {
     const runtime = await bootFresh();
     startMonitorRuntime(runtime);
