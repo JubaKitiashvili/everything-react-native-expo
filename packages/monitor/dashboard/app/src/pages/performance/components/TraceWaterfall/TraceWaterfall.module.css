@@ -1,0 +1,47 @@
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.branch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.detailWrap {
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty,
+.placeholder,
+.error {
+  padding: var(--space-10);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.error {
+  color: var(--color-severity-critical);
+}
