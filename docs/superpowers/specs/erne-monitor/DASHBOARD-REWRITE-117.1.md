@@ -4,8 +4,9 @@
 > touching the dashboard. It records **why** we chose `dashboard-next`
 > (not in-place) and **exactly** what must be built, in what order.
 >
-> Status: **PLANNED — not started.** Owner: lead + parallel page agents.
-> Created 2026-05-26 (planning session). Canonical task row: `TRACKER.md` 117.1.
+> Status: **DONE — shipped 2026-05-26** (commits `1b98083` → `df5cf09`).
+> Owner: lead + 5 parallel page agents. Canonical task row: `TRACKER.md` 117.1.
+> See §10 Outcome for what actually shipped vs. this plan.
 
 ---
 
@@ -233,3 +234,39 @@ Every future page-task slots cleanly into one of these 7.
 - **IA grouping:** the 7 pages above (recommended as-is). Alt: merge ANRs→
   Performance (6 pages), or split Quality→Alerts+Bugs (8). Not yet locked.
 - **Cadence:** Phase 1 solo now, then parallel page agents (recommended).
+
+---
+
+## 10. Outcome (what actually shipped, 2026-05-26)
+
+Built in one session across 4 commits, all green at each gate.
+
+- **Phase 1 (`1b98083`)** — scaffolded `next/`: BrowserRouter + AppShell +
+  7-item Sidebar (active `aria-current`), `RealtimeProvider` +
+  `useRealtimeChannel` (one socket, per-page subscribers torn down on
+  unmount), relocated `shared/`, Overview page. Verified: tsc, 125 vitest
+  (incl. 7 no-leak + 5 router tests), eslint, build, live server smoke.
+- **Phases 2–4 (`5a1d773`)** — Crashes built as the lead reference; the
+  other 5 pages (ANRs, Performance, Sessions, Quality, Settings) built by
+  **5 parallel agents** on disjoint `pages/<x>/` trees, each self-verified
+  with scoped vitest + eslint. Deep-link routes seed selection URL→store;
+  ANRInspector gained an optional `selectedInstanceId` prop. Central gate:
+  tsc, 270 vitest, eslint, build (288 modules).
+- **Phase 5 (`df5cf09`)** — migrated all 17 Playwright specs to route
+  navigation + added a routing/shell spec; **23/23 e2e green in real
+  Chromium** against the seeded server. Cut over: vite `outDir` → `../public`,
+  e2e fixture → `../public`.
+
+### Refinement vs. the plan
+§4 said "delete `app/`, keep `next/` canonical." Shipped instead as: move the
+installed `node_modules` + lockfile into `next/`, **`rm -rf app && mv next app`**.
+Same outcome (legacy flat app gone, rewrite is canonical), but the final dir
+stays `app/` — so the package name (`@erne/monitor-dashboard-app`), the
+server's serve path, the e2e fixture path, and docs all keep working with
+zero reference churn, and no fresh `npm install` was needed at cutover.
+
+### Final verified state (canonical `packages/monitor/dashboard/app/`)
+tsc -b clean · 270 vitest (58 files) · eslint 0 warnings · vite build →
+`../public` (288 modules) · 23/23 Playwright e2e green. Acceptance gate (§7)
+fully met: 7 pages resolve, BrowserRouter + SPA-fallback deep-links work,
+sidebar active highlight, WS no-leak (unit-proven), all Phase-6 tests migrated.
