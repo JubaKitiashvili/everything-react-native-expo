@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-27
-**Current Phase:** Phase 7 — Launch (62/106)
+**Current Phase:** Phase 7 — Launch (66/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 178/222 tasks (Phases 1a–6 ✅ · Phase 7 62/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1003 SDK-src tests + 329 dashboard-app (vitest) + 28 dashboard-app (playwright e2e) + 398 dashboard-server tests + 168 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 182/222 tasks (Phases 1a–6 ✅ · Phase 7 66/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · platform wave closed 117.11 server OTel-ingest + 117.57 cli privacy-manifest + 117.26 app RSC-panel + 117.85 docs pricing via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1003 SDK-src tests + 350 dashboard-app (vitest) + 29 dashboard-app (playwright e2e) + 421 dashboard-server tests + 200 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -194,7 +194,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.15 | User-centric view `/users/:id` (sessions + crash/ANR KPIs + activity) | ✅ |
 | 117.21 | Screenshot annotation canvas + shake-to-report accelerometer wiring | ⬜ |
 | 117.25 | Suspense telemetry with stall detection | ⬜ |
-| 117.26 | RSC boundary panel (we have collector, surface to dashboard) | ⬜ |
+| 117.26 | RSC boundary panel (surfaces RSCCollector data; per-route render/payload/cache/streaming) | ✅ |
 | 117.94 | `erne scan` static analysis CLI (scan consumer's app before install) | ✅ |
 | 117.95 | Privacy-provable SDK test suite (adversarial redteam; closed 3 real PII leaks) — 🟡 CI badge pending | ✅ |
 
@@ -202,13 +202,13 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 
 | # | Task | Status |
 |---|------|--------|
-| 117.11 | OTel bidirectional — ingest `/v1/traces` `/v1/logs` `/v1/metrics` from any OTel source | ⬜ |
+| 117.11 | OTel ingest — `/v1/traces` `/v1/logs` `/v1/metrics` (OTLP/HTTP JSON) from any OTel source | ✅ |
 | 117.17 | Remote adaptive config (server-pushed sampling / PII rules / feature toggles) | ⬜ |
 | 117.18 | Multi-tenant RBAC (3-role Owner/Member/Viewer, JWT localStorage) | ⬜ |
 | 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ✅ |
 | 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
 | 117.56 | CCPA compliance (Do Not Sell signal, CA-specific disclosures) | ⬜ |
-| 117.57 | Transitive dependency privacy manifest audit (App Store compliance) | ⬜ |
+| 117.57 | Transitive dependency privacy manifest audit (`privacy-manifest` cli; curated SDK map + unaudited flags) | ✅ |
 | 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ✅ |
 | 117.60 | SECURITY.md + responsible disclosure policy | ✅ |
 | 117.64 | Per-tenant ingest rate limiting | ✅ |
@@ -229,7 +229,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.41 | Comparison pages (vs Sentry / measure.sh / Bitdrift / Firebase) | ✅ |
 | 117.43 | Example apps (Expo Router + tabs / bare RN / e-commerce clone / complex nav) | ⬜ |
 | 117.44 | Playwright E2E suite (50+ specs against `POST /api/demo/seed`) | ⬜ |
-| 117.85 | Pricing page + tier matrix (OSS free / Cloud / Enterprise) | ⬜ |
+| 117.85 | Pricing page + tier matrix (OSS free / Cloud / Enterprise) — page+matrix ✅; dollar figures TBD (business) | ✅ |
 | 117.92 | ERNE Live public dashboard `monitor.erne.dev` (seed cron for bootstrap) | ⬜ |
 | 117.93 | Pattern Encyclopedia public registry (20 launch patterns, community PR flow) | ⬜ |
 | 117.96 | Twitch/YouTube Live "fix my crash with Claude" session | ⬜ |
