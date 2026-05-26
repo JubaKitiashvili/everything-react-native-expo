@@ -80,6 +80,29 @@ export type {
   ValidateRemoteConfigError,
   ValidateRemoteConfigResult,
 } from './config/remoteConfig.js';
+export {
+  INGEST_KEYS_SETTING_KEY,
+  DEFAULT_GRACE_MS,
+  addKey,
+  emptyKeySet,
+  generateKey,
+  hashToken,
+  isEnforcing,
+  isValid,
+  parseIngestKeySet,
+  pruneExpired,
+  revoke,
+  rotate,
+  serializeIngestKeySet,
+  summarizeKeys,
+} from './auth/ingestKeys.js';
+export type {
+  GeneratedKey,
+  IngestKeyRecord,
+  IngestKeySet,
+  IngestKeyStatus,
+  IngestKeySummary,
+} from './auth/ingestKeys.js';
 export { createDashboardServer, startDashboardServer } from './server.js';
 export type { DashboardServerHandle, DashboardServerOptions } from './server.js';
 export {

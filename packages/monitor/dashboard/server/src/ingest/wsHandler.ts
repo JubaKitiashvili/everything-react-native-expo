@@ -58,6 +58,26 @@ export type IngestWsHandlerOptions = {
    */
   apiKey?: string | null;
   /**
+   * Task 117.62 — managed ingest-key gate on `/ws/ingest`. When provided,
+   * every SDK ingest upgrade must present a token the predicate accepts
+   * (read from `?apiKey=` / `?ws_auth_token=` query params — browsers can't
+   * set WS headers — or `Authorization: Bearer <token>`). The predicate is
+   * the bridge to the rotatable/revocable key set owned by the server
+   * (`createDashboardServer` passes a closure over the `ingest_keys`
+   * setting), so a revoked token is rejected instantly and a rotated-out
+   * token still works during its grace window.
+   *
+   * When OMITTED (the default — and every legacy test), ingest is NOT gated:
+   * any SDK connects, preserving the dev-friendly fail-open behaviour the
+   * shipped fleet relies on. The server only supplies a predicate, and the
+   * predicate only enforces, once an operator has configured at least one
+   * managed key.
+   *
+   * Distinct from `apiKey` above, which gates the dashboard's `/ws/subscribe`
+   * stream with the operator's dashboard key — SDKs never have that key.
+   */
+  authorizeIngest?: (token: string | null) => boolean;
+  /**
    * Task 117.5 — inject a custom queue implementation. When omitted,
    * the handler constructs an `InMemoryQueue<EventRecord>` with
    * concurrency=1 (FIFO to preserve per-session ordering), default
@@ -198,6 +218,12 @@ export class IngestWebSocketHandler {
   private readonly subscribers = new Set<WebSocket>();
   private readonly sdkState = new WeakMap<WebSocket, SdkConnectionState>();
   private readonly apiKey: string | null;
+  /**
+   * Task 117.62 — managed ingest-key predicate. `null` (the default) means
+   * the ingest path is ungated (fail-open dev default). Set by the server
+   * to a closure over the rotatable/revocable `ingest_keys` setting.
+   */
+  private readonly authorizeIngest: ((token: string | null) => boolean) | null;
 
   /**
    * Task 117.64 — per-tenant token-bucket limiter. `null` when disabled
@@ -237,6 +263,7 @@ export class IngestWebSocketHandler {
         console.error(`[dashboard-server:${ctx}]`, err.message);
       });
     this.apiKey = options.apiKey ?? null;
+    this.authorizeIngest = options.authorizeIngest ?? null;
     // Task 117.64 — construct the per-tenant limiter unless explicitly
     // disabled. `undefined` → defaults; a config object → those limits;
     // `false` → no per-tenant limiting (connection guard still applies).
@@ -297,6 +324,15 @@ export class IngestWebSocketHandler {
       // sniffs the first message to decide whether it's the new
       // `{kind: ...}` protocol or the legacy `{type: 'monitor:...'}` frame.
       if (url.pathname === INGEST_PATH || url.pathname === '/') {
+        // Task 117.62 — managed ingest-key gate. Only enforces when the
+        // server supplied a predicate (i.e. an operator configured at least
+        // one ingest key); otherwise ingest stays fail-open for the fleet.
+        // Reject with a 401 Upgrade so the SDK can distinguish "bad/missing
+        // key" from a transient socket drop and rotate to the new token.
+        if (this.authorizeIngest && !this.authorizeIngest(extractIngestToken(req, url))) {
+          rejectUpgrade(socket, 401, 'unauthorized');
+          return;
+        }
         this.wss.handleUpgrade(req, socket, head, (ws) => this.onIngestConnection(ws, req, url));
         return;
       }
@@ -722,6 +758,23 @@ export class IngestWebSocketHandler {
       ws.send(JSON.stringify(msg));
     }
   }
+}
+
+/**
+ * Task 117.62 — pull the SDK-presented ingest token off a WS upgrade
+ * request. Mirrors `deriveTenantKey`'s precedence: `Authorization: Bearer`
+ * (Node/CLI), then `?apiKey=` / `?ws_auth_token=` (browsers, which can't set
+ * WS headers). Returns null when nothing is presented.
+ */
+function extractIngestToken(req: IncomingMessage, url: URL): string | null {
+  const header = req.headers.authorization;
+  if (typeof header === 'string') {
+    const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+    if (match?.[1]) return match[1].trim();
+  }
+  const fromQuery = url.searchParams.get('apiKey') ?? url.searchParams.get('ws_auth_token');
+  if (fromQuery && fromQuery.length > 0) return fromQuery;
+  return null;
 }
 
 function rejectUpgrade(

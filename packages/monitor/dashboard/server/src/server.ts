@@ -37,6 +37,19 @@ import {
   serializeRemoteConfig,
   validateRemoteConfig,
 } from './config/remoteConfig.js';
+import {
+  INGEST_KEYS_SETTING_KEY,
+  DEFAULT_GRACE_MS,
+  addKey as addIngestKey,
+  isEnforcing as ingestKeysEnforcing,
+  isValid as ingestKeyIsValid,
+  parseIngestKeySet,
+  pruneExpired as pruneIngestKeys,
+  revoke as revokeIngestKey,
+  rotate as rotateIngestKeys,
+  serializeIngestKeySet,
+  summarizeKeys as summarizeIngestKeys,
+} from './auth/ingestKeys.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -468,12 +481,37 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         ? options.apiKey
         : (process.env.ERNE_API_KEY ?? null);
 
+  // Task 117.62 — managed ingest-key authorization. The key set lives as a
+  // JSON blob in `server_settings`; this closure reads the live set on every
+  // ingest upgrade so a rotate/revoke applies instantly. Returns a predicate
+  // the WS handler calls with the SDK-presented token. Fail-open: when no
+  // managed keys are configured, the predicate accepts everything (the
+  // legacy/dev default). Backward compat: the legacy single raw
+  // `ws_auth_token` setting is accepted as a valid token even alongside the
+  // managed set, so SDKs already pinned to it keep working.
+  const loadIngestKeySet = () => parseIngestKeySet(store.getSetting(INGEST_KEYS_SETTING_KEY));
+  const authorizeIngestToken = (token: string | null): boolean => {
+    const set = loadIngestKeySet();
+    // No managed keys → ingest is not gated.
+    if (!ingestKeysEnforcing(set)) return true;
+    const now = Date.now();
+    if (ingestKeyIsValid(set, token, now)) return true;
+    // Backward compat: accept the legacy raw ws_auth_token if one is set and
+    // the presented token matches it exactly (constant-time).
+    const legacy = store.getSetting('ws_auth_token');
+    if (legacy && token && legacy.length === token.length) {
+      if (constantTimeEquals(token, legacy)) return true;
+    }
+    return false;
+  };
+
   const websocket =
     options.enableWebsocket === false
       ? null
       : new IngestWebSocketHandler({
           store,
           apiKey: requiredApiKey,
+          authorizeIngest: authorizeIngestToken,
           ...(options.websocket ?? {}),
         });
 
@@ -1212,6 +1250,164 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           reqLogger,
         );
         sendJson(res, 200, { wsTokenMasked: maskToken(token), wsTokenSet: true });
+        return;
+      }
+
+      // Task 117.62 — managed ingest-key endpoints (operator surface, behind
+      // the /api gate). Keys authorise SDK `/ws/ingest` connections; the raw
+      // token is only ever returned once, at creation/rotation. Listings
+      // expose ids + status only — never the hash or any secret.
+      //
+      //   GET  /api/keys             list key ids + status
+      //   POST /api/keys             issue an additional active key
+      //   POST /api/keys/rotate      mint a new active key, retire the old
+      //                              ones into a grace window
+      //   POST /api/keys/:id/revoke  kill a key immediately
+
+      if (req.method === 'GET' && pathname === '/api/keys') {
+        // GC expired grace keys on read so the listing stays tidy without a
+        // separate sweep; persist only when something actually changed.
+        const set = loadIngestKeySet();
+        const now = Date.now();
+        const pruned = pruneIngestKeys(set, now);
+        if (
+          pruned.retired.length !== set.retired.length ||
+          pruned.active.length !== set.active.length
+        ) {
+          store.setSetting(INGEST_KEYS_SETTING_KEY, serializeIngestKeySet(pruned));
+        }
+        sendJson(res, 200, {
+          keys: summarizeIngestKeys(pruned, now),
+          enforcing: ingestKeysEnforcing(pruned),
+        });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/keys') {
+        void readJsonBody(req)
+          .then((body) => {
+            const input = (body ?? {}) as { label?: unknown };
+            const label =
+              typeof input.label === 'string' && input.label.length > 0
+                ? input.label.slice(0, 256)
+                : undefined;
+            const now = Date.now();
+            const current = pruneIngestKeys(loadIngestKeySet(), now);
+            const { set: next, generated } = addIngestKey(current, now, label);
+            store.setSetting(INGEST_KEYS_SETTING_KEY, serializeIngestKeySet(next));
+            recordAuditEvent(
+              store,
+              {
+                action: 'config-change',
+                targetType: 'ingest-key',
+                targetId: generated.record.id,
+                ip: clientIp(req),
+                // Record the id + that a key was created — never the token.
+                metadata: { created: true, ...(label ? { label } : {}) },
+              },
+              reqLogger,
+            );
+            sendJson(res, 200, {
+              // The raw token is surfaced exactly once, here.
+              key: {
+                id: generated.record.id,
+                token: generated.token,
+                createdAt: generated.record.createdAt,
+              },
+              keys: summarizeIngestKeys(next, now),
+              enforcing: ingestKeysEnforcing(next),
+            });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/api/keys/rotate') {
+        void readJsonBody(req)
+          .then((body) => {
+            const input = (body ?? {}) as { label?: unknown; graceMs?: unknown };
+            const label =
+              typeof input.label === 'string' && input.label.length > 0
+                ? input.label.slice(0, 256)
+                : undefined;
+            const graceMs =
+              typeof input.graceMs === 'number' &&
+              Number.isFinite(input.graceMs) &&
+              input.graceMs >= 0
+                ? input.graceMs
+                : DEFAULT_GRACE_MS;
+            const now = Date.now();
+            const current = pruneIngestKeys(loadIngestKeySet(), now);
+            const retiredCount = current.active.length;
+            const { set: next, generated } = rotateIngestKeys(current, now, graceMs, label);
+            store.setSetting(INGEST_KEYS_SETTING_KEY, serializeIngestKeySet(next));
+            recordAuditEvent(
+              store,
+              {
+                action: 'config-change',
+                targetType: 'ingest-key',
+                targetId: generated.record.id,
+                ip: clientIp(req),
+                // Record shape only: how many keys were retired + the grace
+                // window. Never the token.
+                metadata: { rotated: true, retiredCount, graceMs, ...(label ? { label } : {}) },
+              },
+              reqLogger,
+            );
+            sendJson(res, 200, {
+              key: {
+                id: generated.record.id,
+                token: generated.token,
+                createdAt: generated.record.createdAt,
+              },
+              keys: summarizeIngestKeys(next, now),
+              enforcing: ingestKeysEnforcing(next),
+            });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      if (
+        req.method === 'POST' &&
+        pathname.startsWith('/api/keys/') &&
+        pathname.endsWith('/revoke')
+      ) {
+        const id = decodeURIComponent(pathname.slice('/api/keys/'.length, -'/revoke'.length));
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        const now = Date.now();
+        const current = loadIngestKeySet();
+        const { set: next, revoked } = revokeIngestKey(current, id, now);
+        if (!revoked) {
+          sendJson(res, 404, { error: 'not_found', id });
+          return;
+        }
+        store.setSetting(INGEST_KEYS_SETTING_KEY, serializeIngestKeySet(next));
+        recordAuditEvent(
+          store,
+          {
+            action: 'config-change',
+            targetType: 'ingest-key',
+            targetId: id,
+            ip: clientIp(req),
+            metadata: { revoked: true },
+          },
+          reqLogger,
+        );
+        sendJson(res, 200, {
+          ok: true,
+          keys: summarizeIngestKeys(next, now),
+          enforcing: ingestKeysEnforcing(next),
+        });
         return;
       }
 
