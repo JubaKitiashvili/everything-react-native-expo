@@ -53,10 +53,13 @@ const MAX_METADATA_BYTES = 16 * 1024;
 function scrub(text: string): string {
   let out = text;
   // ANSI escapes
+  // eslint-disable-next-line no-control-regex -- intentional: scrub control chars
   out = out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
   // Control chars except \n / \t
+  // eslint-disable-next-line no-control-regex -- intentional: scrub control chars
   out = out.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   // Zero-width / directional / format chars + tag chars
+  // eslint-disable-next-line no-irregular-whitespace -- intentional: scrub these chars
   out = out.replace(/[​-‏‪-‮⁠-⁩﻿]/g, '');
   out = out.replace(/\uDB40[\uDC00-\uDC7F]/g, '');
   // Anthropic-style tag carriers

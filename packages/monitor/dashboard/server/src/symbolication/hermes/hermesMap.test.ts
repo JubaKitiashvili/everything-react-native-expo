@@ -28,7 +28,7 @@ function buildMappings(rows: number[][]): string {
   // Each row is a line of segments. Each segment is an array of
   // [genCol, srcIdx, srcLine, srcCol] or [genCol, srcIdx, srcLine, srcCol, nameIdx].
   // Returns the spec-encoded mappings string with relative deltas.
-  let prev = { genCol: 0, srcIdx: 0, srcLine: 0, srcCol: 0, nameIdx: 0 };
+  const prev = { genCol: 0, srcIdx: 0, srcLine: 0, srcCol: 0, nameIdx: 0 };
   const lineStrings: string[] = [];
   for (const row of rows) {
     let runningGenCol = 0;

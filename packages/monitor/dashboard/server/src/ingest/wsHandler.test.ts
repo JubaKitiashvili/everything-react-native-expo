@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { WebSocket } from 'ws';
 import { DashboardStore } from '../storage/sqliteStore.js';
+import type { EventRecord } from '../storage/types.js';
 import { INGEST_PATH, IngestWebSocketHandler, SUBSCRIBE_PATH } from './wsHandler.js';
 
 async function openServerWithHandler(options: Parameters<typeof makeHandler>[1] = {}): Promise<{
@@ -707,7 +708,7 @@ describe('ingest queue integration (Task 117.5)', () => {
     const parker = new Promise<void>((r) => {
       release = r;
     });
-    const queueImpl = new InMemoryQueue<import('../storage/types.js').EventRecord>({
+    const queueImpl = new InMemoryQueue<EventRecord>({
       maxSize: 2,
     });
     // Override: don't let the handler start its own worker — we install
@@ -728,7 +729,7 @@ describe('ingest queue integration (Task 117.5)', () => {
     await new Promise<void>((resolve) =>
       httpServer.listen(0, '127.0.0.1', () => resolve()),
     );
-    const address = httpServer.address() as import('node:net').AddressInfo;
+    const address = httpServer.address() as AddressInfo;
     const port = address.port;
 
     const sdk = new WebSocket(`ws://127.0.0.1:${port}${INGEST_PATH}`);
