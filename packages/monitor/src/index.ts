@@ -42,6 +42,35 @@ export type {
 } from './storage/SqliteEventStoreBackend';
 export { Sanitizer } from './processors/Sanitizer';
 export type { SanitizerOptions } from './processors/Sanitizer';
+// Task 117.55 — SDK Remote Config (poll /v1/config + apply).
+export {
+  DEFAULT_REMOTE_CONFIG,
+  validateRemoteConfig,
+  remoteConfigEquals,
+} from './remote-config/RemoteConfig';
+export type { RemoteConfig } from './remote-config/RemoteConfig';
+export {
+  RemoteConfigClient,
+  deriveConfigUrl,
+  DEFAULT_POLL_INTERVAL_MS,
+} from './remote-config/RemoteConfigClient';
+export type {
+  RemoteConfigClientDeps,
+  RemoteConfigListener,
+  RemoteConfigTimer,
+} from './remote-config/RemoteConfigClient';
+export {
+  RemoteSamplingGate,
+  applyFeatureFlags,
+  splitPiiRules,
+  DEFAULT_SAMPLING_KEY,
+} from './remote-config/RemoteConfigApplier';
+export type {
+  RemoteSamplingGateDeps,
+  FeatureToggle,
+  ApplyFeatureFlagsResult,
+  PiiRuleSplit,
+} from './remote-config/RemoteConfigApplier';
 export { Enricher } from './processors/Enricher';
 export type { EnrichedEvent, EnricherDeps } from './processors/Enricher';
 export { Fingerprinter } from './processors/Fingerprinter';

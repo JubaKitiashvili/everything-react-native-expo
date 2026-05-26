@@ -102,6 +102,17 @@ import {
   NativeCrashGateway,
 } from '../native';
 import { ANRGateway } from '../native/ANRGateway';
+import {
+  RemoteConfigClient,
+  type RemoteConfigTimer,
+} from '../remote-config/RemoteConfigClient';
+import type { RemoteConfig } from '../remote-config/RemoteConfig';
+import {
+  RemoteSamplingGate,
+  applyFeatureFlags,
+  splitPiiRules,
+  type FeatureToggle,
+} from '../remote-config/RemoteConfigApplier';
 import { NativeMetricsPoller } from '../native/NativeMetricsPoller';
 import { SpanSnapshot } from '../native/SpanSnapshot';
 import type {
@@ -188,6 +199,33 @@ export interface MonitorRuntimeDeps {
     windowMs?: number;
     resetAfterMs?: number;
   };
+  /**
+   * Task 117.55 — opt-in remote config. OFF by default: existing behaviour is
+   * unchanged unless `enabled: true`. When enabled, the runtime polls the
+   * dashboard server's `GET /v1/config` and applies the fetched config:
+   *   - `sampling` gates event emission per type (probabilistic, RNG-injected);
+   *   - `featureFlags` toggle the collectors they map to (unknown flags ignored);
+   *   - `piiRules` feed the Sanitizer's extra sensitive keys / patterns.
+   *
+   * The endpoint is derived from `url` if given, else from `dashboardUrl`
+   * (its ws scheme is normalised to http(s)). `fetchImpl`, `timer`, and
+   * `random` are injectable for deterministic tests.
+   */
+  remoteConfig?: {
+    enabled: boolean;
+    /** Explicit `/v1/config` URL. Falls back to `dashboardUrl` derivation. */
+    url?: string;
+    /** Poll cadence in ms. Defaults to 5 minutes. */
+    intervalMs?: number;
+    /** Injectable fetch for tests; defaults to globalThis.fetch. */
+    fetchImpl?: typeof fetch;
+    /** Injectable timer for tests; defaults to global setInterval. */
+    timer?: RemoteConfigTimer;
+    /** Injectable RNG for the sampling gate; defaults to Math.random. */
+    random?: () => number;
+    /** Optional diagnostics sink for fetch/parse errors (never throws). */
+    onError?: (error: unknown) => void;
+  };
 }
 
 export interface MonitorRuntime {
@@ -237,6 +275,12 @@ export interface MonitorRuntime {
   dualThreadFPS: DualThreadFPSCollector;
   fabricCommit: FabricCommitCollector;
   spanSnapshot: SpanSnapshot;
+  /**
+   * Task 117.55 — remote config poller. Non-null only when
+   * `deps.remoteConfig?.enabled` is true. Exposes the current config and an
+   * `onChange` subscription.
+   */
+  remoteConfigClient: RemoteConfigClient | null;
   trackEvent: (
     name: string,
     attributes?: Record<string, CustomAttributeValue>,
@@ -453,10 +497,20 @@ export async function createMonitorRuntime(
     total: 0,
     consentDropped: 0,
     sampledDropped: 0,
+    remoteSampledDropped: 0,
     burstThrottled: 0,
     stored: 0,
     lastEvent: null as MonitorEvent | null,
   };
+
+  // Task 117.55 — remote sampling gate. Constructed unconditionally (so the
+  // pipeline branch is stable) but starts as a no-op: an empty config keeps
+  // every event (rate defaults to 1). It only gains teeth once a remote config
+  // with sampling rates is applied. Off entirely unless remoteConfig.enabled.
+  const remoteSamplingEnabled = deps.remoteConfig?.enabled === true;
+  const remoteSamplingGate = new RemoteSamplingGate({
+    random: deps.remoteConfig?.random,
+  });
 
   // Forward reference — SignalRouter is instantiated after all the
   // collectors because it needs to wire dispatch outputs that reference
@@ -492,6 +546,19 @@ export async function createMonitorRuntime(
     }
     if (!sampler.shouldKeep(event)) {
       stats.sampledDropped += 1;
+      return;
+    }
+    // Task 117.55 — operator-controlled remote sampling. Runs after the
+    // adaptive sampler so it can only TIGHTEN, not loosen. Critical safety
+    // types (crashes / ANRs) always bypass it. No-op until a remote config is
+    // applied and only active when remoteConfig.enabled.
+    if (
+      remoteSamplingEnabled &&
+      event.type !== 'crash' &&
+      event.type !== 'native_anr' &&
+      !remoteSamplingGate.shouldKeep(event.type)
+    ) {
+      stats.remoteSampledDropped += 1;
       return;
     }
     if (!burstThrottle.accept(event)) {
@@ -822,6 +889,89 @@ export async function createMonitorRuntime(
     sessionManager: session,
   });
 
+  // ---- Task 117.55: Remote Config client + apply wiring ----
+  //
+  // Built only when opted in. The apply path is pure (RemoteConfigApplier):
+  //   - sampling  → swap the gate's active map (gate already in the pipeline);
+  //   - flags     → diff against last-applied, fire collector toggles;
+  //   - piiRules  → split into sensitive keys / patterns, push to Sanitizer.
+  //
+  // Feature flags map to collectors with clean start()/stop() semantics. A
+  // `true` flag enables the collector, `false` disables it. The keys are the
+  // SDK's stable flag vocabulary; operators set any subset and unknown flags
+  // are ignored.
+  let remoteConfigClient: RemoteConfigClient | null = null;
+  if (remoteSamplingEnabled) {
+    const featureToggles: Readonly<Record<string, FeatureToggle>> = {
+      network: { on: () => network.start(), off: () => network.stop() },
+      navigation: { on: () => navigation.start(), off: () => navigation.stop() },
+      render: { on: () => render.start(), off: () => render.stop() },
+      frameDrop: { on: () => frameDrop.start(), off: () => frameDrop.stop() },
+      memory: { on: () => memory.start(), off: () => memory.stop() },
+      longTask: { on: () => longTask.start(), off: () => longTask.stop() },
+      state: { on: () => state.start(), off: () => state.stop() },
+      a11y: { on: () => a11y.start(), off: () => a11y.stop() },
+      image: { on: () => image.start(), off: () => image.stop() },
+      storage: { on: () => storage.start(), off: () => storage.stop() },
+      frustration: { on: () => frustration.start(), off: () => frustration.stop() },
+      // PII redaction can be opted into harder via a flag; tightening only.
+      dashboardStreaming: {
+        on: () => dashboardBridge?.start(),
+        off: () => dashboardBridge?.stop(),
+      },
+    };
+    // Last-applied flag values so we only toggle on transitions (idempotent
+    // re-applies are free). Seeded empty: the first apply fires every
+    // explicitly-configured flag once.
+    const appliedFlags: Record<string, boolean> = {};
+    // Track which extra PII rules have already reached the Sanitizer so a
+    // re-poll with the same rules doesn't re-push duplicates (Sanitizer keys
+    // de-dupe anyway, but patterns would accumulate).
+    const appliedPiiRules = new Set<string>();
+
+    const applyConfig = (cfg: RemoteConfig): void => {
+      // 1. sampling — swap the gate's active map atomically.
+      remoteSamplingGate.setConfig(cfg);
+
+      // 2. featureFlags — diff + fire toggles for known flags.
+      applyFeatureFlags(cfg.featureFlags, featureToggles, appliedFlags);
+      for (const [name, value] of Object.entries(cfg.featureFlags)) {
+        appliedFlags[name] = value;
+      }
+
+      // 3. piiRules — split new rules into keys / patterns, feed Sanitizer.
+      const newRules = cfg.piiRules.filter((r) => !appliedPiiRules.has(r));
+      if (newRules.length > 0) {
+        const split = splitPiiRules(newRules);
+        if (split.sensitiveKeys.length > 0) {
+          sanitizer.addSensitiveKeys(split.sensitiveKeys);
+        }
+        if (split.patterns.length > 0) {
+          sanitizer.addPatterns(split.patterns);
+        }
+        for (const r of newRules) appliedPiiRules.add(r);
+      }
+    };
+
+    remoteConfigClient = new RemoteConfigClient({
+      ...(deps.remoteConfig?.url ? { url: deps.remoteConfig.url } : {}),
+      ...(deps.dashboardUrl ? { baseUrl: deps.dashboardUrl } : {}),
+      ...(deps.remoteConfig?.intervalMs !== undefined
+        ? { intervalMs: deps.remoteConfig.intervalMs }
+        : {}),
+      ...(deps.remoteConfig?.fetchImpl
+        ? { fetchImpl: deps.remoteConfig.fetchImpl }
+        : {}),
+      ...(deps.remoteConfig?.timer ? { timer: deps.remoteConfig.timer } : {}),
+      ...(deps.remoteConfig?.onError
+        ? { onError: deps.remoteConfig.onError }
+        : {}),
+    });
+    // Subscribe BEFORE start() so the immediate (default) config and every
+    // fetched change flow through applyConfig.
+    remoteConfigClient.onChange(applyConfig);
+  }
+
   const runtime: MonitorRuntime = {
     client,
     bus,
@@ -869,6 +1019,7 @@ export async function createMonitorRuntime(
     dualThreadFPS,
     fabricCommit,
     spanSnapshot,
+    remoteConfigClient,
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
       navigation.trackScreenView(screen, params),
@@ -919,6 +1070,7 @@ export async function createMonitorRuntime(
       };
     },
     shutdown: async () => {
+      remoteConfigClient?.stop();
       terminalReporter.stop();
       dashboardBridge?.stop();
       nativeMetricsPoller.stop();
@@ -972,6 +1124,9 @@ export function startMonitorRuntime(runtime: MonitorRuntime): void {
   runtime.client.start();
   runtime.terminalReporter.start();
   runtime.dashboardBridge?.start();
+  // Task 117.55 — begin polling remote config (no-op when not enabled). The
+  // initial fetch is fire-and-forget so boot never blocks on the network.
+  runtime.remoteConfigClient?.start();
   // Phase 2a: install native crash handler if the native module is
   // linked, then drain any reports from the previous session.
   runtime.native.startNativeMonitoring();

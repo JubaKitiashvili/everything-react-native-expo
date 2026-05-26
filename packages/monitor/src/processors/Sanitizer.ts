@@ -143,14 +143,14 @@ function passesLuhn(digits: string): boolean {
  */
 export class Sanitizer {
   private readonly placeholder: string;
-  private readonly extraPatterns: readonly RegExp[];
+  private extraPatterns: RegExp[];
   private readonly sensitiveHeaders: Set<string>;
   private readonly sensitiveQueryKeys: Set<string>;
   private readonly sensitiveKeys: Set<string>;
 
   constructor(options: SanitizerOptions = {}) {
     this.placeholder = options.placeholder ?? DEFAULT_PLACEHOLDER;
-    this.extraPatterns = options.extraPatterns ?? [];
+    this.extraPatterns = [...(options.extraPatterns ?? [])];
     this.sensitiveHeaders = new Set(
       [...DEFAULT_SENSITIVE_HEADERS, ...(options.extraHeaders ?? [])].map((h) =>
         h.toLowerCase(),
@@ -168,6 +168,29 @@ export class Sanitizer {
         ...(options.extraSensitiveKeys ?? []),
       ].map((k) => k.toLowerCase()),
     );
+  }
+
+  /**
+   * Task 117.55 — register extra sensitive object-key names at runtime
+   * (case-insensitive). Used by the remote-config applier to push the
+   * operator's PII key rules into an already-constructed Sanitizer. Idempotent
+   * — duplicates collapse via the backing Set.
+   */
+  addSensitiveKeys(keys: readonly string[]): void {
+    for (const key of keys) {
+      this.sensitiveKeys.add(key.toLowerCase());
+    }
+  }
+
+  /**
+   * Task 117.55 — register extra redaction patterns at runtime. Every pattern
+   * is normalised to a global regex (so `.replace` sweeps all matches) before
+   * being appended to the sweep list.
+   */
+  addPatterns(patterns: readonly RegExp[]): void {
+    for (const pattern of patterns) {
+      this.extraPatterns.push(pattern.global ? pattern : new RegExp(pattern, 'g'));
+    }
   }
 
   sanitize(event: MonitorEvent): MonitorEvent {
