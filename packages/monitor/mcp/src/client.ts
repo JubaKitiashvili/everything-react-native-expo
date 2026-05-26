@@ -332,6 +332,35 @@ export class DashboardClient {
     return body.groups;
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // Task 117.82 — write-capable endpoint (demonstrates the MCP
+  // permission tier gate). Unlike every other method here, this one
+  // MUTATES dashboard state, so the corresponding MCP tool is tagged
+  // `tier: 'write'` and only runs when the operator opts in.
+  // ────────────────────────────────────────────────────────────────
+
+  /**
+   * Set a crash group's triage status (e.g. `acknowledged`, `resolved`).
+   * Hits `POST /api/crash-groups/:fingerprint/status` with `{ status }`.
+   *
+   * NOTE: this server endpoint may not exist yet — it is the plausible
+   * REST shape that mirrors the read-side `GET /api/crash-groups`. The
+   * dashboard server route should be added before this tool is enabled
+   * in production. Kept consistent with the other client methods so the
+   * server change is a drop-in.
+   */
+  async setCrashGroupStatus(
+    fingerprint: string,
+    status: CrashGroupRecord['status'],
+  ): Promise<{ ok: true; group: CrashGroupRecord }> {
+    const body = await this.request<{ ok: true; group: CrashGroupRecord }>(
+      'POST',
+      `/api/crash-groups/${encodeURIComponent(fingerprint)}/status`,
+      { status },
+    );
+    return body;
+  }
+
   async listBugReports(limit = 100): Promise<BugReportRecord[]> {
     const body = await this.request<{ reports: BugReportRecord[] }>(
       'GET',

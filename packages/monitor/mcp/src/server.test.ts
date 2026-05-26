@@ -164,6 +164,18 @@ function makeStubClient(overrides: Partial<DashboardClient> = {}): DashboardClie
       events: [],
       exportedAt: NOW,
     }),
+    setCrashGroupStatus: async (fingerprint: string, status: CrashGroupRecord['status']) => ({
+      ok: true as const,
+      group: {
+        fingerprint,
+        message: 'Boom',
+        firstSeen: NOW - 1000,
+        lastSeen: NOW,
+        eventCount: 7,
+        sessionCount: 3,
+        status,
+      },
+    }),
   } as DashboardClient;
   Object.assign(defaults, overrides);
   return defaults;
@@ -315,7 +327,7 @@ describe('tool handlers', () => {
 });
 
 describe('tool catalogue sanity', () => {
-  test('exactly the 17 expected tool names are registered', () => {
+  test('exactly the expected tool names are registered', () => {
     const expected = [
       'get_health',
       'get_readiness',
@@ -334,9 +346,117 @@ describe('tool catalogue sanity', () => {
       'resolve_symbol',
       'get_user_data_summary',
       'export_user_data',
+      'acknowledge_crash_group',
     ];
     const handle = buildServer();
     expect(handle.listTools()).toEqual(expected);
+  });
+
+  test('every catalogue tool declares a valid tier', () => {
+    for (const tool of TOOL_CATALOGUE) {
+      expect(tool.tier === 'read' || tool.tier === 'write').toBe(true);
+    }
+  });
+
+  test('the 17 original tools are all read-tier; acknowledge_crash_group is write', () => {
+    const byName = new Map(TOOL_CATALOGUE.map((t) => [t.name, t.tier]));
+    expect(byName.get('acknowledge_crash_group')).toBe('write');
+    const writeTools = TOOL_CATALOGUE.filter((t) => t.tier === 'write').map((t) => t.name);
+    expect(writeTools).toEqual(['acknowledge_crash_group']);
+  });
+});
+
+describe('createMcpServer — permission tiers (Task 117.82)', () => {
+  test('read-tier tools run regardless of permissions (default)', async () => {
+    const handle = buildServer();
+    const out = (await handle.invokeTool('get_health', {})) as { ok: boolean };
+    expect(out.ok).toBe(true);
+  });
+
+  test('read-tier tools run even with write explicitly disabled', async () => {
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient(),
+      permissions: { allowWrite: false },
+    });
+    const out = (await handle.invokeTool('list_events', { limit: 5 })) as { count: number };
+    expect(out.count).toBe(2);
+  });
+
+  test('write-tier tool is refused when allowWrite is false (default)', async () => {
+    const setCrashGroupStatus = vi.fn(async () => ({ ok: true as const, record: {} as never }));
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient({ setCrashGroupStatus } as never as Partial<DashboardClient>),
+    });
+    await expect(
+      handle.invokeTool('acknowledge_crash_group', { fingerprint: 'fp-1' }),
+    ).rejects.toThrow(/write-tier tools are disabled/);
+    expect(setCrashGroupStatus).not.toHaveBeenCalled();
+  });
+
+  test('write-tier tool is refused when confirmWrite returns false', async () => {
+    const setCrashGroupStatus = vi.fn(async () => ({ ok: true as const, record: {} as never }));
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient({ setCrashGroupStatus } as never as Partial<DashboardClient>),
+      permissions: { allowWrite: true, confirmWrite: () => false },
+    });
+    await expect(
+      handle.invokeTool('acknowledge_crash_group', { fingerprint: 'fp-1' }),
+    ).rejects.toThrow(/confirmation-denied/);
+    expect(setCrashGroupStatus).not.toHaveBeenCalled();
+  });
+
+  test('write-tier tool runs when allowWrite true + confirmWrite returns true', async () => {
+    const confirmWrite = vi.fn(async (toolName: string, args: Record<string, unknown>) => {
+      expect(toolName).toBe('acknowledge_crash_group');
+      expect(args.fingerprint).toBe('fp-1');
+      return true;
+    });
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient(),
+      permissions: { allowWrite: true, confirmWrite },
+    });
+    const out = (await handle.invokeTool('acknowledge_crash_group', {
+      fingerprint: 'fp-1',
+    })) as { fingerprint: string; status: string; group: { fingerprint: string } };
+    expect(confirmWrite).toHaveBeenCalledTimes(1);
+    expect(out.status).toBe('acknowledged');
+    expect(out.fingerprint).toBe('fp-1');
+  });
+
+  test('write-tier tool runs when allowWrite true and no confirmWrite provided', async () => {
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient(),
+      permissions: { allowWrite: true },
+    });
+    const out = (await handle.invokeTool('acknowledge_crash_group', {
+      fingerprint: 'fp-9',
+    })) as { status: string };
+    expect(out.status).toBe('acknowledged');
+  });
+
+  test('refused write call emits an errored audit row', async () => {
+    const recordAiAction = vi.fn(async () => ({ inserted: true, record: {} as never }));
+    const handle = createMcpServer({
+      dashboardUrl: 'http://localhost',
+      client: makeStubClient({ recordAiAction } as never as Partial<DashboardClient>),
+      audit: true,
+    });
+    await expect(
+      handle.invokeTool('acknowledge_crash_group', { fingerprint: 'fp-1' }),
+    ).rejects.toThrow();
+    const row = recordAiAction.mock.calls[0]?.[0] as {
+      outcome: string;
+      action: string;
+      metadata?: { detail?: string };
+    };
+    expect(row.outcome).toBe('errored');
+    expect(row.action).toBe('invoke-tool:acknowledge_crash_group');
+    expect(row.metadata?.detail).toBe('permission-denied');
   });
 });
 

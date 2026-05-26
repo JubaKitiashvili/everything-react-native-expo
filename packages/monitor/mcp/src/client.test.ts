@@ -195,6 +195,65 @@ describe('DashboardClient — endpoint shapes', () => {
   });
 });
 
+describe('DashboardClient — write endpoint (Task 117.82)', () => {
+  test('setCrashGroupStatus POSTs the status to the fingerprint route', async () => {
+    let seenUrl: string | null = null;
+    let seenBody: string | null = null;
+    let seenMethod: string | null = null;
+    const fetchImpl = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      seenUrl = String(url);
+      seenBody = (init?.body as string) ?? null;
+      seenMethod = init?.method ?? null;
+      return okResponse({
+        ok: true,
+        group: {
+          fingerprint: 'fp-1',
+          message: 'Boom',
+          firstSeen: 1,
+          lastSeen: 2,
+          eventCount: 3,
+          sessionCount: 1,
+          status: 'acknowledged',
+        },
+      });
+    });
+    const client = new DashboardClient({
+      dashboardUrl: 'http://localhost',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const result = await client.setCrashGroupStatus('fp-1', 'acknowledged');
+    expect(seenMethod).toBe('POST');
+    expect(seenUrl).toBe('http://localhost/api/crash-groups/fp-1/status');
+    expect(JSON.parse(seenBody!)).toEqual({ status: 'acknowledged' });
+    expect(result.group.status).toBe('acknowledged');
+  });
+
+  test('setCrashGroupStatus URL-encodes the fingerprint', async () => {
+    const calls: string[] = [];
+    const fetchImpl = vi.fn(async (url: string | URL) => {
+      calls.push(String(url));
+      return okResponse({
+        ok: true,
+        group: {
+          fingerprint: 'a/b c',
+          message: '',
+          firstSeen: 1,
+          lastSeen: 2,
+          eventCount: 1,
+          sessionCount: 1,
+          status: 'resolved',
+        },
+      });
+    });
+    const client = new DashboardClient({
+      dashboardUrl: 'http://localhost',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await client.setCrashGroupStatus('a/b c', 'resolved');
+    expect(calls[0]).toContain('/api/crash-groups/a%2Fb%20c/status');
+  });
+});
+
 describe('DashboardClient — audit trail (Task 117.81)', () => {
   test('recordAiAction POSTs the JSON envelope and returns inserted', async () => {
     let seenBody: string | null = null;

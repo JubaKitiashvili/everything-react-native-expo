@@ -42,6 +42,31 @@ export interface McpBootstrapOptions extends DashboardClientOptions {
    * way to tell that audit emission silently degraded.
    */
   onAuditError?: (err: Error, toolName: string) => void;
+  /**
+   * Task 117.82 — permission tiers for write-capable tools.
+   *
+   * Read-tier tools always run. Write-tier tools (which MUTATE
+   * dashboard state) are REFUSED unless `allowWrite` is true. When it
+   * is, an optional `confirmWrite` callback runs per call — a falsy
+   * result refuses the call with a `confirmation-denied` error. This
+   * lets a host wire in a human-in-the-loop or policy check before any
+   * mutation lands.
+   *
+   * Default: `{ allowWrite: false }` — the safe, read-only posture.
+   */
+  permissions?: {
+    /** Allow write-tier tools to run at all. Defaults to `false`. */
+    allowWrite?: boolean;
+    /**
+     * Per-call gate for write-tier tools, only consulted when
+     * `allowWrite` is true. Return/resolve truthy to permit the call.
+     * Receives the sanitised args so a policy can inspect them.
+     */
+    confirmWrite?: (
+      toolName: string,
+      args: Record<string, unknown>,
+    ) => boolean | Promise<boolean>;
+  };
 }
 
 export interface McpServerHandle {
@@ -81,6 +106,11 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
     string,
     (args: Record<string, unknown>) => Promise<unknown>
   >();
+
+  // Task 117.82 — write-permission posture. Default: deny. The gate
+  // only matters for `write`-tier tools; `read` tools bypass it.
+  const allowWrite = options.permissions?.allowWrite ?? false;
+  const confirmWrite = options.permissions?.confirmWrite;
 
   // Task 117.81 — resolve the audit client. `true` reuses the tool
   // dashboard client; an explicit `{ client }` lets operators route
@@ -153,6 +183,31 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
         await emitToolAudit(tool.name, cleaned, 'errored', err.message);
         throw err;
       }
+
+      // Task 117.82 — permission gate for write-tier tools. Mirrors the
+      // sanitise-rejection path: a refused call emits an `errored`
+      // audit row and throws a clear structured error rather than
+      // touching the dashboard.
+      if (tool.tier === 'write') {
+        if (!allowWrite) {
+          const err = new Error(
+            `tool \`${tool.name}\` refused: write-tier tools are disabled (set permissions.allowWrite to enable mutations)`,
+          );
+          await emitToolAudit(tool.name, cleaned, 'errored', 'permission-denied');
+          throw err;
+        }
+        if (confirmWrite) {
+          const approved = await confirmWrite(tool.name, cleaned.sanitized);
+          if (!approved) {
+            const err = new Error(
+              `tool \`${tool.name}\` refused: confirmation-denied (confirmWrite returned false)`,
+            );
+            await emitToolAudit(tool.name, cleaned, 'errored', 'confirmation-denied');
+            throw err;
+          }
+        }
+      }
+
       try {
         const result = await tool.handler(cleaned.sanitized as never, client);
         await emitToolAudit(tool.name, cleaned, 'invoked');
@@ -169,10 +224,17 @@ export function createMcpServer(options: McpBootstrapOptions): McpServerHandle {
     };
     handlerMap.set(tool.name, toolHandler);
 
+    // Task 117.82 — surface the tier so Claude knows up front which
+    // tools mutate. Write tools also carry a permission note.
+    const tierLabel =
+      tool.tier === 'write'
+        ? '[WRITE — mutates dashboard state; requires operator write permission]'
+        : '[READ-ONLY]';
+
     server.registerTool(
       tool.name,
       {
-        description: `${tool.description}\n\nExample: ${tool.example}`,
+        description: `${tierLabel} ${tool.description}\n\nExample: ${tool.example}`,
         inputSchema: tool.inputSchema,
       },
       async (args: Record<string, unknown>) => {
