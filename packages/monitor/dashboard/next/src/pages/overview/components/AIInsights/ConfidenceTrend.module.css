@@ -1,0 +1,25 @@
+.trend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.trend svg {
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}

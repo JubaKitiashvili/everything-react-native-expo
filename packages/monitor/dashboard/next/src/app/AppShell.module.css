@@ -1,0 +1,82 @@
+.shell {
+  display: flex;
+  height: 100%;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.brandMark {
+  color: var(--color-brand-mint);
+  font-size: var(--font-size-sm);
+}
+
+.brandName {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+}
+
+.brandVersion {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-tertiary);
+}
+
+.statusOpen {
+  background: var(--color-severity-success);
+}
+
+.statusConnecting {
+  background: var(--color-severity-warning);
+}
+
+.statusError,
+.statusClosed {
+  background: var(--color-severity-critical);
+}

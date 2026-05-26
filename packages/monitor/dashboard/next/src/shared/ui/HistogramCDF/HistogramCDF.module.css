@@ -1,0 +1,129 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.bimodalPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-severity-warning-subtle);
+  color: var(--color-severity-warning);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chartWrapper {
+  position: relative;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bar {
+  fill: var(--color-brand-mint-subtle);
+  transition: fill var(--duration-fast) ease-out;
+}
+
+.bar:hover,
+.barActive {
+  fill: var(--color-brand-mint);
+}
+
+.cdfStroke {
+  fill: none;
+  stroke: var(--color-severity-info);
+  stroke-width: 1.5;
+}
+
+.ruleLine {
+  stroke-dasharray: 4 3;
+  stroke-width: 1;
+}
+
+.ruleP50 {
+  stroke: var(--color-text-tertiary);
+}
+
+.ruleP95 {
+  stroke: var(--color-severity-warning);
+}
+
+.ruleP99 {
+  stroke: var(--color-severity-critical);
+}
+
+.ruleLabel {
+  font-size: 10px;
+  font-family: var(--font-family-mono);
+  fill: var(--color-text-secondary);
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 8px));
+  z-index: 1;
+}
+
+.tooltipMuted {
+  color: var(--color-text-tertiary);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
