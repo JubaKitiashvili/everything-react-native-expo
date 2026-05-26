@@ -30,6 +30,13 @@ import {
   parseListFilter as parseAuditLogListFilter,
   recordAuditEvent,
 } from './audit/auditLog.js';
+import {
+  REMOTE_CONFIG_SETTING_KEY,
+  mergeRemoteConfig,
+  parseRemoteConfig,
+  serializeRemoteConfig,
+  validateRemoteConfig,
+} from './config/remoteConfig.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -560,6 +567,13 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       uptimeSeconds: process.uptime(),
     };
   };
+
+  // Task 117.17 — remote adaptive config. SDKs poll the effective config
+  // (sampling rates / PII rules / feature flags); operators read+replace
+  // it. Persisted as a JSON blob in the generic key/value `server_settings`
+  // store under `remote_config`. `parseRemoteConfig` is SAFE: a missing or
+  // corrupt row falls back to defaults so the poll path never breaks.
+  const loadRemoteConfig = () => parseRemoteConfig(store.getSetting(REMOTE_CONFIG_SETTING_KEY));
 
   // Task 117.68 — render the Prometheus text-exposition body from live
   // server + store state. Surfaces ingest queue depth/stats, total event
@@ -1217,6 +1231,58 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      // Task 117.17 — remote adaptive config, operator surface.
+      //   GET  /api/config  — read the current effective config.
+      //   PUT  /api/config  — validate + persist (replace by default,
+      //                       ?merge=1 for per-section merge), record a
+      //                       `config-change` audit row, return the stored
+      //                       config. 400 on invalid input (config unchanged).
+      if (req.method === 'GET' && pathname === '/api/config') {
+        sendJson(res, 200, { config: loadRemoteConfig() });
+        return;
+      }
+
+      if (req.method === 'PUT' && pathname === '/api/config') {
+        const merge = requestUrl.searchParams.get('merge') === '1';
+        void readJsonBody(req)
+          .then((body) => {
+            const result = validateRemoteConfig(body);
+            if (!result.ok) {
+              // Invalid input → 400, config left untouched.
+              sendJson(res, 400, { error: 'invalid_config', errors: result.errors });
+              return;
+            }
+            const next = merge
+              ? mergeRemoteConfig(loadRemoteConfig(), result.config, result.present)
+              : result.config;
+            next.updatedAt = Date.now();
+            store.setSetting(REMOTE_CONFIG_SETTING_KEY, serializeRemoteConfig(next));
+            recordAuditEvent(
+              store,
+              {
+                action: 'config-change',
+                targetType: 'settings',
+                targetId: REMOTE_CONFIG_SETTING_KEY,
+                ip: clientIp(req),
+                // Record shape stats, never PII rule contents themselves.
+                metadata: {
+                  merge,
+                  samplingKeys: Object.keys(next.sampling).length,
+                  piiRules: next.piiRules.length,
+                  featureFlags: Object.keys(next.featureFlags).length,
+                },
+              },
+              reqLogger,
+            );
+            sendJson(res, 200, { config: next });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
       if (req.method === 'POST' && pathname === '/api/demo/seed') {
         const counts = seedDemoData(store, Date.now());
         sendJson(res, 200, { ok: true, seeded: counts });
@@ -1387,6 +1453,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
             const message = err instanceof Error ? err.message : String(err);
             sendJson(res, 400, { error: 'invalid_json', message });
           });
+        return;
+      }
+
+      // Task 117.17 — SDK-facing remote config poll endpoint. Lives at the
+      // root (NOT under /api/) per the same convention as the OTLP ingest
+      // routes, so it bypasses the /api/* API-key gate: SDKs poll this on a
+      // timer to pick up sampling / PII / feature-flag changes and shouldn't
+      // need the operator key. Read-only; returns the same effective config
+      // as GET /api/config.
+      if (req.method === 'GET' && pathname === '/v1/config') {
+        sendJson(res, 200, { config: loadRemoteConfig() });
         return;
       }
 

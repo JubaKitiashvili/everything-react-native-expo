@@ -65,6 +65,21 @@ export type {
   RecordAiActionInputError,
   RecordAiActionResult,
 } from './audit/aiActions.js';
+export {
+  DEFAULT_REMOTE_CONFIG,
+  REMOTE_CONFIG_SETTING_KEY,
+  cloneDefaultRemoteConfig,
+  mergeRemoteConfig,
+  parseRemoteConfig,
+  serializeRemoteConfig,
+  validateRemoteConfig,
+} from './config/remoteConfig.js';
+export type {
+  RemoteConfig,
+  ValidateRemoteConfigOk,
+  ValidateRemoteConfigError,
+  ValidateRemoteConfigResult,
+} from './config/remoteConfig.js';
 export { createDashboardServer, startDashboardServer } from './server.js';
 export type { DashboardServerHandle, DashboardServerOptions } from './server.js';
 export {
