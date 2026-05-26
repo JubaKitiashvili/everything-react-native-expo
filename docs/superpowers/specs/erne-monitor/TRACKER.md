@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-26
-**Current Phase:** Phase 7 — Launch (52/106)
+**Current Phase:** Phase 7 — Launch (55/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 168/222 tasks (Phases 1a–6 ✅ · Phase 7 52/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 270 dashboard-app (vitest) + 23 dashboard-app (playwright e2e) + 356 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 171/222 tasks (Phases 1a–6 ✅ · Phase 7 55/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 274 dashboard-app (vitest) + 24 dashboard-app (playwright e2e) + 378 dashboard-server tests + 131 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -212,7 +212,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ✅ |
 | 117.60 | SECURITY.md + responsible disclosure policy | ✅ |
 | 117.64 | Per-tenant ingest rate limiting | ⬜ |
-| 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ⬜ |
+| 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ✅ |
 | 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ✅ |
 | 117.103 | DPA template + subprocessor list (enterprise prerequisite) | ⬜ |
 
@@ -224,7 +224,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.34 | Cross-platform init test matrix (Expo SDK 52/53/54/55, managed/bare, mac/win/linux) | ✅ |
 | 117.35 | 90-second hero demo video (init → crash → Claude opens PR) | ⬜ |
 | 117.36 | 15-minute technical deep-dive video (architecture + self-hosting + MCP) | ⬜ |
-| 117.37 | README + landing page (3-line quickstart, comparison matrix, architecture diagram, benchmark numbers) | ⬜ |
+| 117.37 | README + landing page (3-line quickstart, comparison matrix, architecture diagram, benchmark numbers) — 🟡 README quickstart+matrix+architecture ✅; web landing page → 117.38; live benchmark numbers → 117.40/117.91 | ⬜ |
 | 117.40 | Benchmark blog post (ERNE vs Sentry vs measure.sh vs Bitdrift — reproducible numbers) | ⬜ |
 | 117.41 | Comparison pages (vs Sentry / measure.sh / Bitdrift / Firebase) | ✅ |
 | 117.43 | Example apps (Expo Router + tabs / bare RN / e-commerce clone / complex nav) | ⬜ |
@@ -246,7 +246,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.24 | React 19 Actions instrumentation | ✅ |
 | 117.27 | Deep link instrumentation | ✅ |
 | 117.28 | Background fetch lifecycle capture | ✅ |
-| 117.29 | App size tracking + bundle diff per build | ⬜ |
+| 117.29 | App size tracking + bundle diff per build | ✅ |
 | 117.30 | Custom dimensions / user properties for slicing | ✅ |
 | 117.31 | Offline event queue with resumable uploads | ✅ |
 | 117.32 | JS+native temporal correlation timeline (honest rename from "causal graph") | ✅ |
@@ -259,7 +259,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.51 | Caching layer (Redis/Valkey: rate limiting, session dedup, hot-path query cache) | ✅ |
 | 117.52 | Brownfield RN support (SDK init from native host, cross-boundary session continuity) | ⬜ |
 | 117.53 | AST-based auto-discovery (ts-morph scan of routes/navigation/API clients) | ⬜ |
-| 117.54 | Copy-as-AI-context button on crash/error detail panels | ⬜ |
+| 117.54 | Copy-as-AI-context button on crash/error detail panels | ✅ |
 | 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
 | 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ✅ |
 | 117.62 | SDK key rotation + revocation endpoint | ⬜ |
