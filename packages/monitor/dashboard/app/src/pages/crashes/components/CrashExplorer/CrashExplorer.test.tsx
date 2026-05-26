@@ -175,6 +175,28 @@ describe('CrashGroupDetail', () => {
     );
     expect(screen.getByText(/no stack captured/i)).toBeInTheDocument();
   });
+
+  test('"Copy as AI context" writes a context block containing the crash message', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(
+      <CrashGroupDetail
+        group={group({ message: 'TypeError: copy me' })}
+        latestEvent={crashEvent({
+          payload: { stack: 'TypeError: copy me\n    at Foo.render (App.tsx:1:1)' },
+        })}
+        now={NOW}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: /copy as ai context/i });
+    await userEvent.click(button);
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText.mock.calls[0]![0]).toContain('TypeError: copy me');
+    expect(await screen.findByRole('button', { name: /copied/i })).toBeInTheDocument();
+  });
 });
 
 describe('CrashExplorer integration', () => {

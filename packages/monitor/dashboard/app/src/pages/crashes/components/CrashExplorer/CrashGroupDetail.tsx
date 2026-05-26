@@ -1,7 +1,9 @@
+import { useRef, useState } from 'react';
 import type { CrashGroupRecord, EventRecord } from '@/shared/api/types';
 import { Pill } from '@/shared/ui/Pill/Pill';
 import { Timestamp } from '@/shared/ui/Timestamp/Timestamp';
 import { StackViewer } from './StackViewer';
+import { buildAiContext } from './buildAiContext';
 import styles from './CrashGroupDetail.module.css';
 
 export interface CrashGroupDetailProps {
@@ -31,6 +33,17 @@ export function CrashGroupDetail({ group, latestEvent, now }: CrashGroupDetailPr
   const stack = readStack(latestEvent);
   const breadcrumbs = readBreadcrumbs(latestEvent);
   const aiSuggestion = readAiSuggestion(group, latestEvent);
+  const [copied, setCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Copy a Claude-ready context block; brief "Copied" feedback then revert.
+  // Guarded so jsdom / clipboard-less environments don't throw.
+  const handleCopy = () => {
+    void navigator.clipboard?.writeText(buildAiContext({ group, latestEvent }));
+    setCopied(true);
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <div className={styles.detail}>
@@ -40,6 +53,13 @@ export function CrashGroupDetail({ group, latestEvent, now }: CrashGroupDetailPr
             {group.status}
           </Pill>
           <code className={styles.fingerprint}>{group.fingerprint}</code>
+          <button
+            type="button"
+            className={copied ? `${styles.copyButton} ${styles.copied}` : styles.copyButton}
+            onClick={handleCopy}
+          >
+            {copied ? 'Copied' : 'Copy as AI context'}
+          </button>
         </div>
         <p className={styles.message}>{group.message}</p>
       </header>

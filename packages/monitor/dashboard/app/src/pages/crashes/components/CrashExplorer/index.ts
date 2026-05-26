@@ -8,3 +8,5 @@ export { StackViewer } from './StackViewer';
 export type { StackViewerProps } from './StackViewer';
 export { parseStack } from './parseStack';
 export type { ParsedStack, ParsedStackFrame } from './parseStack';
+export { buildAiContext } from './buildAiContext';
+export type { BuildAiContextInput } from './buildAiContext';

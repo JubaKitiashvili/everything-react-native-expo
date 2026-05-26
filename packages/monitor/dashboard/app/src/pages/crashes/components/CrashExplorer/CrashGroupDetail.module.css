@@ -20,6 +20,32 @@
   flex-wrap: wrap;
 }
 
+.copyButton {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.copyButton:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.copyButton.copied {
+  color: var(--color-brand-mint);
+  border-color: color-mix(in srgb, var(--color-brand-mint) 40%, transparent);
+}
+
 .fingerprint {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
