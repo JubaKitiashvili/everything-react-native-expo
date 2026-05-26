@@ -250,3 +250,20 @@ Found a vulnerability? **Do not open a public issue.** Report it privately follo
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+### Contributor License Agreement
+
+ERNE uses a lightweight Contributor License Agreement (CLA) to keep the project's
+licensing clean and MIT-compatible. The first time you open a pull request, an
+automated bot (powered by [`contributor-assistant/github-action`](https://github.com/contributor-assistant/github-action))
+will check whether you have signed and, if not, comment on your PR with a short
+phrase to reply with. Signing is a one-time action: post the requested comment
+once, and your signature is recorded for all future contributions.
+
+- Read the agreement here: [CLA.md](CLA.md)
+- To sign, reply to the PR with the exact phrase the bot asks for:
+  `I have read the CLA Document and I hereby sign the CLA`
+
+Maintainers and trusted bots are allowlisted and are not asked to sign. The CLA
+check runs as a status check on each PR (see `.github/workflows/cla.yml`); a PR
+cannot merge until every commit author has signed.

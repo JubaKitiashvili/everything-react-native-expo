@@ -1,0 +1,113 @@
+name: CLA Assistant
+
+# Asks first-time contributors to sign the Contributor License Agreement
+# (CLA.md at the repo root) before their pull requests can merge, using the
+# well-known contributor-assistant/github-action (the cla-assistant flow).
+#
+# How it works:
+#   - On a pull request, the action checks whether every commit author has
+#     signed. If not, it posts a comment asking them to sign by replying to the
+#     PR with the exact phrase below.
+#   - When a contributor comments "I have read the CLA Document and I hereby
+#     sign the CLA", the action records their signature in a JSON file
+#     (signatures/cla.json) on the configured signatures branch and re-checks
+#     the PR, turning its status check green.
+#
+# Why pull_request_target: the action needs write access to the signatures
+# store and to set the PR status, which the read-only token on forked
+# pull_request events cannot provide. pull_request_target runs in the context
+# of the base repo with its secrets. We do NOT check out untrusted PR code in
+# this workflow, so this is safe — the action only reads PR metadata and writes
+# the signatures file.
+#
+# IMPORTANT — maintainer setup required (see CONTRIBUTING.md):
+#   - This action REQUIRES a PERSONAL_ACCESS_TOKEN repository secret (a classic
+#     PAT or fine-grained token with `repo` / contents:write on the signatures
+#     store) to persist signatures. GITHUB_TOKEN alone cannot reliably commit
+#     the signatures file across branches/repos. The token-presence guard below
+#     skips the run with a clear message when the secret is absent, so the
+#     workflow degrades gracefully instead of failing on misconfiguration.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+# Least-privilege: enough to read PRs, post the CLA comment, set the status
+# check, and let the action manage the signatures store.
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: cla-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  cla-check:
+    name: verify CLA signature
+    runs-on: ubuntu-latest
+    # Only run on PR events or on the specific "sign" / "recheck" comments —
+    # this keeps the job from firing on every unrelated issue comment.
+    if: |
+      (github.event_name == 'pull_request_target') ||
+      (github.event.comment.html_url != null &&
+        (contains(github.event.comment.body, 'I have read the CLA Document and I hereby sign the CLA') ||
+         contains(github.event.comment.body, 'recheck')))
+    steps:
+      # Guard: the action cannot persist signatures without PERSONAL_ACCESS_TOKEN.
+      # When the secret is missing (e.g. on forks or before maintainer setup),
+      # skip with an explanatory message instead of failing the run.
+      - name: Check for personal access token
+        id: token
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PERSONAL_ACCESS_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "PERSONAL_ACCESS_TOKEN is not set — skipping CLA check."
+            echo "Add a PERSONAL_ACCESS_TOKEN repository secret to enable the CLA bot (see CONTRIBUTING.md)."
+          fi
+
+      - name: CLA Assistant
+        if: steps.token.outputs.present == 'true'
+        uses: contributor-assistant/github-action@v2.6.1
+        env:
+          # GITHUB_TOKEN authorizes commenting and status checks on this repo.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PERSONAL_ACCESS_TOKEN authorizes writing the signatures file. Required.
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          # Where signatures are recorded. Kept on a dedicated branch so the
+          # ledger never lands on main. The maintainer must create the
+          # `cla-signatures` branch (an empty orphan branch is fine).
+          path-to-signatures: 'signatures/cla.json'
+          branch: 'cla-signatures'
+
+          # The CLA document contributors are agreeing to.
+          path-to-document: 'https://github.com/JubaKitiashvili/everything-react-native-expo/blob/main/CLA.md'
+
+          # The exact phrase a contributor must comment to sign.
+          custom-allsigned-prcomment: 'All contributors have signed the CLA. Thank you!'
+          custom-notsigned-prcomment: >-
+            Thank you for your contribution to ERNE! Before we can merge this pull
+            request, we need you to sign our
+            [Contributor License Agreement](https://github.com/JubaKitiashvili/everything-react-native-expo/blob/main/CLA.md).
+
+            Please read the CLA, then post a **new** comment on this pull request with the
+            following text exactly:
+          custom-pr-sign-comment: 'I have read the CLA Document and I hereby sign the CLA'
+          signed-commit-message: 'chore(cla): @$contributorName has signed the CLA in #$pullRequestNo'
+
+          # Maintainers and bots that never need to sign. Update as the team grows.
+          allowlist: 'JubaKitiashvili,dependabot[bot],github-actions[bot],renovate[bot]'
+
+          # Re-check the PR when a contributor types "recheck" instead of re-opening.
+          use-dco-flag: false
+          remote-organization-name: ''
+          remote-repository-name: ''
