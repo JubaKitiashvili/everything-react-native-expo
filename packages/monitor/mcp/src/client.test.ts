@@ -213,7 +213,7 @@ describe('DashboardClient — write endpoint (Task 117.82)', () => {
           lastSeen: 2,
           eventCount: 3,
           sessionCount: 1,
-          status: 'acknowledged',
+          status: 'investigating',
         },
       });
     });
@@ -221,11 +221,11 @@ describe('DashboardClient — write endpoint (Task 117.82)', () => {
       dashboardUrl: 'http://localhost',
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
-    const result = await client.setCrashGroupStatus('fp-1', 'acknowledged');
+    const result = await client.setCrashGroupStatus('fp-1', 'investigating');
     expect(seenMethod).toBe('POST');
     expect(seenUrl).toBe('http://localhost/api/crash-groups/fp-1/status');
-    expect(JSON.parse(seenBody!)).toEqual({ status: 'acknowledged' });
-    expect(result.group.status).toBe('acknowledged');
+    expect(JSON.parse(seenBody!)).toEqual({ status: 'investigating' });
+    expect(result.group.status).toBe('investigating');
   });
 
   test('setCrashGroupStatus URL-encodes the fingerprint', async () => {

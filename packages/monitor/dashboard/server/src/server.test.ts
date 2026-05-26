@@ -735,3 +735,58 @@ describe('AI agent action audit (Task 117.81)', () => {
     expect(body.total).toBe(2);
   });
 });
+
+describe('crash-group status mutation (Task 117.82 follow-up)', () => {
+  let ctx: Awaited<ReturnType<typeof openServer>>;
+
+  beforeEach(async () => {
+    ctx = await openServer();
+    ctx.store.upsertCrashGroup({
+      fingerprint: 'fp-status-1',
+      message: 'Boom',
+      firstSeen: 1,
+      lastSeen: 2,
+      eventCount: 3,
+      sessionCount: 1,
+      status: 'new',
+    });
+  });
+  afterEach(async () => {
+    await ctx.close();
+  });
+
+  test('POST sets a valid status and returns the updated group', async () => {
+    const res = await fetch(`${ctx.url}/api/crash-groups/fp-status-1/status`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'investigating' }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; group: { status: string } };
+    expect(body.ok).toBe(true);
+    expect(body.group.status).toBe('investigating');
+    // Persisted.
+    expect(ctx.store.listCrashGroups()[0]?.status).toBe('investigating');
+  });
+
+  test('rejects an invalid status with 400 + allowed list', async () => {
+    const res = await fetch(`${ctx.url}/api/crash-groups/fp-status-1/status`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'acknowledged' }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string; allowed: string[] };
+    expect(body.error).toBe('invalid_status');
+    expect(body.allowed).toContain('investigating');
+  });
+
+  test('returns 404 for an unknown fingerprint', async () => {
+    const res = await fetch(`${ctx.url}/api/crash-groups/nope/status`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'resolved' }),
+    });
+    expect(res.status).toBe(404);
+  });
+});

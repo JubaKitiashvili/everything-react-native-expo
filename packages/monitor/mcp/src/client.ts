@@ -53,7 +53,7 @@ export interface CrashGroupRecord {
   lastSeen: number;
   eventCount: number;
   sessionCount: number;
-  status: 'new' | 'acknowledged' | 'resolved' | 'regressed' | string;
+  status: 'new' | 'investigating' | 'resolved' | 'ignored' | string;
   topScreen?: string;
   aiSuggestion?: Record<string, unknown>;
 }

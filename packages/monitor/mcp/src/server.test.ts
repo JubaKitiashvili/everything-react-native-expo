@@ -94,7 +94,7 @@ function makeStubClient(overrides: Partial<DashboardClient> = {}): DashboardClie
         lastSeen: NOW - 3000,
         eventCount: 20,
         sessionCount: 5,
-        status: 'acknowledged',
+        status: 'investigating',
       },
     ],
     listBugReports: async (): Promise<BugReportRecord[]> => [
@@ -423,7 +423,7 @@ describe('createMcpServer — permission tiers (Task 117.82)', () => {
       fingerprint: 'fp-1',
     })) as { fingerprint: string; status: string; group: { fingerprint: string } };
     expect(confirmWrite).toHaveBeenCalledTimes(1);
-    expect(out.status).toBe('acknowledged');
+    expect(out.status).toBe('investigating');
     expect(out.fingerprint).toBe('fp-1');
   });
 
@@ -436,7 +436,7 @@ describe('createMcpServer — permission tiers (Task 117.82)', () => {
     const out = (await handle.invokeTool('acknowledge_crash_group', {
       fingerprint: 'fp-9',
     })) as { status: string };
-    expect(out.status).toBe('acknowledged');
+    expect(out.status).toBe('investigating');
   });
 
   test('refused write call emits an errored audit row', async () => {

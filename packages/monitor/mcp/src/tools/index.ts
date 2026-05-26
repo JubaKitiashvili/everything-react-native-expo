@@ -86,7 +86,10 @@ function defineTool<S extends ZodRawShape>(spec: {
 // ------- shared schema atoms -------
 
 const severityEnum = z.enum(['critical', 'warning', 'info', 'success', 'muted']);
-const crashStatusEnum = z.enum(['new', 'acknowledged', 'resolved', 'regressed']);
+// Canonical crash-group statuses — must match the dashboard server's
+// `CrashGroupStatus` (storage/types.ts): new | investigating | resolved
+// | ignored. "Acknowledging" a crash moves it new → investigating.
+const crashStatusEnum = z.enum(['new', 'investigating', 'resolved', 'ignored']);
 const platformEnum = z.enum(['ios', 'android']);
 
 // ------- derivation helpers -------
@@ -524,16 +527,18 @@ const acknowledgeCrashGroupSchema = {
 const acknowledgeCrashGroup = defineTool({
   name: 'acknowledge_crash_group',
   description:
-    'Mark a crash group as acknowledged (triaged). MUTATES dashboard state — only runs when the operator has granted write permission.',
+    'Acknowledge a crash group — move it from "new" to "investigating" (triaged). MUTATES dashboard state — only runs when the operator has granted write permission.',
   example:
     '`{ fingerprint: "a1b2c3d4" }` — acknowledge an open crash so it drops off the "new" board.',
   tier: 'write',
   inputSchema: acknowledgeCrashGroupSchema,
   handler: async (args, client) => {
-    const result = await client.setCrashGroupStatus(args.fingerprint, 'acknowledged');
+    // Server's canonical statuses don't include "acknowledged"; the
+    // operator-facing "acknowledge" action maps to `investigating`.
+    const result = await client.setCrashGroupStatus(args.fingerprint, 'investigating');
     return {
       fingerprint: args.fingerprint,
-      status: 'acknowledged' as const,
+      status: 'investigating' as const,
       group: sanitizeValue(result.group, { wrap: true, path: 'crashGroup' }),
     };
   },

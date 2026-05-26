@@ -7,6 +7,7 @@ import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js
 import { seedDemoData } from './demo/seed.js';
 import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js';
 import type {
+  CrashGroupStatus,
   EventListFilter,
   SymbolFileRecord,
   SymbolPlatform,
@@ -51,6 +52,16 @@ function generateSymbolId(): string {
 }
 
 const DEFAULT_RETENTION_DAYS = 14;
+
+/** Task 117.82 follow-up — canonical crash-group statuses accepted by
+ *  `POST /api/crash-groups/:fingerprint/status`. Mirrors
+ *  `CrashGroupStatus` in storage/types.ts. */
+const VALID_CRASH_STATUSES: readonly CrashGroupStatus[] = [
+  'new',
+  'investigating',
+  'resolved',
+  'ignored',
+];
 
 function maskToken(token: string | null): string | null {
   if (!token) return null;
@@ -647,6 +658,53 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       if (req.method === 'GET' && pathname === '/api/crash-groups') {
         const groups = store.listCrashGroups();
         sendJson(res, 200, { groups });
+        return;
+      }
+
+      // Task 117.82 follow-up — mutate a crash group's status. Backs the
+      // MCP `acknowledge_crash_group` write tool. Path:
+      //   POST /api/crash-groups/:fingerprint/status   body { status }
+      if (
+        req.method === 'POST' &&
+        pathname.startsWith('/api/crash-groups/') &&
+        pathname.endsWith('/status')
+      ) {
+        const fingerprint = decodeURIComponent(
+          pathname.slice('/api/crash-groups/'.length, -'/status'.length),
+        );
+        if (!fingerprint) {
+          sendJson(res, 400, { error: 'missing_fingerprint' });
+          return;
+        }
+        void readJsonBody(req)
+          .then((body) => {
+            const status = (body as { status?: unknown }).status;
+            if (!VALID_CRASH_STATUSES.includes(status as CrashGroupStatus)) {
+              sendJson(res, 400, {
+                error: 'invalid_status',
+                allowed: VALID_CRASH_STATUSES,
+              });
+              return;
+            }
+            // Confirm the group exists so the caller gets a 404 rather
+            // than a silent no-op when the fingerprint is wrong.
+            const existing = store
+              .listCrashGroups({ limit: 1000 })
+              .find((g) => g.fingerprint === fingerprint);
+            if (!existing) {
+              sendJson(res, 404, { error: 'not_found', fingerprint });
+              return;
+            }
+            store.setCrashGroupStatus(fingerprint, status as CrashGroupStatus);
+            const updated = store
+              .listCrashGroups({ limit: 1000 })
+              .find((g) => g.fingerprint === fingerprint);
+            sendJson(res, 200, { ok: true, group: updated });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
         return;
       }
 
