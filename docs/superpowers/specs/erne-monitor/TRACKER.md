@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (41/106)
+**Current Phase:** Phase 7 — Launch (46/106)
 **Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
-**Overall Progress:** 157/222 tasks (Phases 1a–6 ✅ · Phase 7 41/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs) · 933 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 303 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 162/222 tasks (Phases 1a–6 ✅ · Phase 7 46/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance) · 967 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 334 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -24,7 +24,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch (expanded) | 41/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
+| 7 Launch (expanded) | 46/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -248,25 +248,25 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.28 | Background fetch lifecycle capture | ✅ |
 | 117.29 | App size tracking + bundle diff per build | ⬜ |
 | 117.30 | Custom dimensions / user properties for slicing | ✅ |
-| 117.31 | Offline event queue with resumable uploads | ⬜ |
-| 117.32 | JS+native temporal correlation timeline (honest rename from "causal graph") | ⬜ |
+| 117.31 | Offline event queue with resumable uploads | ✅ |
+| 117.32 | JS+native temporal correlation timeline (honest rename from "causal graph") | ✅ |
 
 ### Cross-cutting infrastructure (all milestones)
 
 | # | Task | Status |
 |---|------|--------|
 | 117.50 | ClickHouse materialized views (crash-free rate, latency percentiles, user impact) — deferred Phase 8 if slip | ⬜ |
-| 117.51 | Caching layer (Redis/Valkey: rate limiting, session dedup, hot-path query cache) | ⬜ |
+| 117.51 | Caching layer (Redis/Valkey: rate limiting, session dedup, hot-path query cache) | ✅ |
 | 117.52 | Brownfield RN support (SDK init from native host, cross-boundary session continuity) | ⬜ |
 | 117.53 | AST-based auto-discovery (ts-morph scan of routes/navigation/API clients) | ⬜ |
 | 117.54 | Copy-as-AI-context button on crash/error detail panels | ⬜ |
 | 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
-| 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ⬜ |
+| 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ✅ |
 | 117.62 | SDK key rotation + revocation endpoint | ⬜ |
 | 117.63 | Webhook HMAC signature (X-ERNE-Signature header) | ✅ |
 | 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ✅ |
 | 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ✅ |
-| 117.69 | Structured server logging (JSON, correlation IDs) | ⬜ |
+| 117.69 | Structured server logging (JSON, correlation IDs) | ✅ |
 | 117.70 | Backup/restore CLI commands (dump + restore across storage adapters) | ✅ |
 | 117.72 | SDK version telemetry + upgrade nag (dashboard badge if outdated) | ✅ |
 | 117.73 | npm release channels (stable/beta/canary + promotion workflow) | ✅ |
