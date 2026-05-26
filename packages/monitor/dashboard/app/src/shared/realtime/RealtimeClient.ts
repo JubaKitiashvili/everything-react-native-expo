@@ -46,7 +46,7 @@ interface RealtimeClientInternals {
  *   in sync without polling.
  *
  * The handler is deliberately framework-agnostic. React wiring lives in
- * `useRealtime.ts`; the imperative class here is unit-testable with a
+ * `RealtimeProvider`; the imperative class here is unit-testable with a
  * mock WebSocket impl.
  */
 export class RealtimeClient {

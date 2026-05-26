@@ -134,6 +134,24 @@ describe('buildJourneyGraph', () => {
     expect(screens[0]).toMatchObject({ screen: 'Home', visits: 2 });
   });
 
+  test('preserves multi-word screen names in transition from/to', () => {
+    // Regression: keying transitions on a space-delimited string would split
+    // "Order History" → "Checkout Page" into the wrong four tokens and drop
+    // the trailing words. The from/to must round-trip verbatim.
+    const events = [
+      event({ sessionId: 's1', screen: 'Order History', timestamp: 1 }),
+      event({ sessionId: 's1', screen: 'Checkout Page', timestamp: 2 }),
+    ];
+    const { transitions, screens } = buildJourneyGraph(events);
+    expect(transitions).toEqual([
+      { from: 'Order History', to: 'Checkout Page', count: 1 },
+    ]);
+    expect(screens.map((s) => s.screen).sort()).toEqual([
+      'Checkout Page',
+      'Order History',
+    ]);
+  });
+
   test('returns empty graph for empty input', () => {
     expect(buildJourneyGraph([])).toEqual({ screens: [], transitions: [] });
   });

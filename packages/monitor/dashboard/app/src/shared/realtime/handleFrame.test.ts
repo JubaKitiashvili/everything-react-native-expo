@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
-import { handleFrame } from './useRealtime';
+import { handleFrame } from './handleFrame';
 import type { EventRecord } from '../api/types';
 
 function makeEvent(type: string): EventRecord {
