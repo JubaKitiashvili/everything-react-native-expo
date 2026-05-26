@@ -16,6 +16,8 @@ import type {
 } from './storage/types.js';
 import { IngestWebSocketHandler } from './ingest/wsHandler.js';
 import type { IngestWsHandlerOptions } from './ingest/wsHandler.js';
+import { mapLogs, mapMetrics, mapTraces } from './ingest/otlp.js';
+import type { EventRecord } from './storage/types.js';
 import { RetentionPurgeJob } from './jobs/retention.js';
 import type { RetentionPurgeJobOptions } from './jobs/retention.js';
 import {
@@ -1380,6 +1382,42 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
             store.updateBugReport(id, cleaned);
             const updated = store.listBugReports().find((r) => r.id === id) ?? null;
             sendJson(res, 200, { report: updated });
+          })
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      // Task 117.11 — OpenTelemetry OTLP/HTTP **JSON** ingest. Lets any
+      // OTel SDK / collector export telemetry to ERNE without the bespoke
+      // WS protocol. Each endpoint reads + parses the JSON body, maps it
+      // to EventRecord[] via the pure mapper, persists every record on the
+      // same store insert path the WS handler uses, and returns the OTLP
+      // success envelope (`{ partialSuccess: {} }`) with 200. Malformed
+      // JSON yields a structured 400 — the handler never crashes on bad
+      // input. Lives at the root (NOT under /api/) per OTLP convention.
+      if (
+        req.method === 'POST' &&
+        (pathname === '/v1/traces' || pathname === '/v1/logs' || pathname === '/v1/metrics')
+      ) {
+        // OTLP exporters batch many spans/logs/points per request — allow
+        // a generous body cap (4 MiB) well above the default JSON limit.
+        void readJsonBody(req, 4 * 1024 * 1024)
+          .then((body) => {
+            let records: EventRecord[];
+            if (pathname === '/v1/traces') records = mapTraces(body);
+            else if (pathname === '/v1/logs') records = mapLogs(body);
+            else records = mapMetrics(body);
+            let accepted = 0;
+            for (const record of records) {
+              if (store.insertEvent(record).inserted) accepted += 1;
+            }
+            // OTLP success shape: an empty `partialSuccess` signals full
+            // acceptance. We surface our accepted count alongside it for
+            // observability without breaking the contract.
+            sendJson(res, 200, { partialSuccess: {}, accepted });
           })
           .catch((err: unknown) => {
             const message = err instanceof Error ? err.message : String(err);
