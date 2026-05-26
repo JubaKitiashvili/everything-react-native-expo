@@ -1,15 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// One-terminal e2e runner:
-//   1. `node e2e/fixtures/start-server.mjs` boots the dashboard server
-//      with a seeded in-memory-ish SQLite DB + the built app as its
-//      public dir, on PORT (default 4173).
-//   2. Playwright waits for that URL, then drives the 17 panel specs.
-//
-// CI runs the same command with FRESH_BUILD=1 so the built app bundle
-// is always rebuilt before the suite.
+// One-terminal e2e runner for dashboard-next:
+//   `node e2e/fixtures/start-server.mjs ${PORT}` builds next → next/dist,
+//   seeds a temp SQLite DB, and serves it on PORT (default 4174).
+// CI sets FRESH_BUILD=1 so the bundle is always rebuilt before the suite.
 
-const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
+const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4174);
 
 export default defineConfig({
   testDir: './e2e/specs',

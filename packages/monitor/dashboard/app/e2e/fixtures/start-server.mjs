@@ -1,16 +1,7 @@
-// Starts a seeded dashboard server on the port passed as the first argv,
-// so Playwright's webServer hook has a warm, deterministic target.
+// Boots a seeded dashboard server serving the built dashboard app, so
+// Playwright (and ad-hoc smoke checks) have a warm, deterministic target.
 //
-// Responsibilities:
-//   1. Locate (or build) the static dashboard app bundle.
-//   2. Open a fresh temp SQLite DB.
-//   3. Seed the DB with fixture events, sessions, crash groups, bug
-//      reports, alert rules, symbols, settings — enough rows to let
-//      every panel render non-empty state.
-//   4. Start the dashboard server on the requested port.
-//
-// Kept in plain ESM (.mjs) so `node ./e2e/fixtures/start-server.mjs 4173`
-// just works — no extra compile step in CI.
+// Plain ESM so `node ./e2e/fixtures/start-server.mjs 4174` just works.
 
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -23,7 +14,7 @@ const APP_ROOT = resolve(here, '..', '..');
 const SERVER_ROOT = resolve(APP_ROOT, '..', 'server');
 const PUBLIC_DIR = resolve(APP_ROOT, '..', 'public');
 
-const port = Number(process.argv[2] ?? 4173);
+const port = Number(process.argv[2] ?? 4174);
 
 function ensureBuilt() {
   if (process.env.FRESH_BUILD === '1' || !existsSync(join(PUBLIC_DIR, 'index.html'))) {
@@ -35,13 +26,10 @@ function ensureBuilt() {
 async function start() {
   ensureBuilt();
 
-  // Temp DB lives alongside each run so the specs never see each other's data.
-  const tmpRoot = mkdtempSync(join(tmpdir(), 'erne-monitor-e2e-'));
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'erne-monitor-next-e2e-'));
   const dbPath = join(tmpRoot, 'dashboard.db');
   mkdirSync(dirname(dbPath), { recursive: true });
 
-  // The server package is in the sibling workspace — resolve it relative to
-  // the dashboard app so this script works whether run from CI or locally.
   const serverEntry = resolve(SERVER_ROOT, 'dist', 'index.js');
   if (!existsSync(serverEntry)) {
     console.log('[e2e] building dashboard server…');
@@ -61,7 +49,7 @@ async function start() {
   });
 
   const url = `http://127.0.0.1:${handle.port}`;
-  console.log(`[e2e] dashboard listening on ${url}`);
+  console.log(`[e2e] dashboard-next listening on ${url}`);
   console.log(`[e2e] seeded DB at ${dbPath}`);
 
   const shutdown = async () => {
