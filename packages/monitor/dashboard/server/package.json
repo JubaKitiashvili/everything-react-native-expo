@@ -32,6 +32,7 @@
   },
   "optionalDependencies": {
     "better-queue": "^3.8.12",
+    "ioredis": "^5.4.1",
     "pg": "^8.13.1"
   },
   "devDependencies": {

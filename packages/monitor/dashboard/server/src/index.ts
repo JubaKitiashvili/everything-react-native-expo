@@ -113,3 +113,20 @@ export type {
   QueueEventMap,
   QueueEventName,
 } from './queue/IQueue.js';
+export { createLogger, createRequestId, LOG_LEVELS } from './logging/logger.js';
+export type {
+  Logger,
+  LogLevel,
+  LogFields,
+  LogStream,
+  CreateLoggerOptions,
+} from './logging/logger.js';
+export { InMemoryCache } from './cache/in-memory-cache.js';
+export type { InMemoryCacheOptions } from './cache/in-memory-cache.js';
+export { RedisCacheAdapter, createRedisCache } from './cache/redis-cache.js';
+export type {
+  RedisCacheOptions,
+  RedisClientLike,
+  RedisCtor,
+} from './cache/redis-cache.js';
+export type { ICache, CacheStats } from './cache/ICache.js';

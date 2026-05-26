@@ -31,6 +31,9 @@ import {
 } from './security/headers.js';
 import { PrometheusRegistry, PROMETHEUS_CONTENT_TYPE } from './metrics/prometheus.js';
 import { crashGroupCommonFrames } from './analysis/commonFrames.js';
+import { createLogger, createRequestId, type Logger } from './logging/logger.js';
+import { InMemoryCache } from './cache/in-memory-cache.js';
+import type { ICache } from './cache/ICache.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -231,6 +234,32 @@ export interface DashboardServerOptions {
         /** Expose `/metrics` without the API-key gate. Default: false. */
         public?: boolean;
       };
+  /**
+   * Task 117.69 — structured request logger. Default: a logger at `info`
+   * writing JSON lines to `process.stderr`. Each HTTP request gets a
+   * correlation id (a `child` logger bound to `{ requestId }`) and logs a
+   * `request.start` + `request.finish` pair (method, path, status,
+   * durationMs) plus `request.error` on a thrown handler. Logging is HTTP
+   * only — it deliberately never touches the hot WebSocket ingest path.
+   *
+   * Tests inject a capturing stream + fixed clock to assert log shape, and
+   * `generateRequestId` for a stable correlation id.
+   */
+  logger?: Logger;
+  /**
+   * Task 117.69 — request-id generator override (tests inject a fixed id
+   * so the emitted correlation id is deterministic). Defaults to the
+   * built-in `createRequestId`.
+   */
+  generateRequestId?: () => string;
+  /**
+   * Task 117.51 — read-path cache. Default: an `InMemoryCache` fronting a
+   * small set of hot GET endpoints (currently `GET /api/crash-groups`).
+   * Set `false` to disable caching entirely (every read hits the store).
+   * Pass an `ICache` instance (e.g. a `RedisCacheAdapter` from
+   * `createRedisCache`) to share a cache across processes.
+   */
+  cache?: ICache | false;
 }
 
 export interface DashboardServerHandle {
@@ -251,6 +280,12 @@ export interface DashboardServerHandle {
    * test-fire button can call it directly without going through HTTP.
    */
   alertEvaluator: AlertEvaluator | null;
+  /**
+   * Task 117.51 — the read-path cache in front of hot GET endpoints.
+   * `null` when caching is disabled via `options.cache = false`. Exposed
+   * so tests can assert hit/miss/invalidation behaviour directly.
+   */
+  cache: ICache | null;
   close: () => Promise<void>;
   url: string;
 }
@@ -374,6 +409,22 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     typeof metricsOption === 'object' && metricsOption?.public === true;
   const store =
     options.store ?? new DashboardStore({ dbPath: options.dbPath ?? defaultDashboardDbPath() });
+
+  // Task 117.69 — structured request logger. Default: info → stderr.
+  const logger = options.logger ?? createLogger({ level: 'info' });
+  const generateRequestId = options.generateRequestId ?? createRequestId;
+
+  // Task 117.51 — read-path cache. Default: in-memory; `false` disables.
+  const cache: ICache | null = options.cache === false ? null : (options.cache ?? new InMemoryCache());
+  // Cache key + TTL for the crash-group list. Short TTL keeps the
+  // dashboard's poll loop from re-scanning SQLite on every tick while
+  // bounding staleness; explicit invalidation on a status mutation keeps
+  // the list correct the instant an operator acknowledges a group.
+  const CRASH_GROUPS_CACHE_KEY = 'crash-groups:list';
+  const CRASH_GROUPS_CACHE_TTL_MS = 3_000;
+  const invalidateCrashGroupsCache = (): void => {
+    if (cache) void cache.del(CRASH_GROUPS_CACHE_KEY);
+  };
 
   // Resolve the required API key once at startup. Explicit null disables
   // the gate even when the env var is set (useful for tests and local
@@ -573,6 +624,22 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? host}`);
     const pathname = requestUrl.pathname;
 
+    // Task 117.69 — per-request correlation id + start/finish logging.
+    // HTTP control plane only; the WS ingest path is never routed here.
+    const requestId = generateRequestId();
+    const reqLogger = logger.child({ requestId });
+    const startedAt = Date.now();
+    const method = req.method ?? 'GET';
+    reqLogger.info('request.start', { method, path: pathname });
+    res.once('finish', () => {
+      reqLogger.info('request.finish', {
+        method,
+        path: pathname,
+        status: res.statusCode,
+        durationMs: Date.now() - startedAt,
+      });
+    });
+
     try {
       // Task 117.61 — API-key gate. Enforced only when a key is
       // configured, only on `/api/*` paths, and always skipped for
@@ -657,6 +724,33 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'GET' && pathname === '/api/crash-groups') {
+        // Task 117.51 — serve the crash-group list from the read cache
+        // when warm. The list is invalidated explicitly on any status
+        // mutation (see POST .../status below), so a cache hit can never
+        // serve a stale status — only a list at most CRASH_GROUPS_CACHE_TTL_MS
+        // behind a brand-new group from ingest, which the poll loop
+        // tolerates.
+        if (cache) {
+          void cache
+            .get<{ groups: unknown }>(CRASH_GROUPS_CACHE_KEY)
+            .then((cached) => {
+              if (cached !== undefined) {
+                sendJson(res, 200, cached);
+                return;
+              }
+              const groups = store.listCrashGroups();
+              const body = { groups };
+              void cache.set(CRASH_GROUPS_CACHE_KEY, body, CRASH_GROUPS_CACHE_TTL_MS);
+              sendJson(res, 200, body);
+            })
+            .catch(() => {
+              // A cache failure must never fail the read — fall back to
+              // the store directly.
+              const groups = store.listCrashGroups();
+              sendJson(res, 200, { groups });
+            });
+          return;
+        }
         const groups = store.listCrashGroups();
         sendJson(res, 200, { groups });
         return;
@@ -697,6 +791,9 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
               return;
             }
             store.setCrashGroupStatus(fingerprint, status as CrashGroupStatus);
+            // Task 117.51 — the cached crash-group list now reflects a
+            // stale status; drop it so the next GET rebuilds from store.
+            invalidateCrashGroupsCache();
             const updated = store
               .listCrashGroups({ limit: 1000 })
               .find((g) => g.fingerprint === fingerprint);
@@ -1162,6 +1259,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       sendJson(res, 404, { error: 'not_found', path: pathname });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      reqLogger.error('request.error', { method, path: pathname, message });
       sendJson(res, 500, { error: 'internal', message });
     }
   });
@@ -1178,6 +1276,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     websocket,
     retentionJob,
     alertEvaluator,
+    cache,
     url: `http://${host}:${port}`,
     close: () =>
       new Promise<void>((resolveClose) => {
@@ -1191,7 +1290,10 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         void drain.finally(() => {
           server.close(() => {
             store.close();
-            resolveClose();
+            // Task 117.51 — release the cache's resources (a Redis socket
+            // for the remote adapter; a no-op for in-memory). Failures
+            // here must not stall shutdown.
+            void Promise.resolve(cache?.close()).finally(() => resolveClose());
           });
         });
       }),
