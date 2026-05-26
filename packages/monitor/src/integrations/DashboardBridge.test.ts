@@ -174,4 +174,69 @@ describe('DashboardBridge', () => {
     for (let i = 0; i < 5; i++) bus.emit(evt());
     expect(bridge.bufferedCount()).toBeLessThanOrEqual(3);
   });
+
+  describe('ingest-key auth (apiKey)', () => {
+    it('connects with no token by default — URL is unchanged', () => {
+      const bus = new SignalBus();
+      const bridge = new DashboardBridge({
+        signalBus: bus,
+        url: 'ws://localhost:9000/runtime',
+        isDev: true,
+        WebSocket: FakeCtor,
+      });
+      bridge.start();
+      const ws = FakeWebSocket.instances[0]!;
+      expect(ws.url).toBe('ws://localhost:9000/runtime');
+      expect(ws.url).not.toContain('apiKey');
+      bridge.stop();
+    });
+
+    it('appends the apiKey as a URL-encoded query param when provided', () => {
+      const bus = new SignalBus();
+      const bridge = new DashboardBridge({
+        signalBus: bus,
+        url: 'ws://localhost:9000/runtime',
+        isDev: true,
+        WebSocket: FakeCtor,
+        apiKey: 'sec ret/+key',
+      });
+      bridge.start();
+      const ws = FakeWebSocket.instances[0]!;
+      expect(ws.url).toBe(
+        `ws://localhost:9000/runtime?apiKey=${encodeURIComponent('sec ret/+key')}`,
+      );
+      expect(ws.url).toContain('apiKey=sec%20ret%2F%2Bkey');
+      bridge.stop();
+    });
+
+    it('merges with an existing query string using & and preserves the fragment', () => {
+      const bus = new SignalBus();
+      const bridge = new DashboardBridge({
+        signalBus: bus,
+        url: 'wss://host/runtime?client=abc#frag',
+        isDev: true,
+        WebSocket: FakeCtor,
+        apiKey: 'tok',
+      });
+      bridge.start();
+      const ws = FakeWebSocket.instances[0]!;
+      expect(ws.url).toBe('wss://host/runtime?client=abc&apiKey=tok#frag');
+      bridge.stop();
+    });
+
+    it('treats an empty apiKey as no token (URL unchanged)', () => {
+      const bus = new SignalBus();
+      const bridge = new DashboardBridge({
+        signalBus: bus,
+        url: 'ws://localhost:9000/runtime',
+        isDev: true,
+        WebSocket: FakeCtor,
+        apiKey: '',
+      });
+      bridge.start();
+      const ws = FakeWebSocket.instances[0]!;
+      expect(ws.url).toBe('ws://localhost:9000/runtime');
+      bridge.stop();
+    });
+  });
 });

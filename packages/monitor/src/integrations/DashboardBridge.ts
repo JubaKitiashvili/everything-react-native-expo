@@ -22,6 +22,14 @@ export interface DashboardBridgeOptions {
   /** ws:// or wss:// URL of the ERNE dashboard runtime endpoint. */
   url: string;
   /**
+   * Optional ingest key. When set, it's appended to the WebSocket URL as a
+   * URL-encoded `?apiKey=<token>` query param so the bridge can connect to a
+   * dashboard server that has ingest-key auth enabled. Merges cleanly with
+   * any existing query string on `url`. Omit (the default) to connect with no
+   * token — behaviour is unchanged.
+   */
+  apiKey?: string;
+  /**
    * When true, the bridge is active only in dev. The dashboard is a dev
    * tool; production apps should ship with the bridge disabled.
    */
@@ -58,6 +66,21 @@ export interface DashboardBridgeOptions {
 }
 
 const READY_OPEN = 1;
+
+/**
+ * Appends `apiKey` to a ws(s):// URL as a URL-encoded query param, preserving
+ * any existing query string and fragment. Uses string surgery (not URL/
+ * URLSearchParams) so it stays portable across the browser and React Native
+ * type/runtime sets the bridge targets.
+ */
+function appendApiKey(url: string, apiKey: string): string {
+  const encoded = `apiKey=${encodeURIComponent(apiKey)}`;
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const fragment = hashIndex === -1 ? '' : url.slice(hashIndex);
+  const separator = base.includes('?') ? '&' : '?';
+  return `${base}${separator}${encoded}${fragment}`;
+}
 
 interface QueuedMessage {
   kind: 'event' | 'hello';
@@ -102,7 +125,10 @@ export class DashboardBridge {
 
   constructor(options: DashboardBridgeOptions) {
     this.bus = options.signalBus;
-    this.url = options.url;
+    this.url =
+      options.apiKey !== undefined && options.apiKey !== ''
+        ? appendApiKey(options.url, options.apiKey)
+        : options.url;
     this.isDev = options.isDev;
     const defaultCtor =
       typeof (globalThis as { WebSocket?: WebSocketCtor }).WebSocket ===

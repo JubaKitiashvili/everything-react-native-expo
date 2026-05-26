@@ -72,6 +72,93 @@ describe('createMonitorRuntime', () => {
     await runtime.shutdown();
   });
 
+  describe('RSC collector wiring (Task 69)', () => {
+    it('constructs the RSC collector and registers it with the client', async () => {
+      const runtime = await bootFresh();
+      expect(runtime.collectors.rsc).toBeDefined();
+      expect(runtime.collectors.rsc.name).toBe('rsc');
+      const names = runtime.client.getCollectors().map((c) => c.name);
+      expect(names).toContain('rsc');
+      await runtime.shutdown();
+    });
+
+    it('starts the RSC collector when the runtime starts', async () => {
+      const runtime = await bootFresh();
+      expect(runtime.collectors.rsc.isRunning()).toBe(false);
+      startMonitorRuntime(runtime);
+      expect(runtime.collectors.rsc.isRunning()).toBe(true);
+      await runtime.shutdown();
+      expect(runtime.collectors.rsc.isRunning()).toBe(false);
+    });
+
+    it('gates OFF by default and emits no RSC events even when started', async () => {
+      const runtime = await bootFresh();
+      startMonitorRuntime(runtime);
+      expect(runtime.collectors.rsc.isActive()).toBe(false);
+      const seen: string[] = [];
+      runtime.bus.onAll((e) => {
+        const name = (e.data as { name?: string } | undefined)?.name;
+        if (name === 'rsc') seen.push(name);
+      });
+      // A record on a non-RSC project must no-op.
+      runtime.collectors.rsc.recordServerRender('/home', 12);
+      expect(seen).toHaveLength(0);
+      await runtime.shutdown();
+    });
+
+    it('gates ON via deps.rscEnabled and emits an rsc custom event', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+          rscEnabled: true,
+        },
+      );
+      startMonitorRuntime(runtime);
+      expect(runtime.collectors.rsc.isActive()).toBe(true);
+      const seen: Array<Record<string, unknown>> = [];
+      runtime.bus.onAll((e) => {
+        const d = e.data as { name?: string; attributes?: Record<string, unknown> };
+        if (d?.name === 'rsc' && d.attributes) seen.push(d.attributes);
+      });
+      runtime.collectors.rsc.recordServerRender('/profile', 42, 'corr-1');
+      expect(seen).toHaveLength(1);
+      expect(seen[0]?.kind).toBe('server-render');
+      expect(seen[0]?.routePath).toBe('/profile');
+      expect(seen[0]?.serverRenderTimeMs).toBe(42);
+      await runtime.shutdown();
+    });
+
+    it('honors a custom deps.isRSCEnabled detector', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+          isRSCEnabled: () => true,
+        },
+      );
+      startMonitorRuntime(runtime);
+      expect(runtime.collectors.rsc.isActive()).toBe(true);
+      await runtime.shutdown();
+    });
+  });
+
   it('exposes the fingerprinter, sampler, and consent gate', async () => {
     const runtime = await bootFresh();
     expect(runtime.fingerprinter).toBeDefined();

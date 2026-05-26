@@ -10,6 +10,31 @@ import type { Collector, MonitorConfig, MonitorEvent } from '../types';
 import type { SignalBus } from '../core/SignalBus';
 
 // ────────────────────────────────────────────────────────────
+// RSC detection
+// ────────────────────────────────────────────────────────────
+
+/**
+ * Conservative default RSC detection. RSC is opt-in behind Expo Router's
+ * `reactServerComponentRoutes` / `reactServerFunctions` experiments, so a
+ * non-RSC project must NOT light up the collector. We treat a couple of
+ * stable runtime signals as the gate and default to OFF when none are present:
+ *   - `process.env.EXPO_PUBLIC_RSC === 'true'` (host opt-in flag)
+ *   - a `globalThis.__ERNE_RSC_ENABLED__` boolean (manual/runtime override)
+ *
+ * Hosts that need bespoke detection pass `deps.isRSCEnabled` to override this.
+ */
+export function detectRSCEnabled(): boolean {
+  const g = globalThis as { __ERNE_RSC_ENABLED__?: unknown };
+  if (typeof g.__ERNE_RSC_ENABLED__ === 'boolean') {
+    return g.__ERNE_RSC_ENABLED__;
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env.EXPO_PUBLIC_RSC === 'true') return true;
+  }
+  return false;
+}
+
+// ────────────────────────────────────────────────────────────
 // Types
 // ────────────────────────────────────────────────────────────
 

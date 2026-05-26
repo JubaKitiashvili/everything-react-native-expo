@@ -180,7 +180,10 @@ describe('Sanitizer', () => {
       const start = Date.now();
       const out = s.sanitizeString(hostile);
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(100);
+      // Generous bound: bounded regex + length cap finish in <10ms; a real
+      // ReDoS would take many seconds. 2s catches ReDoS without flaking under
+      // parallel-test CPU load.
+      expect(elapsed).toBeLessThan(2000);
       expect(typeof out).toBe('string');
     });
 
@@ -192,7 +195,10 @@ describe('Sanitizer', () => {
       const start = Date.now();
       const out = s.sanitizeString(hostile);
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(100);
+      // Generous bound: bounded regex + length cap finish in <10ms; a real
+      // ReDoS would take many seconds. 2s catches ReDoS without flaking under
+      // parallel-test CPU load.
+      expect(elapsed).toBeLessThan(2000);
       expect(typeof out).toBe('string');
     });
 

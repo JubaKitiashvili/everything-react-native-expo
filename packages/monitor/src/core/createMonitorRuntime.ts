@@ -68,6 +68,10 @@ import { FrustrationCollector } from '../collectors/FrustrationCollector';
 import { StateCollector } from '../collectors/StateCollector';
 import { SuspenseCollector } from '../collectors/SuspenseCollector';
 import { ActivityCollector } from '../collectors/ActivityCollector';
+import {
+  RSCCollector,
+  detectRSCEnabled,
+} from '../collectors/RSCCollector';
 import { ImageCollector } from '../collectors/ImageCollector';
 import { A11yCollector } from '../collectors/A11yCollector';
 import { StorageCollector } from '../collectors/StorageCollector';
@@ -139,6 +143,19 @@ export interface MonitorRuntimeDeps {
   backgroundAppState?: BackgroundAppStateLike | null;
   /** Task 117.28 — optional background-task registration hook. */
   backgroundTaskRegistration?: BackgroundTaskRegistration | null;
+  /**
+   * Task 69 — RSC monitoring gate. RSC is opt-in (Expo Router server
+   * components/functions), so the RSCCollector is wired but self-gates:
+   * its `record*` methods no-op unless RSC is detected. Provide
+   * `isRSCEnabled` for bespoke detection, or `rscEnabled` to force the
+   * gate directly (overrides detection). When neither is set, the
+   * collector falls back to `detectRSCEnabled()` (conservative, off by
+   * default). The collector is always registered so its lifecycle is
+   * managed alongside the other collectors.
+   */
+  isRSCEnabled?: () => boolean;
+  /** Task 69 — force the RSC gate on/off, bypassing detection. */
+  rscEnabled?: boolean;
   networkTarget?: {
     fetch?: typeof fetch;
     XMLHttpRequest?: typeof XMLHttpRequest;
@@ -162,6 +179,13 @@ export interface MonitorRuntimeDeps {
   initialDoNotSell?: boolean;
   /** Dashboard runtime endpoint. When set, enables DashboardBridge. */
   dashboardUrl?: string;
+  /**
+   * Optional ingest key for the DashboardBridge. When set, it is appended to
+   * the dashboard WebSocket URL as a URL-encoded `?apiKey=<token>` query param
+   * so the bridge can authenticate against a dashboard server with ingest-key
+   * auth enabled. Omitted by default (no token → current behaviour).
+   */
+  dashboardApiKey?: string;
   /** Injectable WebSocket constructor for tests. */
   webSocketCtor?: WebSocketCtor | null;
   /** Battery info source for AdaptiveSampler. */
@@ -262,6 +286,7 @@ export interface MonitorRuntime {
     storage: StorageCollector;
     deepLink: DeepLinkCollector;
     backgroundFetch: BackgroundFetchCollector;
+    rsc: RSCCollector;
   };
   customDimensions: CustomDimensions;
   signalRouter: SignalRouter;
@@ -666,6 +691,17 @@ export async function createMonitorRuntime(
     appState: deps.backgroundAppState ?? deps.appState ?? null,
     taskRegistration: deps.backgroundTaskRegistration ?? null,
   });
+  // Task 69 — RSC monitoring. Always wired (lifecycle managed by the
+  // client), but RSC-specific: it self-gates via `isRSCEnabled`, computed
+  // in init(). Explicit `rscEnabled` wins; then a custom detector; then the
+  // conservative default (off unless EXPO_PUBLIC_RSC / __ERNE_RSC_ENABLED__).
+  const rsc = new RSCCollector({
+    signalBus: bus,
+    isRSCEnabled:
+      deps.rscEnabled !== undefined
+        ? () => deps.rscEnabled as boolean
+        : (deps.isRSCEnabled ?? detectRSCEnabled),
+  });
 
   const client = MonitorClient.init(config);
   client.registerCollector(crash);
@@ -688,6 +724,7 @@ export async function createMonitorRuntime(
   client.registerCollector(storage);
   client.registerCollector(deepLink);
   client.registerCollector(backgroundFetch);
+  client.registerCollector(rsc);
 
   const terminalReporter = new TerminalReporter({
     signalBus: bus,
@@ -702,6 +739,9 @@ export async function createMonitorRuntime(
         url: deps.dashboardUrl,
         isDev,
         WebSocket: deps.webSocketCtor,
+        ...(deps.dashboardApiKey !== undefined
+          ? { apiKey: deps.dashboardApiKey }
+          : {}),
         // Enrich the hello frame so the dashboard can render a real
         // device card (Platform / OS / version) instead of an empty
         // "unknown" row. Safe to read inline — PlatformBridge is
@@ -1015,6 +1055,7 @@ export async function createMonitorRuntime(
       storage,
       deepLink,
       backgroundFetch,
+      rsc,
     },
     customDimensions,
     signalRouter,
