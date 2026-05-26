@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-26
-**Current Phase:** Phase 7 — Launch (55/106)
+**Current Phase:** Phase 7 — Launch (58/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 171/222 tasks (Phases 1a–6 ✅ · Phase 7 55/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 274 dashboard-app (vitest) + 24 dashboard-app (playwright e2e) + 378 dashboard-server tests + 131 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 174/222 tasks (Phases 1a–6 ✅ · Phase 7 58/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 318 dashboard-app (vitest) + 27 dashboard-app (playwright e2e) + 378 dashboard-server tests + 131 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -176,9 +176,9 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.7 | Visual session replay with UI hierarchy (combine Bitdrift ring-buffer + Instabug layout) | ⬜ |
-| 117.8 | Hermes flamegraph viewer (d3-flame-graph + span-tree transform) | ⬜ |
-| 117.12 | User Journeys panel (Sankey flow + crash/ANR overlay per screen) | ⬜ |
-| 117.13 | Trace waterfall panel (collapsible span tree + attributes + checkpoints) | ⬜ |
+| 117.8 | Hermes flamegraph viewer (hand-built flame tree, no d3 dep) | ✅ |
+| 117.12 | User Journeys panel (weighted screen transitions + crash/ANR overlay per screen) | ✅ |
+| 117.13 | Trace waterfall panel (collapsible span tree + attributes + checkpoints) | ✅ |
 | 117.16 | Latency histograms with CDF (bimodal distribution detection) | ✅ |
 | 117.22 | ANR Inspector multi-page (overview + list + detail) | ✅ |
 | 117.23 | Error Taps frustration panel ("this button causes errors for 12% of users") | ✅ |
