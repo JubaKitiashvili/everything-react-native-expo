@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (33/106)
+**Current Phase:** Phase 7 — Launch (41/106)
 **Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
-**Overall Progress:** 149/222 tasks (Phases 1a–6 ✅ · Phase 7 33/106 — 117.4/5/47/49/61/67/71/100/101 M0 (closed except 117.1 router rewrite) · 117.2/3/6/80/81/91/99 M1 · 117.16/22/23 M2 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance) · 1222 SDK tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 263 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 157/222 tasks (Phases 1a–6 ✅ · Phase 7 41/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs) · 933 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 303 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -24,7 +24,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch (expanded) | 33/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
+| 7 Launch (expanded) | 41/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -226,7 +226,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.36 | 15-minute technical deep-dive video (architecture + self-hosting + MCP) | ⬜ |
 | 117.37 | README + landing page (3-line quickstart, comparison matrix, architecture diagram, benchmark numbers) | ⬜ |
 | 117.40 | Benchmark blog post (ERNE vs Sentry vs measure.sh vs Bitdrift — reproducible numbers) | ⬜ |
-| 117.41 | Comparison pages (vs Sentry / measure.sh / Bitdrift / Firebase) | ⬜ |
+| 117.41 | Comparison pages (vs Sentry / measure.sh / Bitdrift / Firebase) | ✅ |
 | 117.43 | Example apps (Expo Router + tabs / bare RN / e-commerce clone / complex nav) | ⬜ |
 | 117.44 | Playwright E2E suite (50+ specs against `POST /api/demo/seed`) | ⬜ |
 | 117.85 | Pricing page + tier matrix (OSS free / Cloud / Enterprise) | ⬜ |
@@ -243,7 +243,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 
 | # | Task | Status |
 |---|------|--------|
-| 117.24 | React 19 Actions instrumentation | ⬜ |
+| 117.24 | React 19 Actions instrumentation | ✅ |
 | 117.27 | Deep link instrumentation | ✅ |
 | 117.28 | Background fetch lifecycle capture | ✅ |
 | 117.29 | App size tracking + bundle diff per build | ⬜ |
@@ -267,18 +267,18 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ✅ |
 | 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ✅ |
 | 117.69 | Structured server logging (JSON, correlation IDs) | ⬜ |
-| 117.70 | Backup/restore CLI commands (dump + restore across storage adapters) | ⬜ |
-| 117.72 | SDK version telemetry + upgrade nag (dashboard badge if outdated) | ⬜ |
-| 117.73 | npm release channels (stable/beta/canary + promotion workflow) | ⬜ |
+| 117.70 | Backup/restore CLI commands (dump + restore across storage adapters) | ✅ |
+| 117.72 | SDK version telemetry + upgrade nag (dashboard badge if outdated) | ✅ |
+| 117.73 | npm release channels (stable/beta/canary + promotion workflow) | ✅ |
 | 117.74 | VS Code extension (CodeLens crash count, jump to dashboard) | ⬜ |
 | 117.75 | GitHub App (deploy markers + crash-regression status check + issue↔crash linking) | ⬜ |
-| 117.76 | Jest matchers for @erne/monitor/testing | ⬜ |
+| 117.76 | Jest matchers for @erne/monitor/testing | ✅ |
 | 117.78 | Widget + Live Activity crash capture (App Extension forwarding) | ⬜ |
 | 117.79 | mDNS/Bonjour LAN auto-discovery (device finds dashboard without IP config) | ⬜ |
 | 117.82 | MCP tool permission tiers (read-only vs write-capable, per-tool confirmation) | ✅ |
-| 117.83 | Common frame extraction (shared stack frame across error group) | ⬜ |
+| 117.83 | Common frame extraction (shared stack frame across error group) | ✅ |
 | 117.84 | Dashboard WCAG 2.1 AA audit (axe-core in Playwright) | ⬜ |
-| 117.86 | OSS → Cloud migration guide + data export format spec | ⬜ |
+| 117.86 | OSS → Cloud migration guide + data export format spec | ✅ |
 | 117.87 | Public roadmap (GitHub Projects board + ROADMAP.md) | ✅ |
 | 117.88 | GitHub issue templates + triage guidelines | ✅ |
 | 117.89 | Changesets / release-please automation | ✅ |
