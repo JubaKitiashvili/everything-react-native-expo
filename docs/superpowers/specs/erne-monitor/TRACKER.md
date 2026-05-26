@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-08
-**Current Phase:** Phase 7 — Launch (46/106)
+**Current Phase:** Phase 7 — Launch (51/106)
 **Active Task:** Task 117.1 + 117.102 — joint planning session (Dashboard REWRITE + design partner cohort kickoff)
-**Overall Progress:** 162/222 tasks (Phases 1a–6 ✅ · Phase 7 46/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance) · 967 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 334 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 167/222 tasks (Phases 1a–6 ✅ · Phase 7 51/106 — M0 (closed except 117.1) · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 967 SDK-src tests + 247 dashboard-app (vitest) + 17 dashboard-app (playwright) + 356 dashboard-server tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference)
 
@@ -24,7 +24,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 4 Intelligence | 8/8 | ✅ Done | self-learning AI |
 | 5 SDK v1 Launch-Ready | 21/21 | ✅ Done | `npm publish @erne/monitor@1.0.0` — measured, documented |
 | 6 Dashboard v2 | 25/25 | ✅ Done | `npx @erne/monitor dashboard` — 17 panels, persistent, world-class |
-| 7 Launch (expanded) | 46/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
+| 7 Launch (expanded) | 51/106 | 🛠 In progress | unified platform + MCP + Hermes source maps + self-hosted AI + benchmark suite + "best in class" launch |
 
 ---
 
@@ -189,13 +189,13 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.9 | WebLLM local AI (browser WASM, zero external install) + server-side fallback | ⬜ |
-| 117.10 | Terminal-first UX (`erne monitor live` TUI + `erne doctor`) | ⬜ |
+| 117.10 | Terminal-first UX (`erne monitor live` TUI + `erne doctor`) | ✅ |
 | 117.14 | Global search (Cmd-K across crashes/sessions/users/traces/agents/skills/tasks/docs) | ⬜ |
 | 117.15 | User-centric view `/monitor/users/:id` | ⬜ |
 | 117.21 | Screenshot annotation canvas + shake-to-report accelerometer wiring | ⬜ |
 | 117.25 | Suspense telemetry with stall detection | ⬜ |
 | 117.26 | RSC boundary panel (we have collector, surface to dashboard) | ⬜ |
-| 117.94 | `erne scan` static analysis CLI (scan consumer's app before install) | ⬜ |
+| 117.94 | `erne scan` static analysis CLI (scan consumer's app before install) | ✅ |
 | 117.95 | Privacy-provable SDK test suite (adversarial tests, CI badge) | ⬜ |
 
 ### Milestone 4 — Enterprise + OTel moat (Weeks 19-23)
@@ -205,7 +205,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.11 | OTel bidirectional — ingest `/v1/traces` `/v1/logs` `/v1/metrics` from any OTel source | ⬜ |
 | 117.17 | Remote adaptive config (server-pushed sampling / PII rules / feature toggles) | ⬜ |
 | 117.18 | Multi-tenant RBAC (3-role Owner/Member/Viewer, JWT localStorage) | ⬜ |
-| 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ⬜ |
+| 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ✅ |
 | 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
 | 117.56 | CCPA compliance (Do Not Sell signal, CA-specific disclosures) | ⬜ |
 | 117.57 | Transitive dependency privacy manifest audit (App Store compliance) | ⬜ |
@@ -220,8 +220,8 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 
 | # | Task | Status |
 |---|------|--------|
-| 117.33 | Docker compose + Railway + Render one-click + Kubernetes Helm chart + CloudFormation | ⬜ |
-| 117.34 | Cross-platform init test matrix (Expo SDK 52/53/54/55, managed/bare, mac/win/linux) | ⬜ |
+| 117.33 | Docker compose + Railway + Render one-click + Kubernetes Helm chart + CloudFormation | ✅ |
+| 117.34 | Cross-platform init test matrix (Expo SDK 52/53/54/55, managed/bare, mac/win/linux) | ✅ |
 | 117.35 | 90-second hero demo video (init → crash → Claude opens PR) | ⬜ |
 | 117.36 | 15-minute technical deep-dive video (architecture + self-hosting + MCP) | ⬜ |
 | 117.37 | README + landing page (3-line quickstart, comparison matrix, architecture diagram, benchmark numbers) | ⬜ |
