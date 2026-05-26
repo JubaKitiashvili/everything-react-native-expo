@@ -211,6 +211,10 @@ Releases are automated with [Changesets](https://github.com/changesets/changeset
 2. **Version PR.** On merge to `main`, the `Release` workflow (`.github/workflows/release.yml`) opens or updates a "Version Packages" PR that bumps versions and updates changelogs (`npm run version`).
 3. **Publish.** Merging the Version Packages PR triggers `npm run release`, which publishes to npm — **only if the `NPM_TOKEN` repository secret is set** (otherwise the publish step is skipped, not failed).
 
+### Release channels
+
+ERNE publishes to three npm dist-tags — **stable** (`latest`), **beta** (`next`), and **canary** (per-commit). The stable and beta channels are driven by Changesets (beta via pre-release mode); canary builds are published from the `canary` branch by `.github/workflows/canary.yml`. For the full channel model, how Changesets pre-release mode maps to them, and the beta → stable promotion workflow, see [`docs/releasing/channels.md`](docs/releasing/channels.md).
+
 See `.changeset/README.md` for the day-to-day workflow.
 
 ## Pull Request Process

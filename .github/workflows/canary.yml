@@ -1,0 +1,78 @@
+name: Canary
+
+# Publishes a per-commit canary build to npm on pushes to the `canary` branch.
+# Canary builds are disposable, bleeding-edge artifacts published under the
+# `canary` dist-tag — a bare `npm install` never picks them up. See
+# docs/releasing/channels.md for the channel model.
+#
+# This workflow is additive: it does NOT touch the stable/beta flow in
+# release.yml. It deliberately stays outside Changesets' version ledger by
+# stamping an ephemeral prerelease version locally (never committed).
+
+on:
+  push:
+    branches: [canary]
+
+# Least-privilege: we only need to read the repo and publish to npm.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: canary-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-canary:
+    name: publish canary build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      # Guard: only attempt to publish when NPM_TOKEN is configured. Forks and
+      # token-less environments skip publishing instead of failing the run.
+      - name: Check for npm token
+        id: token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "NPM_TOKEN is not set — skipping canary publish."
+          fi
+
+      # Stamp an ephemeral, unique prerelease version derived from the commit.
+      # --no-git-tag-version keeps this purely local: nothing is committed,
+      # tagged, or pushed, so the Changesets stable/beta ledger is untouched.
+      - name: Stamp canary version
+        if: steps.token.outputs.present == 'true'
+        run: |
+          SHORT_SHA="$(git rev-parse --short HEAD)"
+          BASE_VERSION="$(node -p "require('./package.json').version")"
+          CANARY_VERSION="${BASE_VERSION}-canary.${SHORT_SHA}"
+          echo "Publishing canary version: ${CANARY_VERSION}"
+          npm version "$CANARY_VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Validate package
+        if: steps.token.outputs.present == 'true'
+        run: npm run validate
+
+      - name: Publish to npm (canary dist-tag)
+        if: steps.token.outputs.present == 'true'
+        run: npm publish --tag canary
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
