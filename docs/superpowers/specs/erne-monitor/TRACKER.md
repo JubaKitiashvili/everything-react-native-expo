@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-27
-**Current Phase:** Phase 7 — Launch (66/106)
+**Current Phase:** Phase 7 — Launch (70/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 182/222 tasks (Phases 1a–6 ✅ · Phase 7 66/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · platform wave closed 117.11 server OTel-ingest + 117.57 cli privacy-manifest + 117.26 app RSC-panel + 117.85 docs pricing via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1003 SDK-src tests + 350 dashboard-app (vitest) + 29 dashboard-app (playwright e2e) + 421 dashboard-server tests + 200 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 186/222 tasks (Phases 1a–6 ✅ · Phase 7 70/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · platform wave closed 117.11 server OTel-ingest + 117.57 cli privacy-manifest + 117.26 app RSC-panel + 117.85 docs pricing via 4 parallel agents on disjoint trees · compliance+replay wave closed 117.17 server remote-config + 117.56 SDK CCPA + 117.7 app replay-hierarchy + 117.103 docs DPA via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1030 SDK-src tests + 367 dashboard-app (vitest) + 29 dashboard-app (playwright e2e) + 450 dashboard-server tests + 200 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -175,7 +175,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 
 | # | Task | Status |
 |---|------|--------|
-| 117.7 | Visual session replay with UI hierarchy (combine Bitdrift ring-buffer + Instabug layout) | ⬜ |
+| 117.7 | Visual session replay with UI hierarchy (per-frame captured view tree + masked-node indicators) | ✅ |
 | 117.8 | Hermes flamegraph viewer (hand-built flame tree, no d3 dep) | ✅ |
 | 117.12 | User Journeys panel (weighted screen transitions + crash/ANR overlay per screen) | ✅ |
 | 117.13 | Trace waterfall panel (collapsible span tree + attributes + checkpoints) | ✅ |
@@ -203,18 +203,18 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.11 | OTel ingest — `/v1/traces` `/v1/logs` `/v1/metrics` (OTLP/HTTP JSON) from any OTel source | ✅ |
-| 117.17 | Remote adaptive config (server-pushed sampling / PII rules / feature toggles) | ⬜ |
+| 117.17 | Remote adaptive config (server store + GET /v1/config poll + PUT) — 🟡 SDK poll/apply follow-up | ✅ |
 | 117.18 | Multi-tenant RBAC (3-role Owner/Member/Viewer, JWT localStorage) | ⬜ |
 | 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ✅ |
 | 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
-| 117.56 | CCPA compliance (Do Not Sell signal, CA-specific disclosures) | ⬜ |
+| 117.56 | CCPA compliance (Do-Not-Sell gate strips identifiers/dimensions/custom-attrs; CA disclosures) | ✅ |
 | 117.57 | Transitive dependency privacy manifest audit (`privacy-manifest` cli; curated SDK map + unaudited flags) | ✅ |
 | 117.58 | Dependency license audit + NOTICE file + license-checker CI gate | ✅ |
 | 117.60 | SECURITY.md + responsible disclosure policy | ✅ |
 | 117.64 | Per-tenant ingest rate limiting | ✅ |
 | 117.65 | Audit logs (user actions: exports, deletes, config changes, login events) | ✅ |
 | 117.77 | EAS Update / OTA version tagging (runtimeVersion, channel, updateId on every event) | ✅ |
-| 117.103 | DPA template + subprocessor list (enterprise prerequisite) | ⬜ |
+| 117.103 | DPA template + subprocessor list (template + self-hosted=no-subprocessor framing; legal specifics TBD) | ✅ |
 
 ### Milestone 5 — Launch artifacts + iconic moves (Weeks 24-30, 34 with buffer)
 
