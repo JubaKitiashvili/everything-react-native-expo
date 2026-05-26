@@ -2,6 +2,7 @@
 
 import { describe, expect, test } from 'vitest';
 import { AlertDelivery, type FetchLike } from './delivery.js';
+import { verifySignature, X_ERNE_SIGNATURE_HEADER } from '../webhooks/sign.js';
 import type { AlertFiringRecord, AlertRuleRecord } from '../storage/types.js';
 
 const NOW = 1_770_000_000_000;
@@ -269,5 +270,67 @@ describe('AlertDelivery — retries', () => {
     expect(byType.discord).toBe(false);
     expect(byType.webhook).toBe(true);
     expect(calls).toHaveLength(3);
+  });
+});
+
+describe('AlertDelivery — HMAC webhook signatures (Task 117.63)', () => {
+  const SECRET = 'shared-webhook-secret';
+
+  /** Capture the exact raw body string so we can verify the signature. */
+  function makeCapturingFetch(): {
+    fetch: FetchLike;
+    sent: Array<{ url: string; headers: Record<string, string>; rawBody: string }>;
+  } {
+    const sent: Array<{ url: string; headers: Record<string, string>; rawBody: string }> = [];
+    const fetch: FetchLike = async (url, init) => {
+      sent.push({ url, headers: init.headers, rawBody: init.body });
+      return { ok: true, status: 200, text: async () => '' };
+    };
+    return { fetch, sent };
+  }
+
+  test('signs the generic webhook body with X-ERNE-Signature when a secret is set', async () => {
+    const { fetch, sent } = makeCapturingFetch();
+    const delivery = new AlertDelivery({
+      fetch,
+      sleep: async () => {},
+      onError: () => {},
+      webhookSigningSecret: SECRET,
+    });
+    const rule = makeRule({ channels: ['webhook:https://example.com/erne'] });
+    const results = await delivery.deliverAll(rule, makeFiring());
+    expect(results[0]?.ok).toBe(true);
+    expect(sent).toHaveLength(1);
+    const header = sent[0]?.headers[X_ERNE_SIGNATURE_HEADER];
+    expect(header).toMatch(/^sha256=[0-9a-f]{64}$/);
+    // The receiver re-derives + verifies over the exact bytes we sent.
+    expect(verifySignature(SECRET, sent[0]!.rawBody, header)).toBe(true);
+    // A different secret must NOT verify.
+    expect(verifySignature('other', sent[0]!.rawBody, header)).toBe(false);
+  });
+
+  test('does NOT sign when no secret is configured', async () => {
+    const { fetch, sent } = makeCapturingFetch();
+    const delivery = new AlertDelivery({ fetch, sleep: async () => {}, onError: () => {} });
+    const rule = makeRule({ channels: ['webhook:https://example.com/erne'] });
+    await delivery.deliverAll(rule, makeFiring());
+    expect(sent[0]?.headers[X_ERNE_SIGNATURE_HEADER]).toBeUndefined();
+  });
+
+  test('does NOT sign Slack / Discord channels even when a secret is set', async () => {
+    const { fetch, sent } = makeCapturingFetch();
+    const delivery = new AlertDelivery({
+      fetch,
+      sleep: async () => {},
+      onError: () => {},
+      webhookSigningSecret: SECRET,
+    });
+    const rule = makeRule({
+      channels: ['slack:https://hooks.slack.com/x', 'discord:https://discord.com/api/webhooks/1/x'],
+    });
+    await delivery.deliverAll(rule, makeFiring());
+    for (const req of sent) {
+      expect(req.headers[X_ERNE_SIGNATURE_HEADER]).toBeUndefined();
+    }
   });
 });

@@ -23,6 +23,12 @@ import {
 } from './audit/aiActions.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
+import {
+  applyBaseSecurityHeaders,
+  applyHtmlSecurityHeaders,
+  resolveCsp,
+} from './security/headers.js';
+import { PrometheusRegistry, PROMETHEUS_CONTENT_TYPE } from './metrics/prometheus.js';
 
 interface AlertRuleInput {
   id?: string;
@@ -172,6 +178,47 @@ export interface DashboardServerOptions {
         /** Logger surface forwarded into both evaluator + delivery. */
         onError?: (err: Error, context: { rule?: string; channel?: string }) => void;
       };
+  /**
+   * Task 117.63 — shared HMAC secret for OUTBOUND generic `webhook:`
+   * alert deliveries. When set (or via `process.env.ERNE_WEBHOOK_SECRET`),
+   * every generic webhook POST carries an `X-ERNE-Signature: sha256=<hex>`
+   * header computed over the exact body so receivers can verify it. An
+   * explicit value here takes precedence over the env var; pass `null` to
+   * disable signing even when the env var is set. The secret threads into
+   * the `AlertDelivery` instance unless `alerts.delivery.webhookSigningSecret`
+   * is already specified (that wins).
+   */
+  webhookSigningSecret?: string | null;
+  /**
+   * Task 117.66 — override the Content-Security-Policy applied to the
+   * HTML shell. `undefined` uses the SPA-friendly default (see
+   * `DEFAULT_CSP`); a string overrides it wholesale; `null` omits the
+   * CSP header entirely (the other security headers still apply) —
+   * useful behind a reverse proxy that injects its own policy. CSP is
+   * only set on the HTML response; JSON / static assets always carry the
+   * base header set (HSTS, X-Frame-Options, nosniff, Referrer-Policy).
+   */
+  csp?: string | null;
+  /**
+   * Task 117.68 — Prometheus `/metrics` endpoint configuration.
+   *
+   * Default: the endpoint is served and gated by the same API key as
+   * `/api/*` (when a key is configured). Set `metrics: { public: true }`
+   * to expose it WITHOUT the API key — handy when the scraper can't
+   * present the dashboard's key but the endpoint sits on a trusted
+   * network. Set `metrics: false` to disable the endpoint entirely.
+   *
+   * `/metrics` lives at the server root (NOT under `/api/`) per the
+   * Prometheus convention, so it has its own gate handling separate from
+   * the `/api/*` middleware.
+   */
+  metrics?:
+    | false
+    | {
+        enabled?: boolean;
+        /** Expose `/metrics` without the API-key gate. Default: false. */
+        public?: boolean;
+      };
 }
 
 export interface DashboardServerHandle {
@@ -248,6 +295,10 @@ function extractApiKey(req: IncomingMessage, url: URL): string | null {
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
+  // Task 117.66 — base security headers on every response. CSP is
+  // intentionally omitted for JSON (a JSON body is never a browsing
+  // context, so a policy there only adds weight).
+  applyBaseSecurityHeaders(res);
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
@@ -256,10 +307,17 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload);
 }
 
-function sendStatic(res: ServerResponse, filePath: string): void {
+function sendStatic(res: ServerResponse, filePath: string, csp: string | null): void {
   const ext = extname(filePath).toLowerCase();
   const mime = MIME[ext] ?? 'application/octet-stream';
   const size = statSync(filePath).size;
+  // Task 117.66 — the HTML shell gets the full CSP; other static assets
+  // get only the base headers (CSP on an image/JS file is meaningless).
+  if (ext === '.html') {
+    applyHtmlSecurityHeaders(res, csp);
+  } else {
+    applyBaseSecurityHeaders(res);
+  }
   res.writeHead(200, {
     'content-type': mime,
     'content-length': size,
@@ -291,6 +349,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   const host = options.host ?? '127.0.0.1';
   const port = options.port ?? 0;
   const publicDir = options.publicDir ?? defaultPublicDir();
+  // Task 117.66 — resolve the CSP once. `undefined` → default policy,
+  // `null` → no CSP header, string → verbatim override.
+  const resolvedCsp = resolveCsp(options.csp);
+
+  // Task 117.68 — Prometheus /metrics config. Default: enabled + gated.
+  const metricsOption = options.metrics;
+  const metricsEnabled =
+    metricsOption !== false &&
+    !(typeof metricsOption === 'object' && metricsOption?.enabled === false);
+  const metricsPublic =
+    typeof metricsOption === 'object' && metricsOption?.public === true;
   const store =
     options.store ?? new DashboardStore({ dbPath: options.dbPath ?? defaultDashboardDbPath() });
 
@@ -334,9 +403,23 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     alertsOption === false ||
     (typeof alertsOption === 'object' && alertsOption?.enabled === false);
   const alertConfig = typeof alertsOption === 'object' ? alertsOption : {};
+  // Task 117.63 — resolve the outbound webhook signing secret. Explicit
+  // option (incl. null to disable) wins; otherwise fall back to the env
+  // var. Threaded into AlertDelivery below unless delivery options already
+  // pin a secret.
+  const resolvedWebhookSecret =
+    options.webhookSigningSecret === null
+      ? null
+      : options.webhookSigningSecret !== undefined
+        ? options.webhookSigningSecret
+        : (process.env.ERNE_WEBHOOK_SECRET ?? null);
+
   let alertEvaluator: AlertEvaluator | null = null;
   if (!alertsDisabled) {
     const deliveryOptions: AlertDeliveryOptions = { ...(alertConfig.delivery ?? {}) };
+    if (deliveryOptions.webhookSigningSecret === undefined && resolvedWebhookSecret !== null) {
+      deliveryOptions.webhookSigningSecret = resolvedWebhookSecret;
+    }
     if (alertConfig.onError && !deliveryOptions.onError) {
       deliveryOptions.onError = (err, ctx) =>
         alertConfig.onError?.(err, { channel: ctx.channel, rule: ctx.rule });
@@ -382,6 +465,98 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     };
   };
 
+  // Task 117.68 — render the Prometheus text-exposition body from live
+  // server + store state. Surfaces ingest queue depth/stats, total event
+  // count, uptime, and applied migration count. Rebuilt on each scrape so
+  // values are always current.
+  const buildMetrics = (): string => {
+    const registry = new PrometheusRegistry();
+    const ready = store.readyCheck();
+
+    registry.observeCounter(
+      'erne_events_total',
+      'Total events ingested and stored.',
+      store.countEvents(),
+    );
+    registry.observeGauge(
+      'erne_uptime_seconds',
+      'Process uptime in seconds.',
+      Math.round(process.uptime()),
+    );
+    registry.observeGauge(
+      'erne_migrations_applied',
+      'Number of storage migrations applied.',
+      ready.migrationsApplied,
+    );
+    registry.observeGauge(
+      'erne_ready',
+      'Readiness: 1 when migrations are applied and storage is not busy, else 0.',
+      ready.ready ? 1 : 0,
+    );
+
+    if (websocket) {
+      const queue = websocket.queueStats();
+      const ingest = websocket.stats;
+      registry.observeGauge(
+        'erne_ingest_queue_depth',
+        'Current ingest queue depth (pending events).',
+        queue.currentSize,
+      );
+      registry.observeGauge(
+        'erne_ingest_queue_inflight',
+        'Ingest events currently being processed by the worker.',
+        queue.inFlight,
+      );
+      registry.observeGauge(
+        'erne_ingest_queue_high_water_mark',
+        'All-time maximum ingest queue depth.',
+        queue.highWaterMark,
+      );
+      registry.observeCounter(
+        'erne_ingest_queue_enqueued_total',
+        'Total events ever enqueued onto the ingest queue.',
+        queue.enqueued,
+      );
+      registry.observeCounter(
+        'erne_ingest_queue_processed_total',
+        'Total ingest events processed cleanly.',
+        queue.processed,
+      );
+      registry.observeCounter(
+        'erne_ingest_queue_failed_total',
+        'Total ingest events dropped after exhausting retries.',
+        queue.failed,
+      );
+      registry.observeCounter(
+        'erne_ingest_queue_backpressured_total',
+        'Total enqueue attempts rejected due to backpressure.',
+        queue.backpressured,
+      );
+      registry.observeCounter(
+        'erne_ingest_ingested_total',
+        'Total events accepted and ingested over WebSocket.',
+        ingest.ingested,
+      );
+      registry.observeCounter(
+        'erne_ingest_rejected_total',
+        'Total malformed / rate-limited ingest payloads rejected.',
+        ingest.rejected,
+      );
+      registry.observeCounter(
+        'erne_ingest_deduplicated_total',
+        'Total ingest events skipped as duplicates.',
+        ingest.deduplicated,
+      );
+      registry.observeGauge(
+        'erne_subscribers',
+        'Current number of dashboard subscriber connections.',
+        websocket.subscriberCount,
+      );
+    }
+
+    return registry.render();
+  };
+
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const requestUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? host}`);
     const pathname = requestUrl.pathname;
@@ -400,6 +575,37 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           sendJson(res, 401, { error: 'unauthorized' });
           return;
         }
+      }
+
+      // Task 117.68 — Prometheus scrape endpoint. Lives at the root (not
+      // under /api/) per convention, so it bypasses the /api/* gate above
+      // and applies its own. Default: gated by the same API key; set
+      // `metrics: { public: true }` to expose it without the key.
+      if (req.method === 'GET' && pathname === '/metrics') {
+        if (!metricsEnabled) {
+          sendJson(res, 404, { error: 'not_found', path: pathname });
+          return;
+        }
+        if (requiredApiKey && !metricsPublic) {
+          const presented = extractApiKey(req, requestUrl);
+          if (!presented) {
+            sendJson(res, 401, { error: 'missing_auth' });
+            return;
+          }
+          if (!constantTimeEquals(presented, requiredApiKey)) {
+            sendJson(res, 401, { error: 'unauthorized' });
+            return;
+          }
+        }
+        const body = buildMetrics();
+        applyBaseSecurityHeaders(res);
+        res.writeHead(200, {
+          'content-type': PROMETHEUS_CONTENT_TYPE,
+          'content-length': Buffer.byteLength(body),
+          'cache-control': 'no-store',
+        });
+        res.end(body);
+        return;
       }
 
       if (req.method === 'GET' && pathname === '/api/health') {
@@ -857,12 +1063,12 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         const staticPath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
         const filePath = join(publicDir, staticPath);
         if (filePath.startsWith(publicDir) && existsSync(filePath) && statSync(filePath).isFile()) {
-          sendStatic(res, filePath);
+          sendStatic(res, filePath, resolvedCsp);
           return;
         }
         const indexFile = join(publicDir, 'index.html');
         if (existsSync(indexFile)) {
-          sendStatic(res, indexFile);
+          sendStatic(res, indexFile, resolvedCsp);
           return;
         }
       }

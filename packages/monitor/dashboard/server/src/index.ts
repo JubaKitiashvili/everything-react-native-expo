@@ -36,6 +36,25 @@ export type {
 } from './audit/aiActions.js';
 export { createDashboardServer, startDashboardServer } from './server.js';
 export type { DashboardServerHandle, DashboardServerOptions } from './server.js';
+export {
+  signPayload,
+  verifySignature,
+  X_ERNE_SIGNATURE_HEADER,
+  SIGNATURE_PREFIX,
+} from './webhooks/sign.js';
+export {
+  DEFAULT_CSP,
+  BASE_SECURITY_HEADERS,
+  applyBaseSecurityHeaders,
+  applyHtmlSecurityHeaders,
+  resolveCsp,
+} from './security/headers.js';
+export type { SecurityHeaderConfig } from './security/headers.js';
+export {
+  PrometheusRegistry,
+  PROMETHEUS_CONTENT_TYPE,
+} from './metrics/prometheus.js';
+export type { MetricType, MetricSample } from './metrics/prometheus.js';
 export { IngestWebSocketHandler, INGEST_PATH, SUBSCRIBE_PATH } from './ingest/wsHandler.js';
 export type {
   IngestWsHandlerOptions,

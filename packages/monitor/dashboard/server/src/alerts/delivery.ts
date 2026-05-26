@@ -24,6 +24,7 @@ import {
   type AlertDeliveryResult,
   type ParsedAlertChannel,
 } from './types.js';
+import { signPayload, X_ERNE_SIGNATURE_HEADER } from '../webhooks/sign.js';
 import type { AlertRuleRecord, AlertFiringRecord } from '../storage/types.js';
 
 /** Minimal fetch shape we rely on. `globalThis.fetch` matches it. */
@@ -52,6 +53,15 @@ export interface AlertDeliveryOptions {
   sleep?: (ms: number) => Promise<void>;
   /** Logged when a final delivery attempt fails. */
   onError?: (err: Error, context: { rule: string; channel: string }) => void;
+  /**
+   * Task 117.63 — shared HMAC secret for outbound `webhook:` deliveries.
+   * When set, every generic webhook request carries an `X-ERNE-Signature:
+   * sha256=<hex>` header computed over the exact request body, letting the
+   * receiver verify authenticity + integrity. Slack / Discord deliveries
+   * are unaffected — those providers have their own URL-embedded secrets
+   * and do not consume a custom signature header.
+   */
+  webhookSigningSecret?: string | null;
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -89,6 +99,7 @@ export class AlertDelivery {
   private readonly now: () => number;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly onError: (err: Error, context: { rule: string; channel: string }) => void;
+  private readonly webhookSigningSecret: string | null;
 
   constructor(options: AlertDeliveryOptions = {}) {
     this.fetchImpl =
@@ -112,6 +123,7 @@ export class AlertDelivery {
           `[dashboard-server:alert-delivery] rule=${ctx.rule} channel=${ctx.channel} ${err.message}`,
         );
       });
+    this.webhookSigningSecret = options.webhookSigningSecret ?? null;
   }
 
   /**
@@ -156,6 +168,12 @@ export class AlertDelivery {
     }
     const body = formatBody(channel.type, payload);
     const headers: Record<string, string> = { 'content-type': 'application/json' };
+    // Task 117.63 — sign generic webhook bodies so the receiver can
+    // verify authenticity + integrity. Only the generic `webhook` type
+    // gets the header; Slack / Discord rely on their URL-embedded secret.
+    if (channel.type === 'webhook' && this.webhookSigningSecret) {
+      headers[X_ERNE_SIGNATURE_HEADER] = signPayload(this.webhookSigningSecret, body);
+    }
 
     let attempts = 0;
     let lastStatus: number | undefined;
