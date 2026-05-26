@@ -275,6 +275,28 @@ export type {
 // Task 117.77 — EAS Update / OTA version tagging
 export { getOtaContext, withOtaContext } from './core/ota';
 export type { OtaContext, ExpoUpdatesLike } from './core/ota';
+// Task 117.72 — SDK version telemetry + upgrade nag
+export {
+  SDK_VERSION,
+  compareVersions,
+  getVersionContext,
+  checkForUpgrade,
+  withVersionContext,
+} from './core/versionTelemetry';
+export type {
+  UpgradeSeverity,
+  VersionContext,
+  UpgradeCheck,
+} from './core/versionTelemetry';
+// Task 117.24 — React 19 Actions instrumentation
+export { ActionsCollector } from './collectors/ActionsCollector';
+export type {
+  ActionStatus,
+  ActionEventData,
+  AnyAction,
+  WrapActionOptions,
+  ActionsCollectorDeps,
+} from './collectors/ActionsCollector';
 // Phase 2b — Native advanced collectors
 export { DualThreadFPSCollector } from './collectors/native/DualThreadFPSCollector';
 export type {

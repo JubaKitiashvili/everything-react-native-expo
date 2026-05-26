@@ -28,3 +28,13 @@ export type {
   DegradationMode,
   FetchLike,
 } from '../testing/NetworkDegrader';
+
+// Task 117.76 — custom Jest matchers for asserting on captured ERNE events.
+export {
+  registerMatchers,
+  erneMatchers,
+  toHaveEmittedEvent,
+  toHaveCrashWithFingerprint,
+  toHaveNoUnhandledRejections,
+} from '../testing/matchers';
+export type { CapturedEventLike } from '../testing/matchers';
