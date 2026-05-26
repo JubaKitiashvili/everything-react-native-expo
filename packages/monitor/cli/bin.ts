@@ -6,6 +6,7 @@
 //   `npx @erne/monitor discover [path] [--json]`
 //   `npx @erne/monitor doctor [path] [--ping [url]]`
 //   `npx @erne/monitor size [path] [--history <p>] [--no-gzip] [--json]`
+//   `npx @erne/monitor privacy-manifest [path] [--json]`
 //   `npx @erne/monitor monitor live [--url <u>] [--api-key <k>] [--no-color]`
 
 import { runInit } from './init';
@@ -14,6 +15,7 @@ import { runScanCommand } from './scan';
 import { runDiscoverCommand } from './discoverProject';
 import { runDoctorCommand } from './doctor';
 import { runSizeCommand } from './size';
+import { runPrivacyManifestCommand } from './privacyManifest';
 import { runLiveCommand } from './live';
 
 async function main(): Promise<void> {
@@ -65,6 +67,11 @@ async function main(): Promise<void> {
     process.exit(exitCode);
   }
 
+  if (command === 'privacy-manifest' || command === 'privacy') {
+    const exitCode = runPrivacyManifestCommand(rest);
+    process.exit(exitCode);
+  }
+
   if (command === 'monitor') {
     // `monitor live [flags]` — the only `monitor` subcommand today.
     const sub = rest[0];
@@ -81,7 +88,7 @@ async function main(): Promise<void> {
   console.error(
     '@erne/monitor: unknown command "' +
       command +
-      '". Supported: init [--dry-run] | dashboard [flags] | scan [path] | discover [path] | doctor [path] | size [path] | monitor live [flags]',
+      '". Supported: init [--dry-run] | dashboard [flags] | scan [path] | discover [path] | doctor [path] | size [path] | privacy-manifest [path] | monitor live [flags]',
   );
   process.exit(1);
 }
