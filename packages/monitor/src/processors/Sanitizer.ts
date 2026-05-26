@@ -19,7 +19,27 @@ export interface SanitizerOptions {
 const DEFAULT_PLACEHOLDER = '[REDACTED]';
 
 // Email — RFC 5322 simplified pattern, good enough for PII scrubbing.
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+// Quantifiers are BOUNDED per RFC limits (local-part ≤64, domain ≤255, TLD
+// 2–24) so the regex cannot backtrack into O(n²) on a long near-miss string
+// (e.g. 64k of 'aaaa…a@' with no valid tail). Unbounded `+`/`*` here is a
+// classic ReDoS amplifier; the caps keep each attempt's work linear.
+const EMAIL_RE =
+  /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,255}\.[a-zA-Z]{2,24}/g;
+
+// Hard cap on the length of a single string we run the (multiple) regex
+// sweeps over. Above this, a hostile / runaway field could pin the JS thread
+// even with bounded quantifiers — and operator-supplied `extraPatterns`
+// regexes have NO such bound, so a single huge field is the real risk.
+//
+// We do NOT drop data: a string over the cap is sanitized in two pieces —
+// the leading MAX_SANITIZE_LEN chars get the full sweep (that's where PII a
+// user actually typed lives), and the untouched tail is appended verbatim.
+// A short, explicit marker documents the boundary so the truncation is never
+// silent or confusing. The tail is preserved so we never lose telemetry; it
+// just isn't scrubbed (acceptable: a 16k+ single field is pathological and
+// the head — the human-entered prefix — is the PII-bearing region).
+const MAX_SANITIZE_LEN = 16_384;
+const OVERSIZE_MARKER = '[…unsanitized-tail:';
 
 // Phone numbers — international formats. Matches e.g. +1 555 123 4567,
 // (415) 555-1212, +44 20 7946 0958. Deliberately loose to catch PII.
@@ -206,6 +226,18 @@ export class Sanitizer {
    * sanitization).
    */
   sanitizeString(value: string): string {
+    // Length guard: above MAX_SANITIZE_LEN, only sweep the head (where
+    // user-typed PII lives) and re-attach the unscrubbed tail behind an
+    // explicit marker. This bounds the work of EVERY sweep below — including
+    // operator-supplied `extraPatterns` regexes, which carry no quantifier
+    // bound of their own — so no single oversized field can hang the JS
+    // thread. No data is dropped: the tail is preserved verbatim.
+    if (value.length > MAX_SANITIZE_LEN) {
+      const head = value.slice(0, MAX_SANITIZE_LEN);
+      const tail = value.slice(MAX_SANITIZE_LEN);
+      return `${this.sanitizeString(head)}${OVERSIZE_MARKER}${tail.length}chars]${tail}`;
+    }
+
     let out = value.replace(EMAIL_RE, this.placeholder);
 
     // Structured-PII passes run BEFORE the loose phone sweep so the whole

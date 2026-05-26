@@ -12,33 +12,33 @@ always — but it's also the simplest to wire.
 
 | Entry | Files | Raw (KB) | Gzip (KB) | Budget (KB) | Status |
 | ----- | ----: | -------: | --------: | ----------: | :----- |
-| `main` | 75 | 313.25 | 67.49 | 75 | ok |
+| `main` | 88 | 406.93 | 94.66 | 75 | OVER |
 | `/performance` | 11 | 36.35 | 7.01 | 20 | ok |
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
 | `/replay` | 5 | 13.73 | 3.57 | 10 | ok |
 | `/dev` | 5 | 17.61 | 4.58 | 15 | ok |
-| `/testing` | 4 | 14.62 | 4.86 | 10 | ok |
+| `/testing` | 5 | 20.06 | 6.21 | 10 | ok |
 
 ## Largest files (main entry)
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/core/createMonitorRuntime.js` | 23.35 | 5.91 |
+| `dist/core/createMonitorRuntime.js` | 33.96 | 8.87 |
+| `dist/processors/Sanitizer.js` | 11.72 | 4.42 |
+| `dist/processors/CcpaGate.js` | 10.82 | 3.99 |
 | `dist/signal-router/PatternLibrary.js` | 11.55 | 2.84 |
 | `dist/native/ErneMonitorNative.js` | 13.10 | 2.81 |
-| `dist/core/Config.js` | 8.58 | 2.46 |
+| `dist/core/CrashLoopGuard.js` | 7.93 | 2.61 |
+| `dist/core/Config.js` | 8.77 | 2.49 |
+| `dist/remote-config/RemoteConfig.js` | 7.07 | 2.40 |
 | `dist/collectors/NetworkCollector.js` | 7.80 | 2.26 |
 | `dist/storage/EventStore.js` | 8.62 | 2.24 |
+| `dist/remote-config/RemoteConfigClient.js` | 5.94 | 2.22 |
+| `dist/remote-config/RemoteConfigApplier.js` | 5.50 | 2.19 |
 | `dist/collectors/CrashCollector.js` | 6.79 | 2.12 |
-| `dist/storage/SqliteEventStoreBackend.js` | 6.46 | 1.85 |
-| `dist/collectors/RenderCollector.js` | 5.76 | 1.73 |
-| `dist/processors/Sanitizer.js` | 4.53 | 1.70 |
-| `dist/integrations/DashboardBridge.js` | 5.48 | 1.65 |
-| `dist/core/JSPlatformBridge.js` | 4.95 | 1.60 |
-| `dist/processors/BurstThrottle.js` | 4.44 | 1.56 |
-| `dist/collectors/FrameDropCollector.js` | 5.60 | 1.53 |
-| `dist/collectors/StorageCollector.js` | 5.26 | 1.50 |
+| `dist/core/OfflineQueue.js` | 5.89 | 2.08 |
+| `dist/collectors/ActionsCollector.js` | 5.43 | 2.00 |
 
 ## Per-subpath breakdown
 
@@ -106,9 +106,10 @@ always — but it's also the simplest to wire.
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
 | `dist/testing/generateSyntheticEvent.js` | 7.04 | 2.65 |
+| `dist/testing/matchers.js` | 5.22 | 1.59 |
 | `dist/testing/CrashInjector.js` | 3.50 | 1.32 |
 | `dist/testing/NetworkDegrader.js` | 3.58 | 1.31 |
-| `dist/exports/testing.js` | 0.50 | 0.31 |
+| `dist/exports/testing.js` | 0.72 | 0.42 |
 
 ## How to interpret
 

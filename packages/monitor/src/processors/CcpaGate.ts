@@ -17,8 +17,27 @@
 // When Do-Not-Sell is ON, this gate strips exactly those fields from the
 // OUTBOUND (enriched) event while leaving operational telemetry — crash,
 // network, navigation, render, performance signals — intact. This is a real
-// enforcement gate, not a stored flag: the redaction runs on every event in
-// the pipeline before it reaches the store / transport.
+// enforcement gate, not a stored flag.
+//
+// SCOPE / BOUNDARIES (be precise — this gate does NOT cover everything)
+// ---------------------------------------------------------------------
+// The gate runs on the ENRICHED pipeline copy only — the event the main
+// `bus.onAll` pipeline sanitizes → enriches → gates → persists/routes (see
+// createMonitorRuntime). That is the copy that carries the cross-context
+// identifiers and the copy bound for store/transport, so gating it is what
+// matters for "sale/sharing". It is NOT a blanket sweep over literally every
+// byte the SDK touches. Two documented copies fall OUTSIDE this gate:
+//
+//   1. Raw collector store-copies. Each collector also writes its own RAW,
+//      un-enriched, un-gated event straight to the EventStore (the pipeline's
+//      `store.insert` catch comments note "originating collector already wrote
+//      a raw copy"). Those raw copies never carry the enriched CONTEXT
+//      envelope (no `context.userId` / `context.device.*` / `dimensions`),
+//      which is exactly what this gate redacts — so the cross-context
+//      identifiers the Do-Not-Sell signal targets are absent there. But it is
+//      a separate write this gate does not pass over.
+//   2. The dev-only DashboardBridge. In dev it streams RAW events to the local
+//      dashboard; that stream is not routed through this gate.
 //
 // WHY IT GATES THE ENRICHED EVENT (not the raw event)
 // ---------------------------------------------------

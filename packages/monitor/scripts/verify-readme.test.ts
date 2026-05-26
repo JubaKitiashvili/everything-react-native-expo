@@ -77,7 +77,10 @@ describe('README', () => {
   });
 
   it('competitive comparison table lists every primary competitor', () => {
-    for (const name of ['Sentry', 'Crashlytics', 'Datadog', 'Embrace']) {
+    // The competitive set follows docs/compare/ (the source of truth): the
+    // product is positioned against RN-focused monitors, not generic APM.
+    // Updated from the stale Datadog/Embrace pairing to match docs/compare.
+    for (const name of ['Sentry', 'Crashlytics', 'measure.sh', 'Bitdrift']) {
       expect(README).toContain(name);
     }
   });

@@ -2,6 +2,12 @@
 
 > **Runtime intelligence for React Native & Expo** — crash reporting, dual-thread FPS, ANR detection, session replay, and AI-powered diagnosis. RN/Expo-first, **self-hosted by default**, and **Claude-native** via a built-in MCP server. Your telemetry stays on your infrastructure — or, in local-only mode, never leaves the device. MIT-licensed.
 
+```bash
+npx expo install @erne/monitor   # add the SDK, then wrap your app root in <MonitorProvider> (npx @erne/monitor init wires it for you)
+```
+
+Budgets (targets, not yet all met): `<2% CPU`, `<5MB memory` (Reassure), `<75KB gzipped` per entry (size-limit). Import from subpaths (`@erne/monitor/ai`, `/network`, …) to pay only for what you use — see **[bundle analysis](./docs/BUNDLE-ANALYSIS.md)** for current per-entry sizes (the main entry currently exceeds its gzip ceiling pending a subpath/trim pass).
+
 `@erne/monitor` is an SDK plus a self-hostable dashboard, an MCP server so an agent like Claude can query your crash data directly, and an optional AI agent that — gated on a confidence score — can open a fix PR against your repo. It exports OpenTelemetry (traces + logs + metrics) and is built around RN internals other monitors don't see: re-render storms, Fabric commit latency, dual-thread (UI vs JS) FPS, and Hermes CPU profiling. There is **no vendor ingestion endpoint to point a DSN at today** — you run the dashboard, or run with no backend at all.
 
 ---
@@ -16,7 +22,7 @@ npx @erne/monitor dashboard   # starts the local dashboard on http://127.0.0.1:3
 
 `init` is idempotent (re-run safe; use `--dry-run` to preview). It renders a `monitor.config.ts`, wraps your root layout with `<MonitorProvider>`, and adds `@erne/monitor/babel-plugin` to your Babel config. After `init`, install the package if it isn't already a dependency (`npx @erne/monitor init` prints the exact command for your package manager), then start Metro.
 
-> The `dashboard` server defaults to port `3333` and persists ingested events to SQLite at `~/.erne/monitor/dashboard.db`. The live event view is served at `http://127.0.0.1:3333/runtime.html`. Pass `--open` to pop a browser, `--port <n>` / `--host <h>` / `--db <path>` to override defaults.
+> The `dashboard` server defaults to port `3333` and persists ingested events to SQLite at `~/.erne/monitor/dashboard.db`. The dashboard (live feed, crash groups, sessions, metrics) is served at `http://127.0.0.1:3333/`. Pass `--open` to pop a browser, `--port <n>` / `--host <h>` / `--db <path>` to override defaults.
 
 The package also ships an Expo config plugin for native (iOS + Android) wiring. For a full managed-vs-bare setup walkthrough, the config plugin, and rebuilding native, see **[Getting Started](../../docs/getting-started.md)**.
 
@@ -55,7 +61,7 @@ React Native / Expo app
         │  batch upload (gzip) · OpenTelemetry export
         ▼
   Dashboard server  ──────────►  Dashboard UI  (humans)
-  (self-hosted, SQLite/Postgres)   /runtime.html, crash groups, metrics
+  (self-hosted, SQLite/Postgres)   live feed, crash groups, metrics
         │
         ├──────────────────────►  MCP server   (Claude queries crash data)
         └──────────────────────►  AI Fix agent (opens a PR, confidence-gated)

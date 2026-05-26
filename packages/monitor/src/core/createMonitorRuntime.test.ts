@@ -451,6 +451,94 @@ describe('createMonitorRuntime', () => {
     await runtime.shutdown();
   });
 
+  it('remote sampling never drops native ANR custom events (sampling: 0)', async () => {
+    MonitorClient.__resetForTesting();
+    // Remote config that samples EVERYTHING out: custom=0, default=0. A bare
+    // custom event must be dropped; a native_anr custom event must survive
+    // because ANRs (like crashes) always bypass the remote sampling gate.
+    const remoteFetch: typeof fetch = async () =>
+      ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          sampling: { custom: 0, default: 0 },
+          piiRules: [],
+          featureFlags: {},
+          updatedAt: 1,
+        }),
+      }) as unknown as Response;
+    const runtime = await createMonitorRuntime(
+      {},
+      {
+        isDev: true,
+        errorUtils: null,
+        rejectionTracker: null,
+        navigationAdapter: null,
+        networkTarget: {},
+        eventStoreBackend: new MemoryEventStoreBackend(),
+        initialConsent: { crashes: true, analytics: true, replay: true },
+        console: { log: () => {}, warn: () => {}, error: () => {} },
+        remoteConfig: {
+          enabled: true,
+          url: 'http://localhost:9/v1/config',
+          fetchImpl: remoteFetch,
+          // No-op timer so we drive the poll deterministically via fetchNow.
+          timer: { setInterval: () => 0, clearInterval: () => {} },
+        },
+      },
+    );
+    startMonitorRuntime(runtime);
+    // Apply the sampling:0 config into the gate synchronously.
+    await runtime.remoteConfigClient?.fetchNow();
+
+    // 1. A native_anr custom event (the shape ANRGateway emits) — must NOT be
+    //    dropped by remote sampling.
+    runtime.bus.emit({
+      type: 'custom',
+      timestamp: 1,
+      wallTime: 1,
+      sessionId: runtime.session.getCurrentSessionId(),
+      data: {
+        name: 'native_anr',
+        attributes: { durationMs: 6000, screen: 'Home', stackHead: 'x' },
+        anr: {
+          kind: 'anr',
+          durationMs: 6000,
+          mainThreadStack: 'main\nstack',
+          screen: 'Home',
+        },
+      },
+    });
+    // 2. A plain analytics custom event — SHOULD be dropped at sampling 0
+    //    (control that proves the gate is actually active).
+    runtime.bus.emit({
+      type: 'custom',
+      timestamp: 2,
+      wallTime: 2,
+      sessionId: runtime.session.getCurrentSessionId(),
+      data: { name: 'plain_custom', attributes: { foo: 'bar' } },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const drained = await runtime.store.drainAll(50);
+    // Enriched pipeline copies carry a `context` envelope; raw collector
+    // copies do not. (These were emitted directly on the bus, so no raw copy.)
+    const enriched = drained.filter(
+      (e) => (e as unknown as { context?: unknown }).context !== undefined,
+    );
+    const anrStored = enriched.filter(
+      (e) => (e.data as { name?: string }).name === 'native_anr',
+    );
+    const plainStored = enriched.filter(
+      (e) => (e.data as { name?: string }).name === 'plain_custom',
+    );
+    expect(anrStored).toHaveLength(1); // ANR bypassed remote sampling
+    expect(plainStored).toHaveLength(0); // plain custom was sampled out
+    await runtime.shutdown();
+  });
+
   it('signal router delivers to dashboard output for high-severity crashes', async () => {
     MonitorClient.__resetForTesting();
     const busEvents: Array<{ type: string; passthrough?: boolean }> = [];

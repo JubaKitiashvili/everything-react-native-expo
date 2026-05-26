@@ -167,4 +167,61 @@ describe('Sanitizer', () => {
       expect(data.b).toBeUndefined();
     });
   });
+
+  // Regression: a long near-miss string (e.g. 64k of 'a' then a space) must
+  // NOT cause the EMAIL_RE (or any extraPatterns) sweep to backtrack into a
+  // multi-second hang. With bounded quantifiers + the length guard this stays
+  // fast, and large legit strings are still handled (no data dropped).
+  describe('ReDoS / oversized-field guard', () => {
+    it('processes a 64k near-miss string well under a wall-clock bound', () => {
+      const s = new Sanitizer();
+      // No '@', no valid email tail — the worst case for an unbounded EMAIL_RE.
+      const hostile = 'a'.repeat(64000) + ' ';
+      const start = Date.now();
+      const out = s.sanitizeString(hostile);
+      const elapsed = Date.now() - start;
+      expect(elapsed).toBeLessThan(100);
+      expect(typeof out).toBe('string');
+    });
+
+    it('does not hang even with a greedy operator-supplied extra pattern', () => {
+      // An operator regex with no quantifier bound of its own — the length
+      // guard is what keeps this from running unbounded on a huge field.
+      const s = new Sanitizer({ extraPatterns: [/(a+)+$/g] });
+      const hostile = 'a'.repeat(64000) + 'b';
+      const start = Date.now();
+      const out = s.sanitizeString(hostile);
+      const elapsed = Date.now() - start;
+      expect(elapsed).toBeLessThan(100);
+      expect(typeof out).toBe('string');
+    });
+
+    it('preserves the oversized tail verbatim (no silent data loss)', () => {
+      const s = new Sanitizer();
+      const tail = 'TAIL_MARKER_' + 'z'.repeat(100);
+      // Head over the 16_384 cap, then a recognisable tail.
+      const input = 'x'.repeat(20000) + tail;
+      const out = s.sanitizeString(input);
+      // The unscrubbed tail survives intact behind the documented marker.
+      expect(out).toContain(tail);
+      expect(out).toContain('[…unsanitized-tail:');
+    });
+
+    it('still redacts PII that sits in the swept head of an oversized field', () => {
+      const s = new Sanitizer();
+      const input = 'contact me at user@example.com ' + 'q'.repeat(30000);
+      const out = s.sanitizeString(input);
+      expect(out).not.toContain('user@example.com');
+      expect(out).toContain('[REDACTED]');
+    });
+
+    it('handles a large legit email-bearing string correctly', () => {
+      const s = new Sanitizer();
+      const input = 'log line '.repeat(1000) + ' from alice@example.com';
+      const out = s.sanitize(evt({ note: input }));
+      const data = out.data as { note: string };
+      expect(data.note).not.toContain('alice@example.com');
+      expect(data.note).toContain('[REDACTED]');
+    });
+  });
 });

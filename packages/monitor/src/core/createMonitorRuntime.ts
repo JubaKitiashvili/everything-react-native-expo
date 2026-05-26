@@ -550,12 +550,21 @@ export async function createMonitorRuntime(
     }
     // Task 117.55 — operator-controlled remote sampling. Runs after the
     // adaptive sampler so it can only TIGHTEN, not loosen. Critical safety
-    // types (crashes / ANRs) always bypass it. No-op until a remote config is
-    // applied and only active when remoteConfig.enabled.
+    // types always bypass it. No-op until a remote config is applied and only
+    // active when remoteConfig.enabled.
+    //
+    // ANRs bypass too, but they are NOT a top-level `type` — ANRGateway emits
+    // them as `type:'custom'` with `data.name === 'native_anr'` (see
+    // src/native/ANRGateway.ts). The old `event.type !== 'native_anr'` guard
+    // never matched, so ANRs were being remote-sampled away. Detect the custom
+    // shape explicitly so both crashes AND ANRs always skip remote sampling.
+    const isAnr =
+      event.type === 'custom' &&
+      (event.data as { name?: string } | undefined)?.name === 'native_anr';
     if (
       remoteSamplingEnabled &&
       event.type !== 'crash' &&
-      event.type !== 'native_anr' &&
+      !isAnr &&
       !remoteSamplingGate.shouldKeep(event.type)
     ) {
       stats.remoteSampledDropped += 1;
