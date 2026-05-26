@@ -7,6 +7,7 @@ import { PerformancePage } from '@/pages/performance';
 import { SessionsPage } from '@/pages/sessions';
 import { QualityPage } from '@/pages/quality';
 import { SettingsPage } from '@/pages/settings';
+import { UserDetailPage } from '@/pages/users';
 
 /**
  * The app's route table. Every route renders inside <AppShell> (sidebar +
@@ -26,6 +27,8 @@ export function AppRoutes() {
         <Route path="sessions/:id" element={<SessionsPage />} />
         <Route path="quality" element={<QualityPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        {/* user drill-down (linked from sessions/crashes; not a sidebar item) */}
+        <Route path="users/:id" element={<UserDetailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
