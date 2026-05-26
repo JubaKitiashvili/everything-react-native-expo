@@ -900,4 +900,127 @@ describe('createMonitorRuntime', () => {
       await runtime.shutdown();
     });
   });
+
+  describe('lazy module loading (Task 117.107)', () => {
+    it('eager core (crash + ANR + native) is wired synchronously and active immediately on start', async () => {
+      const runtime = await bootFresh();
+      // Eager collectors/gateways exist the instant the runtime resolves —
+      // they are statically imported, never deferred.
+      expect(runtime.collectors.crash).toBeDefined();
+      expect(runtime.anrGateway).toBeDefined();
+      expect(runtime.native).toBeDefined();
+      expect(runtime.nativeCrashGateway).toBeDefined();
+      // Not running until startMonitorRuntime — but no async gap blocks them.
+      expect(runtime.collectors.crash.isRunning()).toBe(false);
+      expect(runtime.anrGateway.isRunning()).toBe(false);
+
+      startMonitorRuntime(runtime);
+      // Crash + ANR capture is live the moment start() returns (synchronous).
+      expect(runtime.collectors.crash.isRunning()).toBe(true);
+      expect(runtime.anrGateway.isRunning()).toBe(true);
+
+      // A crash reported right after start is captured (eager pipeline).
+      const received: Array<{ message?: string }> = [];
+      runtime.bus.on('crash', (e) => received.push(e.data as { message?: string }));
+      runtime.collectors.crash['reportException']?.call(
+        runtime.collectors.crash,
+        new Error('eager crash capture'),
+        false,
+      );
+      expect(received).toHaveLength(1);
+      expect(received[0]?.message).toContain('eager crash capture');
+      await runtime.shutdown();
+    });
+
+    it('lazy collectors are fully constructed by the time the runtime resolves', async () => {
+      const runtime = await bootFresh();
+      // Every lazy-loaded collector ref is populated (NOT null) once
+      // createMonitorRuntime resolves — the dynamic imports are awaited
+      // during init, so the public `collectors` shape is unchanged.
+      for (const key of [
+        'touchBoundary',
+        'frustration',
+        'state',
+        'suspense',
+        'activity',
+        'image',
+        'a11y',
+        'storage',
+        'deepLink',
+        'backgroundFetch',
+        'rsc',
+      ] as const) {
+        expect(runtime.collectors[key]).toBeDefined();
+        expect(typeof runtime.collectors[key].isRunning).toBe('function');
+        expect(runtime.collectors[key].isRunning()).toBe(false);
+      }
+      await runtime.shutdown();
+    });
+
+    it('a lazy collector loads, registers, and starts with the runtime', async () => {
+      const runtime = await bootFresh();
+      // Registered with the client alongside the eager collectors.
+      const names = runtime.client.getCollectors().map((c) => c.name);
+      expect(names).toContain('storage');
+      expect(names).toContain('deep_link');
+      expect(names).toContain('background_fetch');
+
+      expect(runtime.collectors.storage.isRunning()).toBe(false);
+      startMonitorRuntime(runtime);
+      // Lazy collector is started by the normal client lifecycle.
+      expect(runtime.collectors.storage.isRunning()).toBe(true);
+      await runtime.shutdown();
+      expect(runtime.collectors.storage.isRunning()).toBe(false);
+    });
+
+    it('lazy dev integrations (TerminalReporter/DashboardBridge) keep their exact contract', async () => {
+      MonitorClient.__resetForTesting();
+      const runtime = await createMonitorRuntime(
+        {},
+        {
+          isDev: true,
+          errorUtils: null,
+          rejectionTracker: null,
+          navigationAdapter: null,
+          networkTarget: {},
+          eventStoreBackend: new MemoryEventStoreBackend(),
+          initialConsent: { crashes: true, analytics: true, replay: true },
+          dashboardUrl: 'ws://localhost:9001',
+          webSocketCtor: null,
+          console: { log: () => {}, warn: () => {}, error: () => {} },
+        },
+      );
+      // Dev integrations are constructed even though their modules are
+      // dynamic-imported — the runtime awaits them during init.
+      expect(runtime.terminalReporter).toBeDefined();
+      expect(runtime.dashboardBridge).not.toBeNull();
+      expect(runtime.terminalReporter.isRunning()).toBe(false);
+      startMonitorRuntime(runtime);
+      expect(runtime.terminalReporter.isRunning()).toBe(true);
+      await runtime.shutdown();
+      expect(runtime.terminalReporter.isRunning()).toBe(false);
+    });
+
+    it('end-to-end: lazy collector emits an event that flows through the pipeline into the store', async () => {
+      const runtime = await bootFresh();
+      startMonitorRuntime(runtime);
+      // The deep-link collector (lazy) drives a public runtime method —
+      // proving the lazy module is wired end-to-end through the pipeline.
+      runtime.trackDeepLink('myapp://profile/42', false);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      const drained = await runtime.store.drainAll(20);
+      // The deep-link collector emits a `custom` event (data.name ===
+      // 'deep_link'); the enriched pipeline copy carries a `context` envelope.
+      const enriched = drained.filter(
+        (e) =>
+          e.type === 'custom' &&
+          (e.data as { name?: string }).name === 'deep_link' &&
+          (e as unknown as { context?: unknown }).context !== undefined,
+      );
+      expect(enriched.length).toBeGreaterThanOrEqual(1);
+      await runtime.shutdown();
+    });
+  });
 });

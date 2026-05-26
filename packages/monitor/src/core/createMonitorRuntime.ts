@@ -62,27 +62,28 @@ import { FrameDropCollector } from '../collectors/FrameDropCollector';
 import { StartupCollector } from '../collectors/StartupCollector';
 import { MemoryCollector } from '../collectors/MemoryCollector';
 import { LongTaskCollector } from '../collectors/LongTaskCollector';
-// Phase 1c advanced collectors
-import { TouchBoundaryCollector } from '../collectors/TouchBoundaryCollector';
-import { FrustrationCollector } from '../collectors/FrustrationCollector';
-import { StateCollector } from '../collectors/StateCollector';
-import { SuspenseCollector } from '../collectors/SuspenseCollector';
-import { ActivityCollector } from '../collectors/ActivityCollector';
-import {
-  RSCCollector,
-  detectRSCEnabled,
-} from '../collectors/RSCCollector';
-import { ImageCollector } from '../collectors/ImageCollector';
-import { A11yCollector } from '../collectors/A11yCollector';
-import { StorageCollector } from '../collectors/StorageCollector';
-import {
+// Phase 1c advanced collectors — Task 117.107: LAZY. These optional
+// instrumentation collectors are loaded via dynamic `import()` during
+// `createMonitorRuntime`'s async init (see `loadOptionalModules` below) so
+// their implementation bytes leave `main`'s static bundle graph. Only their
+// TYPES are statically imported here (erased at build → zero bundle cost).
+import type { TouchBoundaryCollector } from '../collectors/TouchBoundaryCollector';
+import type { FrustrationCollector } from '../collectors/FrustrationCollector';
+import type { StateCollector } from '../collectors/StateCollector';
+import type { SuspenseCollector } from '../collectors/SuspenseCollector';
+import type { ActivityCollector } from '../collectors/ActivityCollector';
+import type { RSCCollector } from '../collectors/RSCCollector';
+import type { ImageCollector } from '../collectors/ImageCollector';
+import type { A11yCollector } from '../collectors/A11yCollector';
+import type { StorageCollector } from '../collectors/StorageCollector';
+import type {
   DeepLinkCollector,
-  type LinkingLike,
+  LinkingLike,
 } from '../collectors/DeepLinkCollector';
-import {
+import type {
   BackgroundFetchCollector,
-  type BackgroundAppStateLike,
-  type BackgroundTaskRegistration,
+  BackgroundAppStateLike,
+  BackgroundTaskRegistration,
 } from '../collectors/BackgroundFetchCollector';
 import {
   CustomDimensions,
@@ -94,10 +95,14 @@ import { FabricCommitCollector } from '../collectors/native/FabricCommitCollecto
 // Phase 1c SignalRouter
 import { SignalRouter } from '../signal-router/SignalRouter';
 import type { DispatchedSignal } from '../signal-router/DispatchEngine';
-import { TerminalReporter, type ConsoleLike } from '../integrations/TerminalReporter';
-import {
+// Task 117.107: dev integrations are LAZY (type-only static import). The
+// TerminalReporter + DashboardBridge are dev-gated — in production they are
+// never started, so dynamic-importing them keeps their bytes out of `main`
+// entirely (pure win). Loaded via `loadOptionalModules` during async init.
+import type { TerminalReporter, ConsoleLike } from '../integrations/TerminalReporter';
+import type {
   DashboardBridge,
-  type WebSocketCtor,
+  WebSocketCtor,
 } from '../integrations/DashboardBridge';
 import {
   ErneMonitorNative,
@@ -388,6 +393,100 @@ export interface UserDataDeletionResult {
  */
 const SDK_VERSION = '0.1.0';
 
+/**
+ * Task 117.107 — bundle-size reduction via lazy module loading.
+ *
+ * The optional instrumentation collectors and the dev-only integrations
+ * (TerminalReporter, DashboardBridge) are loaded through dynamic `import()`
+ * instead of a static `import`. This is the single lever that moves their
+ * implementation bytes out of `dist/index.js`'s static dependency graph —
+ * Metro's bundler tree-splits a dynamic `import()` into a separate chunk, and
+ * the SDK's `main` entry no longer statically references them.
+ *
+ * Init-reliability guarantee: these imports are fired (and awaited) inside
+ * `createMonitorRuntime`'s async init BEFORE the runtime object is returned
+ * and BEFORE `startMonitorRuntime` runs. Because nothing has started
+ * collecting yet, no events can be missed — the lazy collectors are fully
+ * constructed and registered by the time the runtime resolves. The public
+ * runtime shape is unchanged: `runtime.collectors.*`, `runtime.terminalReporter`,
+ * and `runtime.dashboardBridge` are all populated synchronously-readable refs.
+ *
+ * Eager-by-design (NOT loaded here): crash, native ANR/bridge, and the core
+ * pipeline (signal router / sanitizer / CCPA gate / event store / transport)
+ * plus the performance/network/navigation/render collectors stay statically
+ * imported so they capture from t=0.
+ */
+interface OptionalModules {
+  TouchBoundaryCollector: typeof import('../collectors/TouchBoundaryCollector').TouchBoundaryCollector;
+  FrustrationCollector: typeof import('../collectors/FrustrationCollector').FrustrationCollector;
+  StateCollector: typeof import('../collectors/StateCollector').StateCollector;
+  SuspenseCollector: typeof import('../collectors/SuspenseCollector').SuspenseCollector;
+  ActivityCollector: typeof import('../collectors/ActivityCollector').ActivityCollector;
+  RSCCollector: typeof import('../collectors/RSCCollector').RSCCollector;
+  detectRSCEnabled: typeof import('../collectors/RSCCollector').detectRSCEnabled;
+  ImageCollector: typeof import('../collectors/ImageCollector').ImageCollector;
+  A11yCollector: typeof import('../collectors/A11yCollector').A11yCollector;
+  StorageCollector: typeof import('../collectors/StorageCollector').StorageCollector;
+  DeepLinkCollector: typeof import('../collectors/DeepLinkCollector').DeepLinkCollector;
+  BackgroundFetchCollector: typeof import('../collectors/BackgroundFetchCollector').BackgroundFetchCollector;
+  TerminalReporter: typeof import('../integrations/TerminalReporter').TerminalReporter;
+  DashboardBridge: typeof import('../integrations/DashboardBridge').DashboardBridge;
+}
+
+/**
+ * Dynamically imports every lazy module in parallel and returns their
+ * constructors. Fired once at the top of `createMonitorRuntime`. The
+ * `import()` calls (note: no whitespace after `import`) are what keep these
+ * modules out of `main`'s static graph.
+ */
+async function loadOptionalModules(): Promise<OptionalModules> {
+  const [
+    touch,
+    frustration,
+    state,
+    suspense,
+    activity,
+    rsc,
+    image,
+    a11y,
+    storage,
+    deepLink,
+    backgroundFetch,
+    terminal,
+    dashboard,
+  ] = await Promise.all([
+    import('../collectors/TouchBoundaryCollector'),
+    import('../collectors/FrustrationCollector'),
+    import('../collectors/StateCollector'),
+    import('../collectors/SuspenseCollector'),
+    import('../collectors/ActivityCollector'),
+    import('../collectors/RSCCollector'),
+    import('../collectors/ImageCollector'),
+    import('../collectors/A11yCollector'),
+    import('../collectors/StorageCollector'),
+    import('../collectors/DeepLinkCollector'),
+    import('../collectors/BackgroundFetchCollector'),
+    import('../integrations/TerminalReporter'),
+    import('../integrations/DashboardBridge'),
+  ]);
+  return {
+    TouchBoundaryCollector: touch.TouchBoundaryCollector,
+    FrustrationCollector: frustration.FrustrationCollector,
+    StateCollector: state.StateCollector,
+    SuspenseCollector: suspense.SuspenseCollector,
+    ActivityCollector: activity.ActivityCollector,
+    RSCCollector: rsc.RSCCollector,
+    detectRSCEnabled: rsc.detectRSCEnabled,
+    ImageCollector: image.ImageCollector,
+    A11yCollector: a11y.A11yCollector,
+    StorageCollector: storage.StorageCollector,
+    DeepLinkCollector: deepLink.DeepLinkCollector,
+    BackgroundFetchCollector: backgroundFetch.BackgroundFetchCollector,
+    TerminalReporter: terminal.TerminalReporter,
+    DashboardBridge: dashboard.DashboardBridge,
+  };
+}
+
 function detectIsDev(): boolean {
   const g = globalThis as { __DEV__?: unknown };
   if (typeof g.__DEV__ === 'boolean') return g.__DEV__;
@@ -423,6 +522,13 @@ export async function createMonitorRuntime(
 ): Promise<MonitorRuntime> {
   const config: MonitorConfig = defineMonitorConfig(overrides);
   const isDev = deps.isDev ?? detectIsDev();
+
+  // Task 117.107 — kick off the dynamic imports of the optional collectors +
+  // dev integrations immediately. Awaited before the runtime is wired so every
+  // lazy collector is constructed/registered by the time init returns (no
+  // events can be missed — nothing collects until `startMonitorRuntime`).
+  const optionalModulesPromise = loadOptionalModules();
+
   const bus = new SignalBus();
 
   const store = new EventStore({
@@ -666,7 +772,28 @@ export async function createMonitorRuntime(
   });
   const longTask = new LongTaskCollector({ signalBus: bus });
 
-  // Phase 1c advanced collectors
+  // Task 117.107 — await the lazily-imported optional modules. The promise was
+  // kicked off at the top of init; awaiting here (still before any collector
+  // starts) keeps the runtime fully wired with no missed events. Destructured
+  // into the same local names the constructions below already used.
+  const {
+    TouchBoundaryCollector,
+    FrustrationCollector,
+    StateCollector,
+    SuspenseCollector,
+    ActivityCollector,
+    RSCCollector,
+    detectRSCEnabled,
+    ImageCollector,
+    A11yCollector,
+    StorageCollector,
+    DeepLinkCollector,
+    BackgroundFetchCollector,
+    TerminalReporter,
+    DashboardBridge,
+  } = await optionalModulesPromise;
+
+  // Phase 1c advanced collectors (lazy-loaded above)
   const touchBoundary = new TouchBoundaryCollector({ signalBus: bus });
   const frustration = new FrustrationCollector({ signalBus: bus });
   const state = new StateCollector({ signalBus: bus });

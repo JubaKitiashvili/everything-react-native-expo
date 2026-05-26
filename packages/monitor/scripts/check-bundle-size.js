@@ -49,20 +49,21 @@ const zlib = require('node:zlib');
  * figure assumes subpath imports in a tree-shaking consumer, which the
  * (intentionally tight) subpath budgets below enforce.
  *
- * The `main` budget was 75 KB when the SDK measured ~67 KB. The SDK has
- * since grown into a comprehensive all-in-one runtime (crash + ANR + dual-
- * thread perf + Hermes profiling + session replay + network + privacy/CCPA
- * + remote config + OTel + intelligence), and `main` now measures ~94 KB
- * gzipped in a no-tree-shake scenario. The budget is re-baselined to 96 KB
- * to reflect that legitimate surface while still catching regressions.
- * The real reduction lever — lazy-loading (dynamic-import) the optional
- * instrumentation collectors and the dev-only integrations (TerminalReporter,
- * DashboardBridge) out of main's static graph — is tracked as a dedicated
- * optimization (Task 117.107). Granular consumers already pay only for what
- * they import via the subpaths.
+ * The `main` budget was 75 KB when the SDK measured ~67 KB. The SDK grew
+ * into a comprehensive all-in-one runtime (crash + ANR + dual-thread perf +
+ * Hermes profiling + session replay + network + privacy/CCPA + remote config
+ * + OTel + intelligence), peaking at ~94 KB. Task 117.107 then lazy-loaded
+ * (dynamic-import) the dev integrations (TerminalReporter, DashboardBridge)
+ * and 11 optional instrumentation collectors (deep-link, bg-fetch, OTA,
+ * dimensions, actions, RSC, suspense, frustration, storage, image, state)
+ * out of main's static graph — they load before any collector starts, so no
+ * events are missed — bringing `main` to ~84 KB. The budget is set to 85 KB.
+ * The crash/ANR/network/nav/render/memory/FPS core + the pipeline stay EAGER
+ * (must capture from t=0), so they remain in main by design. Granular
+ * consumers pay only for what they import via the (tight) subpath budgets.
  */
 const BUDGETS = [
-  { name: 'main', entry: 'dist/index.js', budgetKb: 96 },
+  { name: 'main', entry: 'dist/index.js', budgetKb: 85 },
   { name: '/performance', entry: 'dist/exports/performance.js', budgetKb: 20 },
   { name: '/network', entry: 'dist/exports/network.js', budgetKb: 5 },
   { name: '/ai', entry: 'dist/exports/ai.js', budgetKb: 30 },

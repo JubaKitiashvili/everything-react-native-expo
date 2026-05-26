@@ -12,7 +12,7 @@ always — but it's also the simplest to wire.
 
 | Entry | Files | Raw (KB) | Gzip (KB) | Budget (KB) | Status |
 | ----- | ----: | -------: | --------: | ----------: | :----- |
-| `main` | 86 | 401.63 | 94.18 | 96 | ok |
+| `main` | 73 | 346.70 | 83.66 | 85 | ok |
 | `/performance` | 11 | 36.35 | 7.01 | 20 | ok |
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
@@ -24,7 +24,7 @@ always — but it's also the simplest to wire.
 
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
-| `dist/core/createMonitorRuntime.js` | 34.71 | 9.11 |
+| `dist/core/createMonitorRuntime.js` | 36.64 | 9.75 |
 | `dist/processors/Sanitizer.js` | 11.72 | 4.42 |
 | `dist/processors/CcpaGate.js` | 10.82 | 3.99 |
 | `dist/signal-router/PatternLibrary.js` | 11.55 | 2.84 |

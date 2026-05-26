@@ -6,7 +6,7 @@
 npx expo install @erne/monitor   # add the SDK, then wrap your app root in <MonitorProvider> (npx @erne/monitor init wires it for you)
 ```
 
-Overhead budgets: `<2% CPU`, `<5MB memory` (Reassure). Bundle: the full all-in-one runtime is ~94KB gzipped; import a subpath to pay only for what you use (e.g. `@erne/monitor/network` is `<5KB gzipped`, `/performance` `<20KB`). See **[bundle analysis](./docs/BUNDLE-ANALYSIS.md)** for per-entry sizes — lazy-loading optional collectors to shrink the full entry is tracked (Task 117.107).
+Overhead budgets: `<2% CPU`, `<5MB memory` (Reassure). Bundle: the full all-in-one runtime is ~84KB gzipped (optional collectors + dev integrations are lazy-loaded out of the static graph; crash/ANR/network/render stay eager). Import a subpath to pay only for what you use (e.g. `@erne/monitor/network` is `<5KB gzipped`, `/performance` `<20KB`). See **[bundle analysis](./docs/BUNDLE-ANALYSIS.md)** for per-entry sizes.
 
 `@erne/monitor` is an SDK plus a self-hostable dashboard, an MCP server so an agent like Claude can query your crash data directly, and an optional AI agent that — gated on a confidence score — can open a fix PR against your repo. It exports OpenTelemetry (traces + logs + metrics) and is built around RN internals other monitors don't see: re-render storms, Fabric commit latency, dual-thread (UI vs JS) FPS, and Hermes CPU profiling. There is **no vendor ingestion endpoint to point a DSN at today** — you run the dashboard, or run with no backend at all.
 

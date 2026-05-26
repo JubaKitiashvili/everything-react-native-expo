@@ -101,12 +101,17 @@ export type {
   CcpaDataCategory,
   CcpaDisclosure,
 } from './processors/CcpaGate';
-export { TerminalReporter } from './integrations/TerminalReporter';
+// Task 117.107 — the TerminalReporter + DashboardBridge *values* are dev-only
+// (dev-gated, never started in production) and are now lazy-loaded by
+// `createMonitorRuntime` via dynamic `import()`. Re-exporting them as values
+// here would pin their bytes into the production `main` bundle's static graph,
+// defeating the lazy split. They remain publicly importable from the
+// `@erne/monitor/dev` subpath. Types stay re-exported here (erased at build →
+// zero bundle cost) so callers can still name them.
 export type {
   TerminalReporterOptions,
   ConsoleLike,
 } from './integrations/TerminalReporter';
-export { DashboardBridge } from './integrations/DashboardBridge';
 export type {
   DashboardBridgeOptions,
   WebSocketCtor,
@@ -156,42 +161,43 @@ export type {
   PerformanceObserverCtor,
 } from './collectors/LongTaskCollector';
 // Phase 1c advanced collectors
-export { TouchBoundaryCollector } from './collectors/TouchBoundaryCollector';
+//
+// Task 117.107 — these optional instrumentation collectors are lazy-loaded by
+// `createMonitorRuntime` via dynamic `import()` so their implementation bytes
+// no longer live in `main`'s static bundle graph. Re-exporting them as values
+// here would re-anchor them into `main`, so only their TYPES are re-exported
+// (erased at build → zero bundle cost). `ActivityCollector` and
+// `SuspenseCollector` also remain importable as values from the
+// `@erne/monitor/performance` subpath for consumers who wire them by hand.
 export type {
   TouchEventData,
   TouchCollectorDeps,
 } from './collectors/TouchBoundaryCollector';
-export { FrustrationCollector } from './collectors/FrustrationCollector';
 export type {
   FrustrationEventData,
   FrustrationSignal,
   FrustrationLevel,
   FrustrationCollectorDeps,
 } from './collectors/FrustrationCollector';
-export { StateCollector } from './collectors/StateCollector';
 export type {
   StateEventData,
   StateCollectorDeps,
 } from './collectors/StateCollector';
-export { SuspenseCollector } from './collectors/SuspenseCollector';
 export type {
   SuspenseEventData,
   SuspenseCollectorDeps,
 } from './collectors/SuspenseCollector';
-export { ActivityCollector } from './collectors/ActivityCollector';
 export type {
   ActivityEventData,
   ActivityMode,
   ActivityCollectorDeps,
 } from './collectors/ActivityCollector';
-export { ImageCollector } from './collectors/ImageCollector';
 export type {
   ImageEventData,
   ImageLoadInfo,
   ImageCacheResult,
   ImageCollectorDeps,
 } from './collectors/ImageCollector';
-export { A11yCollector } from './collectors/A11yCollector';
 export type {
   A11yEventData,
   A11yElementInfo,
@@ -199,7 +205,6 @@ export type {
   A11ySeverity,
   A11yCollectorDeps,
 } from './collectors/A11yCollector';
-export { StorageCollector } from './collectors/StorageCollector';
 export type {
   StorageEventData,
   StorageBackend,
@@ -208,14 +213,12 @@ export type {
   StorageCollectorDeps,
 } from './collectors/StorageCollector';
 // Task 117.27 — Deep link instrumentation
-export { DeepLinkCollector } from './collectors/DeepLinkCollector';
 export type {
   DeepLinkEventData,
   LinkingLike,
   DeepLinkCollectorDeps,
 } from './collectors/DeepLinkCollector';
 // Task 117.28 — Background fetch lifecycle capture
-export { BackgroundFetchCollector } from './collectors/BackgroundFetchCollector';
 export type {
   BackgroundTransitionEventData,
   BackgroundTaskEventData,
@@ -534,7 +537,9 @@ export type {
   BabelTransformSpec,
 } from './plugins/withMetroInstrumentation';
 // Phase 4 — RSC Collector
-export { RSCCollector } from './collectors/RSCCollector';
+// Task 117.107 — RSC monitoring is opt-in (Expo Router server components) and
+// self-gates; the collector is lazy-loaded by `createMonitorRuntime`. Only its
+// types are re-exported here to keep the value out of `main`'s static graph.
 export type {
   RSCEventData,
   RSCCollectorDeps,
