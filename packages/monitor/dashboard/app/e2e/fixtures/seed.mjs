@@ -230,6 +230,50 @@ export function seedFixtures(store, now) {
       payload: { category: 'nav', message: 'Navigated to /item/42' },
       userId,
     },
+    // RSC boundary events — real collector shape: type 'custom', payload
+    // { name: 'rsc', attributes } (Task 117.26).
+    {
+      id: 'evt-rsc-render',
+      type: 'custom',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 56_000,
+      receivedAt: now - 56_000,
+      platform: 'ios',
+      payload: {
+        name: 'rsc',
+        attributes: { kind: 'server-render', routePath: '/feed', serverRenderTimeMs: 240 },
+      },
+      userId,
+    },
+    {
+      id: 'evt-rsc-payload',
+      type: 'custom',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 55_800,
+      receivedAt: now - 55_800,
+      platform: 'ios',
+      payload: {
+        name: 'rsc',
+        attributes: { kind: 'payload', routePath: '/feed', payloadSizeBytes: 18_240 },
+      },
+      userId,
+    },
+    {
+      id: 'evt-rsc-cache',
+      type: 'custom',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 55_600,
+      receivedAt: now - 55_600,
+      platform: 'ios',
+      payload: {
+        name: 'rsc',
+        attributes: { kind: 'cache-status', routePath: '/feed', cacheHit: true },
+      },
+      userId,
+    },
   ];
   for (const event of events) store.insertEvent(event);
 
