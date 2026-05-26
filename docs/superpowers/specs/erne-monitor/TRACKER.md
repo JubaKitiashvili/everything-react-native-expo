@@ -3,9 +3,9 @@
 > ★ ყოველი სესიის დასაწყისში ეს ფაილი პირველი წაიკითხე. ★
 
 **Last updated:** 2026-05-27
-**Current Phase:** Phase 7 — Launch (70/106)
+**Current Phase:** Phase 7 — Launch (74/106)
 **Active Task:** Task 117.102 — design partner cohort kickoff (117.1 Dashboard REWRITE ✅ shipped — see `DASHBOARD-REWRITE-117.1.md` §10)
-**Overall Progress:** 186/222 tasks (Phases 1a–6 ✅ · Phase 7 70/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · platform wave closed 117.11 server OTel-ingest + 117.57 cli privacy-manifest + 117.26 app RSC-panel + 117.85 docs pricing via 4 parallel agents on disjoint trees · compliance+replay wave closed 117.17 server remote-config + 117.56 SDK CCPA + 117.7 app replay-hierarchy + 117.103 docs DPA via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1030 SDK-src tests + 367 dashboard-app (vitest) + 29 dashboard-app (playwright e2e) + 450 dashboard-server tests + 200 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
+**Overall Progress:** 190/222 tasks (Phases 1a–6 ✅ · Phase 7 74/106 — M0 ✅ closed (117.1 dashboard rewrite shipped 2026-05-26 via 5 parallel page agents) · cohort-enablement wave (alongside 117.102) closed 117.54 app + 117.65 server + 117.29 cli, advanced 117.37 docs (README) via 4 parallel agents · product-depth wave closed 117.8 flamegraph + 117.13 trace waterfall + 117.12 user journeys via 3 parallel agents (page-scoped panels) · hardening+depth wave closed 117.64 server rate-limit + 117.15 app user-view + 117.53 cli AST-discovery + 117.95 SDK privacy-redteam (closed 3 real PII leaks) via 4 parallel agents on disjoint trees · platform wave closed 117.11 server OTel-ingest + 117.57 cli privacy-manifest + 117.26 app RSC-panel + 117.85 docs pricing via 4 parallel agents on disjoint trees · compliance+replay wave closed 117.17 server remote-config + 117.56 SDK CCPA + 117.7 app replay-hierarchy + 117.103 docs DPA via 4 parallel agents on disjoint trees · keys+a11y wave closed 117.62 server key-rotation + 117.55 SDK remote-config-client (completes 117.17) + 117.84 app WCAG-audit (fixed real a11y violations) + 117.93 docs pattern-encyclopedia via 4 parallel agents on disjoint trees · M1 117.2/3/6/80/81/91/99 · M2 117.16/22/23 · parallel-agent wave 1 closed 117.27/28/30/77 SDK + 117.63/66/68 server + 117.82 mcp + 117.58/60/87/88/89 governance · wave 2 closed 117.24/72/76 SDK + 117.70/83 server + 117.41/86/73 docs · wave 3 closed 117.31/32 SDK + 117.69/51 server + 117.59 governance · wave 4 closed 117.19 server + 117.33/34 infra + 117.94/10 cli) · 1086 SDK-src tests + 367 dashboard-app (vitest) + 36 dashboard-app (playwright e2e) + 476 dashboard-server tests + 200 cli tests + 103 mcp tests + 58 ai-fix-pr tests + 46 benchmarks tests passing
 _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iteration competitive audit (Sentry / measure.sh / Bitdrift / Revyl / Honeycomb / Dash0 / 15 other products). New positioning: unified platform (monitor + agents + skills) with Claude-native MCP, self-hosted by default, React Native first. 34-week realistic solo timeline. 3 hard-proof narrative claims._
 **Plan:** See `PHASE-7-IMPLEMENTATION.md` (canonical 106-task spec) and `PHASE-5-6-7-PLAN.md` (historical Phases 5-6 reference). **117.1 dashboard rewrite → `DASHBOARD-REWRITE-117.1.md` (decision record + dashboard-next execution plan).**
 
@@ -203,7 +203,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | # | Task | Status |
 |---|------|--------|
 | 117.11 | OTel ingest — `/v1/traces` `/v1/logs` `/v1/metrics` (OTLP/HTTP JSON) from any OTel source | ✅ |
-| 117.17 | Remote adaptive config (server store + GET /v1/config poll + PUT) — 🟡 SDK poll/apply follow-up | ✅ |
+| 117.17 | Remote adaptive config (server store + GET /v1/config + PUT; SDK polls + applies sampling/flags/PII via 117.55) | ✅ |
 | 117.18 | Multi-tenant RBAC (3-role Owner/Member/Viewer, JWT localStorage) | ⬜ |
 | 117.19 | Alert delivery channels (Slack + Discord + PagerDuty + Opsgenie + generic webhook + email + in-app) | ✅ |
 | 117.20 | Bidirectional bug reports (reply thread + SDK polling for in-app display + assignee + status) | ⬜ |
@@ -231,7 +231,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.44 | Playwright E2E suite (50+ specs against `POST /api/demo/seed`) | ⬜ |
 | 117.85 | Pricing page + tier matrix (OSS free / Cloud / Enterprise) — page+matrix ✅; dollar figures TBD (business) | ✅ |
 | 117.92 | ERNE Live public dashboard `monitor.erne.dev` (seed cron for bootstrap) | ⬜ |
-| 117.93 | Pattern Encyclopedia public registry (20 launch patterns, community PR flow) | ⬜ |
+| 117.93 | Pattern Encyclopedia public registry (20 patterns from catalog.ts + community PR flow) | ✅ |
 | 117.96 | Twitch/YouTube Live "fix my crash with Claude" session | ⬜ |
 | 117.97 | $500 bug bounty launch day (tax-safe gift-card structure, fraud guards) | ⬜ |
 | 117.98 | Bilateral MCP demo with partner (Linear / Cursor / Copilot Workspace — stretch) | ⬜ |
@@ -260,9 +260,9 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.52 | Brownfield RN support (SDK init from native host, cross-boundary session continuity) | ⬜ |
 | 117.53 | AST-based auto-discovery (TS compiler API scan of routes/navigation/API clients; `discover` cli cmd) | ✅ |
 | 117.54 | Copy-as-AI-context button on crash/error detail panels | ✅ |
-| 117.55 | SDK remote config panel (merges into 117.17) | ⬜ |
+| 117.55 | SDK remote config client — polls /v1/config + applies sampling/flags/PII (real effects) | ✅ |
 | 117.59 | CLA bot setup (cla-assistant or GitHub CLA Action) | ✅ |
-| 117.62 | SDK key rotation + revocation endpoint | ⬜ |
+| 117.62 | Ingest key rotation + revocation (server: hashed keys, grace window, audited) — 🟡 SDK-side handling follow-up | ✅ |
 | 117.63 | Webhook HMAC signature (X-ERNE-Signature header) | ✅ |
 | 117.66 | Dashboard CSP + security headers (CSP, HSTS, X-Frame-Options) | ✅ |
 | 117.68 | Prometheus /metrics endpoint (ingest rate, queue depth, storage size) | ✅ |
@@ -277,7 +277,7 @@ _2026-04-18 scope expansion: Phase 7 re-scoped from 8→106 tasks after 3-iterat
 | 117.79 | mDNS/Bonjour LAN auto-discovery (device finds dashboard without IP config) | ⬜ |
 | 117.82 | MCP tool permission tiers (read-only vs write-capable, per-tool confirmation) | ✅ |
 | 117.83 | Common frame extraction (shared stack frame across error group) | ✅ |
-| 117.84 | Dashboard WCAG 2.1 AA audit (axe-core in Playwright) | ⬜ |
+| 117.84 | Dashboard WCAG 2.1 AA audit (axe-core e2e, all 7 routes; fixed contrast/aria-sort/dl violations) | ✅ |
 | 117.86 | OSS → Cloud migration guide + data export format spec | ✅ |
 | 117.87 | Public roadmap (GitHub Projects board + ROADMAP.md) | ✅ |
 | 117.88 | GitHub issue templates + triage guidelines | ✅ |
