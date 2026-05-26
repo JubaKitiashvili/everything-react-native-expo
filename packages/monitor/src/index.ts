@@ -169,6 +169,23 @@ export type {
   AsyncStorageLike,
   StorageCollectorDeps,
 } from './collectors/StorageCollector';
+// Task 117.27 — Deep link instrumentation
+export { DeepLinkCollector } from './collectors/DeepLinkCollector';
+export type {
+  DeepLinkEventData,
+  LinkingLike,
+  DeepLinkCollectorDeps,
+} from './collectors/DeepLinkCollector';
+// Task 117.28 — Background fetch lifecycle capture
+export { BackgroundFetchCollector } from './collectors/BackgroundFetchCollector';
+export type {
+  BackgroundTransitionEventData,
+  BackgroundTaskEventData,
+  BackgroundTaskResult,
+  BackgroundAppStateLike,
+  BackgroundTaskRegistration,
+  BackgroundFetchCollectorDeps,
+} from './collectors/BackgroundFetchCollector';
 // Phase 1c SignalRouter core
 export { SignalRouter } from './signal-router/SignalRouter';
 export type {
@@ -246,6 +263,18 @@ export type {
   AppStateLike,
   AppStateStatus,
 } from './core/SessionManager';
+// Task 117.30 — Custom dimensions / user properties
+export {
+  CustomDimensions,
+  CUSTOM_DIMENSION_LIMITS,
+} from './core/CustomDimensions';
+export type {
+  DimensionValue,
+  CustomDimensionsOptions,
+} from './core/CustomDimensions';
+// Task 117.77 — EAS Update / OTA version tagging
+export { getOtaContext, withOtaContext } from './core/ota';
+export type { OtaContext, ExpoUpdatesLike } from './core/ota';
 // Phase 2b — Native advanced collectors
 export { DualThreadFPSCollector } from './collectors/native/DualThreadFPSCollector';
 export type {

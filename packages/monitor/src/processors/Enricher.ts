@@ -7,6 +7,7 @@ import type {
   PlatformBridge,
 } from '../types';
 import type { SessionManager } from '../core/SessionManager';
+import type { DimensionValue } from '../core/CustomDimensions';
 
 export interface EnrichedEvent extends MonitorEvent {
   context: {
@@ -26,11 +27,23 @@ export interface EnrichedEvent extends MonitorEvent {
      */
     userId: string | null;
   };
+  /**
+   * Task 117.30 — user-defined slicing dimensions attached at enrich time.
+   * Present only when the host has set at least one dimension via
+   * `monitor.setDimension()` / `monitor.setUserProperties()`.
+   */
+  dimensions?: Record<string, DimensionValue>;
 }
 
 export interface EnricherDeps {
   platformBridge: PlatformBridge;
   sessionManager: SessionManager;
+  /**
+   * Task 117.30 — supplies the current custom dimensions. Returns an
+   * empty object when none are set; in that case no `dimensions` field is
+   * attached. Injected so the Enricher stays decoupled from the store.
+   */
+  getDimensions?: () => Record<string, DimensionValue>;
 }
 
 /**
@@ -59,7 +72,7 @@ export class Enricher {
     if (this.cachedApp === null) {
       this.cachedApp = this.deps.platformBridge.getAppInfo();
     }
-    return {
+    const enriched: EnrichedEvent = {
       ...event,
       context: {
         device: this.cachedDevice,
@@ -73,6 +86,11 @@ export class Enricher {
         userId: this.userId,
       },
     };
+    const dimensions = this.deps.getDimensions?.();
+    if (dimensions && Object.keys(dimensions).length > 0) {
+      enriched.dimensions = dimensions;
+    }
+    return enriched;
   }
 
   /** Clears the cached device/app info — e.g. after a locale change. */

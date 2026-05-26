@@ -66,6 +66,19 @@ import { ActivityCollector } from '../collectors/ActivityCollector';
 import { ImageCollector } from '../collectors/ImageCollector';
 import { A11yCollector } from '../collectors/A11yCollector';
 import { StorageCollector } from '../collectors/StorageCollector';
+import {
+  DeepLinkCollector,
+  type LinkingLike,
+} from '../collectors/DeepLinkCollector';
+import {
+  BackgroundFetchCollector,
+  type BackgroundAppStateLike,
+  type BackgroundTaskRegistration,
+} from '../collectors/BackgroundFetchCollector';
+import {
+  CustomDimensions,
+  type DimensionValue,
+} from './CustomDimensions';
 // Phase 2b native collectors
 import { DualThreadFPSCollector } from '../collectors/native/DualThreadFPSCollector';
 import { FabricCommitCollector } from '../collectors/native/FabricCommitCollector';
@@ -101,6 +114,15 @@ export interface MonitorRuntimeDeps {
   errorUtils?: ErrorUtilsLike | null;
   rejectionTracker?: RejectionTrackerLike | null;
   navigationAdapter?: NavigationAdapter | null;
+  /** Task 117.27 — React Native `Linking` module for deep-link capture. */
+  linking?: LinkingLike | null;
+  /**
+   * Task 117.28 — AppState source for the BackgroundFetchCollector. Falls
+   * back to `deps.appState` (shared with SessionManager) when omitted.
+   */
+  backgroundAppState?: BackgroundAppStateLike | null;
+  /** Task 117.28 — optional background-task registration hook. */
+  backgroundTaskRegistration?: BackgroundTaskRegistration | null;
   networkTarget?: {
     fetch?: typeof fetch;
     XMLHttpRequest?: typeof XMLHttpRequest;
@@ -185,7 +207,10 @@ export interface MonitorRuntime {
     image: ImageCollector;
     a11y: A11yCollector;
     storage: StorageCollector;
+    deepLink: DeepLinkCollector;
+    backgroundFetch: BackgroundFetchCollector;
   };
+  customDimensions: CustomDimensions;
   signalRouter: SignalRouter;
   terminalReporter: TerminalReporter;
   dashboardBridge: DashboardBridge | null;
@@ -205,6 +230,12 @@ export interface MonitorRuntime {
     screen: string,
     params?: Record<string, unknown>,
   ) => void;
+  /** Task 117.27 — manually record a deep link the SDK didn't auto-capture. */
+  trackDeepLink: (url: string, coldStart?: boolean) => void;
+  /** Task 117.30 — set a single slicing dimension attached to events. */
+  setDimension: (key: string, value: DimensionValue) => boolean;
+  /** Task 117.30 — bulk-set user properties; returns accepted count. */
+  setUserProperties: (props: Record<string, DimensionValue>) => number;
   leaveBreadcrumb: (crumb: Omit<Breadcrumb, 'timestamp'>) => void;
   setConsent: (partial: Partial<ConsentState>) => Promise<void>;
   /**
@@ -327,10 +358,15 @@ export async function createMonitorRuntime(
   });
   await crashLoopGuard.hydrate();
 
+  // Task 117.30 — custom dimensions store. Declared before the Enricher so
+  // its getter is wired into the enrichment path.
+  const customDimensions = new CustomDimensions();
+
   const sanitizer = new Sanitizer(deps.sanitizerOptions);
   const enricher = new Enricher({
     platformBridge,
     sessionManager: session,
+    getDimensions: () => customDimensions.getDimensions(),
   });
   const fingerprinter = new Fingerprinter();
   const sampler = new AdaptiveSampler({
@@ -490,6 +526,22 @@ export async function createMonitorRuntime(
   const image = new ImageCollector({ signalBus: bus });
   const a11y = new A11yCollector({ signalBus: bus });
   const storage = new StorageCollector({ signalBus: bus });
+  // Task 117.27 — deep link instrumentation.
+  const deepLink = new DeepLinkCollector({
+    signalBus: bus,
+    eventStore: store,
+    sessionManager: session,
+    linking: deps.linking ?? null,
+  });
+  // Task 117.28 — background fetch lifecycle capture. Reuses the same
+  // AppState source as SessionManager when a dedicated one isn't given.
+  const backgroundFetch = new BackgroundFetchCollector({
+    signalBus: bus,
+    eventStore: store,
+    sessionManager: session,
+    appState: deps.backgroundAppState ?? deps.appState ?? null,
+    taskRegistration: deps.backgroundTaskRegistration ?? null,
+  });
 
   const client = MonitorClient.init(config);
   client.registerCollector(crash);
@@ -510,6 +562,8 @@ export async function createMonitorRuntime(
   client.registerCollector(image);
   client.registerCollector(a11y);
   client.registerCollector(storage);
+  client.registerCollector(deepLink);
+  client.registerCollector(backgroundFetch);
 
   const terminalReporter = new TerminalReporter({
     signalBus: bus,
@@ -751,7 +805,10 @@ export async function createMonitorRuntime(
       image,
       a11y,
       storage,
+      deepLink,
+      backgroundFetch,
     },
+    customDimensions,
     signalRouter,
     terminalReporter,
     dashboardBridge,
@@ -766,6 +823,9 @@ export async function createMonitorRuntime(
     trackEvent: (name, attributes) => custom.trackEvent(name, attributes),
     trackScreenView: (screen, params) =>
       navigation.trackScreenView(screen, params),
+    trackDeepLink: (url, coldStart) => deepLink.trackDeepLink(url, coldStart),
+    setDimension: (key, value) => customDimensions.setDimension(key, value),
+    setUserProperties: (props) => customDimensions.setUserProperties(props),
     leaveBreadcrumb: (crumb) => breadcrumb.leave(crumb),
     setConsent: (partial) => consentGate.setConsent(partial),
     setUserId: (userId) => enricher.setUserId(userId),
