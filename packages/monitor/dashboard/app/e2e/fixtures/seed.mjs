@@ -285,6 +285,46 @@ export function seedFixtures(store, now) {
       payload: { kind: 'cache-status', routePath: '/feed', cacheHit: true },
       userId,
     },
+    // Suspense stalls — canonical shape: type 'suspense', flat payload (Task 117.25).
+    {
+      id: 'evt-suspense-slow',
+      type: 'suspense',
+      severity: 'warning',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 54_000,
+      receivedAt: now - 54_000,
+      platform: 'ios',
+      payload: { boundaryName: 'FeedScreen', fallbackDurationMs: 3200, depth: 1, outcome: 'resolved' },
+      userId,
+    },
+    {
+      id: 'evt-suspense-ok',
+      type: 'suspense',
+      severity: 'info',
+      sessionId: 'sess-ios-1',
+      timestamp: now - 53_800,
+      receivedAt: now - 53_800,
+      platform: 'ios',
+      payload: { boundaryName: 'ProfileCard', fallbackDurationMs: 180, depth: 2, outcome: 'resolved' },
+      userId,
+    },
+    {
+      id: 'evt-suspense-error',
+      type: 'suspense',
+      severity: 'critical',
+      sessionId: 'sess-android-1',
+      timestamp: now - 53_600,
+      receivedAt: now - 53_600,
+      platform: 'android',
+      payload: {
+        boundaryName: 'CheckoutScreen',
+        fallbackDurationMs: 5400,
+        depth: 1,
+        outcome: 'error',
+        errorMessage: 'Suspense boundary timed out fetching cart',
+      },
+      userId,
+    },
   ];
   for (const event of events) store.insertEvent(event);
 

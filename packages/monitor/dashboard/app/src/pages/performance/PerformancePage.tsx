@@ -3,13 +3,15 @@ import { NetworkWaterfall } from './components/NetworkWaterfall';
 import { Flamegraph } from './components/Flamegraph';
 import { TraceWaterfall } from './components/TraceWaterfall';
 import { RscBoundaries } from './components/RscBoundaries';
+import { SuspensePanel } from './components/Suspense';
 import styles from './PerformancePage.module.css';
 
 /**
  * Performance page. Serves `/performance` — runtime performance vitals
  * (FPS, CPU, memory, Fabric commits, startup waterfall), the per-session
  * network request timeline, a Hermes CPU flamegraph, a distributed trace
- * waterfall, and React Server Component boundaries. No detail route.
+ * waterfall, React Server Component boundaries, and Suspense stalls.
+ * No detail route.
  */
 export function PerformancePage() {
   return (
@@ -19,6 +21,7 @@ export function PerformancePage() {
       <Flamegraph />
       <TraceWaterfall />
       <RscBoundaries />
+      <SuspensePanel />
     </div>
   );
 }
