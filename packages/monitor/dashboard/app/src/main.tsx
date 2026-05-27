@@ -8,8 +8,13 @@ import { AuthProvider } from '@/shared/auth/AuthProvider';
 import * as tokenStore from '@/shared/auth/tokenStore';
 import { RealtimeProvider } from '@/realtime/RealtimeProvider';
 import { AppRoutes } from '@/app/routes';
+import { AnalyticsTracker, initAnalytics } from '@/shared/analytics';
 import '@/tokens.css';
 import '@/index.css';
+
+// Privacy-first self-analytics — a no-op unless VITE_ANALYTICS_DOMAIN is set
+// and Do Not Track is off. Reads the build-time env once here.
+initAnalytics();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -47,6 +52,7 @@ createRoot(rootElement).render(
         <AuthProvider>
           <RealtimeProvider url={realtimeUrl}>
             <BrowserRouter>
+              <AnalyticsTracker />
               <AppRoutes />
             </BrowserRouter>
           </RealtimeProvider>
