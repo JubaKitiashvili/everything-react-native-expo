@@ -1,112 +1,127 @@
 ---
 title: '@erne/monitor'
-description: Runtime intelligence for React Native & Expo — crash, ANR, performance and session monitoring, AI-assisted fix PRs, MCP integration, and a self-hostable dashboard.
+description: React Native & Expo runtime monitoring — crashes, ANRs, performance, and sessions. Self-hostable, privacy-first, with AI-assisted fix PRs.
 template: splash
 hero:
   tagline: >-
-    Runtime intelligence for React Native & Expo. Crash, ANR, performance, and
-    session monitoring — RN/Expo-first, self-hosted by default, and Claude-native.
+    React Native & Expo runtime monitoring — crashes, ANRs, performance, and
+    sessions. Self-hostable, privacy-first, with AI-assisted fix PRs.
   actions:
+    # NOTE: the GitHub URL below is a PLACEHOLDER — the public repo URL is not
+    # yet known. Replace `your-org/erne-monitor` with the real repo before launch.
     - text: Get started
       link: /getting-started/
       icon: right-arrow
-    - text: Self-host the dashboard
+      variant: primary
+    - text: Self-host
       link: /self-hosting/
+      icon: laptop
+      variant: secondary
+    - text: GitHub
+      link: https://github.com/your-org/erne-monitor
+      icon: github
       variant: minimal
 ---
 
-import { Card, CardGrid, Code } from '@astrojs/starlight/components';
+import { Card, CardGrid, Code, LinkButton } from '@astrojs/starlight/components';
 
 `@erne/monitor` is a React Native / Expo SDK plus a self-hostable dashboard, an
-MCP server so an agent like Claude can query your crash data directly, and an
-optional AI agent that — gated on a confidence score — can open a fix PR against
-your repo. Your telemetry stays on your infrastructure, or in **local-only mode**
-never leaves the device. MIT-licensed.
+MCP server so an agent like Claude can query your monitoring data, and an
+**optional, separate** AI agent that can open a fix PR against your repo. Your
+telemetry stays on **your** infrastructure — or, in local-only mode, never
+leaves the device. MIT-licensed, with no vendor ingestion endpoint to point a
+DSN at.
 
-There is **no vendor ingestion endpoint to point a DSN at**: you run the
-dashboard, or run with no backend at all.
+## Quickstart
 
-## Quickstart (3 lines)
+Three lines from zero to a live event stream:
 
 <Code
-  code={`npx @erne/monitor init        # wires MonitorProvider + babel plugin into your app
-npx @erne/monitor dashboard   # starts the local dashboard on http://127.0.0.1:3333
-# then start Metro and reload your app — events stream in live`}
+  code={`npx expo install @erne/monitor                  # 1. add the SDK
+npx @erne/monitor init                          # 2. wires <MonitorProvider> + babel plugin
+npx @erne/monitor dashboard --open              # 3. open the local dashboard, reload your app`}
   lang="bash"
 />
 
-`init` is idempotent (re-run safe; `--dry-run` previews). It renders a
-`monitor.config.ts`, wraps your root layout with `<MonitorProvider>`, and adds
-`@erne/monitor/babel-plugin` to your Babel config. See
-[Getting started](/getting-started/) for the full walkthrough.
+`init` is idempotent (re-run safe; `--dry-run` previews). See
+[Getting started](/getting-started/) for the manual wiring, native build steps,
+and how to point the SDK at the dashboard over WebSocket.
 
-## What it captures
+## What you get
 
 <CardGrid>
-  <Card title="Crashes" icon="error">
-    JS exceptions and unhandled rejections (burst-coalesced), plus native
-    SIGSEGV / abort via a signal-safe POSIX handler. Crashes are persisted
-    across process death and drained on the next launch.
-  </Card>
-  <Card title="ANRs" icon="warning">
-    Watchdog-thread detection (5s threshold) with the real main-thread stack on
-    iOS and Android's `Looper.getMainLooper().thread.stackTrace`.
+  <Card title="Crash & ANR capture" icon="error">
+    JS exceptions and unhandled rejections, plus native crashes via a
+    signal-safe handler — persisted across process death and drained on the
+    next launch. A watchdog thread detects ANRs and captures the real
+    main-thread stack on iOS and Android.
   </Card>
   <Card title="Performance" icon="rocket">
-    Dual-thread FPS (native UI vs JS), Fabric commit latency, Hermes CPU
-    profiler, frame-drop detection, long-task observer, and memory + thermal
-    polling.
+    Dual-thread FPS (native UI vs JS), Fabric commit latency, a Hermes CPU
+    profiler with a flamegraph in the dashboard, frame-drop and long-task
+    detection, and memory + thermal polling. RSC projects also get server
+    render time, payload size, and streaming metrics.
   </Card>
-  <Card title="Sessions & replay" icon="seti:video">
-    PII-masked screenshots in a ring buffer, layout snapshots, and
-    navigation-triggered visual repro. Each app-run is a session with event and
-    crash counters.
+  <Card title="Session replay" icon="seti:video">
+    Each app-run is a session with event and crash counters. PII-masked
+    screenshots in a ring buffer, layout snapshots, and navigation-triggered
+    visual repro reconstruct what the user saw — without exposing their data.
   </Card>
-  <Card title="RSC monitoring" icon="puzzle">
-    For React Server Component projects: server render time, payload size,
-    streaming chunks, cache status, and `router.reload()` timing — a no-op when
-    RSC isn't enabled.
+  <Card title="AI-assisted fix PRs" icon="seti:github">
+    A separate, confidence-gated agent (`@erne/monitor-ai-fix-pr`) turns a crash
+    group into a candidate fix and opens a pull request via the GitHub API. Its
+    confidence decays automatically as your team merges or rejects proposals.
   </Card>
-  <Card title="Intelligence" icon="open-book">
-    A signal router (dedup → correlate → confidence → context → dispatch), a
-    built-in RN pattern library, on-device anomaly detection, an MCP server for
-    agents, and an optional AI Fix PR agent.
+  <Card title="MCP integration" icon="seti:json">
+    A Model Context Protocol server exposes your telemetry — crash groups,
+    events, sessions, bug reports, symbols, DSAR — to Claude and any MCP-aware
+    client. Tools are read-only by default; the one mutating tool needs an
+    explicit write grant.
+  </Card>
+  <Card title="Self-hostable dashboard" icon="laptop">
+    A Node server that ingests events, groups crashes, and serves the UI. SQLite
+    by default for local dev, PostgreSQL for production. Multi-tenant RBAC
+    (Owner / Member / Viewer) plus rotatable, revocable ingest keys.
+  </Card>
+  <Card title="Privacy-first" icon="approve-check">
+    On-device PII sanitization (emails, phone numbers, auth headers, sensitive
+    URL params) runs before transport — redacted data never leaves the app.
+    Per-category consent, a CCPA "do not sell" signal, an Apple Privacy Manifest,
+    and DSAR export / delete APIs.
+  </Card>
+  <Card title="Pay for what you use" icon="puzzle">
+    Tree-shakeable subpath imports (`@erne/monitor/performance`,
+    `@erne/monitor/network`, `@erne/monitor/ai`, …) pull only the collectors and
+    code you name, so an app that wants crashes alone doesn't ship the profiler.
   </Card>
 </CardGrid>
 
-## Key features
-
-- **Crash + ANR + performance + RSC + session monitoring** out of the box.
-- **AI-assisted fix PRs** — a separate, confidence-gated agent that proposes a
-  patch and opens a pull request. See [MCP integration](/mcp-integration/).
-- **MCP integration** — a Model Context Protocol server exposes your telemetry
-  to Claude (and any MCP-aware client) as read-only tools.
-- **Self-hostable dashboard** — SQLite by default, PostgreSQL for production.
-  See [Self-hosting](/self-hosting/).
-- **Privacy-first** — per-category consent gate, on-device PII sanitization
-  (email / phone / auth headers / URLs), Apple Privacy Manifest bundled, and
-  DSAR export / delete APIs.
-- **Tree-shakeable** — import a subpath (`@erne/monitor/network`,
-  `@erne/monitor/performance`, …) to pay only for the collectors you use.
-
-## Where to go next
+## Read the guides
 
 <CardGrid>
   <Card title="Getting started" icon="rocket">
-    Install the SDK, wrap your app, point it at a dashboard.
-    [Read the guide →](/getting-started/)
+    Install the SDK, wrap your app with `<MonitorProvider>`, point it at a
+    dashboard, and verify the integration.
+
+    <LinkButton href="/getting-started/" variant="minimal" icon="right-arrow">Read the guide</LinkButton>
   </Card>
   <Card title="SDK configuration" icon="setting">
-    Collectors, sampling, PII sanitization, remote config.
-    [Read the guide →](/sdk-configuration/)
+    Collectors, sampling, per-category consent, on-device PII sanitization,
+    remote config, and the AI block.
+
+    <LinkButton href="/sdk-configuration/" variant="minimal" icon="right-arrow">Read the guide</LinkButton>
   </Card>
   <Card title="Self-hosting" icon="laptop">
-    Run the dashboard on SQLite or Postgres, RBAC, ingest keys.
-    [Read the guide →](/self-hosting/)
+    Run the dashboard on SQLite or Postgres, configure RBAC, and manage ingest
+    keys.
+
+    <LinkButton href="/self-hosting/" variant="minimal" icon="right-arrow">Read the guide</LinkButton>
   </Card>
   <Card title="MCP integration" icon="seti:json">
-    Let Claude query your monitoring data and open fix PRs.
-    [Read the guide →](/mcp-integration/)
+    Let Claude query your monitoring data, and run the separate agent that opens
+    AI fix PRs.
+
+    <LinkButton href="/mcp-integration/" variant="minimal" icon="right-arrow">Read the guide</LinkButton>
   </Card>
 </CardGrid>
 
