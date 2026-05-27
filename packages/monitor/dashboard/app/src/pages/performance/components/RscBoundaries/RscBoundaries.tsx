@@ -30,9 +30,9 @@ export function RscBoundaries({ events }: RscBoundariesProps = {}) {
 }
 
 function RscBoundariesContainer() {
-  // RSC events arrive as `type: 'custom'` envelopes (payload.name === 'rsc');
-  // aggregateRscBoundaries filters them out of the custom stream.
-  const query = useEvents({ filter: { type: 'custom', limit: EVENT_LIMIT }, staleTime: 10_000 });
+  // The server's canonical ingest promotes the SDK's custom `rsc` events to
+  // top-level `type: 'rsc'`, so query that directly (matches aggregate + seed).
+  const query = useEvents({ filter: { type: 'rsc', limit: EVENT_LIMIT }, staleTime: 10_000 });
 
   if (query.isPending) {
     return (
