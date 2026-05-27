@@ -1,0 +1,55 @@
+{
+  "name": "erne-monitor-vscode",
+  "displayName": "ERNE Monitor",
+  "version": "0.1.0",
+  "description": "Inline crash counts (CodeLens) and one-click jump to the @erne/monitor dashboard, right in your editor.",
+  "license": "MIT",
+  "author": "Juba Kitiashvili",
+  "private": true,
+  "publisher": "erne",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "erne-monitor.openCrash",
+        "title": "ERNE: Open crash in dashboard"
+      }
+    ],
+    "configuration": {
+      "title": "ERNE Monitor",
+      "properties": {
+        "erne-monitor.dashboardUrl": {
+          "type": "string",
+          "default": "http://localhost:4174",
+          "description": "Base URL of the @erne/monitor dashboard. Crash links and the crash-groups API are derived from this."
+        },
+        "erne-monitor.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional API key. When set, it is sent as 'Authorization: Bearer <key>' on crash-groups requests."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "@types/vscode": "^1.85.0",
+    "typescript": "~5.9.0",
+    "vitest": "^3.2.4"
+  }
+}
