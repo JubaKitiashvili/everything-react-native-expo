@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './AppShell';
+import { RequireAuth } from '@/shared/auth/RequireAuth';
 import { OverviewPage } from '@/pages/overview';
 import { CrashesPage } from '@/pages/crashes';
 import { AnrsPage } from '@/pages/anrs';
@@ -8,15 +9,24 @@ import { SessionsPage } from '@/pages/sessions';
 import { QualityPage } from '@/pages/quality';
 import { SettingsPage } from '@/pages/settings';
 import { UserDetailPage } from '@/pages/users';
+import { LoginPage } from '@/pages/login';
 
 /**
- * The app's route table. Every route renders inside <AppShell> (sidebar +
- * header + <Outlet/>). Order mirrors the sidebar nav.
+ * The app's route table. `/login` stands alone (no shell); every other route
+ * renders inside <AppShell> behind <RequireAuth> (sidebar + header +
+ * <Outlet/>). Order mirrors the sidebar nav.
  */
 export function AppRoutes() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        element={
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        }
+      >
         <Route index element={<OverviewPage />} />
         <Route path="crashes" element={<CrashesPage />} />
         <Route path="crashes/:fingerprint" element={<CrashesPage />} />

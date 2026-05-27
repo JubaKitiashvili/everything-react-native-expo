@@ -41,6 +41,25 @@ async function start() {
   const seed = await import('./seed.mjs');
   seed.seedFixtures(store, Date.now());
 
+  // Task 117.18 — a SECOND server in enforcing-RBAC mode on port+1, used only
+  // by the RBAC auth e2e spec. Bootstrapped FIRST (before the main dormant
+  // server's health endpoint goes live below) with owner/member/viewer users
+  // so the spec never races user creation. The main server (port) stays
+  // login-free so the other 52 specs are unaffected.
+  const authPort = port + 1;
+  const authDbPath = join(tmpRoot, 'dashboard-auth.db');
+  const authStore = new server.DashboardStore({ dbPath: authDbPath });
+  seed.seedFixtures(authStore, Date.now());
+  const authHandle = await server.startDashboardServer({
+    port: authPort,
+    host: '127.0.0.1',
+    publicDir: PUBLIC_DIR,
+    store: authStore,
+    auth: { jwtSecret: 'e2e-rbac-secret' },
+  });
+  await bootstrapAuthUsers(`http://127.0.0.1:${authPort}`);
+  console.log(`[e2e] RBAC (enforcing) server listening on http://127.0.0.1:${authPort}`);
+
   const handle = await server.startDashboardServer({
     port,
     host: '127.0.0.1',
@@ -55,6 +74,7 @@ async function start() {
   const shutdown = async () => {
     try {
       await handle.close();
+      await authHandle.close();
     } finally {
       rmSync(tmpRoot, { recursive: true, force: true });
       process.exit(0);
@@ -62,6 +82,25 @@ async function start() {
   };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
+}
+
+/** Create owner@e2e.dev (Owner, bootstrap) + member + viewer via the real API. */
+async function bootstrapAuthUsers(base) {
+  const post = (path, body, token) =>
+    fetch(`${base}${path}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+  await post('/api/auth/register', { email: 'owner@e2e.dev', password: 'ownerpass1' });
+  const login = await post('/api/auth/login', { email: 'owner@e2e.dev', password: 'ownerpass1' });
+  const { token } = await login.json();
+  await post('/api/auth/register', { email: 'viewer@e2e.dev', password: 'viewerpass1', role: 'viewer' }, token);
+  await post('/api/auth/register', { email: 'member@e2e.dev', password: 'memberpass1', role: 'member' }, token);
 }
 
 start().catch((err) => {

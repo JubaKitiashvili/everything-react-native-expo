@@ -53,12 +53,57 @@
   padding: var(--space-6);
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
 .status {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.userChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.userEmail {
+  color: var(--color-text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rolePill {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.logout {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.logout:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-tertiary);
 }
 
 .statusDot {

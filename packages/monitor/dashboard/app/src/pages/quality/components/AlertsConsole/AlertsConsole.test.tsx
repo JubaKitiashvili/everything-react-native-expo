@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiProvider } from '@/shared/api/context';
 import type { DashboardApiClient, SaveAlertRuleInput } from '@/shared/api/client';
+import { authStubMethods } from '@/shared/api/authStub';
 import type { AlertRuleRecord } from '@/shared/api/types';
 import { AlertsConsole } from './AlertsConsole';
 
@@ -80,6 +81,7 @@ describe('AlertsConsole (wired via QueryClient + ApiProvider)', () => {
   ): DashboardApiClient {
     const state = [...rules];
     return {
+      ...authStubMethods(),
       fetchEvents: vi.fn(async () => []),
       fetchSessions: vi.fn(async () => []),
       fetchCrashGroups: vi.fn(async () => []),

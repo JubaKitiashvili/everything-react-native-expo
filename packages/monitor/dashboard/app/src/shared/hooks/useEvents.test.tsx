@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
 import { ApiProvider } from '../api/context';
 import type { DashboardApiClient } from '../api/client';
+import { authStubMethods } from '../api/authStub';
 import { useCrashGroups } from './useCrashGroups';
 import { useEvents } from './useEvents';
 
@@ -23,6 +24,7 @@ function makeWrapper(apiClient: DashboardApiClient) {
 
 function makeApi(overrides: Partial<DashboardApiClient> = {}): DashboardApiClient {
   return {
+    ...authStubMethods(),
     fetchEvents: vi.fn(async () => []),
     fetchSessions: vi.fn(async () => []),
     fetchCrashGroups: vi.fn(async () => []),

@@ -1,0 +1,83 @@
+.hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #9ca3af);
+}
+
+.createForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.input,
+.select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-subtle, #2a2f3a);
+  border-radius: 8px;
+  border-curve: continuous;
+  background: var(--color-bg-base, #0b0e14);
+  color: var(--color-text-primary, #e6e9ef);
+  font-size: 13px;
+}
+
+.input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  border-curve: continuous;
+  background: var(--color-accent, #6ea8fe);
+  color: #0b0e14;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-severity-critical, #f87171);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--color-border-subtle, #2a2f3a);
+}
+
+.emailCell {
+  font-weight: 500;
+  color: var(--color-text-primary, #e6e9ef);
+}
+
+.remove {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-subtle, #2a2f3a);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-severity-critical, #f87171);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remove:hover {
+  border-color: var(--color-severity-critical, #f87171);
+}

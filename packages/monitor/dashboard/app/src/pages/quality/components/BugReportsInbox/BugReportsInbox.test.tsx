@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiProvider } from '@/shared/api/context';
 import type { DashboardApiClient, UpdateBugReportInput } from '@/shared/api/client';
+import { authStubMethods } from '@/shared/api/authStub';
 import type { BugReportRecord } from '@/shared/api/types';
 import { BugReportsInbox } from './BugReportsInbox';
 
@@ -74,6 +75,7 @@ describe('BugReportsInbox wired to the API', () => {
   ): DashboardApiClient {
     const state = [...initial];
     return {
+      ...authStubMethods(),
       fetchEvents: vi.fn(async () => []),
       fetchSessions: vi.fn(async () => []),
       fetchCrashGroups: vi.fn(async () => []),

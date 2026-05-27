@@ -5,12 +5,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { ApiProvider } from '@/shared/api/context';
 import type { DashboardApiClient } from '@/shared/api/client';
+import { authStubMethods } from '@/shared/api/authStub';
 import type { EventRecord } from '@/shared/api/types';
 import { resetUiStore } from '@/shared/store/uiStore';
 import { LiveFeed } from './LiveFeed';
 
 function makeApi(events: EventRecord[]): DashboardApiClient {
   return {
+    ...authStubMethods(),
     fetchEvents: vi.fn(async () => events),
     fetchSessions: vi.fn(async () => []),
     fetchCrashGroups: vi.fn(async () => []),

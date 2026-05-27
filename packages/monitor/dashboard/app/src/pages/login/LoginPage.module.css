@@ -1,0 +1,96 @@
+.screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--color-bg, #0b0e14);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 28px;
+  border: 1px solid var(--color-border, #2a2f3a);
+  border-radius: 16px;
+  border-curve: continuous;
+  background: var(--color-surface, #121620);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandMark {
+  color: var(--color-accent, #6ea8fe);
+  font-size: 12px;
+}
+
+.brandName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text, #e6e9ef);
+}
+
+.heading {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text, #e6e9ef);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--color-text-secondary, #9ca3af);
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #2a2f3a);
+  border-radius: 10px;
+  border-curve: continuous;
+  background: var(--color-bg, #0b0e14);
+  color: var(--color-text, #e6e9ef);
+  font-size: 14px;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-accent, #6ea8fe);
+  outline-offset: 1px;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-danger, #f87171);
+}
+
+.submit {
+  margin-top: 4px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 10px;
+  border-curve: continuous;
+  background: var(--color-accent, #6ea8fe);
+  color: #0b0e14;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { ApiProvider } from '@/shared/api/context';
 import type { DashboardApiClient } from '@/shared/api/client';
+import { authStubMethods } from '@/shared/api/authStub';
 import type { EventRecord, SessionRecord } from '@/shared/api/types';
 import { resetUiStore } from '@/shared/store/uiStore';
 import { SessionReplay } from './SessionReplay';
@@ -16,6 +17,7 @@ function makeApi(
   overrides: Partial<DashboardApiClient> = {},
 ): DashboardApiClient {
   return {
+    ...authStubMethods(),
     fetchSessions: vi.fn(async () => sessions),
     fetchEvents: vi.fn(async (filter) => {
       if (filter?.sessionId) {

@@ -87,12 +87,65 @@ export interface DashboardApiClient {
   rotateWsToken(): Promise<{ wsTokenMasked: string | null; wsTokenSet: boolean }>;
   resetDatabase(): Promise<DashboardResetResult>;
   generateSampleData(): Promise<DemoSeedResult>;
+  // --- Task 117.18 RBAC ---
+  /** Exchange email+password for a JWT. Rejects on 401 (bad credentials). */
+  login(email: string, password: string): Promise<LoginResponse>;
+  /** The current principal + whether RBAC is enforced. */
+  fetchMe(): Promise<MeResponse>;
+  /** Create a user (Owner-only; the first call bootstraps the first Owner). */
+  registerUser(input: RegisterUserInput): Promise<AuthUser>;
+  /** List users in the caller's tenant (Owner-only). */
+  fetchUsers(): Promise<AuthUser[]>;
+  /** Change a user's role (Owner-only). */
+  setUserRole(id: string, role: AuthRole): Promise<void>;
+  /** Remove a user (Owner-only). */
+  deleteUser(id: string): Promise<void>;
+}
+
+/** Task 117.18 — the three RBAC roles, mirrored from the server. */
+export type AuthRole = 'owner' | 'member' | 'viewer';
+
+/** The authenticated identity returned by login / me. */
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: AuthRole;
+  tenantId: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface MeResponse {
+  /** Whether RBAC is enforced. When false the dashboard runs login-free. */
+  enforcing: boolean;
+  user: AuthUser;
+}
+
+export interface RegisterUserInput {
+  email: string;
+  password: string;
+  role?: AuthRole;
 }
 
 export interface CreateApiClientOptions {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   signal?: AbortSignal;
+  /**
+   * Task 117.18 — supplies the current Bearer JWT for each request. A getter
+   * (not a static value) so a fresh login/logout is picked up without
+   * recreating the client. Returns null when unauthenticated.
+   */
+  getToken?: () => string | null;
+  /**
+   * Task 117.18 — invoked once when any request gets a 401, so the app can
+   * clear its session + redirect to login. The originating call still
+   * rejects (callers see the error) — this is a side-channel, not a retry.
+   */
+  onUnauthorized?: () => void;
 }
 
 /**
@@ -124,12 +177,24 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
   const baseUrl = (options.baseUrl ?? '').replace(/\/$/, '');
   const fetchFn = options.fetchImpl ?? fetch;
 
+  /** Authorization header from the current token getter, when present. */
+  function authHeader(): Record<string, string> {
+    const token = options.getToken?.();
+    return token ? { authorization: `Bearer ${token}` } : {};
+  }
+
+  /** Notify the app on a 401 so it can clear the session + redirect. */
+  function noteStatus(status: number): void {
+    if (status === 401) options.onUnauthorized?.();
+  }
+
   async function getJson<T>(path: string): Promise<T> {
     const response = await fetchFn(`${baseUrl}${path}`, {
       signal: options.signal ?? null,
-      headers: { accept: 'application/json' },
+      headers: { accept: 'application/json', ...authHeader() },
     });
     if (!response.ok) {
+      noteStatus(response.status);
       const body = await response.text().catch(() => '');
       throw new Error(
         `[dashboard-api] ${response.status} ${response.statusText} for ${path}: ${body || '<no body>'}`,
@@ -148,12 +213,14 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
       signal: options.signal ?? null,
       headers: {
         accept: 'application/json',
+        ...authHeader(),
         ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
       },
     };
     if (body !== undefined) init.body = JSON.stringify(body);
     const response = await fetchFn(`${baseUrl}${path}`, init);
     if (!response.ok) {
+      noteStatus(response.status);
       const text = await response.text().catch(() => '');
       throw new Error(
         `[dashboard-api] ${response.status} ${response.statusText} for ${method} ${path}: ${text || '<no body>'}`,
@@ -282,6 +349,37 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
     },
     async generateSampleData() {
       return sendJson<DemoSeedResult>('/api/demo/seed', 'POST');
+    },
+    async login(email, password) {
+      // Direct fetch (not sendJson): a 401 here means "wrong password", NOT
+      // "session expired", so it must not trip the onUnauthorized side-channel.
+      const response = await fetchFn(`${baseUrl}/api/auth/login`, {
+        method: 'POST',
+        signal: options.signal ?? null,
+        headers: { accept: 'application/json', 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 401 ? 'invalid_credentials' : `login_failed_${response.status}`);
+      }
+      return (await response.json()) as LoginResponse;
+    },
+    async fetchMe() {
+      return getJson<MeResponse>('/api/auth/me');
+    },
+    async registerUser(input) {
+      const { user } = await sendJson<{ user: AuthUser }>('/api/auth/register', 'POST', input);
+      return user;
+    },
+    async fetchUsers() {
+      const { users } = await getJson<{ users: AuthUser[] }>('/api/auth/users');
+      return users;
+    },
+    async setUserRole(id, role) {
+      await sendJson<{ ok: true }>(`/api/auth/users/${encodeURIComponent(id)}`, 'PATCH', { role });
+    },
+    async deleteUser(id) {
+      await sendJson<{ ok: true }>(`/api/auth/users/${encodeURIComponent(id)}`, 'DELETE');
     },
   };
 }

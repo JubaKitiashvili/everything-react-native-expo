@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { ApiProvider } from '@/shared/api/context';
 import type { DashboardApiClient } from '@/shared/api/client';
+import { authStubMethods } from '@/shared/api/authStub';
 import type { CrashGroupRecord, EventRecord } from '@/shared/api/types';
 import { resetUiStore } from '@/shared/store/uiStore';
 import { CrashExplorer } from './CrashExplorer';
@@ -13,6 +14,7 @@ import { CrashGroupList } from './CrashGroupList';
 
 function makeApi(partial: Partial<DashboardApiClient>): DashboardApiClient {
   return {
+    ...authStubMethods(),
     fetchEvents: vi.fn(async () => []),
     fetchSessions: vi.fn(async () => []),
     fetchCrashGroups: vi.fn(async () => []),

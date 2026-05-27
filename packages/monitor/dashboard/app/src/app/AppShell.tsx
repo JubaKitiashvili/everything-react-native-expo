@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { useUiStore, type RealtimeStatus } from '@/shared/store/uiStore';
+import { useAuth } from '@/shared/auth/useAuth';
+import { roleLabel } from '@/shared/auth/roles';
 import { Sidebar } from './Sidebar';
 import styles from './AppShell.module.css';
 
@@ -30,6 +32,7 @@ function statusDotClass(status: RealtimeStatus): string {
  */
 export function AppShell() {
   const status = useUiStore((s) => s.realtimeStatus);
+  const { enforcing, user, logout } = useAuth();
 
   return (
     <div className={styles.shell}>
@@ -41,10 +44,25 @@ export function AppShell() {
             <span className={styles.brandName}>@erne/monitor</span>
             <span className={styles.brandVersion}>v0.1.0</span>
           </div>
-          <span className={styles.status} role="status" aria-label={`Realtime: ${STATUS_LABEL[status]}`}>
-            <span className={statusDotClass(status)} aria-hidden="true" />
-            {STATUS_LABEL[status]}
-          </span>
+          <div className={styles.headerRight}>
+            <span
+              className={styles.status}
+              role="status"
+              aria-label={`Realtime: ${STATUS_LABEL[status]}`}
+            >
+              <span className={statusDotClass(status)} aria-hidden="true" />
+              {STATUS_LABEL[status]}
+            </span>
+            {enforcing && user ? (
+              <span className={styles.userChip} aria-label="Current user">
+                <span className={styles.userEmail}>{user.email}</span>
+                <span className={styles.rolePill}>{roleLabel(user.role)}</span>
+                <button type="button" className={styles.logout} onClick={logout}>
+                  Sign out
+                </button>
+              </span>
+            ) : null}
+          </div>
         </header>
         <main className={styles.main}>
           <Outlet />
