@@ -11,3 +11,13 @@ export type {
   OperatorReply,
   SubmitReportInput,
 } from '../integrations/BugReportChannel';
+
+// Task 117.21 — shake-to-report: feed an accelerometer in, get shake events
+// out, wire to BugReporter.onShakeDetected.
+export { ShakeDetector } from '../integrations/ShakeDetector';
+export type {
+  AccelerometerSample,
+  AccelerometerSource,
+  AccelerometerSubscription,
+  ShakeDetectorOptions,
+} from '../integrations/ShakeDetector';

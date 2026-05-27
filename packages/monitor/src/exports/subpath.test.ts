@@ -96,8 +96,9 @@ describe('subpath exports', () => {
   });
 
   describe('@erne/monitor/bug-reports', () => {
-    it('exports the bidirectional bug-report channel', () => {
+    it('exports the bidirectional bug-report channel + shake detector', () => {
       expect(BugReports.BugReportChannel).toBeDefined();
+      expect(BugReports.ShakeDetector).toBeDefined();
     });
 
     it('does NOT leak unrelated surfaces', () => {

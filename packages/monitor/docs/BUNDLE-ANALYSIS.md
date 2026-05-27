@@ -17,7 +17,7 @@ always — but it's also the simplest to wire.
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
 | `/replay` | 5 | 13.73 | 3.57 | 10 | ok |
-| `/bug-reports` | 2 | 4.98 | 1.75 | 5 | ok |
+| `/bug-reports` | 3 | 8.81 | 2.89 | 5 | ok |
 | `/discovery` | 2 | 3.85 | 1.46 | 5 | ok |
 | `/dev` | 5 | 18.39 | 4.91 | 15 | ok |
 | `/testing` | 5 | 20.06 | 6.21 | 10 | ok |
@@ -98,7 +98,8 @@ always — but it's also the simplest to wire.
 | File | Raw (KB) | Gzip (KB) |
 | ---- | -------: | --------: |
 | `dist/integrations/BugReportChannel.js` | 4.58 | 1.60 |
-| `dist/exports/bug-reports.js` | 0.40 | 0.29 |
+| `dist/integrations/ShakeDetector.js` | 3.65 | 1.34 |
+| `dist/exports/bug-reports.js` | 0.58 | 0.36 |
 
 ### `@erne/monitor/discovery`
 

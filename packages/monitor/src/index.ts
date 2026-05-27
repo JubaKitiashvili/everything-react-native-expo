@@ -447,6 +447,13 @@ export type {
   OperatorReply,
   SubmitReportInput,
 } from './integrations/BugReportChannel';
+// Task 117.21 — shake-to-report detector. VALUE on `@erne/monitor/bug-reports`.
+export type {
+  AccelerometerSample,
+  AccelerometerSource,
+  AccelerometerSubscription,
+  ShakeDetectorOptions,
+} from './integrations/ShakeDetector';
 // Task 117.79 — LAN auto-discovery. VALUE lives on `@erne/monitor/discovery`
 // (opt-in); types re-exported here at zero bundle cost.
 export type {
