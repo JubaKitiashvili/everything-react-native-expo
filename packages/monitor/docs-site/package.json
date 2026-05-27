@@ -1,0 +1,19 @@
+{
+  "name": "@erne/monitor-docs-site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Astro + Starlight documentation site for @erne/monitor.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.39.2",
+    "astro": "6.3.8",
+    "sharp": "^0.34.0"
+  }
+}

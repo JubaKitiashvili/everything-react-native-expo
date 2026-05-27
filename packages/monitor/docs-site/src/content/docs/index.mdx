@@ -1,0 +1,115 @@
+---
+title: '@erne/monitor'
+description: Runtime intelligence for React Native & Expo — crash, ANR, performance and session monitoring, AI-assisted fix PRs, MCP integration, and a self-hostable dashboard.
+template: splash
+hero:
+  tagline: >-
+    Runtime intelligence for React Native & Expo. Crash, ANR, performance, and
+    session monitoring — RN/Expo-first, self-hosted by default, and Claude-native.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: Self-host the dashboard
+      link: /self-hosting/
+      variant: minimal
+---
+
+import { Card, CardGrid, Code } from '@astrojs/starlight/components';
+
+`@erne/monitor` is a React Native / Expo SDK plus a self-hostable dashboard, an
+MCP server so an agent like Claude can query your crash data directly, and an
+optional AI agent that — gated on a confidence score — can open a fix PR against
+your repo. Your telemetry stays on your infrastructure, or in **local-only mode**
+never leaves the device. MIT-licensed.
+
+There is **no vendor ingestion endpoint to point a DSN at**: you run the
+dashboard, or run with no backend at all.
+
+## Quickstart (3 lines)
+
+<Code
+  code={`npx @erne/monitor init        # wires MonitorProvider + babel plugin into your app
+npx @erne/monitor dashboard   # starts the local dashboard on http://127.0.0.1:3333
+# then start Metro and reload your app — events stream in live`}
+  lang="bash"
+/>
+
+`init` is idempotent (re-run safe; `--dry-run` previews). It renders a
+`monitor.config.ts`, wraps your root layout with `<MonitorProvider>`, and adds
+`@erne/monitor/babel-plugin` to your Babel config. See
+[Getting started](/getting-started/) for the full walkthrough.
+
+## What it captures
+
+<CardGrid>
+  <Card title="Crashes" icon="error">
+    JS exceptions and unhandled rejections (burst-coalesced), plus native
+    SIGSEGV / abort via a signal-safe POSIX handler. Crashes are persisted
+    across process death and drained on the next launch.
+  </Card>
+  <Card title="ANRs" icon="warning">
+    Watchdog-thread detection (5s threshold) with the real main-thread stack on
+    iOS and Android's `Looper.getMainLooper().thread.stackTrace`.
+  </Card>
+  <Card title="Performance" icon="rocket">
+    Dual-thread FPS (native UI vs JS), Fabric commit latency, Hermes CPU
+    profiler, frame-drop detection, long-task observer, and memory + thermal
+    polling.
+  </Card>
+  <Card title="Sessions & replay" icon="seti:video">
+    PII-masked screenshots in a ring buffer, layout snapshots, and
+    navigation-triggered visual repro. Each app-run is a session with event and
+    crash counters.
+  </Card>
+  <Card title="RSC monitoring" icon="puzzle">
+    For React Server Component projects: server render time, payload size,
+    streaming chunks, cache status, and `router.reload()` timing — a no-op when
+    RSC isn't enabled.
+  </Card>
+  <Card title="Intelligence" icon="open-book">
+    A signal router (dedup → correlate → confidence → context → dispatch), a
+    built-in RN pattern library, on-device anomaly detection, an MCP server for
+    agents, and an optional AI Fix PR agent.
+  </Card>
+</CardGrid>
+
+## Key features
+
+- **Crash + ANR + performance + RSC + session monitoring** out of the box.
+- **AI-assisted fix PRs** — a separate, confidence-gated agent that proposes a
+  patch and opens a pull request. See [MCP integration](/mcp-integration/).
+- **MCP integration** — a Model Context Protocol server exposes your telemetry
+  to Claude (and any MCP-aware client) as read-only tools.
+- **Self-hostable dashboard** — SQLite by default, PostgreSQL for production.
+  See [Self-hosting](/self-hosting/).
+- **Privacy-first** — per-category consent gate, on-device PII sanitization
+  (email / phone / auth headers / URLs), Apple Privacy Manifest bundled, and
+  DSAR export / delete APIs.
+- **Tree-shakeable** — import a subpath (`@erne/monitor/network`,
+  `@erne/monitor/performance`, …) to pay only for the collectors you use.
+
+## Where to go next
+
+<CardGrid>
+  <Card title="Getting started" icon="rocket">
+    Install the SDK, wrap your app, point it at a dashboard.
+    [Read the guide →](/getting-started/)
+  </Card>
+  <Card title="SDK configuration" icon="setting">
+    Collectors, sampling, PII sanitization, remote config.
+    [Read the guide →](/sdk-configuration/)
+  </Card>
+  <Card title="Self-hosting" icon="laptop">
+    Run the dashboard on SQLite or Postgres, RBAC, ingest keys.
+    [Read the guide →](/self-hosting/)
+  </Card>
+  <Card title="MCP integration" icon="seti:json">
+    Let Claude query your monitoring data and open fix PRs.
+    [Read the guide →](/mcp-integration/)
+  </Card>
+</CardGrid>
+
+---
+
+MIT © [Juba Kitiashvili](https://github.com/JubaKitiashvili).
