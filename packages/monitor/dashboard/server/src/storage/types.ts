@@ -56,6 +56,24 @@ export interface BugReportRecord {
   eventIds?: string[];
 }
 
+/** Who authored a bug-report reply (Task 117.20 — bidirectional thread). */
+export type BugReplyAuthorRole = 'operator' | 'reporter';
+
+/**
+ * One message in a bug report's two-way thread. `operator` replies come from
+ * a dashboard user (RBAC member+); `reporter` replies come from the app user
+ * via the SDK. Ordered by `createdAt`.
+ */
+export interface BugReportReplyRecord {
+  id: string;
+  reportId: string;
+  /** Operator user id/email, or an opaque app-user marker for the reporter. */
+  author: string;
+  authorRole: BugReplyAuthorRole;
+  body: string;
+  createdAt: number;
+}
+
 export interface AlertRuleRecord {
   id: string;
   name: string;

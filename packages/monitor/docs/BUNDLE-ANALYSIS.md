@@ -17,6 +17,7 @@ always — but it's also the simplest to wire.
 | `/network` | 2 | 8.09 | 2.36 | 5 | ok |
 | `/ai` | 13 | 47.13 | 11.08 | 30 | ok |
 | `/replay` | 5 | 13.73 | 3.57 | 10 | ok |
+| `/bug-reports` | 2 | 4.98 | 1.75 | 5 | ok |
 | `/dev` | 5 | 18.39 | 4.91 | 15 | ok |
 | `/testing` | 5 | 20.06 | 6.21 | 10 | ok |
 
@@ -90,6 +91,13 @@ always — but it's also the simplest to wire.
 | `dist/processors/ReplayMasker.js` | 2.81 | 0.94 |
 | `dist/collectors/native/LayoutSnapshotCollector.js` | 2.10 | 0.86 |
 | `dist/exports/replay.js` | 0.69 | 0.35 |
+
+### `@erne/monitor/bug-reports`
+
+| File | Raw (KB) | Gzip (KB) |
+| ---- | -------: | --------: |
+| `dist/integrations/BugReportChannel.js` | 4.58 | 1.60 |
+| `dist/exports/bug-reports.js` | 0.40 | 0.29 |
 
 ### `@erne/monitor/dev`
 

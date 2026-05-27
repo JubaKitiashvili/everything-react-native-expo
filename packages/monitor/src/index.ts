@@ -439,6 +439,14 @@ export type {
   BugReporterDeps,
   ReplayFrameSnapshot,
 } from './integrations/BugReporter';
+// Task 117.20 — bidirectional bug-report channel. The VALUE lives on the
+// `@erne/monitor/bug-reports` subpath (opt-in, kept out of the main bundle);
+// types are re-exported here (erased at build) so callers can name them.
+export type {
+  BugReportChannelOptions,
+  OperatorReply,
+  SubmitReportInput,
+} from './integrations/BugReportChannel';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,

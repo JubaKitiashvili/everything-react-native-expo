@@ -39,6 +39,7 @@ import {
   type AuditLogRecord,
   type BugReportListFilter,
   type BugReportRecord,
+  type BugReportReplyRecord,
   type BugReportStatus,
   type CrashGroupListFilter,
   type CrashGroupRecord,
@@ -448,6 +449,23 @@ export class PostgresStore implements IMonitorStoreAsync {
     if (filter.offset !== undefined) builder.offset(filter.offset);
     const result = await this.client.query<BugReportRow>(builder.text(), builder.params());
     return result.rows.map(rowToBugReport);
+  }
+
+  async insertBugReportReply(record: BugReportReplyRecord): Promise<void> {
+    await this.client.query(
+      `INSERT INTO bug_report_replies (id, report_id, author, author_role, body, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO NOTHING`,
+      [record.id, record.reportId, record.author, record.authorRole, record.body, record.createdAt],
+    );
+  }
+
+  async listBugReportReplies(reportId: string): Promise<BugReportReplyRecord[]> {
+    const result = await this.client.query<BugReportReplyRow>(
+      `SELECT * FROM bug_report_replies WHERE report_id = $1 ORDER BY created_at ASC`,
+      [reportId],
+    );
+    return result.rows.map(rowToBugReportReply);
   }
 
   // ------------------------------ Alert rules ------------------------------
@@ -1085,6 +1103,26 @@ function rowToBugReport(row: BugReportRow): BugReportRecord {
     rec.eventIds = JSON.parse(row.event_ids_json) as string[];
   }
   return rec;
+}
+
+interface BugReportReplyRow extends Record<string, unknown> {
+  id: string;
+  report_id: string;
+  author: string;
+  author_role: string;
+  body: string;
+  created_at: string | number;
+}
+
+function rowToBugReportReply(row: BugReportReplyRow): BugReportReplyRecord {
+  return {
+    id: row.id,
+    reportId: row.report_id,
+    author: row.author,
+    authorRole: row.author_role === 'reporter' ? 'reporter' : 'operator',
+    body: row.body,
+    createdAt: Number(row.created_at),
+  };
 }
 
 interface AlertRuleRow extends Record<string, unknown> {

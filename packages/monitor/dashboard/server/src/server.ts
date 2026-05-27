@@ -2084,6 +2084,78 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         return;
       }
 
+      // Task 117.20 — bug-report reply thread, OPERATOR side (RBAC). GET is a
+      // read (Viewer+); POST appends an operator reply (Member+). Matched by
+      // method, so they never collide with the PATCH route above.
+      if (
+        req.method === 'GET' &&
+        pathname.startsWith('/api/bug-reports/') &&
+        pathname.endsWith('/replies')
+      ) {
+        const id = decodeURIComponent(
+          pathname.slice('/api/bug-reports/'.length, -'/replies'.length),
+        );
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        sendJson(res, 200, { replies: store.listBugReportReplies(id) });
+        return;
+      }
+
+      if (
+        req.method === 'POST' &&
+        pathname.startsWith('/api/bug-reports/') &&
+        pathname.endsWith('/replies')
+      ) {
+        if (!requireRole(principal, 'member', res)) return;
+        const id = decodeURIComponent(
+          pathname.slice('/api/bug-reports/'.length, -'/replies'.length),
+        );
+        if (!id) {
+          sendJson(res, 400, { error: 'missing_id' });
+          return;
+        }
+        void readJsonBody(req)
+          .then((body) => {
+            const text = (body as { body?: unknown }).body;
+            if (typeof text !== 'string' || text.trim().length === 0) {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const exists = store.listBugReports({ limit: 1000 }).some((r) => r.id === id);
+            if (!exists) {
+              sendJson(res, 404, { error: 'not_found', id });
+              return;
+            }
+            const reply = {
+              id: randomUUID(),
+              reportId: id,
+              author: principal.userId,
+              authorRole: 'operator' as const,
+              body: text.slice(0, 8000),
+              createdAt: Date.now(),
+            };
+            store.insertBugReportReply(reply);
+            recordAuditEvent(
+              store,
+              {
+                action: 'bug-reply',
+                actor: principal.userId,
+                targetType: 'bug_report',
+                targetId: id,
+                ip: clientIp(req),
+              },
+              reqLogger,
+            );
+            sendJson(res, 201, { reply });
+          })
+          .catch((err: unknown) => {
+            sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+          });
+        return;
+      }
+
       // Task 117.17 — SDK-facing remote config poll endpoint. Lives at the
       // root (NOT under /api/) per the same convention as the OTLP ingest
       // routes, so it bypasses the /api/* API-key gate: SDKs poll this on a
@@ -2092,6 +2164,108 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       // as GET /api/config.
       if (req.method === 'GET' && pathname === '/v1/config') {
         sendJson(res, 200, { config: loadRemoteConfig() });
+        return;
+      }
+
+      // Task 117.20 — SDK-facing bidirectional bug reports. Lives under /v1
+      // (NOT /api/, so it bypasses the RBAC + operator-key gates) and is
+      // authed with the INGEST key — the SDK creates reports, posts the app
+      // user's ("reporter") replies, and polls operator replies for in-app
+      // display. Reporter replies and report creation are clamped + sanitized.
+      if (pathname === '/v1/bug-reports' || pathname.startsWith('/v1/bug-reports/')) {
+        if (!authorizeIngestToken(extractBearerToken(req, requestUrl))) {
+          sendJson(res, 401, { error: 'unauthorized' });
+          return;
+        }
+        // Poll operator replies for a session (in-app display).
+        if (req.method === 'GET' && pathname === '/v1/bug-reports/replies') {
+          const sessionId = requestUrl.searchParams.get('sessionId');
+          if (!sessionId) {
+            sendJson(res, 400, { error: 'missing_sessionId' });
+            return;
+          }
+          const sinceRaw = requestUrl.searchParams.get('since');
+          const since = sinceRaw !== null && Number.isFinite(Number(sinceRaw)) ? Number(sinceRaw) : 0;
+          const reports = store.listBugReports({ sessionId, limit: 1000 });
+          const replies = reports
+            .flatMap((r) => store.listBugReportReplies(r.id))
+            .filter((reply) => reply.authorRole === 'operator' && reply.createdAt > since)
+            .sort((a, b) => a.createdAt - b.createdAt);
+          sendJson(res, 200, { replies });
+          return;
+        }
+        // Create a report.
+        if (req.method === 'POST' && pathname === '/v1/bug-reports') {
+          void readJsonBody(req)
+            .then((body) => {
+              const b = (body ?? {}) as {
+                sessionId?: unknown;
+                title?: unknown;
+                description?: unknown;
+                eventIds?: unknown;
+                attachments?: unknown;
+              };
+              if (typeof b.sessionId !== 'string' || b.sessionId.length === 0) {
+                sendJson(res, 400, { error: 'invalid_body' });
+                return;
+              }
+              const report = {
+                id: randomUUID(),
+                sessionId: b.sessionId,
+                submittedAt: Date.now(),
+                status: 'new' as const,
+                ...(typeof b.title === 'string' ? { title: b.title.slice(0, 500) } : {}),
+                ...(typeof b.description === 'string'
+                  ? { description: b.description.slice(0, 8000) }
+                  : {}),
+                ...(Array.isArray(b.eventIds)
+                  ? { eventIds: b.eventIds.filter((x): x is string => typeof x === 'string').slice(0, 100) }
+                  : {}),
+                ...(b.attachments && typeof b.attachments === 'object'
+                  ? { attachments: b.attachments as Record<string, unknown> }
+                  : {}),
+              };
+              store.insertBugReport(report);
+              sendJson(res, 201, { report });
+            })
+            .catch((err: unknown) => {
+              sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+            });
+          return;
+        }
+        // Reporter (app user) reply.
+        if (
+          req.method === 'POST' &&
+          pathname.startsWith('/v1/bug-reports/') &&
+          pathname.endsWith('/replies')
+        ) {
+          const id = decodeURIComponent(
+            pathname.slice('/v1/bug-reports/'.length, -'/replies'.length),
+          );
+          void readJsonBody(req)
+            .then((body) => {
+              const text = (body as { body?: unknown }).body;
+              if (typeof text !== 'string' || text.trim().length === 0 || !id) {
+                sendJson(res, 400, { error: 'invalid_body' });
+                return;
+              }
+              const reply = {
+                id: randomUUID(),
+                reportId: id,
+                author: 'reporter',
+                authorRole: 'reporter' as const,
+                body: text.slice(0, 8000),
+                createdAt: Date.now(),
+              };
+              store.insertBugReportReply(reply);
+              sendJson(res, 201, { reply });
+            })
+            .catch((err: unknown) => {
+              sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+            });
+          return;
+        }
+        sendJson(res, 404, { error: 'not_found', path: pathname });
         return;
       }
 

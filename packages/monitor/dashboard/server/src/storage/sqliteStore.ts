@@ -18,6 +18,7 @@ import {
   type AlertRuleRecord,
   type BugReportListFilter,
   type BugReportRecord,
+  type BugReportReplyRecord,
   type BugReportStatus,
   type CrashGroupListFilter,
   type CrashGroupRecord,
@@ -177,6 +178,7 @@ const RESET_TABLES = [
   'sessions',
   'crash_groups',
   'bug_reports',
+  'bug_report_replies',
   'alert_rules',
   'alert_history',
   'symbol_files',
@@ -197,6 +199,7 @@ const BACKUP_TABLES = [
   'sessions',
   'crash_groups',
   'bug_reports',
+  'bug_report_replies',
   'alert_rules',
   'alert_history',
   'symbol_files',
@@ -275,6 +278,7 @@ interface PreparedStatements {
   insertCrashGroup: Statement;
   touchCrashGroup: Statement;
   insertBugReport: Statement;
+  insertBugReportReply: Statement;
   upsertAlertRule: Statement;
   deleteAlertRule: Statement;
   insertAlertFiring: Statement;
@@ -413,6 +417,11 @@ export class DashboardStore implements IMonitorStore {
         `INSERT OR REPLACE INTO bug_reports
          (id, session_id, submitted_at, title, description, status, assignee, attachments_json, event_ids_json)
          VALUES (@id, @sessionId, @submittedAt, @title, @description, @status, @assignee, @attachmentsJson, @eventIdsJson)`,
+      ),
+      insertBugReportReply: this.db.prepare(
+        `INSERT OR REPLACE INTO bug_report_replies
+         (id, report_id, author, author_role, body, created_at)
+         VALUES (@id, @reportId, @author, @authorRole, @body, @createdAt)`,
       ),
       upsertAlertRule: this.db.prepare(
         `INSERT INTO alert_rules
@@ -868,6 +877,26 @@ export class DashboardStore implements IMonitorStore {
       )
       .all(params) as BugReportRow[];
     return rows.map(rowToBugReport);
+  }
+
+  insertBugReportReply(record: BugReportReplyRecord): void {
+    this.statements.insertBugReportReply.run({
+      id: record.id,
+      reportId: record.reportId,
+      author: record.author,
+      authorRole: record.authorRole,
+      body: record.body,
+      createdAt: record.createdAt,
+    });
+  }
+
+  listBugReportReplies(reportId: string): BugReportReplyRecord[] {
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM bug_report_replies WHERE report_id = @reportId ORDER BY created_at ASC`,
+      )
+      .all({ reportId }) as BugReportReplyRow[];
+    return rows.map(rowToBugReportReply);
   }
 
   // ------------------------------ Alert rules ------------------------------
@@ -1508,6 +1537,26 @@ function rowToBugReport(row: BugReportRow): BugReportRecord {
     rec.eventIds = JSON.parse(row.event_ids_json) as string[];
   }
   return rec;
+}
+
+interface BugReportReplyRow {
+  id: string;
+  report_id: string;
+  author: string;
+  author_role: string;
+  body: string;
+  created_at: number;
+}
+
+function rowToBugReportReply(row: BugReportReplyRow): BugReportReplyRecord {
+  return {
+    id: row.id,
+    reportId: row.report_id,
+    author: row.author,
+    authorRole: row.author_role === 'reporter' ? 'reporter' : 'operator',
+    body: row.body,
+    createdAt: row.created_at,
+  };
 }
 
 interface AlertRuleRow {

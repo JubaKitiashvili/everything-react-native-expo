@@ -91,6 +91,18 @@ CREATE TABLE IF NOT EXISTS bug_reports (
 CREATE INDEX IF NOT EXISTS idx_bug_reports_submitted ON bug_reports (submitted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bug_reports_status    ON bug_reports (status, submitted_at DESC);
 
+-- Task 117.20 — bidirectional bug-report thread.
+CREATE TABLE IF NOT EXISTS bug_report_replies (
+  id           TEXT    PRIMARY KEY,
+  report_id    TEXT    NOT NULL,
+  author       TEXT    NOT NULL,
+  author_role  TEXT    NOT NULL DEFAULT 'operator',
+  body         TEXT    NOT NULL,
+  created_at   BIGINT  NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_bug_report_replies_report ON bug_report_replies (report_id, created_at);
+
 CREATE TABLE IF NOT EXISTS alert_rules (
   id                TEXT     PRIMARY KEY,
   name              TEXT     NOT NULL,
@@ -247,6 +259,7 @@ export const POSTGRES_RESET_TABLES = [
   'sessions',
   'crash_groups',
   'bug_reports',
+  'bug_report_replies',
   'alert_rules',
   'alert_history',
   'symbol_files',

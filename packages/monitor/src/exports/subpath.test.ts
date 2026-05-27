@@ -15,6 +15,7 @@ import * as Performance from './performance';
 import * as Network from './network';
 import * as AI from './ai';
 import * as Replay from './replay';
+import * as BugReports from './bug-reports';
 import * as Dev from './dev';
 import * as Testing from './testing';
 
@@ -90,6 +91,17 @@ describe('subpath exports', () => {
     it('does NOT leak unrelated surfaces', () => {
       expect((Replay as Record<string, unknown>).SignalRouter).toBeUndefined();
       expect((Replay as Record<string, unknown>).NetworkCollector).toBeUndefined();
+    });
+  });
+
+  describe('@erne/monitor/bug-reports', () => {
+    it('exports the bidirectional bug-report channel', () => {
+      expect(BugReports.BugReportChannel).toBeDefined();
+    });
+
+    it('does NOT leak unrelated surfaces', () => {
+      expect((BugReports as Record<string, unknown>).SignalRouter).toBeUndefined();
+      expect((BugReports as Record<string, unknown>).BugReporter).toBeUndefined();
     });
   });
 

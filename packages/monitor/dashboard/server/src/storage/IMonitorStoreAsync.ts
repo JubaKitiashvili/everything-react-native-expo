@@ -30,6 +30,7 @@ import type {
   AuditLogRecord,
   BugReportListFilter,
   BugReportRecord,
+  BugReportReplyRecord,
   CrashGroupListFilter,
   CrashGroupRecord,
   CrashGroupStatus,
@@ -86,6 +87,8 @@ export interface IMonitorStoreAsync {
     patch: Partial<Pick<BugReportRecord, 'status' | 'assignee' | 'title' | 'description'>>,
   ): Promise<void>;
   listBugReports(filter?: BugReportListFilter): Promise<BugReportRecord[]>;
+  insertBugReportReply(record: BugReportReplyRecord): Promise<void>;
+  listBugReportReplies(reportId: string): Promise<BugReportReplyRecord[]>;
 
   // ------------------------------ Alert rules ------------------------------
   saveAlertRule(rule: AlertRuleRecord): Promise<void>;

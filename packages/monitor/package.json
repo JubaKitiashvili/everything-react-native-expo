@@ -30,6 +30,10 @@
       "types": "./dist/exports/replay.d.ts",
       "default": "./dist/exports/replay.js"
     },
+    "./bug-reports": {
+      "types": "./dist/exports/bug-reports.d.ts",
+      "default": "./dist/exports/bug-reports.js"
+    },
     "./dev": {
       "types": "./dist/exports/dev.d.ts",
       "default": "./dist/exports/dev.js"

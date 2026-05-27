@@ -68,6 +68,7 @@ const BUDGETS = [
   { name: '/network', entry: 'dist/exports/network.js', budgetKb: 5 },
   { name: '/ai', entry: 'dist/exports/ai.js', budgetKb: 30 },
   { name: '/replay', entry: 'dist/exports/replay.js', budgetKb: 10 },
+  { name: '/bug-reports', entry: 'dist/exports/bug-reports.js', budgetKb: 5 },
   { name: '/dev', entry: 'dist/exports/dev.js', budgetKb: 15 },
   { name: '/testing', entry: 'dist/exports/testing.js', budgetKb: 10 },
 ];

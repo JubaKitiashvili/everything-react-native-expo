@@ -30,6 +30,7 @@ import type {
   AuditLogRecord,
   BugReportListFilter,
   BugReportRecord,
+  BugReportReplyRecord,
   CrashGroupListFilter,
   CrashGroupRecord,
   CrashGroupStatus,
@@ -115,6 +116,10 @@ export interface IMonitorStore {
     patch: Partial<Pick<BugReportRecord, 'status' | 'assignee' | 'title' | 'description'>>,
   ): void;
   listBugReports(filter?: BugReportListFilter): BugReportRecord[];
+  /** Task 117.20 — append a reply to a bug report's thread. */
+  insertBugReportReply(record: BugReportReplyRecord): void;
+  /** Task 117.20 — list a bug report's replies, oldest first. */
+  listBugReportReplies(reportId: string): BugReportReplyRecord[];
 
   // ------------------------------ Alert rules ------------------------------
   saveAlertRule(rule: AlertRuleRecord): void;
