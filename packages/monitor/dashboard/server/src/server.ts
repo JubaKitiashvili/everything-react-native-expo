@@ -2,7 +2,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { DashboardStore, defaultDashboardDbPath } from './storage/sqliteStore.js';
 import { seedDemoData } from './demo/seed.js';
 import { parseProGuardMapping, resolveFrame } from './symbolication/resolver.js';
@@ -52,6 +52,25 @@ import {
   serializeIngestKeySet,
   summarizeKeys as summarizeIngestKeys,
 } from './auth/ingestKeys.js';
+import {
+  RBAC_SETTING_KEY,
+  RBAC_JWT_SECRET_SETTING_KEY,
+  authenticate as rbacAuthenticate,
+  createTenant as rbacCreateTenant,
+  createUser as rbacCreateUser,
+  isEnforcing as rbacIsEnforcing,
+  isRole as rbacIsRole,
+  parseRbac,
+  removeUser as rbacRemoveUser,
+  roleSatisfies,
+  serializeRbac,
+  setRole as rbacSetRole,
+  signToken,
+  summarizeUsers as rbacSummarizeUsers,
+  verifyToken,
+  type Principal,
+  type Role,
+} from './auth/rbac.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -305,6 +324,35 @@ export interface DashboardServerOptions {
     /** Clock override for the OTLP limiter — defaults to `Date.now`. */
     now?: () => number;
   };
+  /**
+   * Task 117.18 — multi-tenant RBAC for the MANAGEMENT surface (`/api/*`).
+   * Independent of the ingest auth in `ingestKeys.ts` (`/v1/*` + WS keep
+   * their own bearer tokens) and of the coarse `apiKey` edge gate above.
+   *
+   * Default (`enabled` omitted): AUTO — RBAC enforces as soon as the first
+   * user exists (created via `POST /api/auth/register`), and is dormant
+   * before that. While dormant, every caller is treated as the synthetic
+   * Owner of the `default` tenant, so a single-tenant self-host (and every
+   * existing test) needs no login. This mirrors the fail-open empty-set
+   * default of ingest keys: opt-in, never a surprise lockout.
+   *
+   * Set `enabled: true` to require auth even before a user exists (the very
+   * first request would 401 until you bootstrap), or `enabled: false` to
+   * disable RBAC entirely regardless of stored users.
+   *
+   * `jwtSecret` signs/verifies access tokens. Precedence: this value →
+   * `process.env.MONITOR_JWT_SECRET` → a 256-bit secret generated once and
+   * persisted in `server_settings` (survives restarts). Pass `null` to force
+   * the generated-secret path even when the env var is set.
+   */
+  auth?: {
+    enabled?: boolean;
+    jwtSecret?: string | null;
+    /** Access-token lifetime in ms. Default: 12h (see DEFAULT_TOKEN_TTL_MS). */
+    tokenTtlMs?: number;
+    /** Clock override for token issue/verify — defaults to `Date.now`. */
+    now?: () => number;
+  };
 }
 
 export interface DashboardServerHandle {
@@ -366,6 +414,57 @@ function defaultPublicDir(): string {
  * unhealthy and restart it on a key mismatch loop.
  */
 const PUBLIC_API_PATHS = new Set(['/api/health', '/api/ready']);
+
+/**
+ * Task 117.18 — `/api/*` paths reachable WITHOUT a valid JWT even when RBAC
+ * is enforcing. Login must be reachable (you can't get a token without it);
+ * the probes must always answer for orchestrators. `/api/auth/register` is
+ * deliberately NOT here: when dormant it passes via the synthetic Owner; once
+ * enforcing it requires a real Owner, so anonymous access correctly 401s.
+ */
+const AUTH_PUBLIC_PATHS = new Set(['/api/health', '/api/ready', '/api/auth/login']);
+
+/**
+ * The identity used for every request while RBAC is dormant (no users yet, or
+ * `auth.enabled === false`): a full Owner of the `default` tenant. This is what
+ * keeps the single-tenant self-host login-free.
+ */
+const SYNTHETIC_OWNER: Principal = {
+  userId: 'system',
+  tenantId: 'default',
+  email: 'system@localhost',
+  role: 'owner',
+};
+
+/** Extract a Bearer JWT from the request: `Authorization: Bearer` or `?token`. */
+function extractBearerToken(req: IncomingMessage, url: URL): string | null {
+  const header = req.headers.authorization;
+  if (typeof header === 'string') {
+    const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+    if (match?.[1]) return match[1].trim();
+  }
+  const query = url.searchParams.get('token');
+  if (query && query.length > 0) return query;
+  return null;
+}
+
+/**
+ * Guard a route by minimum role. Returns true when `principal` satisfies
+ * `required`; otherwise sends 403 and returns false so the caller does
+ * `if (!requireRole(...)) return;`. While RBAC is dormant the principal is the
+ * synthetic Owner, so every guard passes — checks only bite for a real lower
+ * -privilege token.
+ */
+function requireRole(principal: Principal, required: Role, res: ServerResponse): boolean {
+  if (roleSatisfies(principal.role, required)) return true;
+  sendJson(res, 403, { error: 'forbidden', required, role: principal.role });
+  return false;
+}
+
+/** Normalise an unknown thrown value to a message string. */
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
 
 function constantTimeEquals(a: string, b: string): boolean {
   const bufA = Buffer.from(a, 'utf8');
@@ -645,6 +744,42 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
   // corrupt row falls back to defaults so the poll path never breaks.
   const loadRemoteConfig = () => parseRemoteConfig(store.getSetting(REMOTE_CONFIG_SETTING_KEY));
 
+  // Task 117.18 — RBAC state + JWT secret, loaded/persisted via the same
+  // settings KV the other feature modules use.
+  const authNow = options.auth?.now ?? Date.now;
+  const authTokenTtlMs = options.auth?.tokenTtlMs;
+  const loadRbac = () => parseRbac(store.getSetting(RBAC_SETTING_KEY));
+  const saveRbac = (set: ReturnType<typeof loadRbac>) =>
+    store.setSetting(RBAC_SETTING_KEY, serializeRbac(set));
+
+  /**
+   * The signing secret. Precedence: explicit option → env → a 256-bit secret
+   * generated once and persisted (so tokens survive restarts). `null` option
+   * forces the generated path even when the env var is set.
+   */
+  const resolveJwtSecret = (): string => {
+    if (typeof options.auth?.jwtSecret === 'string' && options.auth.jwtSecret.length > 0) {
+      return options.auth.jwtSecret;
+    }
+    if (options.auth?.jwtSecret !== null) {
+      const env = process.env.MONITOR_JWT_SECRET;
+      if (typeof env === 'string' && env.length > 0) return env;
+    }
+    const existing = store.getSetting(RBAC_JWT_SECRET_SETTING_KEY);
+    if (existing && existing.length > 0) return existing;
+    const generated = randomBytes(32).toString('hex');
+    store.setSetting(RBAC_JWT_SECRET_SETTING_KEY, generated);
+    return generated;
+  };
+
+  /** Whether RBAC currently enforces. Forced on/off by `auth.enabled`, else
+   *  auto: enforce as soon as a user exists. */
+  const rbacEnforcing = (): boolean => {
+    if (options.auth?.enabled === false) return false;
+    if (options.auth?.enabled === true) return true;
+    return rbacIsEnforcing(loadRbac());
+  };
+
   // Task 117.68 — render the Prometheus text-exposition body from live
   // server + store state. Surfaces ingest queue depth/stats, total event
   // count, uptime, and applied migration count. Rebuilt on each scrape so
@@ -780,6 +915,37 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         }
       }
 
+      // Task 117.18 — RBAC gate. Resolves the request's identity for every
+      // `/api/*` call. While dormant, `principal` is the synthetic Owner so
+      // nothing is gated (single-tenant default). While enforcing, a valid
+      // Bearer JWT is required on every `/api/*` path except login + probes;
+      // per-route `requireRole(...)` checks below then enforce write/admin
+      // boundaries. Ingest (`/v1/*` + WS) and `/metrics` are unaffected.
+      let principal: Principal = SYNTHETIC_OWNER;
+      if (pathname.startsWith('/api/') && rbacEnforcing()) {
+        const verified = verifyToken(
+          extractBearerToken(req, requestUrl),
+          resolveJwtSecret(),
+          authNow(),
+        );
+        if (verified) {
+          principal = verified;
+        } else {
+          // Always let the FIRST-user bootstrap through, even when auth is
+          // force-enabled with no users yet — otherwise the initial Owner
+          // could never be created (permanent lockout). Login + probes are
+          // always public via AUTH_PUBLIC_PATHS.
+          const isBootstrap =
+            req.method === 'POST' &&
+            pathname === '/api/auth/register' &&
+            !rbacIsEnforcing(loadRbac());
+          if (!AUTH_PUBLIC_PATHS.has(pathname) && !isBootstrap) {
+            sendJson(res, 401, { error: 'unauthorized' });
+            return;
+          }
+        }
+      }
+
       // Task 117.68 — Prometheus scrape endpoint. Lives at the root (not
       // under /api/) per convention, so it bypasses the /api/* gate above
       // and applies its own. Default: gated by the same API key; set
@@ -832,6 +998,221 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         // about; the JSON body explains the reason for humans.
         const report = store.readyCheck();
         sendJson(res, report.ready ? 200 : 503, report);
+        return;
+      }
+
+      // ----------------------------------------------------------------
+      // Task 117.18 — RBAC auth endpoints.
+      // ----------------------------------------------------------------
+
+      // POST /api/auth/login — exchange email+password for a JWT. Always
+      // reachable (AUTH_PUBLIC_PATHS). 401 on bad creds (no email-exists leak).
+      if (req.method === 'POST' && pathname === '/api/auth/login') {
+        void readJsonBody(req)
+          .then((body) => {
+            const { email, password } = (body ?? {}) as { email?: unknown; password?: unknown };
+            if (typeof email !== 'string' || typeof password !== 'string') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            const set = loadRbac();
+            const user = rbacAuthenticate(set, email, password);
+            if (!user) {
+              recordAuditEvent(
+                store,
+                { action: 'login', actor: email.slice(0, 200), ip: clientIp(req), metadata: { ok: false } },
+                reqLogger,
+              );
+              sendJson(res, 401, { error: 'invalid_credentials' });
+              return;
+            }
+            const token = signToken(
+              user,
+              resolveJwtSecret(),
+              authNow(),
+              authTokenTtlMs,
+            );
+            recordAuditEvent(
+              store,
+              { action: 'login', actor: user.id, ip: clientIp(req), metadata: { ok: true, email: user.email } },
+              reqLogger,
+            );
+            sendJson(res, 200, {
+              token,
+              user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId },
+            });
+          })
+          .catch((err: unknown) => {
+            sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+          });
+        return;
+      }
+
+      // GET /api/auth/me — the current principal's identity. While dormant
+      // this returns the synthetic Owner so the SPA can render in dev mode.
+      if (req.method === 'GET' && pathname === '/api/auth/me') {
+        sendJson(res, 200, {
+          enforcing: rbacEnforcing(),
+          user: {
+            id: principal.userId,
+            email: principal.email,
+            role: principal.role,
+            tenantId: principal.tenantId,
+          },
+        });
+        return;
+      }
+
+      // POST /api/auth/register — create a user. Bootstrap: while dormant the
+      // synthetic Owner reaches here and creates the FIRST user (role forced
+      // to owner + a `default` tenant if none). Once enforcing, requires a
+      // real Owner and honours the requested role within the Owner's tenant.
+      if (req.method === 'POST' && pathname === '/api/auth/register') {
+        if (!requireRole(principal, 'owner', res)) return;
+        void readJsonBody(req)
+          .then((body) => {
+            const { email, password, role } = (body ?? {}) as {
+              email?: unknown;
+              password?: unknown;
+              role?: unknown;
+            };
+            if (typeof email !== 'string' || typeof password !== 'string') {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            let set = loadRbac();
+            const bootstrapping = !rbacIsEnforcing(set);
+            // First user is always an Owner; later users honour the request.
+            const desiredRole: Role = bootstrapping
+              ? 'owner'
+              : rbacIsRole(role)
+                ? role
+                : 'viewer';
+            // Resolve the tenant: bootstrap creates `default`; otherwise the
+            // new user joins the acting Owner's tenant.
+            let tenantId = principal.tenantId;
+            if (bootstrapping) {
+              const created = rbacCreateTenant(set, 'default', authNow());
+              set = created.set;
+              tenantId = created.tenant.id;
+            }
+            const result = rbacCreateUser(
+              set,
+              { tenantId, email, password, role: desiredRole },
+              authNow(),
+            );
+            if ('error' in result) {
+              const status = result.error === 'duplicate-email' ? 409 : 400;
+              sendJson(res, status, { error: result.error });
+              return;
+            }
+            saveRbac(result.set);
+            recordAuditEvent(
+              store,
+              {
+                action: 'user-create',
+                actor: principal.userId,
+                targetType: 'user',
+                targetId: result.user.id,
+                ip: clientIp(req),
+                metadata: { email: result.user.email, role: result.user.role, bootstrap: bootstrapping },
+              },
+              reqLogger,
+            );
+            sendJson(res, 201, {
+              user: {
+                id: result.user.id,
+                email: result.user.email,
+                role: result.user.role,
+                tenantId: result.user.tenantId,
+              },
+            });
+          })
+          .catch((err: unknown) => {
+            sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+          });
+        return;
+      }
+
+      // GET /api/auth/users — list users in the principal's tenant (Owner).
+      if (req.method === 'GET' && pathname === '/api/auth/users') {
+        if (!requireRole(principal, 'owner', res)) return;
+        sendJson(res, 200, { users: rbacSummarizeUsers(loadRbac(), principal.tenantId) });
+        return;
+      }
+
+      // PATCH /api/auth/users/:id — change a user's role (Owner). Guards the
+      // last-owner invariant.
+      if (req.method === 'PATCH' && pathname.startsWith('/api/auth/users/')) {
+        if (!requireRole(principal, 'owner', res)) return;
+        const userId = decodeURIComponent(pathname.slice('/api/auth/users/'.length));
+        void readJsonBody(req)
+          .then((body) => {
+            const role = (body as { role?: unknown }).role;
+            if (!rbacIsRole(role)) {
+              sendJson(res, 400, { error: 'invalid_role' });
+              return;
+            }
+            const set = loadRbac();
+            const target = set.users.find((u) => u.id === userId);
+            if (target && target.tenantId !== principal.tenantId) {
+              sendJson(res, 404, { error: 'not_found' }); // tenant isolation
+              return;
+            }
+            const result = rbacSetRole(set, userId, role);
+            if (!result.ok) {
+              sendJson(res, result.error === 'unknown-user' ? 404 : 409, { error: result.error });
+              return;
+            }
+            saveRbac(result.set);
+            recordAuditEvent(
+              store,
+              {
+                action: 'user-role-change',
+                actor: principal.userId,
+                targetType: 'user',
+                targetId: userId,
+                ip: clientIp(req),
+                metadata: { role },
+              },
+              reqLogger,
+            );
+            sendJson(res, 200, { ok: true });
+          })
+          .catch((err: unknown) => {
+            sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
+          });
+        return;
+      }
+
+      // DELETE /api/auth/users/:id — remove a user (Owner). Guards last-owner.
+      if (req.method === 'DELETE' && pathname.startsWith('/api/auth/users/')) {
+        if (!requireRole(principal, 'owner', res)) return;
+        const userId = decodeURIComponent(pathname.slice('/api/auth/users/'.length));
+        const set = loadRbac();
+        const target = set.users.find((u) => u.id === userId);
+        if (target && target.tenantId !== principal.tenantId) {
+          sendJson(res, 404, { error: 'not_found' }); // tenant isolation
+          return;
+        }
+        const result = rbacRemoveUser(set, userId);
+        if (!result.ok) {
+          sendJson(res, result.error === 'unknown-user' ? 404 : 409, { error: result.error });
+          return;
+        }
+        saveRbac(result.set);
+        recordAuditEvent(
+          store,
+          {
+            action: 'user-delete',
+            actor: principal.userId,
+            targetType: 'user',
+            targetId: userId,
+            ip: clientIp(req),
+          },
+          reqLogger,
+        );
+        sendJson(res, 200, { ok: true });
         return;
       }
 
@@ -964,6 +1345,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/alert-rules') {
+        if (!requireRole(principal, 'owner', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const rule = body as AlertRuleInput;
@@ -1000,6 +1382,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'DELETE' && pathname.startsWith('/api/alert-rules/')) {
+        if (!requireRole(principal, 'owner', res)) return;
         const id = pathname.slice('/api/alert-rules/'.length);
         if (!id) {
           sendJson(res, 400, { error: 'missing_id' });
@@ -1034,6 +1417,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/alert-rules/') &&
         pathname.endsWith('/test-fire')
       ) {
+        if (!requireRole(principal, 'member', res)) return;
         const id = pathname.slice('/api/alert-rules/'.length, -'/test-fire'.length);
         if (!id) {
           sendJson(res, 400, { error: 'missing_id' });
@@ -1095,6 +1479,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/notifications/') &&
         pathname.endsWith('/read')
       ) {
+        if (!requireRole(principal, 'member', res)) return;
         const id = decodeURIComponent(
           pathname.slice('/api/notifications/'.length, -'/read'.length),
         );
@@ -1130,6 +1515,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/users/') &&
         pathname.endsWith('/export')
       ) {
+        if (!requireRole(principal, 'owner', res)) return;
         const userId = decodeURIComponent(pathname.slice('/api/users/'.length, -'/export'.length));
         if (!userId) {
           sendJson(res, 400, { error: 'missing_user_id' });
@@ -1155,6 +1541,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'DELETE' && pathname.startsWith('/api/users/')) {
+        if (!requireRole(principal, 'owner', res)) return;
         const userId = decodeURIComponent(pathname.slice('/api/users/'.length));
         if (!userId) {
           sendJson(res, 400, { error: 'missing_user_id' });
@@ -1182,6 +1569,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'PATCH' && pathname === '/api/settings') {
+        if (!requireRole(principal, 'owner', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const patch = body as { retentionDays?: unknown };
@@ -1237,6 +1625,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/audit/ai-actions') {
+        if (!requireRole(principal, 'member', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const result = recordAiAction(store, body);
@@ -1267,6 +1656,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/settings/rotate-token') {
+        if (!requireRole(principal, 'owner', res)) return;
         const token = randomUUID().replace(/-/g, '');
         store.setSetting('ws_auth_token', token);
         recordAuditEvent(
@@ -1316,6 +1706,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/keys') {
+        if (!requireRole(principal, 'owner', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const input = (body ?? {}) as { label?: unknown };
@@ -1358,6 +1749,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/keys/rotate') {
+        if (!requireRole(principal, 'owner', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const input = (body ?? {}) as { label?: unknown; graceMs?: unknown };
@@ -1411,6 +1803,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
         pathname.startsWith('/api/keys/') &&
         pathname.endsWith('/revoke')
       ) {
+        if (!requireRole(principal, 'owner', res)) return;
         const id = decodeURIComponent(pathname.slice('/api/keys/'.length, -'/revoke'.length));
         if (!id) {
           sendJson(res, 400, { error: 'missing_id' });
@@ -1444,6 +1837,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/settings/reset') {
+        if (!requireRole(principal, 'owner', res)) return;
         const counts = store.resetAllUserData();
         recordAuditEvent(
           store,
@@ -1471,6 +1865,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'PUT' && pathname === '/api/config') {
+        if (!requireRole(principal, 'owner', res)) return;
         const merge = requestUrl.searchParams.get('merge') === '1';
         void readJsonBody(req)
           .then((body) => {
@@ -1512,6 +1907,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/demo/seed') {
+        if (!requireRole(principal, 'owner', res)) return;
         const counts = seedDemoData(store, Date.now());
         sendJson(res, 200, { ok: true, seeded: counts });
         return;
@@ -1531,6 +1927,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/symbols') {
+        if (!requireRole(principal, 'owner', res)) return;
         // 8 MiB cap — large enough for mid-sized ProGuard mappings, small
         // enough to reject accidental uploads of full dSYM bundles (those
         // stay on the developer's machine; we only record metadata).
@@ -1576,6 +1973,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'DELETE' && pathname.startsWith('/api/symbols/')) {
+        if (!requireRole(principal, 'owner', res)) return;
         const id = pathname.slice('/api/symbols/'.length);
         if (!id) {
           sendJson(res, 400, { error: 'missing_id' });
@@ -1591,6 +1989,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'POST' && pathname === '/api/symbols/resolve') {
+        if (!requireRole(principal, 'member', res)) return;
         void readJsonBody(req)
           .then((body) => {
             const payload = body as SymbolResolvePayload;
@@ -1640,6 +2039,7 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
       }
 
       if (req.method === 'PATCH' && pathname.startsWith('/api/bug-reports/')) {
+        if (!requireRole(principal, 'member', res)) return;
         const id = pathname.slice('/api/bug-reports/'.length);
         if (!id) {
           sendJson(res, 400, { error: 'missing_id' });
