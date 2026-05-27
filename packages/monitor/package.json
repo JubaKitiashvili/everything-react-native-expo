@@ -34,6 +34,10 @@
       "types": "./dist/exports/bug-reports.d.ts",
       "default": "./dist/exports/bug-reports.js"
     },
+    "./discovery": {
+      "types": "./dist/exports/discovery.d.ts",
+      "default": "./dist/exports/discovery.js"
+    },
     "./dev": {
       "types": "./dist/exports/dev.d.ts",
       "default": "./dist/exports/dev.js"

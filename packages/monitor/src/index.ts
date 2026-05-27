@@ -447,6 +447,15 @@ export type {
   OperatorReply,
   SubmitReportInput,
 } from './integrations/BugReportChannel';
+// Task 117.79 — LAN auto-discovery. VALUE lives on `@erne/monitor/discovery`
+// (opt-in); types re-exported here at zero bundle cost.
+export type {
+  DashboardDiscoveryOptions,
+  DiscoveredDashboard,
+  DiscoveredService,
+  MdnsBrowser,
+  MdnsBrowserHandlers,
+} from './discovery/DashboardDiscovery';
 // Phase 2a — Native module bridge
 export {
   ErneMonitorNative,

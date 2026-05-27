@@ -71,6 +71,7 @@ import {
   type Principal,
   type Role,
 } from './auth/rbac.js';
+import { DashboardAdvertiser, type DashboardAdvertiserOptions } from './discovery/advertiser.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -353,6 +354,18 @@ export interface DashboardServerOptions {
     /** Clock override for token issue/verify — defaults to `Date.now`. */
     now?: () => number;
   };
+  /**
+   * Task 117.79 — mDNS/Bonjour LAN auto-discovery. OFF by default. When
+   * `enabled`, the server advertises itself as `_erne-monitor._tcp` once it's
+   * listening, so SDKs on the LAN can find it without a hardcoded IP. The real
+   * multicast needs the optional `bonjour-service` package; if it isn't
+   * installed, advertising is a logged no-op (never a startup failure). Pass a
+   * `publisher` to inject a mock/custom advertiser. Other fields tune the
+   * advertised name / TXT record.
+   */
+  discovery?:
+    | false
+    | (Omit<DashboardAdvertiserOptions, 'secure'> & { enabled?: boolean; secure?: boolean });
 }
 
 export interface DashboardServerHandle {
@@ -367,6 +380,12 @@ export interface DashboardServerHandle {
    * or `{ enabled: false }`.
    */
   retentionJob: RetentionPurgeJob | null;
+  /**
+   * Task 117.79 — LAN discovery advertiser. `null` when discovery is disabled
+   * (the default). `startDashboardServer` calls `start(port)` once listening;
+   * `close()` stops it. Exposed so tests can assert advertising behaviour.
+   */
+  advertiser: DashboardAdvertiser | null;
   /**
    * Task 117.99 — alert evaluator. `null` when disabled via
    * `options.alerts = false`. Exposed so tests + the dashboard's
@@ -658,6 +677,17 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           ...(typeof retentionOption === 'object' ? retentionOption : {}),
         });
   retentionJob?.start();
+
+  // Task 117.79 — LAN discovery advertiser. Off unless `discovery` is enabled.
+  // Created here; `startDashboardServer` starts it once the bound port is known.
+  const discoveryOption = options.discovery;
+  const advertiser =
+    discoveryOption && (typeof discoveryOption !== 'object' || discoveryOption.enabled !== false)
+      ? new DashboardAdvertiser({
+          logger,
+          ...(typeof discoveryOption === 'object' ? discoveryOption : {}),
+        })
+      : null;
 
   // Task 117.99 — alert evaluator + delivery. Default on; opt-out with
   // `alerts: false` or `{ enabled: false }`. Constructed unconditionally
@@ -2371,12 +2401,14 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
     port,
     websocket,
     retentionJob,
+    advertiser,
     alertEvaluator,
     cache,
     url: `http://${host}:${port}`,
     close: () =>
       new Promise<void>((resolveClose) => {
         retentionJob?.stop();
+        advertiser?.stop();
         // Task 117.5 — drain the ingest queue before closing the store
         // so inflight events land. Fall back to the sync close path if
         // the handler doesn't expose closeAsync (future adapters).
@@ -2407,6 +2439,8 @@ export async function startDashboardServer(
   const address = handle.server.address();
   const listeningPort =
     typeof address === 'object' && address !== null ? address.port : handle.port;
+  // Task 117.79 — advertise on the LAN now that the bound port is known.
+  handle.advertiser?.start(listeningPort);
   return {
     ...handle,
     port: listeningPort,

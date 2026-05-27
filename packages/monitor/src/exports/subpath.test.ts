@@ -16,6 +16,7 @@ import * as Network from './network';
 import * as AI from './ai';
 import * as Replay from './replay';
 import * as BugReports from './bug-reports';
+import * as Discovery from './discovery';
 import * as Dev from './dev';
 import * as Testing from './testing';
 
@@ -102,6 +103,18 @@ describe('subpath exports', () => {
     it('does NOT leak unrelated surfaces', () => {
       expect((BugReports as Record<string, unknown>).SignalRouter).toBeUndefined();
       expect((BugReports as Record<string, unknown>).BugReporter).toBeUndefined();
+    });
+  });
+
+  describe('@erne/monitor/discovery', () => {
+    it('exports the LAN discovery surface', () => {
+      expect(Discovery.DashboardDiscovery).toBeDefined();
+      expect(Discovery.ERNE_SERVICE_TYPE).toBe('_erne-monitor._tcp');
+    });
+
+    it('does NOT leak unrelated surfaces', () => {
+      expect((Discovery as Record<string, unknown>).SignalRouter).toBeUndefined();
+      expect((Discovery as Record<string, unknown>).BugReportChannel).toBeUndefined();
     });
   });
 
