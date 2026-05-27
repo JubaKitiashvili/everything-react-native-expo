@@ -161,6 +161,7 @@ describe('CrashGroupDetail', () => {
         latestEvent={event}
         now={NOW}
       />,
+      { wrapper: makeWrapper(makeApi({})) },
     );
 
     expect(screen.getByText('TypeError: boom')).toBeInTheDocument(); // group.message
@@ -174,6 +175,7 @@ describe('CrashGroupDetail', () => {
   test('shows a friendly "no stack captured" message when payload.stack is missing', () => {
     render(
       <CrashGroupDetail group={group({})} latestEvent={crashEvent({ payload: {} })} now={NOW} />,
+      { wrapper: makeWrapper(makeApi({})) },
     );
     expect(screen.getByText(/no stack captured/i)).toBeInTheDocument();
   });
@@ -190,6 +192,7 @@ describe('CrashGroupDetail', () => {
         })}
         now={NOW}
       />,
+      { wrapper: makeWrapper(makeApi({})) },
     );
 
     const button = screen.getByRole('button', { name: /copy as ai context/i });

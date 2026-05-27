@@ -80,6 +80,12 @@ export interface DashboardApiClient {
   fetchBugReportReplies(reportId: string): Promise<BugReportReply[]>;
   /** Task 117.20 — append an operator reply (Member+). */
   addBugReportReply(reportId: string, body: string): Promise<BugReportReply>;
+  /**
+   * Task 117.9 — server-side AI completion fallback (Member+). Rejects with a
+   * `not_configured` error when the server has no AI provider, so callers can
+   * fall back to in-browser WebLLM or hide the feature.
+   */
+  aiComplete(prompt: string, opts?: { maxTokens?: number; system?: string }): Promise<string>;
   fetchSymbolFiles(filter?: SymbolFileListFilter): Promise<SymbolFileRecord[]>;
   uploadSymbolFile(input: UploadSymbolFileInput): Promise<SymbolFileRecord>;
   deleteSymbolFile(id: string): Promise<void>;
@@ -299,6 +305,23 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
         { body },
       );
       return reply;
+    },
+    async aiComplete(prompt, opts = {}) {
+      const response = await fetchFn(`${baseUrl}/api/ai/complete`, {
+        method: 'POST',
+        signal: options.signal ?? null,
+        headers: { accept: 'application/json', 'content-type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ prompt, ...opts }),
+      });
+      // 501 = server has no AI provider → a distinct, non-error signal so the
+      // caller can fall back to in-browser WebLLM or hide the feature.
+      if (response.status === 501) throw new Error('not_configured');
+      if (!response.ok) {
+        noteStatus(response.status);
+        throw new Error(`ai_failed_${response.status}`);
+      }
+      const { text } = (await response.json()) as { text: string };
+      return text;
     },
     async fetchSymbolFiles(filter = {}) {
       const params = new URLSearchParams();

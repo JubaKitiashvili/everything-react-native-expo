@@ -72,6 +72,7 @@ import {
   type Role,
 } from './auth/rbac.js';
 import { DashboardAdvertiser, type DashboardAdvertiserOptions } from './discovery/advertiser.js';
+import { resolveAiProvider, type AiProvider } from './ai/provider.js';
 import { AlertDelivery, type AlertDeliveryOptions } from './alerts/delivery.js';
 import { AlertEvaluator } from './alerts/evaluator.js';
 import {
@@ -366,6 +367,16 @@ export interface DashboardServerOptions {
   discovery?:
     | false
     | (Omit<DashboardAdvertiserOptions, 'secure'> & { enabled?: boolean; secure?: boolean });
+  /**
+   * Task 117.9 — server-side AI fallback for `POST /api/ai/complete` (Member+).
+   * The dashboard prefers in-browser WebLLM; this is the fallback for browsers
+   * without WebGPU / server-side use. Provider precedence: `ai.provider` →
+   * `ANTHROPIC_API_KEY` env → none. When no provider is configured the endpoint
+   * returns 501 (the dashboard then relies on in-browser WebLLM or hides the
+   * feature). Pass `ai.provider` to inject a stub in tests. `ai.provider: null`
+   * forces the endpoint off regardless of env.
+   */
+  ai?: { provider?: AiProvider | null };
 }
 
 export interface DashboardServerHandle {
@@ -680,6 +691,9 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
 
   // Task 117.79 — LAN discovery advertiser. Off unless `discovery` is enabled.
   // Created here; `startDashboardServer` starts it once the bound port is known.
+  // Task 117.9 — resolve the AI fallback provider (option → env → none).
+  const aiProvider = resolveAiProvider(options.ai?.provider);
+
   const discoveryOption = options.discovery;
   const advertiser =
     discoveryOption && (typeof discoveryOption !== 'object' || discoveryOption.enabled !== false)
@@ -1672,6 +1686,45 @@ export function createDashboardServer(options: DashboardServerOptions = {}): Das
           .catch((err: unknown) => {
             const message = err instanceof Error ? err.message : String(err);
             sendJson(res, 400, { error: 'invalid_json', message });
+          });
+        return;
+      }
+
+      // Task 117.9 — server-side AI completion fallback (Member+). The
+      // dashboard prefers in-browser WebLLM; this backs browsers without
+      // WebGPU. 501 when no provider is configured. Errors map to 502 so a
+      // provider outage is distinguishable from a bad request.
+      if (req.method === 'POST' && pathname === '/api/ai/complete') {
+        if (!requireRole(principal, 'member', res)) return;
+        if (!aiProvider) {
+          sendJson(res, 501, { error: 'ai_not_configured' });
+          return;
+        }
+        void readJsonBody(req)
+          .then(async (body) => {
+            const b = (body ?? {}) as { prompt?: unknown; maxTokens?: unknown; system?: unknown };
+            if (typeof b.prompt !== 'string' || b.prompt.trim().length === 0) {
+              sendJson(res, 400, { error: 'invalid_body' });
+              return;
+            }
+            try {
+              const text = await aiProvider.complete({
+                prompt: b.prompt.slice(0, 24_000),
+                ...(typeof b.maxTokens === 'number' ? { maxTokens: b.maxTokens } : {}),
+                ...(typeof b.system === 'string' ? { system: b.system.slice(0, 4_000) } : {}),
+              });
+              recordAuditEvent(
+                store,
+                { action: 'ai-complete', actor: principal.userId, ip: clientIp(req) },
+                reqLogger,
+              );
+              sendJson(res, 200, { text });
+            } catch (err) {
+              sendJson(res, 502, { error: 'ai_provider_error', message: errorMessage(err) });
+            }
+          })
+          .catch((err: unknown) => {
+            sendJson(res, 400, { error: 'invalid_json', message: errorMessage(err) });
           });
         return;
       }

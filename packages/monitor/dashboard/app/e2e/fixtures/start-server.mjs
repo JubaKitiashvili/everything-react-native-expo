@@ -65,6 +65,14 @@ async function start() {
     host: '127.0.0.1',
     publicDir: PUBLIC_DIR,
     store,
+    // Task 117.9 — a stub AI provider so the "Summarize with AI" flow has a
+    // deterministic response in e2e (no live LLM).
+    ai: {
+      provider: {
+        complete: async () =>
+          'Likely a null dereference in LoginScreen — guard the user object before reading .id.',
+      },
+    },
   });
 
   const url = `http://127.0.0.1:${handle.port}`;

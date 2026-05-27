@@ -3,6 +3,7 @@ import type { CrashGroupRecord, EventRecord } from '@/shared/api/types';
 import { Pill } from '@/shared/ui/Pill/Pill';
 import { Timestamp } from '@/shared/ui/Timestamp/Timestamp';
 import { StackViewer } from './StackViewer';
+import { AiSummary } from './AiSummary';
 import { buildAiContext } from './buildAiContext';
 import styles from './CrashGroupDetail.module.css';
 
@@ -90,6 +91,8 @@ export function CrashGroupDetail({ group, latestEvent, now }: CrashGroupDetailPr
           <p className={styles.aiBody}>{aiSuggestion}</p>
         </section>
       ) : null}
+
+      <AiSummary group={group} latestEvent={latestEvent} />
 
       <section aria-label="Stack trace">
         <h3 className={styles.subhead}>Stack</h3>

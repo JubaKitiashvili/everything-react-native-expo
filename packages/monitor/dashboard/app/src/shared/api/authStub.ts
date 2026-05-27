@@ -18,6 +18,7 @@ export function authStubMethods(): Pick<
   | 'deleteUser'
   | 'fetchBugReportReplies'
   | 'addBugReportReply'
+  | 'aiComplete'
 > {
   return {
     login: async () => {
@@ -35,6 +36,9 @@ export function authStubMethods(): Pick<
     deleteUser: async () => undefined,
     fetchBugReportReplies: async () => [],
     addBugReportReply: async () => {
+      throw new Error('not used');
+    },
+    aiComplete: async () => {
       throw new Error('not used');
     },
   };
