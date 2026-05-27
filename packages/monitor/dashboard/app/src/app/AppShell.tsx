@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useUiStore, type RealtimeStatus } from '@/shared/store/uiStore';
 import { useAuth } from '@/shared/auth/useAuth';
 import { roleLabel } from '@/shared/auth/roles';
+import { CommandPalette } from '@/shared/command/CommandPalette';
 import { Sidebar } from './Sidebar';
 import styles from './AppShell.module.css';
 
@@ -68,6 +69,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

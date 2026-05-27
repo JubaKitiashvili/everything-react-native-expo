@@ -1,0 +1,99 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.palette {
+  width: 100%;
+  max-width: 560px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle, #2a2f3a);
+  border-radius: 14px;
+  border-curve: continuous;
+  background: var(--color-bg-surface, #121620);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.input {
+  padding: 16px 18px;
+  border: none;
+  border-bottom: 1px solid var(--color-border-subtle, #2a2f3a);
+  background: transparent;
+  color: var(--color-text-primary, #e6e9ef);
+  font-size: 16px;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.results {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--color-text-tertiary, #6b7280);
+  font-size: 14px;
+}
+
+.group {
+  list-style: none;
+}
+
+.groupHeading {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary, #6b7280);
+}
+
+.groupList {
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border-curve: continuous;
+  cursor: pointer;
+}
+
+.optionActive {
+  background: var(--color-bg-base, #0b0e14);
+}
+
+.optionLabel {
+  color: var(--color-text-primary, #e6e9ef);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionSub {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary, #6b7280);
+  font-size: 12px;
+}
