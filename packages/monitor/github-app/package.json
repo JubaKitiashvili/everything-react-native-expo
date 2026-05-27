@@ -1,0 +1,36 @@
+{
+  "name": "@erne/monitor-github-app",
+  "version": "0.1.0",
+  "description": "GitHub App webhook handler library for @erne/monitor. Records deploy markers, posts a crash-regression status check on PRs, and links GitHub issues to crash fingerprints. Pure, injectable, fully unit-tested handler logic — no live GitHub or network dependency.",
+  "license": "MIT",
+  "author": "Juba Kitiashvili",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "typescript": "~5.9.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
