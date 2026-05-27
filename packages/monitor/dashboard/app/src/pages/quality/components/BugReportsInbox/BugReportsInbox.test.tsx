@@ -4,12 +4,44 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiProvider } from '@/shared/api/context';
-import type { DashboardApiClient, UpdateBugReportInput } from '@/shared/api/client';
+import { createApiClient, type DashboardApiClient, type UpdateBugReportInput } from '@/shared/api/client';
 import { authStubMethods } from '@/shared/api/authStub';
+import { AuthContext, type AuthState } from '@/shared/auth/AuthContext';
 import type { BugReportRecord } from '@/shared/api/types';
 import { BugReportsInbox } from './BugReportsInbox';
 
 const NOW = 1_770_000_000_000;
+
+const MEMBER_AUTH: AuthState = {
+  status: 'authenticated',
+  enforcing: true,
+  user: { id: 'me', email: 'op@acme.io', role: 'member', tenantId: 't' },
+  login: async () => undefined,
+  logout: () => undefined,
+};
+
+/** QueryClient + Api + Auth providers — ReplyThread (inside ReportDetail) needs all three. */
+function providers(api: DashboardApiClient, auth: AuthState = MEMBER_AUTH) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 0 } },
+  });
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <ApiProvider client={api}>
+        <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
+      </ApiProvider>
+    </QueryClientProvider>
+  );
+}
+
+/** Minimal full client for the view-only tests (replies fetch returns empty). */
+function stubApi(): DashboardApiClient {
+  return {
+    ...createApiClient({ baseUrl: '' }),
+    fetchBugReports: async () => [],
+    fetchBugReportReplies: async () => [],
+  };
+}
 
 function report(partial: Partial<BugReportRecord>): BugReportRecord {
   return {
@@ -35,7 +67,7 @@ function report(partial: Partial<BugReportRecord>): BugReportRecord {
 
 describe('BugReportsInbox view-only', () => {
   test('renders empty state when no reports exist', () => {
-    render(<BugReportsInbox reports={[]} now={NOW} />);
+    render(<BugReportsInbox reports={[]} now={NOW} />, { wrapper: providers(stubApi()) });
     expect(screen.getByText(/no bug reports yet/i)).toBeInTheDocument();
   });
 
@@ -44,7 +76,7 @@ describe('BugReportsInbox view-only', () => {
       report({ id: 'old', submittedAt: NOW - 60_000, title: 'Older', attachments: {} }),
       report({ id: 'fresh', submittedAt: NOW - 1_000, title: 'Fresh shake' }),
     ];
-    render(<BugReportsInbox reports={reports} now={NOW} />);
+    render(<BugReportsInbox reports={reports} now={NOW} />, { wrapper: providers(stubApi()) });
 
     // Fresh report auto-selected → detail shows its screenshot + breadcrumbs + device.
     const detail = await waitFor(() => screen.getByLabelText(/bug report detail/i));
@@ -56,17 +88,6 @@ describe('BugReportsInbox view-only', () => {
 });
 
 describe('BugReportsInbox wired to the API', () => {
-  function wrapper(api: DashboardApiClient) {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, staleTime: 0 } },
-    });
-    return ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        <ApiProvider client={api}>{children}</ApiProvider>
-      </QueryClientProvider>
-    );
-  }
-
   function makeApi(
     initial: BugReportRecord[],
     recorder: {
@@ -139,7 +160,7 @@ describe('BugReportsInbox wired to the API', () => {
   test('Assign submits status=assigned + assignee via updateBugReport mutation', async () => {
     const update = vi.fn();
     const api = makeApi([report({ id: 'bug-1', title: 'Shaky UI' })], { update });
-    render(<BugReportsInbox />, { wrapper: wrapper(api) });
+    render(<BugReportsInbox />, { wrapper: providers(api) });
 
     await waitFor(() => expect(screen.getByText('Shaky UI')).toBeInTheDocument());
 
@@ -160,7 +181,7 @@ describe('BugReportsInbox wired to the API', () => {
     const api = makeApi([report({ id: 'bug-2', status: 'assigned', assignee: 'juba' })], {
       update,
     });
-    render(<BugReportsInbox />, { wrapper: wrapper(api) });
+    render(<BugReportsInbox />, { wrapper: providers(api) });
 
     await waitFor(() => expect(screen.getByText('Shaky UI')).toBeInTheDocument());
     await userEvent.click(screen.getByRole('button', { name: /mark resolved/i }));

@@ -28,6 +28,7 @@ export const queryKeys = {
   bugReports: {
     root: () => ['bug-reports'] as const,
     list: () => ['bug-reports', 'list'] as const,
+    replies: (id: string) => ['bug-reports', id, 'replies'] as const,
   },
   symbols: {
     root: () => ['symbols'] as const,

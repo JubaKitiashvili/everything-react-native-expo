@@ -64,6 +64,19 @@ export interface BugReportRecord {
   eventIds?: string[];
 }
 
+/** Task 117.20 — who authored a bug-report reply. */
+export type BugReplyAuthorRole = 'operator' | 'reporter';
+
+/** One message in a bug report's two-way thread. */
+export interface BugReportReply {
+  id: string;
+  reportId: string;
+  author: string;
+  authorRole: BugReplyAuthorRole;
+  body: string;
+  createdAt: number;
+}
+
 export interface AlertRuleRecord {
   id: string;
   name: string;

@@ -1,6 +1,7 @@
 import type {
   AlertRuleRecord,
   BugReportRecord,
+  BugReportReply,
   CrashGroupRecord,
   DashboardResetResult,
   DashboardSettings,
@@ -75,6 +76,10 @@ export interface DashboardApiClient {
   fetchAlertHistory(filter?: AlertHistoryFilter): Promise<AlertFiringRecord[]>;
   fetchBugReports(): Promise<BugReportRecord[]>;
   updateBugReport(id: string, patch: UpdateBugReportInput): Promise<BugReportRecord | null>;
+  /** Task 117.20 — the bug report's reply thread, oldest first. */
+  fetchBugReportReplies(reportId: string): Promise<BugReportReply[]>;
+  /** Task 117.20 — append an operator reply (Member+). */
+  addBugReportReply(reportId: string, body: string): Promise<BugReportReply>;
   fetchSymbolFiles(filter?: SymbolFileListFilter): Promise<SymbolFileRecord[]>;
   uploadSymbolFile(input: UploadSymbolFileInput): Promise<SymbolFileRecord>;
   deleteSymbolFile(id: string): Promise<void>;
@@ -280,6 +285,20 @@ export function createApiClient(options: CreateApiClientOptions = {}): Dashboard
         patch,
       );
       return report;
+    },
+    async fetchBugReportReplies(reportId) {
+      const { replies } = await getJson<{ replies: BugReportReply[] }>(
+        `/api/bug-reports/${encodeURIComponent(reportId)}/replies`,
+      );
+      return replies;
+    },
+    async addBugReportReply(reportId, body) {
+      const { reply } = await sendJson<{ reply: BugReportReply }>(
+        `/api/bug-reports/${encodeURIComponent(reportId)}/replies`,
+        'POST',
+        { body },
+      );
+      return reply;
     },
     async fetchSymbolFiles(filter = {}) {
       const params = new URLSearchParams();

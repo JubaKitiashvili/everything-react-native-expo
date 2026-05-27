@@ -3,6 +3,7 @@ import { Pill } from '@/shared/ui/Pill/Pill';
 import { Timestamp } from '@/shared/ui/Timestamp/Timestamp';
 import type { BugReportRecord } from '@/shared/api/types';
 import type { UpdateBugReportInput } from '@/shared/api/client';
+import { ReplyThread } from './ReplyThread';
 import styles from './ReportDetail.module.css';
 
 export interface ReportDetailProps {
@@ -119,6 +120,8 @@ export function ReportDetail({ report, onUpdate, busy, now }: ReportDetailProps)
           {isBusy ? 'Saving…' : 'Mark resolved'}
         </button>
       </form>
+
+      <ReplyThread reportId={report.id} {...(now !== undefined ? { now } : {})} />
     </div>
   );
 }
