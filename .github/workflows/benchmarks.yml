@@ -15,9 +15,9 @@ on:
     branches: [main]
     paths:
       - 'packages/benchmarks/**'
-  schedule:
-    # 06:00 UTC nightly — full suite with install_time enabled.
-    - cron: '0 6 * * *'
+  # Nightly schedule paused: install_time pins an unpublished @erne/monitor
+  # version, so the full suite cannot pass until the package is on npm.
+  # Re-enable `schedule: - cron: '0 6 * * *'` after the first publish.
   workflow_dispatch: {}
 
 jobs:
@@ -69,8 +69,6 @@ jobs:
     defaults:
       run:
         working-directory: packages/benchmarks
-    env:
-      RUNNER_IMAGE: ${{ runner.os }}-${{ runner.arch }}
     steps:
       - uses: actions/checkout@v4
 
@@ -90,11 +88,16 @@ jobs:
           npm run build
 
       - name: Run full benchmark suite
+        # `runner` context is not available in job-level env, so set it per step.
+        env:
+          RUNNER_IMAGE: ${{ runner.os }}-${{ runner.arch }}
         run: npm run bench -- --out=results.md --json --out=results.json
         # Two --out flags is intentional: bench captures the LAST one,
         # so this writes JSON. We separately render markdown below.
 
       - name: Render Markdown report
+        env:
+          RUNNER_IMAGE: ${{ runner.os }}-${{ runner.arch }}
         run: npm run bench -- --out=results.md
 
       - uses: actions/upload-artifact@v4

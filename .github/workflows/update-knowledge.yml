@@ -1,9 +1,9 @@
 name: Update Knowledge Base
 
 on:
-  schedule:
-    # Every Sunday at 06:00 UTC
-    - cron: '0 6 * * 0'
+  # Weekly schedule paused: the updater currently writes to the unshipped
+  # dogfood .claude/rules/common and crashes on new RN releases, so every run
+  # fails. Re-enable `schedule: - cron: '0 6 * * 0'` once it targets rules/.
   workflow_dispatch:
     inputs:
       dry_run:
